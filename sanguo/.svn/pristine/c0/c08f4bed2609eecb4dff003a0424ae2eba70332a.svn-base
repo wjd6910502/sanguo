@@ -1,0 +1,47 @@
+	public:
+		int64_t roleid;
+		Octets pvpinfo;
+		Octets fight_pvpinfo;
+		int robot_flag;
+		int robot_seed;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPENTERRE };
+	public:
+		PvpEnterRe() { type = PROTOCOL_PVPENTERRE; }
+		PvpEnterRe(void*) : Protocol(PROTOCOL_PVPENTERRE) { }
+		PvpEnterRe (const int64_t& l_roleid,const Octets& l_pvpinfo,const Octets& l_fight_pvpinfo,
+			const int& l_robot_flag,const int& l_robot_seed)
+			 : roleid(l_roleid),pvpinfo(l_pvpinfo),fight_pvpinfo(l_fight_pvpinfo)
+			,robot_flag(l_robot_flag),robot_seed(l_robot_seed)
+		{
+			type = PROTOCOL_PVPENTERRE;
+		}
+
+		PvpEnterRe(const PvpEnterRe &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),pvpinfo(rhs.pvpinfo),fight_pvpinfo(rhs.fight_pvpinfo)
+			,robot_flag(rhs.robot_flag),robot_seed(rhs.robot_seed) { }
+
+		GNET::Protocol *Clone() const { return new PvpEnterRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << pvpinfo;
+			os << fight_pvpinfo;
+			os << robot_flag;
+			os << robot_seed;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> pvpinfo;
+			os >> fight_pvpinfo;
+			os >> robot_flag;
+			os >> robot_seed;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

@@ -1,0 +1,46 @@
+function OnCommand_RoleLogin(player, role, arg, others)
+	player:Log("OnCommand_RoleLogin, "..DumpTable(arg).." "..DumpTable(others))
+
+	--把玩家的私聊信息发给玩家
+	
+	--local resp = NewCommand("PrivateChatHistory")
+	--resp.private_chat = {}
+	--local chats = role._roledata._chat._received_private_chats
+
+	--local cit = chats:SeekToBegin()
+	--local c = cit:GetValue()
+	--while c~=nil do
+	--	local c2 = {}
+	--	c2.src = {}
+	--	c2.src.id = c._brief._id:ToStr()
+	--	c2.src.name = c._brief._name
+	--	c2.src.photo = c._brief._photo
+	--	c2.src.level = c._brief._level
+	--	c2.src.mafia_id = c._brief._mafia_id:ToStr()
+	--	c2.src.mafia_name = c._brief._mafia_name
+	--	c2.content = c._content
+	--	c2.time = c._time
+
+	--	resp.private_chat[#resp.private_chat+1] = c2
+	--	cit:Next()
+	--	c = cit:GetValue()
+	--end
+	--player:SendToClient(SerializeCommand(resp))
+
+	--查看全服事件，来进行处理
+	local msg = NewMessage("RoleUpdateServerEvent")
+	player:SendMessage(role._roledata._base._id, SerializeMessage(msg))
+
+	--刷新玩家的个人商店
+	PRIVATE_RefreshAllShop(role)
+	--刷新玩家的战役信息
+	--ROLE_RefreshAllBattleInfo(role)
+	--local now = API_GetTime()
+	--role._roledata._status._update_server_event = now
+	
+	--查看玩家是否存在正在匹配铜雀台
+	if role._roledata._tongquetai_data._cur_state == 1 then
+		local msg = NewMessage("TongQueTaiCancle")
+		player:SendMessage(role._roledata._base._id, SerializeMessage(msg))
+	end
+end

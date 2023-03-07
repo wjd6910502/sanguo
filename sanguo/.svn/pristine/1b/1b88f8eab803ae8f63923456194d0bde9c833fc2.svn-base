@@ -1,0 +1,10 @@
+function OnMessage_PVPMatchSuccess(player, role, arg, others)
+	player:Log("OnMessage_PVPMatchSuccess, "..DumpTable(arg).." "..DumpTable(others))
+
+	--在这里就给客户端发送协议告诉他匹配成功了
+	local resp = NewCommand("PvpMatchSuccess")
+	resp.retcode = arg.retcode
+	resp.index = arg.index
+	player:SendToClient(SerializeCommand(resp))
+
+end

@@ -1,0 +1,35 @@
+	public:
+		int64_t roleid;
+		int speed;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPSPEEDRE };
+	public:
+		PvpSpeedRe() { type = PROTOCOL_PVPSPEEDRE; }
+		PvpSpeedRe(void*) : Protocol(PROTOCOL_PVPSPEEDRE) { }
+		PvpSpeedRe (const int64_t& l_roleid,int l_speed)
+			 : roleid(l_roleid),speed(l_speed)
+		{
+			type = PROTOCOL_PVPSPEEDRE;
+		}
+
+		PvpSpeedRe(const PvpSpeedRe &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),speed(rhs.speed) { }
+
+		GNET::Protocol *Clone() const { return new PvpSpeedRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << speed;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> speed;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

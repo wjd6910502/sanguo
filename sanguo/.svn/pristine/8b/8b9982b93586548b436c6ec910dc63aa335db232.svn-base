@@ -1,0 +1,38 @@
+
+#ifndef __GNET_SENDPVPVIDEOID_HPP
+#define __GNET_SENDPVPVIDEOID_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class SendPvpVideoID : public GNET::Protocol
+{
+	#include "sendpvpvideoid"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "GAMED::SendPvpVideoID, roleid=%ld, video_id=%ld", roleid, video_id);
+
+		string value;
+		char msg[128];
+		snprintf(msg, sizeof(msg), "%ld", video_id);
+		value = msg;
+		
+		Octets value_oct = Octets((void*)value.c_str(), value.size());
+		Octets tmp_out;
+		Base64Encoder::Convert(tmp_out, value_oct);
+		
+		memset(msg, 0, sizeof(msg));
+		snprintf(msg, sizeof(msg), "10021:%.*s:", (int)tmp_out.size(), (char*)tmp_out.begin()); //PvpVideoid
+		MessageManager::GetInstance().Put(roleid, roleid, msg, 0);
+	}
+};
+
+};
+
+#endif

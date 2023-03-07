@@ -1,0 +1,115 @@
+#include "RoleNameCache.h"
+
+namespace CACHE
+{
+
+SGT_RoleNameCache::SGT_RoleNameCache(): Singleton("SGT_RoleNameCache")
+{
+	_in_transaction = false;
+	_transaction_id = 0;
+
+	SingletonManager::GetInstance().Register(12, this);
+}
+
+void SGT_RoleNameCache::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_RoleNameCache::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void SGT_RoleNameCache::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+void SGT_RoleNameCache::backup(const char *name, int64_t transaction_id)
+{
+	if(transaction_id != _transaction_id)
+	{
+		_transaction_id = transaction_id;
+		_transaction_data.clear();
+	}
+	else if(_transaction_data.find(name) != _transaction_data.end())
+	{
+		return;
+	}
+
+	if(false)
+	{
+	}
+	else if(strcmp(name, "_data") == 0)
+	{
+		_data.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _data;
+		_transaction_data["_data"] = os;
+	}
+	else
+	{
+		abort();
+	}
+}
+
+void SGT_RoleNameCache::restore(int64_t transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_data");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _data;
+			_data.cleanup();
+		}
+		else
+		{
+			_data.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_data.restore(transaction_id);
+	}
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_RoleNameCache::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_data.cleanup();
+}
+
+RoleNameQueryResults* SGT_RoleNameCache::Query(const std::string& pattern)
+{
+	//TODO: 
+	RoleNameQueryResults *rets = new RoleNameQueryResults();
+	RoleNameQueryResult node;
+	node._name = "Player1"; node._id = Int64(1); rets->PushBack(node);
+	node._name = "Player2"; node._id = Int64(2); rets->PushBack(node);
+	node._name = "Player3"; node._id = Int64(3); rets->PushBack(node);
+	node._name = "Player4"; node._id = Int64(4); rets->PushBack(node);
+	node._name = "Player5"; node._id = Int64(5); rets->PushBack(node);
+	return rets;
+}
+
+}
+

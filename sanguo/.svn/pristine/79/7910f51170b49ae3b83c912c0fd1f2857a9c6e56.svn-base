@@ -1,0 +1,48 @@
+function OnCommand_FuDaiGetReward(player, role, arg, others)
+	player:Log("OnCommand_FuDaiGetReward, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("FuDaiGetReward_Re")
+	resp.fudai_flag = arg.fudai_flag
+	resp.item = {}
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	local reward = 0
+	local limit_id = 0
+	local now = API_GetTime()
+	if arg.fudai_flag == 1 then
+		if role._roledata._status._little_fudai > now then
+			reward = quanju.month_card_daily_reward_id
+			limit_id = quanju.month_card_daily_limit_id
+		end
+	elseif arg.fudai_flag == 2 then
+		if role._roledata._status._big_fudai > now then
+			reward = quanju.month_card2_daily_reward_id
+			limit_id = quanju.month_card2_daily_limit_id
+		end
+	end
+
+	if limit_id ~= 0 then
+		if LIMIT_TestUseLimit(role, limit_id, 1) == true then
+			if reward ~= 0 then
+				local Reward = DROPITEM_Reward(role, reward)
+				ROLE_AddReward(role, Reward)
+				for i = 1, table.getn(Reward.item) do
+					local instance_item = {}
+					instance_item.tid = Reward.item[i].itemid
+					instance_item.count = Reward.item[i].itemnum
+					resp.item[#resp.item+1] = instance_item
+				end
+				resp.retcode = G_ERRCODE["SUCCESS"]
+				LIMIT_AddUseLimit(role, limit_id, 1)
+			else
+				resp.retcode = G_ERRCODE["FUDAI_BUY_FIRST"]
+			end
+		else
+			resp.retcode = G_ERRCODE["FUDAI_HAVE_GET"]
+		end
+	else
+		resp.retcode = G_ERRCODE["FUDAI_BUY_FIRST"]
+	end
+	player:SendToClient(SerializeCommand(resp))
+end

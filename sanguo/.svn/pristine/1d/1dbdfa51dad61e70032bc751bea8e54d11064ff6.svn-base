@@ -1,0 +1,64 @@
+
+#ifndef __GNET_CREATEMAFIANAME_HPP
+#define __GNET_CREATEMAFIANAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "createmafianamearg"
+#include "createmafianameres"
+
+#include "base64.h"
+
+namespace GNET
+{
+
+class CreateMafiaName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "createmafianame"
+#undef	RPC_BASECLASS
+
+public:
+	int _create_time;
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+		// CreateMafiaNameRes *res = (CreateMafiaNameRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+		CreateMafiaNameRes *res = (CreateMafiaNameRes *)result;
+
+		GLog::log(LOG_INFO, "CreateMafiaName::Client, retcode=%d, account=%.*s, name=%.*s, thread=%u",
+		          res->retcode, (int)arg->account.size(), (char*)arg->account.begin(), (int)arg->name.size(), (char*)arg->name.begin(),
+		       	  (unsigned int)pthread_self());
+		//这里不直接考虑结果，直接给这个玩家仍一个消息过去就可以了
+		Octets out_name;
+		Base64Encoder::Convert(out_name, arg->name);
+
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10003:%d:%d:%.*s:", res->retcode,_create_time, (int)out_name.size(), (char*)out_name.begin()); 
+		MessageManager::GetInstance().Put(arg->roleid, arg->roleid, msg, 0);
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+
+		GLog::log(LOG_ERR, "CreateMafiaName::OnTimeout, account=%.*s, name=%.*s, _create_time=%d, thread=%u",
+		          (int)arg->account.size(), (char*)arg->account.begin(), (int)arg->name.size(), (char*)arg->name.begin(),
+		           _create_time, (unsigned int)pthread_self());
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10003:%d:%d:", 3,_create_time);
+		MessageManager::GetInstance().Put(arg->roleid, arg->roleid, msg, 0);
+	}
+
+};
+
+};
+#endif

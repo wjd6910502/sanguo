@@ -1,0 +1,30 @@
+
+#ifndef __GNET_AUTHRESULT_HPP
+#define __GNET_AUTHRESULT_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "connection.h"
+
+namespace GNET
+{
+
+class AuthResult : public GNET::Protocol
+{
+	#include "authresult"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		fprintf(stderr, "AuthResult::Process, retcode=%d, trans_ip=%s, trans_port=%d, udp_trans_ip=%s, udp_trans_port=%d, trans_token=%s\n",
+		        retcode, B16EncodeOctets(trans_ip).c_str(), trans_port, B16EncodeOctets(udp_trans_ip).c_str(), udp_trans_port,
+		        B16EncodeOctets(trans_token).c_str());
+
+		Connection::GetInstance().OnAuthResult(manager, sid, retcode, trans_ip, trans_port, udp_trans_ip, udp_trans_port, trans_token);
+	}
+};
+
+};
+
+#endif

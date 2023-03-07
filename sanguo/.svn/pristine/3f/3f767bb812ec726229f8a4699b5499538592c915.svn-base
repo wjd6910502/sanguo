@@ -1,0 +1,63 @@
+#ifndef _PVP_MATCH_H_
+#define _PVP_MATCH_H_
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include <string>
+#include <map>
+#include <vector>
+
+#include "gnet_timer.h"
+#include "itimer.h"
+
+//using namespace GNET;
+
+namespace GNET
+{
+
+struct pvp_data
+{
+	int64_t role_id;
+	int zoneid;
+	std::vector<int> hero;
+};
+
+struct pvp_match_data
+{
+	int64_t fight1_id;
+	int64_t fight2_id;
+	int fight1_zoneid;
+	int fight2_zoneid;
+	std::vector<int> fight1_hero;
+	std::vector<int> fight2_hero;
+	int fight1_flag;
+	int fight2_flag;
+};
+
+class PVPMatch: public IntervalTimer::Observer
+{
+private:
+	//这里设置成map的主要是为了查找，以及删除
+	std::map<int64_t, pvp_data> _data;
+	std::map<int64_t, pvp_match_data> _match_data;
+
+	static int64_t pvp_index;
+public:
+	PVPMatch();
+	static PVPMatch& GetInstance()
+	{
+		static PVPMatch _instance;
+		return _instance;
+	}
+
+	int AddPVPData(int64_t roleid, pvp_data data);
+	bool Initialize();
+	bool Update();
+	int RolePvpEnter(int64_t roleid, int index, int flag);
+};
+
+
+};
+#endif

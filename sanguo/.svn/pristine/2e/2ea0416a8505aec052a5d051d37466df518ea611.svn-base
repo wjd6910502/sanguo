@@ -1,0 +1,12 @@
+#!/bin/sh
+
+touch localconfig.lua
+
+cd scripts
+ln -sf ../localconfig.lua .
+cd ..
+
+killall -USR1 gamed
+
+
+

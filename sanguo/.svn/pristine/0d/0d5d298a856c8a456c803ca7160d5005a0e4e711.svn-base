@@ -1,0 +1,24 @@
+function GetPrizeByID(id)
+	local ed = DataPool_Find("elementdata")
+		
+	local value = ed.taskprize[id]
+
+	return value
+end
+
+function GiveRolePrizeByID(role, id)
+	local ed = DataPool_Find("elementdata")
+		
+	local value = ed.taskprize[id]
+	
+	if value~=nil then
+		--给玩家添加经验，金钱，添加道具，添加声望
+		--这个做成接口，为了方便修改以及给客户端提示等
+		value.exp
+		value.money
+		value.rep_id
+		value.rep_num
+		value.item_id
+		value.item_num
+	end
+end

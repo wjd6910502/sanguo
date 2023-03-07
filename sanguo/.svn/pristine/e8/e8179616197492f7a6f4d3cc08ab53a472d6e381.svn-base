@@ -1,0 +1,10 @@
+function OnMessage_PublicChat(player, role, arg, others)
+	--player:Log("OnMessage_PublicChat, "..DumpTable(arg))
+	
+	--local msg = NewMessage("PublicChat") 
+	--msg.src = arg.src
+	--msg.text_content = arg.text_content
+	--msg.time = arg.time
+    	--player:SendMessageToAllRole(SerializeMessage(msg))
+
+end

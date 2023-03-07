@@ -1,0 +1,131 @@
+#ifndef _PVP_MANAGER_H_
+#define _PVP_MANAGER_H_
+
+#include <string>
+#include <map>
+
+#include "forlua.h"
+#include "structs.h"
+#include "thread.h"
+#include "mutex.h"
+#include "transaction.h"
+#include "message.h"
+#include "glog.h"
+#include "commonmacro.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class PVP: public GNET::Marshal, public TransactionBase
+{
+public:
+	PVPData _data;
+
+	//PVP(int id, int mode, const Int64& fighter1, const Int64& fighter2): _pvpd_port(0), _in_transaction(false)
+	PVP(int id, int mode, const Int64& fighter1, const Int64& fighter2): _lock("PVP::_lock"), _in_transaction(false), _transaction_id(0)
+	{
+		_data._id = id;
+		_data._mode = mode;
+		_data._status_change_time = Now();
+		_data._fighter1._id = fighter1;
+		_data._fighter2._id = fighter2;
+	}
+
+	virtual OctetsStream& marshal(OctetsStream &os) const
+	{
+		os << _data;
+		return os;
+	}
+	virtual const OctetsStream& unmarshal(const OctetsStream &os)
+	{
+		os >> _data;
+		return os;
+	}
+
+	void backup(const char *name, int64_t transaction_id);
+	void restore(int64_t transaction_id);
+	void cleanup();
+
+	void PVPD_Create();
+	void PVPD_Delete();
+
+public:
+	mutable Thread::Mutex2 _lock;
+
+	//std::string _pvpd_ip;
+	//unsigned short _pvpd_port;
+
+	//transaction
+	bool _in_transaction;
+	int64_t _transaction_id;
+	std::map<std::string, GNET::Octets> _transaction_data;
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	//void OnTimer(int tick, int now);
+	void OnTimer1s(time_t now);
+};
+
+struct PVPD
+{
+	std::string _ip;
+	unsigned short _port;
+	unsigned int _sid;
+	time_t _last_active_time;
+	int _load;
+
+public:
+	PVPD(): _port(0), _sid(0), _last_active_time(0), _load(0) {}
+};
+
+class PVPManager
+{
+	int _id_stub;
+	std::map<int, PVP*> _map;
+	std::set<int> _will_delete_list;
+
+	std::vector<PVPD> _pvpds;
+
+	mutable Thread::Mutex2 _lock;
+
+	PVPManager(): _id_stub(0), _lock("PVPManager::_lock") {}
+
+public:
+	static PVPManager& GetInstance()
+	{
+		static PVPManager _instance;
+		return _instance;
+	}
+
+	void OnTimer(int tick, int now);
+
+	PVP* Find(int id);
+
+	void AddPVPServer(const char *ip, unsigned short port, unsigned int sid);
+	void UpdatePVPServerLoad(unsigned int sid, int load);
+	const PVPD* AllocPVPServer() const;
+	const PVPD* FindPVPServer(const char *ip, unsigned short port) const;
+
+	int LUA_Create(int mode, const Int64& fighter1, const Int64& fighter2);
+	void LUA_Delete(int id);
+	void Lua_PvpEnter(char* roleid, int index, int flag);
+	void Lua_PvpLeave(char* roleid, int index, int reason);
+};
+
+}
+
+inline int API_PVP_Create(int mode, const CACHE::Int64& fighter1, const CACHE::Int64& fighter2)
+{
+	return CACHE::PVPManager::GetInstance().LUA_Create(mode, fighter1, fighter2);
+}
+inline void API_PVP_Delete(int id) { CACHE::PVPManager::GetInstance().LUA_Delete(id); }
+inline CACHE::PVP* API_GetLuaPVP(void *r) { return (CACHE::PVP*)r; }
+//inline void API_PVP_Enter(char* roleid, int index, int flag) {CACHE::PVPManager::GetInstance().Lua_PvpEnter(roleid, index, flag);}
+//inline void API_PVP_Leave(char* roleid, int index, int reason) {CACHE::PVPManager::GetInstance().Lua_PvpLeave(roleid, index, reason);}
+
+#endif //_PVP_MANAGER_H_
+

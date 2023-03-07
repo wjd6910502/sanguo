@@ -1,0 +1,43 @@
+function OnMessage_TowerUpdateRoleRank(player, role, arg, others)
+	player:Log("OnMessage_TowerUpdateRoleRank, "..DumpTable(arg).." "..DumpTable(others))
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+
+	role._roledata._tower_data._yestaday_difficulty = role._roledata._tower_data._difficulty
+	role._roledata._tower_data._yestaday_rank = arg.rank
+	role._roledata._tower_data._timestamp = API_MakeTodayTime(quanju.global_reset_time, 0, 0) + 24*3600
+
+	--清空昨天的数据
+	role._roledata._tower_data._difficulty = 0
+	role._roledata._tower_data._all_star = 0
+	role._roledata._tower_data._cur_star = 0
+	role._roledata._tower_data._reward_star = 0
+	role._roledata._tower_data._buff:Clear()
+	role._roledata._tower_data._dead_hero:Clear()
+	role._roledata._tower_data._injured_hero:Clear()
+	role._roledata._tower_data._cur_layer = 0
+	role._roledata._tower_data._cur_layer_typ = 0
+	role._roledata._tower_data._select_layer_difficulty = 0
+	role._roledata._tower_data._cur_attack_all_army_info:Clear()
+	role._roledata._tower_data._win_flag = 0
+	role._roledata._tower_data._get_prize_flag = 0
+	role._roledata._tower_data._box_info:Clear()
+	role._roledata._tower_data._buff_info:Clear()
+	role._roledata._tower_data._army_info:Clear()
+	role._roledata._tower_data._cur_army_ids:Clear()
+	role._roledata._tower_data._cur_army_info:Clear()
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	if role._roledata._status._level >= quanju.tower2_open_level and role._roledata._tower_data._history_layer_reset_flag ~= 1 then
+		role._roledata._tower_data._history_layer = 0
+		role._roledata._tower_data._history_layer_reset_flag = 1
+	end
+
+	--把自己的变化同步给客户端
+	local resp = NewCommand("TowerUpdateRoleInfo")
+	resp.difficulty = role._roledata._tower_data._difficulty
+	player:SendToClient(SerializeCommand(resp))	
+		
+end

@@ -1,0 +1,20 @@
+function OnCommand_RoleNameQuery(player, role, arg, others)
+	player:Log("OnCommand_RoleNameQuery, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("RoleNameQuery_Re")
+	resp.pattern = arg.pattern
+	resp.results = {}
+
+	local cache = others.rolenamecache
+	local rets = cache:Query(arg.pattern)
+	if rets~=nil then
+		for ret in Cache_List(rets) do
+			local ni = {}
+			ni.name = ret._name
+			ni.id = ret._id:ToStr()
+			resp.results[#resp.results+1] = ni
+		end
+		cache:ReleaseResult(rets)
+	end
+	player:SendToClient(SerializeCommand(resp))
+end

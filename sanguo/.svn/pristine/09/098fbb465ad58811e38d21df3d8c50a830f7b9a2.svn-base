@@ -1,0 +1,19 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+ulimit -c unlimited
+
+#./statusd gamesys.conf
+#gdb -args ./statusd gamesys.conf
+
+valgrind -v --leak-check=full --gen-suppressions=all ./statusd gamesys.conf
+#valgrind -v --leak-check=full --suppressions=./valgrind.supp ./statusd gamesys.conf
+#valgrind -v --leak-check=full --show-leak-kinds=all --suppressions=./valgrind.supp ./statusd gamesys.conf
+
+#env CPUPROFILE=gp.out CPUPROFILESIGNAL=12 ./statusd gamesys.conf
+#env HEAPCHECK=normal ./statusd gamesys.conf
+#env HEAPCHECK=strict ./statusd gamesys.conf
+#env HEAPPROFILE=gp.hp ./statusd gamesys.conf
+

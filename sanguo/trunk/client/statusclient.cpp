@@ -1,0 +1,82 @@
+
+#include "statusclient.hpp"
+#include "state.hxx"
+
+#include "connection.h"
+
+namespace GNET
+{
+
+//StatusClient StatusClient::instance;
+
+const Protocol::Manager::Session::State* StatusClient::GetInitState() const
+{
+	return &state_StatusClient;
+}
+
+void StatusClient::OnAddSession(Session::ID sid)
+{
+	fprintf(stderr, "StatusClient::OnAddSession, this->sid=%d, sid=%d\n", this->sid, sid);
+
+	Thread::Mutex::Scoped l(locker_state);
+
+	if(conn_state)
+	{
+		Close(sid);
+		return;
+	}
+	if(_discard_sid_le_than>0 && sid<=_discard_sid_le_than)
+	{
+		Close(sid);
+		return;
+	}
+	conn_state = true;
+	this->sid = sid;
+}
+
+void StatusClient::OnDelSession(Session::ID sid)
+{
+	fprintf(stderr, "StatusClient::OnDelSession, this->sid=%d, sid=%d\n", this->sid, sid);
+
+	Thread::Mutex::Scoped l(locker_state);
+
+	if(!conn_state || this->sid!=sid) return;
+	conn_state = false;
+}
+
+void StatusClient::OnAbortSession(const SockAddr &sa)
+{
+	//Thread::Mutex::Scoped l(locker_state);
+	//conn_state = false;
+}
+
+void StatusClient::OnCheckAddress(SockAddr &sa) const
+{
+}
+
+bool StatusClient::LoadSessionConfig(GNET::NetSession::Config &cnf)
+{
+	if(!GNET::Protocol::Manager::LoadSessionConfig(cnf)) return false;
+	//cnf.address = Connection::GetInstance().GetStatusIP();
+	//cnf.port = Connection::GetInstance().GetStatusPort();
+	cnf.address = _conn->GetStatusIP();
+	cnf.port = _conn->GetStatusPort();
+	return true;
+}
+
+void StatusClient::CloseCur()
+{
+	if (conn_state)
+	{
+		conn_state = false;
+		Close(sid);
+	}
+}
+
+int StatusClient::GetCurSID() const
+{
+	if(!conn_state) return 0;
+	return sid;
+}
+
+};

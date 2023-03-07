@@ -1,0 +1,52 @@
+
+#ifndef __GNET_DBLOADROLEDATA_HPP
+#define __GNET_DBLOADROLEDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbloadroledataarg"
+#include "dbloadroledatares"
+
+#include "playermanager.h"
+
+//using namespace GNET;
+using namespace CACHE;
+
+namespace GNET
+{
+
+class DBLoadRoleData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloadroledata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+		// DBLoadRoleDataRes *res = (DBLoadRoleDataRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+		DBLoadRoleDataRes *res = (DBLoadRoleDataRes *)result;
+		
+		GLog::log(LOG_INFO, "DBLoadRoleData  retcode=%d ", res->retcode);
+
+		PlayerManager::GetInstance().LoadRoleInfo(arg->key, res->value);
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+
+		GLog::log(LOG_INFO, "DBLoadRoleDataArg OnTimeout        key = %.*s", (int)arg->key.size(), (char*)arg->key.begin());
+	}
+
+};
+
+};
+#endif

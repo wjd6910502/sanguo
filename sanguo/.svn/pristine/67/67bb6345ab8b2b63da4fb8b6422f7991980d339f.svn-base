@@ -1,0 +1,3 @@
+function OnCommand_SkinBuy(player, role, arg, others)
+	--player:Log("OnCommand_SkinBuy, "..DumpTable(arg).." "..DumpTable(others))
+end

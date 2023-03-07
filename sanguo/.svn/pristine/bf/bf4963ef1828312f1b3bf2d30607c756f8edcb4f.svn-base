@@ -1,0 +1,208 @@
+$#include "playermanager.h"
+$#include "topmanager.h"
+$#include "mafiamanager.h"
+$#include "pvpmanager.h"
+$#include "dbsavemanager.h"
+
+$#include "forlua.h"
+$#include "structs.h"
+
+$using namespace CACHE;
+
+namespace CACHE
+{
+
+class Int64
+{
+	Int64(): _v(0), _s("0") {}
+	Int64(const char *s);
+
+	const char* ToStr() const { return _s.c_str(); }
+
+	void Set(const char *s);
+	void Set(const int &s);
+	void Set(const Int64 &s);
+	
+	void Add(const char *s);
+	void AddInt(const int &s);
+	void Add(const Int64 &s);
+	
+	void Sub(const char *s);
+	void Sub(const int &s);
+	void Sub(const Int64 &s);
+	
+	void Mul(const char *s);
+	void Mul(const int &s);
+	void Mul(const Int64 &s);
+	
+	void Div(const char *s);
+	void Div(const int &s);
+	void Div(const Int64 &s);
+
+	void Mode(const char *s);
+	void Mode(const int &s);
+	void Mode(const Int64 &s);
+	
+	bool Less(const char *s);
+	bool Less(const int &s);
+	bool Less(const Int64 &s);
+	
+	bool Great(const char *s);
+	bool GreatInt(const int &s);
+	bool Great(const Int64 &s);
+	
+	bool Equle(const char *s);
+	bool EquleInt(const int &s);
+	bool Equle(const Int64 &s);
+};
+
+$$$REPLACE ME!$$$
+
+class Role
+{
+public:
+	RoleData _roledata;	
+
+	void SendToClient(const std::string& v);
+	void SendUDPToClient(const std::string& v);
+	void FastSess_Reset();
+	void FastSess_Send(const std::string& v);
+	void FastSess_OnAck(int index_ack);
+	bool FastSess_IsReceived(int index) const;
+	void FastSess_SetReceived(int index);
+	void FastSess_SendAck();
+	void FastSess_TriggerSend();
+	void SendPVPJoin();
+	void SendPVPEnter(int flag);
+	void SendPVPReady();
+	void SendPVPLeave(int reason, int typ);
+	void SendPVPCancle();
+	void SendPVPSpeed(int speed);
+};
+
+class Player
+{
+public:
+	void Log(const char *v) const;
+	void Err(const char *v) const;
+	void SendToClient(const std::string& v);
+	void SendUDPToClient(const std::string& v);
+	void SendMessage(const Int64& target, const std::string& v);
+	void SendMessage(const Int64& target, const std::string& v, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps);
+	void SendMessageToAllRole(const std::string& v);
+	void SendMessageToAllRole(const std::string& v, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps);
+	void KickoutSelf(int reason);
+	bool HaveRole() const { return _role_id!=0; }
+	void CreateRole(const char *name, int photo);
+	bool IsCreatingRole() const { return (_role_id==0 && !_role_name.empty()); }
+	bool HaveMafia() const { return _role._mafia._id!=0; }
+	void CreateMafia(const char *name, int flag);
+	bool IsCreatingMafia() const { return ((int64_t)_role._mafia._id==0 && !_l_mafia_name.empty()); }
+	bool NetTime_NeedSync() const { return _network_time.NeedSync(); }
+	void NetTime_Sync2Client();
+
+	static bool IsValidRoleName(const char *name);
+	static bool IsValidMafiaName(const char *name);
+};
+
+class RoleIter
+{
+public:
+	void Next();
+	Role* GetValue();
+};
+
+class PlayerManager
+{
+public:
+	static PlayerManager& GetInstance()
+
+	int Size() const { return _map_by_role_id.size(); }
+
+	Role* Find(const Int64& k);
+
+	RoleIter SeekToBegin() const { return RoleIter(_map_by_role_id.begin(), this, _tag); }
+	RoleIter Seek(const Int64& k) const { return RoleIter(_map_by_role_id.find(k), this, _tag); }
+};
+
+class Mafia
+{
+public:
+	Int64 _id;
+	std::string _name;
+	int _flag;
+	std::string _announce;
+	int _level;
+	int _activity;
+	Int64 _boss_id;
+	std::string _boss_name;
+	MafiaMemberMap _member_map;
+
+	Mafia(): _flag(0), _level(0), _activity(0), _in_transaction(false) {}
+};
+
+class MafiaMapIter
+{
+public:
+	void Next() { _rep.Next(); }
+	Mafia* GetValue() { return _rep.GetValue(); }
+};
+
+class MafiaMap
+{
+public:
+	MafiaMap(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	Mafia* Find(const Int64& k) { return _rep.Find(k); }
+	//void Insert(const Int64& k, const Mafia& v) { _rep.Insert(k, v); }
+	//void Delete(const Int64& k) { _rep.Delete(k); }
+	//void Clear() { _rep.Clear(); }
+
+	MafiaMapIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	MafiaMapIter Seek(const Int64& k) const { return _rep.Seek(k); }
+	MafiaMapIter SeekToLast() const { return _rep.SeekToLast(); }
+};
+
+class MafiaManager
+{
+public:
+	static MafiaManager& GetInstance();
+	MafiaMap& GetMap() { return _map; } //_map尽在big锁状态下才会传给lua，此时系统处于单线程模式，无所谓锁不锁
+};
+
+class PVP
+{
+public:
+	PVPData _data;
+
+	void PVPD_Create();
+	void PVPD_Delete();
+};
+
+class TopManager
+{
+public:
+	//for lua
+	int Size() const;
+
+	TopList* Find(const int& k);
+
+	TopManagerMapIter SeekToBegin();
+	TopManagerMapIter Seek(const int& k);
+};
+
+};
+
+inline CACHE::Player* API_GetLuaPlayer(void *p) { return (CACHE::Player*)p; }
+inline CACHE::Role* API_GetLuaRole(void *p) { return (p ? &(((CACHE::Player*)p)->_role) : 0); }
+inline CACHE::Mafia* API_GetLuaMafia(void *r) { return (CACHE::Mafia*)r; }
+inline int API_PVP_Create(int mode, const CACHE::Int64& fighter1, const CACHE::Int64& fighter2);
+inline void API_PVP_Delete(int id) { CACHE::PVPManager::GetInstance().LUA_Delete(id); }
+inline CACHE::PVP* API_GetLuaPVP(void *r) { return (CACHE::PVP*)r; }
+inline CACHE::TopManager* API_GetLuaTopManager(void *r) { return (CACHE::TopManager*)r; }
+inline void API_LuaSave() {return CACHE::DBSaveManager::GetInstance().Save()}
+//inline void API_PVP_Enter(char* roleid, int index, int flag) {CACHE::PVPManager::GetInstance().Lua_PvpEnter(roleid, index, flag);}
+//inline void API_PVP_Leave(char* roleid, int index, int reason) {CACHE::PVPManager::GetInstance().Lua_PvpLeave(roleid, index, reason);}
+

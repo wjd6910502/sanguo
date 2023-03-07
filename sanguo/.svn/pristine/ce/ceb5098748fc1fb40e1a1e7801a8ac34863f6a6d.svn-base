@@ -1,0 +1,77 @@
+
+#ifndef __GNET_GMCMD_GETCHAR_HPP
+#define __GNET_GMCMD_GETCHAR_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "singletons/RoleNameCache.h"
+#include "gmadapterserver.hpp"
+
+namespace GNET
+{
+
+extern int g_zoneid;
+class GMCmd_GetChar : public GNET::Protocol
+{
+	#include "gmcmd_getchar"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetChar::Process, charid=%ld, charname=%.*s, session_id=%d", 
+				charid, (int)charname.size(), (char*)charname.begin(), session_id);
+
+		GMCmd_GetChar_Re resp;
+
+		const Player *player = PlayerManager::GetInstance().FindByRoleId(charid);
+		if(player)
+		{
+			char msg[100];
+			snprintf(msg, sizeof(msg), "11000:%d:%u:", session_id, sid);
+			MessageManager::GetInstance().Put(charid, charid, msg, 0);
+			return;
+		}
+
+		if(charname.size() > 0)
+		{
+			string rolename = std::string((char*)charname.begin(), charname.size());
+			GMAdapterServer::GetInstance()->ConvertToUtf8(rolename);
+
+			RoleNameQueryResults *rets = SGT_RoleNameCache::GetInstance().Query(rolename);
+			RoleNameQueryResultsIter iter = rets->SeekToBegin();
+			RoleBrief *role = iter.GetValue();
+			while(role != NULL)
+			{
+				if(role->_name == rolename)
+				{
+					player = PlayerManager::GetInstance().FindByRoleId(role->_id);
+					if(player)
+					{
+						char msg[100];
+						snprintf(msg, sizeof(msg), "11000:%d:%u:", session_id, sid);
+						MessageManager::GetInstance().Put(role->_id, role->_id, msg, 0);
+						return;
+					}
+					break;
+				}
+				iter.Next();
+				role = iter.GetValue();
+			}
+		}
+		
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetChar::Process, Failure, charid=%ld, charname=%.*s, session_id=%d, not found", 
+				charid, (int)charname.size(), (char*)charname.begin(), session_id);
+
+		//TODO: noload player
+
+		resp.retcode = -1;
+		resp.session_id = session_id;
+		const char *desc = "not found";
+		resp.desc = Octets(desc, strlen(desc));
+		manager->Send(sid, resp);
+	}
+};
+
+};
+
+#endif

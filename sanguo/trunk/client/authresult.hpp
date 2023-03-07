@@ -1,0 +1,55 @@
+
+#ifndef __GNET_AUTHRESULT_HPP
+#define __GNET_AUTHRESULT_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "connection.h"
+#include <assert.h>
+#include "gateclient.hpp"
+
+namespace GNET
+{
+
+class AuthResult : public GNET::Protocol
+{
+	#include "authresult"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		fprintf(stderr, "AuthResult::Process, retcode=%d, trans_ip=%.*s, trans_port=%d, udp_trans_ip=%.*s, udp_trans_port=%d, stund_ip=%.*s, stund_port=%d, trans_token=%s, signature=%d\n",
+		        retcode, (int)trans_ip.size(), (char*)trans_ip.begin(), trans_port, (int)udp_trans_ip.size(), (char*)udp_trans_ip.begin(), udp_trans_port,
+		        (int)stund_ip.size(), (char*)stund_ip.begin(), stund_port, B16EncodeOctets(trans_token).c_str(), signature);
+
+		//assert(((GateClient*)manager)->GetCurSID() == (int)sid);
+		if(((GateClient*)manager)->GetCurSID()!=(int)sid) return;
+
+
+		//check signature
+		Octets tmp;
+		tmp.push_back(&retcode, sizeof(retcode));
+		tmp.push_back(trans_ip.begin(), trans_ip.size());
+		tmp.push_back(&trans_port, sizeof(trans_port));
+		tmp.push_back(udp_trans_ip.begin(), udp_trans_ip.size());
+		tmp.push_back(&udp_trans_port, sizeof(udp_trans_port));
+		tmp.push_back(stund_ip.begin(), stund_ip.size());
+		tmp.push_back(&stund_port, sizeof(stund_port));
+		tmp.push_back(trans_token.begin(), trans_token.size());
+		//if(signature != UDPSignature(tmp, Connection::GetInstance().GetKey1()))
+		if(signature != UDPSignature(tmp, ((GateClient*)manager)->GetConnection()->GetKey1()))
+		{
+			return;
+		}
+
+		//Connection::GetInstance().OnAuthResult(manager, sid, retcode, trans_ip, trans_port, udp_trans_ip, udp_trans_port, stund_ip,
+		//                                       stund_port, trans_token);
+		((GateClient*)manager)->GetConnection()->OnAuthResult(manager, sid, retcode, trans_ip, trans_port, udp_trans_ip, udp_trans_port, stund_ip,
+		                                                      stund_port, trans_token);
+	}
+};
+
+};
+
+#endif

@@ -1,0 +1,50 @@
+#ifndef _VERSION_INFO_H_
+#define _VERSION_INFO_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_Version_Info: public Singleton, TransactionBase
+{
+	bool _in_transaction;
+	int _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	Version_InfoData _data;
+
+private:
+	SGT_Version_Info();
+
+public:
+	static SGT_Version_Info& GetInstance()
+	{
+		static SGT_Version_Info _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "Version_Info"; }
+	virtual int GetID() const { return 10; }
+	virtual const char* GetLockName() const { return "version_info"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int transaction_id);
+	void restore(int transaction_id);
+	void cleanup();
+};
+
+}
+
+inline CACHE::SGT_Version_Info* API_GetLuaVersion_Info(void *r) { return (CACHE::SGT_Version_Info*)r; }
+inline CACHE::SGT_Version_Info* API_GetLuaVersion_Info() { return (InBigLock() ? &CACHE::SGT_Version_Info::GetInstance() : 0); }
+
+#endif //_VERSION_INFO_H_
+

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+top_client_dir=~/SANGUO_ClientSVN
+
+rsync -avzL *.lua ${top_client_dir}/LuaUI/uLua/NetWork
+rsync -avzL init_command.lua.4client ${top_client_dir}/LuaUI/uLua/NetWork/init_command.lua
+rsync -avzL deserialize_command.lua.4client ${top_client_dir}/LuaUI/uLua/NetWork/deserialize_command.lua
+
+#rsync -avzL cmds/*.lua ${top_client_dir}/LuaUI/uLua/NetWork/cmds
+
+all_cmds=`ls cmds/*.lua`
+for f in ${all_cmds}
+do
+	if [ ! -e ${top_client_dir}/LuaUI/uLua/NetWork/${f} ]
+	then
+		#echo ${f}
+		rsync -avzL ${f} ${top_client_dir}/LuaUI/uLua/NetWork/cmds
+	fi
+done
+

@@ -1,0 +1,3 @@
+function OnCommand_LegionGetInfo(player, role, arg, others)
+	--player:Log("OnCommand_LegionGetInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

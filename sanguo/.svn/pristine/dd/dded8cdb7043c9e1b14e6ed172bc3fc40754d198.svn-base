@@ -1,0 +1,143 @@
+function OnCommand_MysteryShopBuyItem(player, role, arg, others)
+	player:Log("OnCommand_MysteryShopBuyItem, "..DumpTable(arg).." "..DumpTable(others))
+
+	player:NewSendToClientList()
+
+	local resp = NewCommand("MysteryShopBuyItem_Re")
+	resp.shop_id = arg.shop_id
+	resp.position = arg.position
+	resp.item_id = arg.item_id
+
+	if arg.item_num <= 0 then
+		return
+	end
+
+	local shop = role._roledata._private_shop:Find(arg.shop_id)
+	if shop == nil then
+		resp.retcode = G_ERRCODE["PRIVATE_SHOP_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_ERR")                    
+		return
+	end
+
+	--数据统计日志
+	local source_id = 0
+	if arg.shop_id == 7990 then
+		source_id = 14
+	elseif arg.shop_id == 7991 then
+		source_id = 13
+	elseif arg.shop_id == 38090 then
+		source_id = 12
+	elseif arg.shop_id == 42897 then
+		source_id = 11
+	elseif arg.shop_id == 42898 then
+		source_id = 15
+	end
+
+	local shop_data = shop._shop_data
+	local shop_data_it = shop_data:SeekToBegin()
+	local item_data = shop_data_it:GetValue()
+	local position = 1
+	while item_data ~= nil do
+		if position == arg.position then
+			if item_data._item_id == arg.item_id then
+				if item_data._buy_count >= item_data._max_count or (item_data._buy_count + arg.item_num) > item_data._max_count then
+					resp.retcode = G_ERRCODE["PRIVATE_SHOP_BUY_MAX"]
+					role:SendToClient(SerializeCommand(resp))
+					player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_BUY_MAX")                    
+					return
+				end
+				local ed = DataPool_Find("elementdata")
+				local shopitem_info = ed:FindBy("shopitem_id", arg.item_id)
+				if shopitem_info == nil then
+					resp.retcode = G_ERRCODE["PRIVATE_SHOP_ITEM_NOT_EXIST"]
+					role:SendToClient(SerializeCommand(resp))
+					player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_ITEM_NOT_EXIST")                    
+					return
+				end
+				local need_money = shopitem_info.price * arg.item_num
+				local currency = ed:FindBy("currency_id", shopitem_info.currency)
+				if currency.currency_type == 1 then
+					if need_money > role._roledata._status._money then
+						resp.retcode = G_ERRCODE["PRIVATE_SHOP_MONEY_LESS"]
+						player:SendToClient(SerializeCommand(resp))
+						player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_MONEY_LESS")                    
+						return
+					end
+					ROLE_SubMoney(role, need_money, source_id)
+				elseif currency.currency_type == 2 then
+					if need_money > role._roledata._status._yuanbao then
+						resp.retcode = G_ERRCODE["PRIVATE_SHOP_YUANBAO_LESS"]
+						player:SendToClient(SerializeCommand(resp))
+						player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_YUANBAO_LESS")                    
+						return
+					end
+					ROLE_SubYuanBao(role, need_money, source_id)
+				elseif currency.currency_type == 4 then
+					local repnum = ROLE_GetRep(role, currency.rep_id)
+					if need_money > repnum then
+						resp.retcode = G_ERRCODE["PRIVATE_SHOP_REP_LESS"]
+						player:SendToClient(SerializeCommand(resp))
+						player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_REP_LESS")                    
+						return
+					end
+					ROLE_SubRep(role, currency.rep_id, need_money, source_id)
+				else
+					resp.retcode = G_ERRCODE["PRIVATE_SHOP_MONEY_TYPE_ERR"]
+					player:SendToClient(SerializeCommand(resp))
+					player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_MONEY_TYPE_ERR")                    
+					return
+				end
+				item_data._buy_count = item_data._buy_count + arg.item_num
+				local flag, all_items, itemtype = BACKPACK_AddItem(role, shopitem_info.itemid, shopitem_info.nums*arg.item_num, 
+					source_id)
+				resp.item = {}
+				for i = 1, table.getn(all_items) do
+					local tmp_item = {}
+					tmp_item.tid = all_items[i].tid
+					tmp_item.count = all_items[i].count
+					resp.item[#resp.item+1] = tmp_item
+				end
+				resp.retcode = G_ERRCODE["SUCCESS"]
+				resp.buy_count = item_data._buy_count
+				player:SendToClientFirst(SerializeCommand(resp))
+
+				--数据统计日志
+				local date = os.date("%Y-%m-%d %H:%M:%S")
+				local cointype = 0
+				local coin_need_money = 0
+				local yuanbao_need_money = 0
+				if currency.currency_type == 1 then
+					cointype = 99
+					coin_need_money = need_money
+				elseif currency.currency_type == 4 then
+					cointype = currency.rep_id
+					coin_need_money = need_money
+				else
+					yuanbao_need_money = need_money
+				end
+				player:BILog("{\"logtime\":\""..date.."\",\"logname\":\"shoptrade\",\"serverid\":\""
+					..API_GetZoneId().."\",\"os\":\""..role._roledata._device_info._os.."\",\"platform\":\""
+					.."laohu".."\",\"userid\":\""..role._roledata._status._account.."\",\"account\":\""..role._roledata._status._account..
+					"\",\"roleid\":\""..role._roledata._base._id:ToStr().."\",\"rolename\":\""..role._roledata._base._name..
+					"\",\"lev\":\""..role._roledata._status._level.."\",\"itemtype\":\""..itemtype.."\",\"itemid\":\""
+					..shopitem_info.itemid.."\",\"itemcount\":\""..shopitem_info.nums*arg.item_num.."\",\"cointype\":\""..cointype..
+					"\",\"coin\":\""..coin_need_money.."\",\"yuanbaotype\":\"".."2".."\",\"yuanbao\":\""..yuanbao_need_money.."\"}")
+
+				return
+			else
+				resp.retcode = G_ERRCODE["PRIVATE_SHOP_ITEM_INFO_ERR"]
+				role:SendToClient(SerializeCommand(resp))
+				player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_ITEM_INFO_ERR")                    
+				return
+			end
+		end
+		position = position + 1
+		shop_data_it:Next()
+		item_data = shop_data_it:GetValue()
+	end
+	resp.retcode = G_ERRCODE["PRIVATE_SHOP_ERR"]
+	player:SendToClient(SerializeCommand(resp))
+	player:Log("OnCommand_MysteryShopBuyItem, error=PRIVATE_SHOP_ERR")                    
+	return
+end

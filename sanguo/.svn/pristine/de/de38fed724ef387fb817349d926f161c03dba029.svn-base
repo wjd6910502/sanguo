@@ -1,0 +1,5 @@
+function OnCommand_GetActiveCodeRward(player, role, arg, others)
+	player:Log("OnCommand_GetActiveCodeRward, "..DumpTable(arg).." "..DumpTable(others))
+	--—È÷§º§ªÓ¬Î
+	
+end

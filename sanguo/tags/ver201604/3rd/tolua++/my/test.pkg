@@ -1,0 +1,35 @@
+$#include "test.h"
+
+namespace NS_TEST
+{
+
+struct TestObject
+{
+	int arg;
+	std::string str;
+
+	TestObject();
+	~TestObject();
+};
+
+class TestClass
+{
+public:
+	int var1;
+	TestObject var2;
+
+	static int static_var1;
+
+public:
+	//TestClass(): var1(0) {}
+
+	TestObject* func1(int arg1, TestObject *arg2);
+
+	static int static_func1(int arg1);
+};
+
+TestClass* g_func1(int arg1);
+//TestClass g_func2(int arg1);
+
+}
+

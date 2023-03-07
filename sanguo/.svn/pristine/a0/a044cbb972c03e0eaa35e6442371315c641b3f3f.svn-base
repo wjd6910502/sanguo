@@ -1,0 +1,64 @@
+#ifndef _PLAYER_MANAGER_H_
+#define _PLAYER_MANAGER_H_
+
+#include <string>
+#include <map>
+#include <set>
+#include "gnet_timer.h"
+#include "fastudpsession.h"
+#include "protocol.h"
+
+namespace GNET
+{
+
+class Player
+{
+	friend class PlayerManager;
+
+	int64_t _role_id;
+	int _pvp_id;
+	int _udp_trans_sid;
+	FastUDPSession _fast_udp_session;
+
+public:
+	Player(int64_t role_id, int pvp_id): _role_id(role_id), _pvp_id(pvp_id), _udp_trans_sid(0), _fast_udp_session(this) {}
+
+	int64_t GetRoleId() const { return _role_id; }
+	int GetPVPId() const { return _pvp_id; }
+	unsigned int GetUDPTransSid() const { return _udp_trans_sid; }
+
+	void SetUDPTransSid(unsigned int sid) { _udp_trans_sid = sid; }
+
+	void OnCmd(const char *cmd);
+	void SendUDPGameProtocol(const char *cmd);
+	void SendUDPProtocol(Protocol& prot);
+
+	void FastSess_Reset();
+	void FastSess_Send(const std::string& data);
+	void FastSess_OnAck(int index_ack);
+	bool FastSess_IsReceived(int index) const;
+	void FastSess_SetReceived(int index);
+	void FastSess_SendAck();
+	void FastSess_TriggerSend();
+};
+
+class PlayerManager
+{
+	std::map<int64_t, Player*> _map;
+
+public:
+	static PlayerManager& GetInstance()
+	{
+		static PlayerManager _instance;
+		return _instance;
+	}
+
+	void Add(int64_t role_id, int pvp_id);
+	Player* Find(int64_t role_id);
+	void Delete(int64_t role_id);
+};
+
+}
+
+#endif //_PLAYER_MANAGER_H_
+

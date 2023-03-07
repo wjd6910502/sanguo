@@ -1,0 +1,74 @@
+
+#ifndef __GNET_CREATEROLENAME_HPP
+#define __GNET_CREATEROLENAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "createrolenamearg"
+#include "createrolenameres"
+
+namespace GNET
+{
+
+class CreateRoleName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "createrolename"
+#undef	RPC_BASECLASS
+
+public:
+	int _create_time;
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// CreateRoleNameArg *arg = (CreateRoleNameArg *)argument;
+		// CreateRoleNameRes *res = (CreateRoleNameRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		CreateRoleNameArg *arg = (CreateRoleNameArg *)argument;
+		CreateRoleNameRes *res = (CreateRoleNameRes *)result;
+
+		GLog::log(LOG_INFO, "CreateRoleName::Client, retcode=%d, account=%.*s, name=%.*s, errorinfo=%.*s, _create_time=%d, thread=%u",
+		          res->retcode, (int)arg->account.size(), (char*)arg->account.begin(), (int)arg->name.size(), (char*)arg->name.begin(),
+		          (int)arg->errorinfo.size(), (char*)arg->errorinfo.begin(), _create_time, (unsigned int)pthread_self());
+
+		if(res->retcode == 0)
+		{
+			//成功创建角色
+			PlayerManager::GetInstance().OnAllocRoleName(arg->account, arg->name, _create_time);
+		}
+		else
+		{
+			//直接给客户端发送错误的消息
+			Player *player = PlayerManager::GetInstance().FindByAccount(arg->account);
+			Thread::Mutex::Scoped keeper2(player->_lock);
+
+			if(player->_role._roledata._base._id != 0) return;
+
+			player->_role._roledata._base._name = "";
+			player->_role._roledata._base._create_time = 0;
+			//后面这几个其实没有什么必要进行重新的初始化
+			player->_role._roledata._base._photo = 0;
+			player->_role._roledata._base._photo_frame = 0;
+			player->_role._roledata._base._sex = 0;
+			player->SendToClient(std::string((char*)arg->errorinfo.begin(),arg->errorinfo.size()));
+		}
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		CreateRoleNameArg *arg = (CreateRoleNameArg *)argument;
+
+		GLog::log(LOG_ERR, "CreateRoleName::OnTimeout, account=%.*s, name=%.*s, errorinfo=%.*s, _create_time=%d, thread=%u",
+		          (int)arg->account.size(), (char*)arg->account.begin(), (int)arg->name.size(), (char*)arg->name.begin(),
+		          (int)arg->errorinfo.size(), (char*)arg->errorinfo.begin(), _create_time, (unsigned int)pthread_self());
+	}
+
+};
+
+};
+#endif

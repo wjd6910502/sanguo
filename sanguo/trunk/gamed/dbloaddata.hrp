@@ -1,0 +1,147 @@
+
+#ifndef __GNET_DBLOADDATA_HPP
+#define __GNET_DBLOADDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbloaddataarg"
+#include "dbloaddatares"
+#include "topmanager.h"
+#include "gamedbclient.hpp"
+#include "packagemanager.h"
+#include "playermanager.h"
+#include "mafiamanager.h"
+#include "commonmacro.h"
+#include "TopList.h"
+#include "Misc.h"
+#include "PveArena.h"
+#include "TopList_All_Role.h"
+#include "JieYi_Info.h"
+#include "ServerReward.h"
+
+using namespace GNET;
+using namespace CACHE;
+
+extern int g_server_state;
+
+namespace GNET
+{
+
+class DBLoadData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloaddata"
+#undef	RPC_BASECLASS
+	
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		// DBLoadDataRes *res = (DBLoadDataRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		DBLoadDataRes *res = (DBLoadDataRes *)result;
+
+		//取出当前的表的名字
+		//目前只有3个表，以后添加新的表的时候需要在这里添加相应的代码。以及存储的代码
+		//roleinfo,mafia,toplist
+		//std::string get_table = std::string((char*)arg->key_table.begin(), arg->key_table.size());
+	
+		GLog::log(LOG_INFO, "DBLoadData::Client, retcode=%d, result_value.size()=%d", res->retcode, (int)res->result_value.size());
+	
+		if(res->retcode != 0)
+		{
+			DBLoadDataArg *arg1 = arg;
+			GameDBClient::GetInstance()->SendProtocol( Rpc::Call(RPC_DBLOADDATA, arg1));
+			GLog::log(LOG_ERR,"DBLoadData::Client DBLoadData: Error");
+			return;
+		}
+		if(res->handle.size()!=0) manager->Send(sid,Rpc::Call(RPC_DBLOADDATA, DBLoadDataArg(res->handle)));
+		for(unsigned int num = 0; num < res->result_key.size(); num++)
+		{
+			string key = res->result_key[num];
+			unsigned int pos = key.find("_", 0);
+			string get_table = key.substr(0,pos);
+
+			Octets insert_key, insert_value;
+			insert_key = Octets((void*)res->result_key[num].data(), res->result_key[num].size());
+			insert_value = Octets((void*)res->result_value[num].data(), res->result_value[num].size());
+			
+			GLog::log(LOG_INFO, "DBLoadData::Client, key=%.*s, value=%d", (int)insert_key.size(), (char*)insert_key.begin(), (int)insert_value.size());
+			
+			if(get_table == "roleinfo")
+			{
+				PlayerManager::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "mafia")
+			{
+				MafiaManager::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "toplist")
+			{
+				SGT_TopList::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "package")
+			{
+				PackagManager::GetInstance().Load(insert_value);
+			}
+			else if(get_table == "playermanagerinfo")
+			{
+				PlayerManager::GetInstance().LoadPlayerInfo(insert_key, insert_value);
+			}
+			else if(get_table == "pvearena")
+			{
+				SGT_PveArena::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "toplistallrole")
+			{
+				SGT_TopList_All_Role::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "miscmanager")
+			{
+				SGT_Misc::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "jieyiinfo")
+			{
+				SGT_JieYi_Info::GetInstance().Load(insert_key, insert_value);
+			}
+			else if(get_table == "serverreward")
+			{
+				SGT_ServerReward::GetInstance().Load(insert_key, insert_value);
+			}
+		}
+
+		if(res->handle.size() != 0)
+		{
+			//manager->Send(sid,Rpc::Call(RPC_DBLOADDATA, DBLoadDataArg(res->handle)));
+		}
+		else
+		{
+			g_server_state = SERVER_STATE_LOADING_END;
+
+			//在这里扔一个消息出去，做一些服务器启动完成以后的初始化信息
+			char msg[100];
+			snprintf(msg, sizeof(msg), "10027:"); //OpenServer
+			MessageManager::GetInstance().Put(0, 0, msg, 0);
+			GLog::log(LOG_INFO, "DBLoadData::Client DBLoadDataFinish");
+		}
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		
+		GLog::log(LOG_ERR, "DBLoadData::Client DBLoadData OnTimeout");
+		DBLoadDataArg *new_arg = arg;
+		GameDBClient::GetInstance()->SendProtocol( Rpc::Call(RPC_DBLOADDATA, new_arg));
+	}
+
+};
+
+};
+#endif

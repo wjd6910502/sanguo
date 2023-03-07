@@ -1,0 +1,44 @@
+	public:
+		int id;
+		int64_t fighter1;
+		int64_t fighter2;
+		int reason;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPEND };
+	public:
+		PVPEnd() { type = PROTOCOL_PVPEND; }
+		PVPEnd(void*) : Protocol(PROTOCOL_PVPEND) { }
+		PVPEnd (int l_id,int64_t l_fighter1,int64_t l_fighter2,
+			int l_reason)
+			 : id(l_id),fighter1(l_fighter1),fighter2(l_fighter2)
+			,reason(l_reason)
+		{
+			type = PROTOCOL_PVPEND;
+		}
+
+		PVPEnd(const PVPEnd &rhs)
+			: Protocol(rhs),id(rhs.id),fighter1(rhs.fighter1),fighter2(rhs.fighter2)
+			,reason(rhs.reason) { }
+
+		GNET::Protocol *Clone() const { return new PVPEnd(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << fighter1;
+			os << fighter2;
+			os << reason;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> fighter1;
+			os >> fighter2;
+			os >> reason;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

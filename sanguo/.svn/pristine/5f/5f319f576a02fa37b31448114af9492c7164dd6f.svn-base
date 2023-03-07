@@ -1,0 +1,42 @@
+
+服务器端口分配表:
+
+
+
+
+内服:
+	对client:
+		gated:		9238
+		status:		9239
+		transd:		9240(TCP+UDP)
+		pvpd:		9237(UDP)
+		stundeafd:	9236(UDP)
+
+		stund:		9235(UDP, 且必须和transd在不用机器上)
+
+	server间:
+		gamed:		9241(PVPGameServer)
+		stund:		9242(STUNGameServer)
+
+
+
+
+DU:
+	对client:
+		gated:		19238
+		status:		19239
+		transd:		19240(TCP+UDP)
+		pvpd:		19237(UDP)
+		stundeafd:	19236(UDP)
+		stund:		和内服共用
+
+	server间:
+		gamed:		19241(PVPGameServer)
+		stund:		和内服共用
+
+
+
+
+
+
+

@@ -1,0 +1,65 @@
+
+#ifndef __GNET_GMCMD_ADDFORBIDTALK_HPP
+#define __GNET_GMCMD_ADDFORBIDTALK_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GMCmd_AddForbidTalk : public GNET::Protocol
+{
+	#include "gmcmd_addforbidtalk"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_AddForbidTalk::Process, roleid=%ld, forbidtime=%d, desc=%.*s, notifytouser=%.*s, session_id=%d", 
+				roleid, forbidtime, (int)desc.size(), (char*)desc.begin(), (int)notifytouser.size(), (char*)notifytouser.begin(), session_id);
+
+		GMCmd_AddForbidTalk_Re resp;
+
+		const Player *player = PlayerManager::GetInstance().FindByRoleId(roleid);
+		if(!player)
+		{
+			//TODO: noload player
+			resp.retcode = -1;
+			resp.session_id = session_id;
+			const char *errdesc = "role not found";
+			resp.desc = Octets(errdesc, strlen(errdesc));
+			manager->Send(sid, resp);
+			return;
+		}
+
+		Int64 key(roleid);
+		ForbidRoleInfo* forbidinfo = SGT_Misc::GetInstance()._miscdata._forbidtalk_role_map.Find(key);
+		if(forbidinfo)
+		{
+			forbidinfo->_begintime = Now();
+			forbidinfo->_time = forbidtime;
+			forbidinfo->_desc = std::string((char*)desc.begin(), desc.size());
+			forbidinfo->_notifytouser = std::string((char*)notifytouser.begin(), notifytouser.size());
+		}
+		else
+		{
+			ForbidRoleInfo info;
+			info._roleid = key;
+			info._begintime = Now();
+			info._time = forbidtime;
+			info._desc = std::string((char*)desc.begin(), desc.size());
+			info._notifytouser = std::string((char*)notifytouser.begin(), notifytouser.size());
+
+			SGT_Misc::GetInstance()._miscdata._forbidtalk_role_map.Insert(key, info);
+		}
+
+		resp.retcode = 0;
+		resp.session_id = session_id;
+		manager->Send(sid, resp);
+	}
+};
+
+};
+
+#endif

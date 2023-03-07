@@ -1,0 +1,65 @@
+function OnCommand_BattleFieldGetEvent(player, role, arg, others)
+	player:Log("OnCommand_BattleFieldGetEvent, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("BattleFieldGetEvent_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.battle_id = arg.battle_id
+	resp.event = 0
+	player:SendToClient(SerializeCommand(resp))
+
+	--test code
+	local battle = role._roledata._battle_info:Find(arg.battle_id)
+	local position = battle._position_info:Find(battle._cur_position)
+	if position._flag ~= 1 then
+		position._flag = 1
+		--敌方军队死掉
+		local npc_it = position._npc_info:SeekToBegin()
+		local npc = npc_it:GetValue()
+		while npc ~= nil do
+			if npc._camp == 2 then
+				npc._alive = 0
+			end
+			npc_it:Next()
+			npc = npc_it:GetValue()
+		end
+
+	end
+	--开始告诉客户端，已经占领了这个格子
+	resp = NewCommand("BattleFieldCapturedPosition")
+	resp.battle_id = arg.battle_id
+	resp.position_info = ROLE_MakeBattleCurPositionInfo(role, arg.battle_id)
+	player:SendToClient(SerializeCommand(resp))
+
+	--判断这个战役的结束是否是占领这个格子，是的话直接让这个战役结束，然后发送奖励
+	--胜利条件（0占领大营/1击败总大将）
+	local ed = DataPool_Find("elementdata")
+	local battle_info = ed:FindBy("battle_id", arg.battle_id)
+	local battlefielddata_info = ed:FindBy("battlefielddata_id", battle_info.battlefieldid)
+	if battlefielddata_info.battle_target_type == 0 then
+		if battlefielddata_info.enemy_camp_pos == battle._cur_position then
+			battle._state = 2
+	
+			resp = NewCommand("ChangeBattleState")
+			resp.battle_id = arg.battle_id
+			resp.state = battle._state
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	elseif battlefielddata_info.battle_target_type == 1 then
+		local npc_it = position._npc_info:SeekToBegin()
+		local npc = npc_it:GetValue()
+		while npc ~= nil do
+			if npc.armyid == battlefielddata_info.enemy_leader_id then
+				battle._state = 2
+	
+				resp = NewCommand("ChangeBattleState")
+				resp.battle_id = arg.battle_id
+				resp.state = battle._state
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+			npc_it:Next()
+			npc = npc_it:GetValue()
+		end
+	end
+end

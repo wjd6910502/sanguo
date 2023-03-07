@@ -1,0 +1,38 @@
+	public:
+		int64_t orignate_time;
+		int64_t receive_time;
+		int64_t transmit_time;
+		enum { PROTOCOL_TYPE = PROTOCOL_SYNCNETIMERE };
+	public:
+		SyncNetimeRe() { type = PROTOCOL_SYNCNETIMERE; }
+		SyncNetimeRe(void*) : Protocol(PROTOCOL_SYNCNETIMERE) { }
+		SyncNetimeRe (int64_t l_orignate_time,int64_t l_receive_time,int64_t l_transmit_time)
+			 : orignate_time(l_orignate_time),receive_time(l_receive_time),transmit_time(l_transmit_time)
+		{
+			type = PROTOCOL_SYNCNETIMERE;
+		}
+
+		SyncNetimeRe(const SyncNetimeRe &rhs)
+			: Protocol(rhs),orignate_time(rhs.orignate_time),receive_time(rhs.receive_time),transmit_time(rhs.transmit_time) { }
+
+		GNET::Protocol *Clone() const { return new SyncNetimeRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << orignate_time;
+			os << receive_time;
+			os << transmit_time;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> orignate_time;
+			os >> receive_time;
+			os >> transmit_time;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

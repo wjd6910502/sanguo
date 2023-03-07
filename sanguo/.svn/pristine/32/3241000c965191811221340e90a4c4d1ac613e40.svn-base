@@ -1,0 +1,38 @@
+function OnMessage_ActiveCodeResult(player, role, arg, others)
+	player:Log("OnMessage_ActiveCodeResult, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("GetActiveCodeRward_Re")
+	resp.retcode = arg.retcode
+
+	if resp.retcode == 0 then
+		--ÅÐ¶ÏÈÕÆÚ 
+		local ed = DataPool_Find("elementdata")
+		local codeinfo = ed:FindBy("redeemcode", arg.type)
+		if codeinfo == nil then
+			resp.retcode = G_ERRCODE["ACTIVE_CODE_TYPE"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		
+		local now = API_GetTime()
+		local now_date = os.date("*t", now)
+		local data = now_date.year*10000 + now_date.month*100 + now_date.day
+		if data < codeinfo.start_time or data > codeinfo.end_time then
+			resp.retcode = G_ERRCODE["ACTIVE_CODE_TIME"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+
+		local Reward = DROPITEM_Reward(role, codeinfo.reward_id)
+		resp.item = {}
+		local item_count = table.getn(Reward.item)
+		for i = 1, item_count do
+			local reward_info = {}
+			reward_info.tid = Reward.item[i].itemid
+			reward_info.count = Reward.item[i].itemnum
+			resp.item[#resp.item+1] = reward_info
+		end
+		ROLE_AddReward(role, Reward, 0)
+	end
+	player:SendToClient(SerializeCommand(resp))
+end

@@ -1,0 +1,73 @@
+function OnCommand_PveArenaEndBattle(player, role, arg, others)
+--	player:Log("OnCommand_PveArenaEndBattle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PveArenaEndBattle_Re")
+	local pve_arena = others.misc._miscdata._pve_arena_map
+	
+	if role._roledata._pve_arena_info._cur_attack_player._id == "" then
+		resp.retcode = G_ERRCODE["JJC_END_NO_OPPO"]
+		role:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	if arg.win_flag == 1 then
+		resp.score_change = 10
+	else
+		resp.score_change = -10
+	end
+
+	local cur_score = role._roledata._pve_arena_info._score
+	role._roledata._pve_arena_info._score = role._roledata._pve_arena_info._score + resp.score_change
+
+	PVEARENA_ChangeRoleScore(pve_arena, role, cur_score, cur_score+resp.score_change)
+
+	local pve_arena_hero_info = {}
+	pve_arena_hero_info.heroinfo = {}
+	local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+	local heroid = heroid_it:GetValue()
+	while heroid ~= nil do
+		local tmp_hero = {}
+		tmp_hero.id = heroid._value
+		pve_arena_hero_info.heroinfo[#pve_arena_hero_info.heroinfo+1] = tmp_hero
+		heroid_it:Next()
+		heroid = heroid_it:GetValue()
+	end
+	
+	local os = {}
+	SerializeStruct(os, "RolePveArenaInfo", pve_arena_hero_info)
+	
+	role._roledata._pve_arena_info._cur_num = role._roledata._pve_arena_info._cur_num + 1
+
+	local tmp_info = CACHE.PveArenaRoleInfo()
+	tmp_info._match_id = role._roledata._pve_arena_info._cur_num
+	tmp_info._id = role._roledata._pve_arena_info._cur_attack_player._id
+	tmp_info._name = role._roledata._pve_arena_info._cur_attack_player._name
+	tmp_info._win_flag = arg.win_flag
+	tmp_info._attack_flag = 1
+	tmp_info._self_hero_info = table.concat(os)
+	tmp_info._oppo_hero_info = role._roledata._pve_arena_info._cur_attack_player._hero_info
+	local os = {}
+	SerializeStruct(os, "PveArenaOperation", arg.operation)
+	tmp_info._operation = table.concat(os)
+	tmp_info._time = API_GetTime()
+
+	role._roledata._pve_arena_info._pve_arena_history:Insert(role._roledata._pve_arena_info._cur_num, tmp_info)
+
+	--给被打的人扔一个消息去进行单独的处理
+	local msg = NewMessage("RoleUpdateDefencePlayerPveArenaInfo")
+	msg.id = role._roledata._base._id:ToStr()
+	msg.name = role._roledata._base._name
+	msg.self_hero_info = tmp_info._self_hero_info
+	msg.oppo_hero_info = tmp_info._oppo_hero_info
+	msg.win_flag = tmp_info._win_flag
+	msg.operation = tmp_info._operation
+
+	API_SendMsg(tmp_info._id, SerializeMessage(msg), 0)
+	role:SendToClient(SerializeCommand(resp))
+
+	role._roledata._pve_arena_info._cur_attack_player._id = ""
+	role._roledata._pve_arena_info._cur_attack_player._name = ""
+	role._roledata._pve_arena_info._cur_attack_player._hero_info = ""
+	return
+end

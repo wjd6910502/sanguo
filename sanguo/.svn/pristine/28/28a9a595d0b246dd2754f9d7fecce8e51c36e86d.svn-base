@@ -1,0 +1,3 @@
+function OnCommand_BattleFieldJoinBattle(player, role, arg, others)
+	--player:Log("OnCommand_BattleFieldJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+end

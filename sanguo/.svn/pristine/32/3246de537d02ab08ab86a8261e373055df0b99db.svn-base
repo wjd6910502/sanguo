@@ -1,0 +1,65 @@
+#ifndef _ROLENAMECACHE_H_
+#define _ROLENAMECACHE_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+struct RoleBriefInfo
+{
+	RoleBrief _brief;
+
+	int _size;
+};
+
+class SGT_RoleNameCache: public Singleton, TransactionBase
+{
+	bool _in_transaction;
+	int64_t _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	RoleNameCacheData _data; //没用，不用管这个结构
+
+private:
+	SGT_RoleNameCache();
+	std::map<std::string, std::list<RoleBriefInfo> > _map_pattern_to_roles;
+	std::map<std::string, std::list<RoleBriefInfo> >::iterator it; 
+
+public:
+	static SGT_RoleNameCache& GetInstance()
+	{
+		static SGT_RoleNameCache _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "RoleNameCache"; }
+	virtual int GetID() const { return 12; }
+	virtual const char* GetLockName() const { return "rolenamecache"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int64_t transaction_id);
+	void restore(int64_t transaction_id);
+	void cleanup();
+
+	void Insert(const std::string& name, const RoleBrief brief);
+
+	RoleNameQueryResults* Query(const std::string& pattern);
+	void ReleaseResult(RoleNameQueryResults *results) { delete results; }
+};
+
+}
+
+inline CACHE::SGT_RoleNameCache* API_GetLuaRoleNameCache(void *r) { return (CACHE::SGT_RoleNameCache*)r; }
+inline CACHE::SGT_RoleNameCache* API_GetLuaRoleNameCache() { return (InBigLock() ? &CACHE::SGT_RoleNameCache::GetInstance() : 0); }
+
+#endif //_ROLENAMECACHE_H_
+

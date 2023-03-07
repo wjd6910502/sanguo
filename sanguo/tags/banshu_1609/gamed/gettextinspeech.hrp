@@ -1,0 +1,42 @@
+
+#ifndef __GNET_GETTEXTINSPEECH_HPP
+#define __GNET_GETTEXTINSPEECH_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "gettextinspeecharg"
+#include "gettextinspeechres"
+
+namespace GNET
+{
+
+class GetTextInSpeech : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "gettextinspeech"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// GetTextInSpeechArg *arg = (GetTextInSpeechArg *)argument;
+		// GetTextInSpeechRes *res = (GetTextInSpeechRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		 //GetTextInSpeechArg *arg = (GetTextInSpeechArg *)argument;
+		 //GetTextInSpeechRes *res = (GetTextInSpeechRes *)result;
+		
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+
+	}
+
+};
+
+};
+#endif

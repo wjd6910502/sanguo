@@ -1,0 +1,91 @@
+
+#ifndef __GNET_DBLOADDATA_HPP
+#define __GNET_DBLOADDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+//#include "gamedbd.cpp"
+#include "dbloaddataarg"
+#include "dbloaddatares"
+#include "glog.h"
+
+#include "leveldb.h"
+#include "write_batch.h"
+
+extern leveldb::DB* g_db;
+
+namespace GNET
+{
+
+class DBLoadData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloaddata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		DBLoadDataRes *res = (DBLoadDataRes *)result;
+
+		res->retcode = -1;
+		leveldb::Iterator *it = g_db->NewIterator(leveldb::ReadOptions());
+		it->SeekToFirst();
+
+		for(int i = 0; i < arg->step; i++)
+		{
+			if(it->Valid())
+				it->Next();
+		}
+
+		int num = 0;
+		std::string find_key = std::string((char*)arg->key_table.begin(), arg->key_table.size());
+
+		res->result_step = arg->step;
+
+		for(; it->Valid() && num < 1000;it->Next())
+		{
+			std::string key, value;
+			key = it->key().ToString();
+			value = it->value().ToString();
+
+			Octets tmp_key = Octets(key.c_str(), key.size());
+			Octets tmp_value = Octets(value.c_str(), value.size());
+			
+			if(key.size() > find_key.size())
+			{
+				if(strncmp(find_key.c_str(), key.c_str(), find_key.size()) == 0)
+				{
+					res->result_key.push_back(tmp_key);
+					res->result_value.push_back(tmp_value);
+					num++;
+				}
+			}
+			res->result_step++;
+		}
+
+		if(it->Valid())
+			res->flag = 1;
+		else
+			res->flag = 0; //代表结束了
+
+		delete it;
+		res->retcode = 0;
+		GLog::log(LOG_INFO, "DBLoadData ... ...");
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		// DBLoadDataRes *res = (DBLoadDataRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

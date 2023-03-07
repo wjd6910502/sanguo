@@ -1,0 +1,62 @@
+function OnCommand_GetFighterInfo(player, role, arg, others)
+	player:Log("OnCommand_GetFighterInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("GetFighterInfo_Re")
+
+	--首先根据自己的名次，然后选出自己对手的名次
+	local fight_id = {}
+	local all_num = others.misc._miscdata._pve_arena_map._all_num
+	if all_num < 2 then
+		resp.retcode = G_ERRCODE["JJC_PLAYER_LESS"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	local my_rank = PVEARENA_GetRank(others.misc._miscdata._pve_arena_map._pve_arena_data_map_data, role._roledata._base._id, role._roledata._pve_arena_info._score)
+
+	if all_num >= 2 and all_num < 5 then
+		for i = 1, all_num do
+			if i ~= my_rank then
+				table.insert(fight_id, i)
+			end
+		end
+	elseif all_num > 5 and all_num < 20 then
+		for i = 1, 2 do
+			if i ~= my_rank then
+				table.insert(fight_id, i)
+			end
+		end
+	else
+		for i = 1, 2 do
+			if i ~= my_rank then
+				table.insert(fight_id, i)
+			end
+		end
+	end
+	table.sort(fight_id)
+	resp.fightinfo = {}
+	
+	for i = 1, table.getn(fight_id) do
+		local fight_info = PVEARENA_GetRoleInfoByRank(others.misc._miscdata._pve_arena_map._pve_arena_data_map_data, fight_id[i])
+		if fight_info.role_id ~= "0" then
+			local tmp_fight = {}
+			tmp_fight.id = fight_info.role_id
+			tmp_fight.name = fight_info.name
+			tmp_fight.level = fight_info.level
+			tmp_fight.score = fight_info.score
+			tmp_fight.hero_score = 100
+			tmp_fight.mafia_name = fight_info.mafia_name
+			tmp_fight.rank = fight_id[i]
+			
+			tmp_fight.hero_info = {}
+			tmp_fight.hero_info.heroinfo = {}
+			for i = 1, table.getn(fight_info.hero_info) do
+				tmp_fight.hero_info.heroinfo[#tmp_fight.hero_info.heroinfo+1] = fight_info.hero_info[i]
+			end
+
+			resp.fightinfo[#resp.fightinfo+1] = tmp_fight
+		end
+	end
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

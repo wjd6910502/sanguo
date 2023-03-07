@@ -1,0 +1,68 @@
+
+#ifndef __GNET_DBLOADROLEDATA_HPP
+#define __GNET_DBLOADROLEDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbloadroledataarg"
+#include "dbloadroledatares"
+
+namespace GNET
+{
+
+class DBLoadRoleData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloadroledata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+		DBLoadRoleDataRes *res = (DBLoadRoleDataRes *)result;
+
+		LOG_TRACE("DB::DBLoadRoleData, player=%.*s\n", arg->key.size(), (char*)arg->key.begin());
+		Marshal::OctetsStream key,value;
+		string find_key = std::string((char*)arg->key.begin(), arg->key.size());
+		CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+		LOCK_TABLE(db_data)
+		START_TRANSACTION
+		{
+			key << find_key;
+			if(db_data->find(key, value, txnobj))
+			{
+				string find_value;
+				value >> find_value;
+				res->value = Octets(find_value.data(), find_value.size());
+				res->retcode = 0;
+			}
+			else
+			{
+				res->retcode = 1;
+			}
+		}
+		END_TRANSACTION
+		
+		if(txnerr)
+		{
+		        Log::log(LOG_ERR, "DB::DBLoadRoleData: player=%.*s,(%d) %s", arg->key.size(), (char*)arg->key.begin(), txnerr, GamedbException::GetError(txnerr));
+		        res->retcode = -1;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+		// DBLoadRoleDataRes *res = (DBLoadRoleDataRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

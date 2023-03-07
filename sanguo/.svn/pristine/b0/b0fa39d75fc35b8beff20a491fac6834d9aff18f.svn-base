@@ -1,0 +1,5 @@
+function OnMessage_RoleUpdateLevelTop(player, role, arg, others)
+	player:Log("OnMessage_RoleUpdateLevelTop, "..DumpTable(arg).." "..DumpTable(others))
+
+	TOP_InsertData(others.top._top_manager, 1, role._roledata._base._id, role._roledata._status._level, role._roledata._base._name, role._roledata._base._photo)
+end

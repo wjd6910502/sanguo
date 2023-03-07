@@ -1,0 +1,29 @@
+function OnCommand_GetRefreshTime(player, role, arg, others)
+	player:Log("OnCommand_GetRefreshTime, "..DumpTable(arg).." "..DumpTable(others))
+	
+	-- type = 抽奖模板id 
+	local resp = NewCommand("GetRefreshTime_Re")	 
+	resp.typ = arg.typ
+	
+	-- 这里限制一下抽奖类型 
+	--if arg.typ ~= 1 or arg.typ ~= 2 or arg.typ ~= 3 then
+	--	return
+	--end
+
+	local last_time = 0
+	local now = API_GetTime()
+	
+	local time_map = role._roledata._status._last_lotterytime
+	local find_time = time_map:Find(arg.typ)
+	if find_time == nil then
+		time_map:Insert(arg.typ,now)
+		--last_time = now
+	else
+		last_time = find_time
+	end
+	
+	player:Log("OnCommand_GetRefreshTime_Re")
+	resp.last_refreshtime = last_time 		
+	player:SendToClient(SerializeCommand(resp)) 
+
+end

@@ -1,0 +1,43 @@
+function OnCommand_DebugCommand(player, role, arg, others)
+	player:Log("OnCommand_DebugCommand, "..DumpTable(arg))
+
+	if arg.typ=="levelup" then
+		--level up
+		role._status._level = role._status._level+1
+		--通知好友
+		local friends = role._friend._friends
+		local fit = friends:SeekToBegin()
+		local f = fit:GetValue()
+		while f~=nil do
+			--同步方式
+			--local d_player = others:FindPlayer(f._brief._id)
+			--if d_player~=nil then 
+			--	local d_friends = d_player._role_friend._friends
+			--	local d_f = d_friends:Find(player._role_base._id)
+			--	if d_f~=nil then
+			--		--d_f._brief._id = arg.id 
+			--		d_f._brief._name = player._role_base._name
+			--		d_f._brief._photo = player._role_base._photo
+			--		d_f._brief._level = player._role_status._level
+			--	end
+			--end
+			--消息方式
+			local msg = NewMessage("UpdateRoleInfo")
+			msg.id = role._base._id:ToStr()
+			msg.name = role._base._name
+			msg.photo = role._base._photo
+			msg.level = role._status._level
+			player:SendMessageToRole(f._brief._id, SerializeMessage(msg))
+			fit:Next()
+			f = fit:GetValue()
+		end
+	elseif arg.typ=="TestMessage4" then
+		local msg = NewMessage("TestMessage4")
+		player:SendMessage(role._base._id, SerializeMessage(msg))
+	elseif arg.typ=="AddVP" then
+		ROLE_Addvp(role, 120, 1)
+	elseif arg.typ=="AddYuanBao" then
+		ROLE_AddYuanBao(role, arg.count)
+		ROLE_AddChongZhi(role, arg.count)
+	end
+end

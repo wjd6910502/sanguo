@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<structures dbversion="4">
+	<structure name="Int">
+		<variable name="_value" type="int"/>
+	</structure>
+
+	<list name="IntList" value_type="Int"/>
+	<list name="Int64List" value_type="Int64"/>
+
+	<map name="intIntMap" key_type="int" value_type="Int"/>
+	<map name="StringIntMap" key_type="std::string" value_type="Int"/>
+
+	<structure name="RoleBase">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_xxx" type="int" dbversion="2"/>
+		<variable name="_yyy" type="int" dbversion="3"/>
+		<variable name="_zzz" type="int" dbversion="4"/>
+	</structure>
+
+	<structure name="RoleInstance">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_score" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="RoleInstanceList" value_type="RoleInstance"/>
+
+	<structure name="RoleStatus">
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_exp" type="Int64" dbversion="1"/>
+		<variable name="_vp" type="int" dbversion="1"/>
+		<variable name="_instances" type="RoleInstanceList" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleHero">
+		<variable name="_tid" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="RoleHeroList" value_type="RoleHero"/>
+
+	<structure name="RoleHeroHall">
+		<variable name="_heros" type="RoleHeroList" dbversion="1"/>
+	</structure>
+
+	<structure name="Item">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_count" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="ItemList" value_type="Item"/>
+
+	<structure name="RoleBackPack">
+		<variable name="_capacity" type="int" dbversion="1"/>
+		<variable name="_items" type="ItemList" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleBrief">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_mafia_id" type="Int64" dbversion="1"/>
+		<variable name="_mafia_name" type="std::string" dbversion="1"/>
+	</structure>
+
+	<structure name="Friend">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<map name="FriendMap" key_type="Int64" value_type="Friend"/>
+
+	<structure name="FriendRequest">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<list name="FriendRequestList" value_type="FriendRequest"/>
+
+	<structure name="RoleFriend">
+		<variable name="_friends" type="FriendMap" dbversion="1"/>
+		<variable name="_requests" type="FriendRequestList" dbversion="1"/>
+	</structure>
+
+	<structure name="PrivateChat">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+		<variable name="_time" type="int" dbversion="1"/>
+		<variable name="_content" type="std::string" dbversion="1"/>
+	</structure>
+
+	<list name="PrivateChatList" value_type="PrivateChat"/>
+
+	<structure name="RoleChat">
+		<variable name="_received_private_chats" type="PrivateChatList" dbversion="1"/>
+	</structure>
+
+	<structure name="MafiaInvite">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<list name="MafiaInviteList" value_type="MafiaInvite"/>
+
+	<structure name="RoleMafia">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_invites" type="MafiaInviteList" dbversion="1"/>
+	</structure>
+
+	<structure name="PVPInvite">
+		<variable name="_src" type="RoleBrief"/>
+		<variable name="_time" type="int"/>
+	</structure>
+
+	<list name="PVPInviteList" value_type="PVPInvite"/>
+
+	<structure name="RolePVP">
+		<variable name="_id" type="int"/>
+		<variable name="_invites" type="PVPInviteList"/>
+	</structure>
+
+	<structure name="MafiaMember">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_activity" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="MafiaMemberMap" key_type="Int64" value_type="MafiaMember"/>
+
+	<structure name="PVPFighter">
+		<variable name="_id" type="Int64"/>
+		<variable name="_status" type="int"/>
+		<variable name="_ops" type="intIntMap"/>
+		<variable name="_accumulate_latency" type="int"/>
+		<variable name="_delay_count" type="int"/>
+		<variable name="_wait_seconds" type="int"/>
+		<variable name="_result" type="int"/>
+	</structure>
+</structures>
+

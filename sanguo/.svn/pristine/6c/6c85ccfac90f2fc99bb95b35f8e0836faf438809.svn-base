@@ -1,0 +1,76 @@
+--DONT CHANGE ME!
+
+dofile "scripts/base64.lua"
+dofile "scripts/serialize.lua"
+dofile "scripts/serialize_struct.lua"
+dofile "scripts/deserialize_struct.lua"
+dofile "scripts/common.lua"
+dofile "scripts/util.lua"
+
+dofile "scripts/cmds/GetVersion.lua"
+dofile "scripts/cmds/GetRoleInfo.lua"
+dofile "scripts/cmds/CreateRole.lua"
+dofile "scripts/cmds/EnterInstance.lua"
+dofile "scripts/cmds/CompleteInstance.lua"
+dofile "scripts/cmds/SweepInstance.lua"
+dofile "scripts/cmds/GetBackPack.lua"
+dofile "scripts/cmds/GetInstance.lua"
+dofile "scripts/cmds/BuyVp.lua"
+dofile "scripts/cmds/BuyInstanceCount.lua"
+dofile "scripts/cmds/BuyYuanBao.lua"
+dofile "scripts/cmds/Task_Finish.lua"
+dofile "scripts/cmds/PublicChat.lua"
+dofile "scripts/cmds/ListFriends.lua"
+dofile "scripts/cmds/FriendRequest.lua"
+dofile "scripts/cmds/FriendReply.lua"
+dofile "scripts/cmds/MafiaGet.lua"
+dofile "scripts/cmds/MafiaCreate.lua"
+dofile "scripts/cmds/MafiaInvite.lua"
+dofile "scripts/cmds/MafiaReply.lua"
+dofile "scripts/cmds/MafiaKickout.lua"
+dofile "scripts/cmds/MafiaQuit.lua"
+dofile "scripts/cmds/MafiaDestory.lua"
+dofile "scripts/cmds/MafiaAnnounce.lua"
+dofile "scripts/cmds/Ping.lua"
+dofile "scripts/cmds/UDPPing.lua"
+dofile "scripts/cmds/PVPInvite.lua"
+dofile "scripts/cmds/PVPReply.lua"
+dofile "scripts/cmds/PVPReady.lua"
+dofile "scripts/cmds/PVPOperation.lua"
+dofile "scripts/cmds/PVPEnd.lua"
+dofile "scripts/cmds/TopListGet.lua"
+dofile "scripts/cmds/TaskFinish.lua"
+dofile "scripts/cmds/DebugCommand.lua"
+
+dofile "scripts/serialize_command.lua"
+dofile "scripts/deserialize_command.lua"
+
+function InitCommandInMainThread()
+	API_ResetCmdExtraRolesMax()
+	API_ResetCmdExtraMafiasMax()
+	API_ResetCmdExtraPVPsMax()
+	API_ResetCmdLockToplist()
+
+	API_SetCmdExtraRolesMax(10306,1)
+	API_SetCmdExtraRolesMax(10109,1)
+	API_SetCmdExtraRolesMax(10105,1)
+	API_SetCmdExtraRolesMax(10008,1)
+	API_SetCmdExtraRolesMax(10009,1)
+	API_SetCmdExtraRolesMax(10106,1)
+	API_SetCmdExtraRolesMax(10301,1)
+	API_SetCmdExtraRolesMax(10302,1)
+	API_SetCmdExtraMafiasMax(10112,1)
+	API_SetCmdExtraMafiasMax(10114,1)
+	API_SetCmdExtraMafiasMax(10116,1)
+	API_SetCmdExtraMafiasMax(10101,1)
+	API_SetCmdExtraMafiasMax(10105,1)
+	API_SetCmdExtraMafiasMax(10106,1)
+	API_SetCmdExtraMafiasMax(10109,1)
+	API_SetCmdExtraPVPsMax(10304,1)
+	API_SetCmdExtraPVPsMax(10306,1)
+	API_SetCmdExtraPVPsMax(10308,1)
+	API_SetCmdLockToplist(20000)
+	API_SetCmdLockToplist(99999)
+
+end
+

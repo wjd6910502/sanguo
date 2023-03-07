@@ -1,0 +1,6 @@
+function OnCommand_PVPStatus(player, role, arg, others)
+	API_Log("OnCommand_PVPStatus, "..DumpTable(arg))
+
+	local t = arg.op_ticks[#arg.op_ticks].tick
+	if g_op_tick_max<t then g_op_tick_max=t end
+end

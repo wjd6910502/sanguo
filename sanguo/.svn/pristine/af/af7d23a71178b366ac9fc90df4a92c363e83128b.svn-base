@@ -1,0 +1,216 @@
+function OnCommand_JieYiLastOperate(player, role, arg, others)
+	player:Log("OnCommand_JieYiLastOperate, "..DumpTable(arg).." "..DumpTable(others))
+	--
+	local resp = NewCommand("JieYiOperateInvite_Re")	
+	local jieyi_info = others.jieyi_info._data
+	
+	local brotherall = {}
+
+	local id = CACHE.Int64()
+	id.Set(arg.id)
+
+	--准备结义的处理方法
+	if arg.typ == 2 then
+
+		--验证所有状态都是邀请状态
+		--local brotherall = {}
+		local fit = jieyi_info._compare_jieyi_info:Find(id)
+		if fit ~= nil then
+			local v = fit
+			local bossId = v._boss_info._id:ToStr()
+ 			local boss_role = others.roles[bossId]	
+			if boss_role == nil then
+				--主A不存在 操作错误
+				return	
+			end
+			brotherall[#brotherall+1] = boss_role
+
+			local sit = v._brother_info:SeekToBegin()
+			local s = sit:GetValue()
+			while s ~= nil do
+				local brother_role = others.roles[s._id:ToStr()]
+				if brother_role == nil then
+					--这个人不在	
+					return
+				end
+
+				if s._accept ~= 1 then
+					--这个人没有接受邀请
+					return
+				end	
+				brotherall[#brotherall+1] = brother_role
+				sit:Next()
+				s = sit:GetValue()
+			end	
+		end
+					
+		--如果agreement  0代表同意 1代表不同意
+		if arg.agreement == 1 then
+			resp.retcode = 1
+		elseif arg.agreement == 0 then
+			resp.retcode = 0
+			--设置状态
+			local v = fit
+			local sit = v._brother_info:SeekToBegin()  
+			local s = sit:GetValue()
+			while s ~= nil do	
+				s._ready = 1 --二次确认完成
+			
+				sit:Next()
+				s = sit:GetValue()
+			end
+		else
+			return
+		end
+		
+		resp.id = v._id:ToStr()
+		resp.name = arg.name
+		resp.roleId = role._roledata._base._id:ToStr() 
+		
+		--用msg代替
+		--给所有人都发一下
+		for i = 1, string.len(brotherall) do
+			local dest_role = brotherall[i]
+			dest_role:SendToClient(SerializeCommand(resp))
+		end
+		
+		--这里可能存在的问题，如果这里设置状态，没有给主A发送状态成功，主A会出现没有刷新状态，这里让客户端判断 如果大于一分钟，则刷新一下Getjieyiinfo
+	end
+
+	--已经结义的
+	if arg.typ == 1 then
+				
+		--local brotherall = {} 	
+		local fit = jieyi_info._jieyi_info:Find(id)			
+		if fit ~= nil then
+			local v = fit
+			local bossId = v._boss_info._id:ToStr()
+ 			local boss_role = others.roles[bossId]	
+			if boss_role == nil then
+				--主A不存在 操作错误
+				return	
+			end
+			brotherall[#brotherall+1] = boss_role
+
+			local sit = v._brother_info:SeekToBegin()
+			local s = sit:GetValue()
+			while sit ~= nil do
+				local brother_role = others.roles[s._id:ToStr()]
+				if brother_role == nil then
+					--这个人不在	
+					return
+				end
+			
+				if s._accept ~= 1 then
+					--这个人没有接受邀请
+					return
+				end
+
+				brotherall[#brotherall+1] = brother_role
+				sit:Next()
+				s = sit:GetValue()
+
+			end	
+		end
+								
+		--如果agreement  0代表同意 1代表不同意
+		if arg.agreement == 1 then
+			resp.retcode = 1
+		elseif arg.agreement == 0 then
+			resp.retcode = 0
+			--设置状态
+			local v = fit
+			local sit = v._brother_info:SeekToBegin()  
+			local s = sit:GetValue()
+			while s ~= nil do	
+				s._ready = 1 --二次邀请
+			
+				sit:Next()
+				s = sit:GetValue()
+			end
+		else
+			return
+		end
+		
+		--给所有人都发一下
+		resp.id = v._id:ToStr()
+		resp.name = arg.name
+		resp.roleId = role._roledata._base._id:ToStr() 
+		
+		--用msg代替
+		--给所有人都发一下
+		for i = 1, string.len(brotherall)	do
+			local dest_role = brotherall[i]
+			dest_role:SendToClient(SerializeCommand(resp))
+		end
+
+	end
+	
+
+	--如果所有人都确认了 直接给用户发确认的消息
+	--修改数据库数据 主要针对准备结义的
+	if arg.typ == 2 or arg.typ == 1 then
+				--清空所有的以前的结义数据
+		--local jj = jieyi_info._jieyi_info:Find(role._roledata._jieyi_info._jieyi_id)
+		--if jj ~= nil then
+		--	jj:Clear()
+		--	return	
+		--end
+		
+		local fit = {}
+		if arg.typ == 2 then
+			jieyi_info._compare_jieyi_info:Find(id)
+		elseif arg.typ == 1 then
+			jieyi_info._jieyi_info:Find(id)
+		else
+			return
+		end
+		if fit ~= nil then
+			local v = fit
+			local bossId = v._boss_info._id
+ 			local boss_role = others.roles[bossId]	
+			if boss_role == nil then
+				--主A不存在 操作错误
+
+				return	
+			end
+			brotherall[#brotherall+1] = boss_role
+
+			local sit = v._brother_info:SeekToBegin()
+			local s = sit:GetValue()
+			while sit ~= nil do
+				local brother_role = others.roles[s._id]
+				if brother_role == nil then
+					--这个人不在	
+					return
+				end
+				if s._accept ~= 1 or s._ready ~= 1 then
+					--这个人没有接受邀请
+					return
+				end
+				
+				brotherall[#brotherall+1] = brother_role
+				sit:Next()
+				s = sit:GetValue()
+			end	
+		end
+	end
+	
+	--
+	role._roledata._jieyi_info._jieyi_id = id
+	role._roledata._jieyi_info._cur_operate_id = 0
+	role._roledata._jieyi_info._cur_operate_typ = 1
+	
+	--则给所有人发结义成功	
+	local resp_suc = NewCommand("JieYiResult")
+	resp_suc.id = role._roledata._jieyi_info._jieyi_id:ToStr() 
+	resp_suc.name = role._roledata._jieyi_info._jieyi_name
+	resp_suc.retcode  = 0 --成功 0  失败 1
+	--发送所有状态
+	for i = 1, #brotherall	do
+		local dest_role = brotherall[i]
+		dest_role:SendToClient(SerializeCommand(resp))
+	end	
+
+end
+

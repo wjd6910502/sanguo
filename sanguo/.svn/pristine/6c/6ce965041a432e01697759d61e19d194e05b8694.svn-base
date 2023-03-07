@@ -1,0 +1,223 @@
+#include "topmanager.h"
+
+extern std::map<Octets, Octets> g_toplist_data_map;
+extern std::map<Octets, Octets> g_save_data_map;
+namespace CACHE
+{
+
+void TopManager::OnChanged()
+{
+	_top_manager.OnChanged();
+}
+
+int TopManager::Tag() const
+{
+	return _top_manager.Tag();
+}
+
+std::map<int, TopList>::iterator  TopManager::End()
+{
+	return _top_manager.End();
+}
+
+//for lua
+int TopManager::Size() const
+{
+	return _top_manager.Size();
+}
+
+TopList* TopManager::Find(const int& k)
+{
+	return _top_manager.Find(k);
+}
+
+//void Insert(const Int64& k, const TopList& v);
+//void Delete(const int& k);
+
+TopManagerMapIter TopManager::SeekToBegin()
+{
+	return _top_manager.SeekToBegin();
+}
+
+TopManagerMapIter TopManager::Seek(const int& k)
+{
+	return _top_manager.Seek(k);
+}
+
+void TopManager::Load()
+{
+	//在这里首先定义好几个排行榜
+	TopList top_level;
+	TopList top_capacity;
+	
+	std::map<Octets, Octets>::iterator it = g_toplist_data_map.begin();
+	for(; it != g_toplist_data_map.end(); it++)
+	{
+		TopListSaveData tmp;
+		Marshal::OctetsStream os;
+		Octets key,value;
+		key = it->first;
+		value = it->second;
+		std::string aaa = std::string((char*)value.begin(), value.size());
+		os.push_byte(aaa.c_str(), aaa.size());
+		tmp.unmarshal(os);
+		if(tmp.top_type == TOPLIST_TYPE_LEVEL)
+		{
+			//等级榜
+			TopListData tmp_data;
+			if(tmp.top_type == 1)
+			{
+				//实时榜
+				tmp_data._id = tmp._id;
+				tmp_data._name = tmp._name;
+				tmp_data._photo = tmp._photo;
+				tmp_data.data = tmp.data;
+				top_level._new_top_list_by_id.Insert(tmp_data._id, tmp_data);
+				top_level._new_top_list_by_data.Insert(tmp_data.data, tmp_data);
+				GLog::log(LOG_INFO, "level list now id=%ld, data=%ld, name=%s", (int64_t)tmp._id, (int64_t)tmp.data, tmp._name.c_str());
+			}
+			else
+			{
+				//历史榜
+				tmp_data._id = tmp._id;
+				tmp_data._name = tmp._name;
+				tmp_data._photo = tmp._photo;
+				tmp_data.data = tmp.data;
+				top_level._old_top_list.Insert(tmp_data.data, tmp_data);
+				GLog::log(LOG_INFO, "level list history id=%ld, data=%ld, name=%s", (int64_t)tmp._id, (int64_t)tmp.data, tmp._name.c_str());
+			}
+
+		}
+		else if(tmp.top_type == TOPLIST_TYPE_CAPACITY)
+		{
+			//战力榜
+			TopListData tmp_data;
+			if(tmp.top_type == 1)
+			{
+				//实时榜
+				tmp_data._id = tmp._id;
+				tmp_data._name = tmp._name;
+				tmp_data._photo = tmp._photo;
+				tmp_data.data = tmp.data;
+				top_capacity._new_top_list_by_id.Insert(tmp_data._id, tmp_data);
+				top_capacity._new_top_list_by_data.Insert(tmp_data.data, tmp_data);
+				GLog::log(LOG_INFO, "capacity list now id=%ld, data=%ld, name=%s", (int64_t)tmp._id, (int64_t)tmp.data, tmp._name.c_str());
+			}
+			else
+			{
+				//历史榜
+				tmp_data._id = tmp._id;
+				tmp_data._name = tmp._name;
+				tmp_data._photo = tmp._photo;
+				tmp_data.data = tmp.data;
+				top_capacity._old_top_list.Insert(tmp_data.data, tmp_data);
+				GLog::log(LOG_INFO, "capacity list history id=%ld, data=%ld, name=%s", (int64_t)tmp._id, (int64_t)tmp.data, tmp._name.c_str());
+			}
+		}
+	}
+	_top_manager.Insert(TOPLIST_TYPE_LEVEL, top_level);
+	_top_manager.Insert(TOPLIST_TYPE_CAPACITY, top_capacity);
+}
+
+void TopManager::Save()
+{
+	TopManagerMapIter it_manager = _top_manager.SeekToBegin();
+	TopList * toplist = NULL;
+	Marshal::OctetsStream key, value;
+	for(char top_type = 1; (toplist = it_manager.GetValue()); it_manager.Next(), top_type++)
+	{
+		TopList tmp = *toplist;
+		TopListData *toplistdata = NULL;
+		for(TopListMapIter it = tmp._new_top_list_by_id.SeekToBegin(); (toplistdata = it.GetValue()); it.Next())
+		{
+
+			key.clear();
+			value.clear();
+			char buf[64];
+			buf[0] = top_type;
+			snprintf(buf+1, sizeof(buf), "%ld", int64_t(toplistdata->_id));
+			std::string key_str = buf;
+			key_str = "toplist_now"  + key_str; //注意Key的组成，分别是表名+表类型+玩家的ID
+
+			TopListSaveData value_data;
+			value_data._id = toplistdata->_id;
+			value_data._name = toplistdata->_name;
+			value_data._photo = toplistdata->_photo;
+			value_data.data = toplistdata->data;
+			value_data.type = TOPLIST_TIME_NOW;
+			value_data.top_type = top_type;
+
+			//key << key_str;
+			value_data.marshal(value);
+			g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+		}
+		toplistdata = NULL;
+		for(TopListMultiMapIter it = tmp._old_top_list.SeekToBegin(); (toplistdata = it.GetValue()); it.Next())
+		{
+			key.clear();
+			value.clear();
+			char buf[64];
+			buf[0] = top_type;
+			snprintf(buf+1, sizeof(buf), "%ld", int64_t(toplistdata->_id));
+			std::string key_str = buf;
+			key_str = "toplist_history"  + key_str; //注意Key的组成，分别是表名+表类型+玩家的ID
+
+			TopListSaveData value_data;
+			value_data._id = toplistdata->_id;
+			value_data._name = toplistdata->_name;
+			value_data._photo = toplistdata->_photo;
+			value_data.data = toplistdata->data;
+			value_data.type = TOPLIST_TIME_HISTORY;
+			value_data.top_type = top_type;
+
+			//key << key_str;
+			value_data.marshal(value);
+			g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+		}
+	}
+}
+
+void TopManager::SaveTest()
+{
+	TopList top_level;
+	TopList top_capacity;
+	TopListData tmp_data;
+	for(int64_t i = 1; i < 11; i++)
+	{
+		tmp_data._name = "an1";
+		tmp_data._photo = i;
+		tmp_data._id = i*1000;
+		tmp_data.data = i*10;
+		top_level._new_top_list_by_id.Insert(tmp_data._id, tmp_data);
+		top_level._new_top_list_by_data.Insert(tmp_data.data, tmp_data);
+	}
+	for(int64_t i = 1; i < 11; i++)
+	{
+		tmp_data._name = "an2";
+		tmp_data._photo = i;
+		tmp_data._id = i*500;
+		tmp_data.data = i*5;
+		top_level._old_top_list.Insert(tmp_data.data, tmp_data);
+	}
+	for(int64_t i = 1; i < 11; i++)
+	{
+		tmp_data._name = "an3";
+		tmp_data._photo = i;
+		tmp_data._id = i*1000;
+		tmp_data.data = i*10;
+		top_capacity._new_top_list_by_id.Insert(tmp_data._id, tmp_data);
+		top_capacity._new_top_list_by_data.Insert(tmp_data.data, tmp_data);
+	}
+	for(int64_t i = 1; i < 11; i++)
+	{
+		tmp_data._name = "an4";
+		tmp_data._photo = i;
+		tmp_data._id = i*500;
+		tmp_data.data = i*5;
+		top_capacity._old_top_list.Insert(tmp_data.data, tmp_data);
+	}
+     	_top_manager.Insert(TOPLIST_TYPE_LEVEL, top_level);
+	_top_manager.Insert(TOPLIST_TYPE_CAPACITY, top_capacity);
+}
+
+};

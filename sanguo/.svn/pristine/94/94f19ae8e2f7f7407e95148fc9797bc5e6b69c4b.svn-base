@@ -1,0 +1,24 @@
+function OnCommand_DelBlackList(player, role, arg, others)
+	player:Log("OnCommand_DelBlackList, "..DumpTable(arg).." "..DumpTable(others))
+
+	local blacklist = role._roledata._friend._blacklist
+
+	local index = CACHE.Int64(arg.roleid)
+
+	local value = blacklist:Find(index)
+
+	if value == nil then
+		local cmd = NewCommand("ErrorInfo")
+		cmd.error_id = G_ERRCODE["BLACKLIST_NOT_HAVE"]
+		role:SendToClient(SerializeCommand(cmd))
+		player:Log("OnCommand_DelBlackList, error=BLACKLIST_NOT_HAVE")                    
+		return
+	end
+
+	blacklist:Delete(index)
+
+	local resp = NewCommand("DelBlackList_Re")
+	resp.roleid = arg.roleid
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

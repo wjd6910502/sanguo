@@ -1,0 +1,35 @@
+	public:
+		int64_t roleid;
+		Octets video_id;
+		enum { PROTOCOL_TYPE = PROTOCOL_DELPVPVIDEO };
+	public:
+		DelPvpVideo() { type = PROTOCOL_DELPVPVIDEO; }
+		DelPvpVideo(void*) : Protocol(PROTOCOL_DELPVPVIDEO) { }
+		DelPvpVideo (const int64_t& l_roleid,const Octets& l_video_id)
+			 : roleid(l_roleid),video_id(l_video_id)
+		{
+			type = PROTOCOL_DELPVPVIDEO;
+		}
+
+		DelPvpVideo(const DelPvpVideo &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),video_id(rhs.video_id) { }
+
+		GNET::Protocol *Clone() const { return new DelPvpVideo(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << video_id;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> video_id;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

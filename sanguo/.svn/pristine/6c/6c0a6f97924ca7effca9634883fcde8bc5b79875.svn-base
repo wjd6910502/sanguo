@@ -1,0 +1,39 @@
+
+#ifndef __GNET_PVPENTERRE_HPP
+#define __GNET_PVPENTERRE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "base64.h"
+
+namespace GNET
+{
+
+class PvpEnterRe : public GNET::Protocol
+{
+	#include "pvpenterre"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "GAMED::PvpEnterRe, roleid=%lld, fightid=%lld", roleid, fightid);
+
+		Int64 tmp(fightid);
+
+		std::string tmp_str = tmp.ToStr();
+
+		Octets tmp_in((void*)(tmp.ToStr()), tmp_str.size());
+		Octets tmp_out;
+
+		Base64Encoder::Convert(tmp_out, tmp_in);
+
+		char msg[256];
+		snprintf(msg, sizeof(msg), "10012:%s:%d:%d:%d:%d:%d:%d:", (char*)tmp_out.begin(), hero_list[0], hero_list[1], hero_list[2], fight_hero_list[0], fight_hero_list[1], fight_hero_list[2]); //PVPEnterRe
+		MessageManager::GetInstance().Put(roleid, roleid, msg);
+	}
+};
+
+};
+
+#endif

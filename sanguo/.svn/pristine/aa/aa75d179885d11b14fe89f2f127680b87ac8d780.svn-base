@@ -1,0 +1,58 @@
+[GateServer]
+type                    =       tcp
+port                    =       19228
+address                 =       0.0.0.0
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[TransServer]
+type                    =       tcp
+port                    =       19230
+address                 =       10.68.8.16
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+;[UDPTransServer]
+;type                    =       udp
+;port                    =       19230
+;address                 =       10.68.8.16
+;so_sndbuf               =       32768
+;so_rcvbuf               =       32768
+;ibuffermax              =       1048576
+;obuffermax              =       1048576
+;tcp_nodelay             =       0
+;listen_backlog          =       10
+;accumulate              =       16777216
+
+[PVPGameServer]
+type                    =       tcp
+port                    =       19231
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+;[GameDBClient]
+;type                    =       tcp
+;port                    =       4000
+;address                 =       127.0.0.1
+;so_sndbuf               =       32768
+;so_rcvbuf               =       32768
+;ibuffermax              =       1048576
+;obuffermax              =       1048576
+;accumulate              =       16777216
+;db_version		=	4

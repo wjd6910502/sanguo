@@ -1,0 +1,12 @@
+function OnMessage_RoleInfoInit(player, role, arg, others)
+	player:Log("OnMessage_RoleInfoInit, "..DumpTable(arg).." "..DumpTable(others))
+	ROLE_OnlineInit(role)
+
+	--对军团做一些单独的处理
+	if role._roledata._mafia._apply_mafia:Size() == 0 then
+		role._roledata._mafia._apply_mafia:Clear()
+	end
+	if role._roledata._mafia._id:ToStr() ~= "0" then
+		--扔一个消息，去查看一下自己在当前帮会中的信息。
+	end
+end

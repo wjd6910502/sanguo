@@ -1,0 +1,19 @@
+
+激活码生成说明
+	./gactivcode gamesys.conf mkcode type count numb
+
+	type 为生成激活码的类型 范围 (1 - 65535)
+	count 为生成激活码的数量
+	numb 为每个激活码的使用次数 范围(1 - 65535)
+
+
+例如:
+	JSRN-GGGK-NGDR-SDCM-FRJF
+	JSRN-GGGK-PRLA-LEPP-FPBC
+
+	JSRN 代表生成类型 
+	GGGK 代表使用次数
+
+
+
+

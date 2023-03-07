@@ -1,0 +1,38 @@
+	public:
+		int magic;
+		char change_ip;
+		char change_port;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPSTUNREQUEST };
+	public:
+		UDPSTUNRequest() { type = PROTOCOL_UDPSTUNREQUEST; }
+		UDPSTUNRequest(void*) : Protocol(PROTOCOL_UDPSTUNREQUEST) { }
+		UDPSTUNRequest (int l_magic,char l_change_ip,char l_change_port)
+			 : magic(l_magic),change_ip(l_change_ip),change_port(l_change_port)
+		{
+			type = PROTOCOL_UDPSTUNREQUEST;
+		}
+
+		UDPSTUNRequest(const UDPSTUNRequest &rhs)
+			: Protocol(rhs),magic(rhs.magic),change_ip(rhs.change_ip),change_port(rhs.change_port) { }
+
+		GNET::Protocol *Clone() const { return new UDPSTUNRequest(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << magic;
+			os << change_ip;
+			os << change_port;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> magic;
+			os >> change_ip;
+			os >> change_port;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

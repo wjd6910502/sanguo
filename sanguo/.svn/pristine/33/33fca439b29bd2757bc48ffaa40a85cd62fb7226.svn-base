@@ -1,0 +1,5 @@
+function OnMessage_FlowerGiftUpdate(player, role, arg, others)
+	player:Log("OnMessage_FlowerGiftUpdate, "..DumpTable(arg).." "..DumpTable(others))
+	
+
+end

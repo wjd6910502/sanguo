@@ -1,0 +1,8 @@
+function OnMessage_RoleUpdateMafiaMaShuScore(mafia, arg, others)
+	API_Log("OnMessage_RoleUpdateMafiaMaShuScore, "..DumpTable(arg).." "..DumpTable(others))
+
+	local mafia_info = mafia._data
+
+	TOP_InsertData(others.toplist._data._top_data, 8, mafia_info._id, mafia_info._all_mashu_score,
+			mafia_info._name, mafia_info._flag, 0, CACHE.BadgeInfoMap(), mafia_info._level, 0, 0, 0)
+end

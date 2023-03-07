@@ -1,0 +1,6 @@
+function OnCommand_BuyYuanBao(player, role, arg, others)
+	player:Log("OnCommand_BuyYuanBao, "..DumpTable(arg).." "..DumpTable(others))
+
+	ROLR_AddYuanBao(role, arg.yuanbao)
+	ROLR_AddChongZhi(role, arg.chongzhi)
+end

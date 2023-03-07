@@ -1,0 +1,54 @@
+#ifndef __GNET_DBSAVETASK_H
+#define __GNET_DBSAVETASK_H
+
+#include "thread.h"
+#include "dbsavedata.hrp"
+#include "message.h"
+
+using namespace GNET;
+
+//extern std::map<Octets, Octets> g_save_data_map;
+
+namespace CACHE
+{
+	class DelayDBSaveDataTask : public Thread::Runnable
+	{
+	public:
+		static DelayDBSaveDataTask * GetInstance()
+		{
+			static DelayDBSaveDataTask instance;
+			return &instance;
+		}
+		DelayDBSaveDataTask(): Runnable(1){ }
+
+		void Run()
+		{
+			//在这里发送一个消息，来进行数据的开始存储。
+		
+			GLog::log(LOG_INFO, "dbSavedata begin ... ...");
+
+			////在这里进行一下判断上一次的存储是否已经完毕，是的话才开始下一次。
+			//if(g_save_data_map.size() == 0)
+			//{
+			//	char msg[100];
+			//	snprintf(msg, sizeof(msg), "10006:");
+			//	MessageManager::GetInstance().Put(0, 0, msg, 0);
+
+			//	//Thread::HouseKeeper::AddTimerTask(this, 60);
+			//}
+			//else
+			//{
+			//	GLog::log(LOG_ERR, "last dbsave not finish");
+			//}
+
+			char msg[100];
+			snprintf(msg, sizeof(msg), "10006:");
+			MessageManager::GetInstance().Put(0, 0, msg, 0);
+
+			Thread::HouseKeeper::AddTimerTask(this, SERVER_CONST_SAVE_INTERVAL);
+		};
+	};
+};
+
+#endif
+

@@ -1,0 +1,10 @@
+function OnCommand_BuyVp(player, role, arg, others)
+	player:Log("OnCommand_BuyVp, "..DumpTable(arg).." "..DumpTable(others))
+	--在这里首先需要判断他已经买了几次了，判断是否还可以继续买。
+	ROLE_Addvp(role, 120, 1)
+
+	local resp = NewCommand("BuyVp_Re")
+	resp.retcode = 0
+	resp.num = 120
+	player:SendToClient(SerializeCommand(resp))
+end

@@ -1,0 +1,48 @@
+function OnCommand_WuZheShiLianSelectDifficulty(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianSelectDifficulty, "..DumpTable(arg).." "..DumpTable(others))
+		
+	local resp = NewCommand("WuZheShiLianSelectDifficulty_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	
+	-- 难度定义 1-低  2-中 3-高  4-极高 5-暴怒 
+	local difficulty = arg.difficulty
+
+	--这里主要验证传入参数是否正确就可以
+	local hero_trial = role._roledata._wuzhe_shilian	
+	
+	if difficulty < 1 or difficulty > hero_trial._high_difficulty then
+		--关卡尚未开启
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_DIFFICULTY_LOCK"] 
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+		
+	--已经有难度
+	if hero_trial._cur_difficulty ~= 0 and hero_trial._cur_difficulty ~= difficulty then
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_DIFFICULTY_LOCK"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	else
+		hero_trial._cur_difficulty = difficulty
+	end
+	
+	resp.cur_diffculty = hero_trial._cur_difficulty
+	hero_trial._cur_stage = 9
+	--当前关卡计算
+	local f = hero_trial._attack_info:Find(difficulty)
+	if f ~= nil then
+		local sit = f._difficulty_attackinfo:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do	
+			if s._alive_flag == 1 and s._stage < hero_trial._cur_stage then
+				hero_trial._cur_stage = s._stage					
+			end
+			sit:Next()
+			s = sit:GetValue()
+		end
+	end
+	
+	--代表当前难度都已经通关
+	player:SendToClient(SerializeCommand(resp))
+
+end

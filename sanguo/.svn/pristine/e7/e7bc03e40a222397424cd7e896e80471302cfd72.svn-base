@@ -1,0 +1,22 @@
+local tc = NS_TEST.g_func1(1)
+
+local to = NS_TEST.TestObject:new()
+to.arg = 1002
+local to1 = tc:func1(1003,to)
+print(tc.var1)
+print(tc.var2)
+if to1 then print(to1.arg) end
+to = nil
+to1 = nil
+
+local to = NS_TEST.TestObject:new()
+to.arg = 2002
+local to1 = tc:func1(2003,to)
+print(tc.var1)
+print(tc.var2)
+if to1 then print(to1.arg) end
+to = nil
+to1 = nil
+
+
+

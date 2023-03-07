@@ -1,0 +1,3 @@
+function OnCommand_MysteryShopBuyItem(player, role, arg, others)
+	--player:Log("OnCommand_MysteryShopBuyItem, "..DumpTable(arg).." "..DumpTable(others))
+end

@@ -1,0 +1,3 @@
+function OnCommand_BattleFieldMove(player, role, arg, others)
+	--player:Log("OnCommand_BattleFieldMove, "..DumpTable(arg).." "..DumpTable(others))
+end

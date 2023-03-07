@@ -1,0 +1,34 @@
+function OnMessage_CreateRoleResult(player, role, arg, others)
+	player:Log("OnMessage_CreateRoleResult, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("CreateRole_Re")
+	if arg.retcode==G_ERRCODE["SUCCESS"] then
+		resp.retcode = 0
+		ROLE_Init(role)--角色的一些数据进行初始化
+		--if role._roledata._base._sex == 1 and role._roledata._base._photo == 4 then
+		--	ROLE_Copy(role, others.roles[tostring(role._roledata._base._photo)])
+		--if role._roledata._base._sex == 1 and role._roledata._base._photo == 1 then
+		--	ROLE_Copy(role, others.roles["4"])
+		--	ROLE_PostInit(role)
+		--end
+		TASK_RefreshTask(role)--角色的成就进行初始化
+		TASK_ChangeCondition(role, G_ACH_TYPE["LEVEL_FINISH"], 0, role._roledata._status._level)
+		resp.info = ROLE_MakeRoleInfo(role)
+	else
+		--永远没有机会调用到
+	end
+	player:SendToClient(SerializeCommand(resp))
+	
+	role:SendRoleInfoToRegister(role._roledata._base._name, role._roledata._status._level,  role._roledata._base._photo)
+	
+	--数据统计日志
+	local date = os.date("%Y-%m-%d %H:%M:%S")
+	player:BILog("{\"logtime\":\""..date.."\",\"logname\":\"createrole\",\"serverid\":\""..API_GetZoneId()..
+		"\",\"os\":\""..role._roledata._device_info._os.."\",\"platform\":\"".."laohu".."\",\"mac\":\""
+		..role._roledata._device_info._mac.."\",\"userid\":\"".."0".."\",\"account\":\""..role._roledata._status._account..
+		"\",\"roleid\":\""..role._roledata._base._id:ToStr().."\",\"rolename\":\""..role._roledata._base._name..
+		"\",\"occupation\":\"0\",\"ip\":\""..role._roledata._device_info._public_ip.."\",\"device_model\":\""
+		..role._roledata._device_info._device_model.."\",\"device_sys\":\""..role._roledata._device_info._device_sys..
+		"\",\"device_ram\":\""..role._roledata._device_info._device_ram.."\",\"idfa\":\"".."0".."\",\"device_id\":\"".."0".."\"}")
+
+end

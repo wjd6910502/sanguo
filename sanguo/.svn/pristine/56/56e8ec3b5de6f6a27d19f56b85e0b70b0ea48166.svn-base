@@ -1,0 +1,9 @@
+function OnCommand_EnterInstance(player, role, arg, others)
+	player:Log("OnCommand_EnterInstance, "..DumpTable(arg))
+
+	local resp = NewCommand("EnterInstance_Re")
+	resp.retcode = 0
+	resp.inst_tid = arg.inst_tid
+	resp.seed = math.random(1000000) --TODO: 
+	player:SendToClient(SerializeCommand(resp))
+end

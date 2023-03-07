@@ -1,0 +1,82 @@
+
+#ifndef __GNET_GMCMD_GETCHAR_HPP
+#define __GNET_GMCMD_GETCHAR_HPP
+
+#include <sstream>
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+extern int g_zoneid;
+class GMCmd_GetChar : public GNET::Protocol
+{
+	#include "gmcmd_getchar"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetChar::Process, charid=%ld, charname=%.*s, session_id=%d", 
+				charid, (int)charname.size(), (char*)charname.begin(), session_id);
+
+		GMCmd_GetChar_Re resp;
+
+		const Player *player = PlayerManager::GetInstance().FindByRoleId(charid);
+		if(player)
+		{
+			std::ostringstream stream;
+			stream << sid;
+			std::string ssid = stream.str();
+			char msg[100];
+			snprintf(msg, sizeof(msg), "1001:%d:%s:", session_id, ssid.c_str());
+			MessageManager::GetInstance().Put(charid, charid, msg, 0);
+
+			/*resp.retcode = 0;
+			resp.session_id = session_id;
+			resp.charid = charid;
+			resp.name = player->role._roledata._base._name;
+			resp.lineid = g_zoneid;
+			resp.level = player->role._roledata._status._level;
+			resp.sex = player->role._roledata._base._sex;
+			resp.registertime = player->role._roledata._base._create_time;
+			resp.lastlogintime = player->role._roledata._status._login_time;
+			resp.ip = player->role._roledata._device_info._public_ip;
+			resp.exp = player->role._roledata._status._exp;
+			resp.familyname = player->role._roledata._mafia._name;
+			resp.gold = player->role._roledata._status._yuanbao;
+			resp.money = player->role._roledata._status._money;
+			resp.bdyuanbao = 0; //TODO
+			resp.vip = 
+
+			//TODO: noload player
+			resp.retcode = -1;
+			resp.session_id = session_id;
+			resp.desc = Octets("not found", 9);
+			manager->Send(sid, resp);
+			return;*/
+		}
+
+		//{
+		//Thread::Mutex2::Scoped keeper2(player->_lock);
+
+		/*
+		resp.retcode = 0;
+		resp.accid = accid;
+		resp.session_id = session_id;
+		resp.roleid = player->GetRoleId();
+		if(resp.roleid)
+		{
+			resp.rolename = Octets(player->_role._roledata._base._name.c_str(), player->_role._roledata._base._name.size());
+			resp.level = player->_role._roledata._status._level;
+		}
+		}
+		manager->Send(sid, resp);
+		*/
+	}
+};
+
+};
+
+#endif

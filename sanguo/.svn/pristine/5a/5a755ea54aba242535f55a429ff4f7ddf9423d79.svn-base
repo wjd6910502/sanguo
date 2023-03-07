@@ -1,0 +1,109 @@
+#ifndef _PVP_MATCH_H_
+#define _PVP_MATCH_H_
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include <string>
+#include <map>
+#include <vector>
+
+#include "gnet_timer.h"
+#include "itimer.h"
+#include "commonmacro.h"
+#include "glog.h"
+
+//using namespace GNET;
+
+namespace GNET
+{
+#define SUCCESS 		0 	//正常结束获得胜利
+#define FAIL			1 	//正常结束获得失败
+#define SUCCESS_SURRENDER 	2	//由于对方投降获得胜利
+#define FAIL_SURRENDER 		3	//由于自己投降获得失败
+#define SUCCESS_OVERTIME 	4	//由于对方掉线获得胜利
+#define FAIL_OVERTIME 		5	//由于自己掉线获得失败
+#define FAIL_DOUBLE 		6	//由于双方都说自己胜利了，所以直接服务器判双方失败
+
+struct pvp_data
+{
+	int64_t role_id;
+	int zoneid;
+	std::vector<int> hero;
+};
+
+struct pvp_match_data
+{
+	int64_t fight1_id;
+	int64_t fight2_id;
+	int fight1_zoneid;
+	int fight2_zoneid;
+	std::vector<int> fight1_hero;
+	std::vector<int> fight2_hero;
+	int fight1_flag;
+	int fight2_flag;
+
+	int begin_time; //这个是用来控制副本结束的。
+	int64_t winner; 
+	int end_time; //这个是收到了第一个玩家结束的消息，然后几秒以后，把副本结束掉
+
+	bool notice_flag;
+	std::string ip;
+	int ip_port;
+	int pvp_sid;
+public:
+	pvp_match_data(): fight1_id(0), fight2_id(0), fight1_zoneid(0),fight2_zoneid(0),fight1_flag(0), fight2_flag(0),begin_time(0),winner(0),end_time(0),notice_flag(false),ip_port(0),pvp_sid(0) {}
+};
+
+struct pvp_server_data
+{
+	std::string _ip;
+	unsigned short _port;
+	unsigned int _sid;
+	time_t _last_active_time;
+	int _load;
+
+public:
+      pvp_server_data(): _port(0), _sid(0), _last_active_time(0), _load(0) {}
+};
+
+class PVPMatch: public IntervalTimer::Observer
+{
+private:
+	//这是进行匹配的队列	
+	std::map<int64_t, pvp_data> _data;
+	//匹配成功的队列
+	std::map<int, pvp_match_data> _match_data;
+
+	//这个是管理所有的PVPd服务器的链接
+	std::vector<pvp_server_data> _pvpds;
+
+	static int pvp_index;
+public:
+	PVPMatch();
+	static PVPMatch& GetInstance()
+	{
+		static PVPMatch _instance;
+		return _instance;
+	}
+
+	//PVPD的接口
+	void AddPVPServer(const char *ip, unsigned short port, unsigned int sid);
+	void UpdatePVPServerLoad(unsigned int sid, int load);
+	const pvp_server_data* AllocPVPServer() const;
+	void PvpdPvpEnd(int index, int64_t fight1, int64_t fight2, int reason);
+
+	bool Initialize();
+	bool Update();
+	
+	//GAMED那边使用的接口
+	int AddPVPData(int64_t roleid, pvp_data data);
+	int RolePvpEnter(int64_t roleid, int index, int flag);
+	pvp_match_data * GetPvpMatchData(int key);
+	int RolePvpLeave(int64_t roleid, int index, int reason);
+};
+
+
+};
+#endif

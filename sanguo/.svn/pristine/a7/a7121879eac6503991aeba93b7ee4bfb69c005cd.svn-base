@@ -1,0 +1,53 @@
+#include "mafiamanager.h"
+
+namespace CACHE
+{
+
+void Mafia::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+	_transaction_data.clear();
+	OctetsStream os;
+	os._for_transaction = true;
+	//TODO: try catch
+	marshal(os);
+	_transaction_data.swap(os);
+}
+
+void Mafia::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void Mafia::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+	//TODO: try catch
+	OctetsStream os(_transaction_data);
+	os._for_transaction = true;
+	unmarshal(os);
+}
+
+Mafia* MafiaManager::Find(const Int64& k)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	return _map.Find(k);
+}
+
+void MafiaManager::Insert(const Int64& k, const Mafia& v)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	_map.Insert(k, v);
+}
+
+void MafiaManager::Delete(const Int64& k)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	_map.Delete(k);
+}
+
+};
+

@@ -1,0 +1,3 @@
+function OnCommand_WuZheShiLianJoinBattle(player, role, arg, others)
+	--player:Log("OnCommand_WuZheShiLianJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+end

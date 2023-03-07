@@ -1,0 +1,38 @@
+function OnCommand_PveArenaJoinBattle(player, role, arg, others)
+	player:Log("OnCommand_PveArenaJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("PveArenaJoinBattle_Re")
+
+	local dest_role = others.roles[arg.roleid]
+
+	if role._roledata._base._id:ToStr() == dest_role._roledata._base._id:ToStr() then
+		return 
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	
+
+	if LIMIT_TestUseLimit(role, quanju.arena_free_times, 1) == false then
+		resp.retcode = G_ERRCODE["JJC_ATTACK_COUNT_LESS"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.hero_info = {}
+
+	local heroid_it = dest_role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+	local heroid = heroid_it:GetValue()
+	while heroid ~= nil do
+		resp.hero_info[#resp.hero_info+1] = heroid._value
+		heroid_it:Next()
+		heroid = heroid_it:GetValue()
+	end
+
+	role._roledata._pve_arena_info._last_attack_time = API_GetTime()
+	LIMIT_AddUseLimit(role, quanju.arena_free_times, 1)
+
+	resp.last_attack_time = role._roledata._pve_arena_info._last_attack_time
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

@@ -1,0 +1,6 @@
+function OnMessage_RoleUpdatePvpEndTime(player, role, arg, others)
+	player:Log("OnMessage_RoleUpdatePvpEndTime, "..DumpTable(arg).." "..DumpTable(others))
+
+	local mist = others.mist
+	role._roledata._pvp_info._pvp_season_end_time = mist._pvp_season_end_time
+end

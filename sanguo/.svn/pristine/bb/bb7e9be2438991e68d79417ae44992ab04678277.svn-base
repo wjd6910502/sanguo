@@ -1,0 +1,3 @@
+function OnCommand_BattleFieldGetPrize(player, role, arg, others)
+	--player:Log("OnCommand_BattleFieldGetPrize, "..DumpTable(arg).." "..DumpTable(others))
+end

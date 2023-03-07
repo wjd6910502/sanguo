@@ -1,0 +1,47 @@
+function OnCommand_ChangeHeroSelectSkill(player, role, arg, others)
+	player:Log("OnCommand_ChangeHeroSelectSkill, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("ChangeHeroSelectSkill_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(arg.hero_id)
+	
+	if hero == nil then
+		--不存在的武将怎么进行设置
+		resp.retcode = G_ERRCODE["SELECT_SKILL_NO_HERO"]
+		player:SendToClient(SerializeCommand(resp))
+	end
+
+	if table.getn(arg.skill_id) ~= 2 then
+		--有错误的，必须是2呀
+		resp.retcode = G_ERRCODE["SELECT_SKILL_NUM_ERROR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--这里直接去他的所有无双技能里面去查看。
+	for i = 1, table.getn(arg.skill_id) do
+		local hit = hero._skill:Find(arg.skill_id[i])
+		if hit == nil then
+			--技能不存在
+			resp.retcode = G_ERRCODE["SELECT_SKILL_ID_ERROR"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+
+	--在这里开始进行设置
+	hero._select_skill:Clear()
+	for i = 1, table.getn(arg.skill_id) do
+		local skill_id = CACHE.Int:new()
+		skill_id._value = arg.skill_id[i]
+		hero._select_skill:PushBack(skill_id)
+	end
+	--返回给客户端，成功
+	resp.hero_id = arg.hero_id
+	resp.skill_id = arg.skill_id
+
+	player:SendToClient(SerializeCommand(resp))
+
+end

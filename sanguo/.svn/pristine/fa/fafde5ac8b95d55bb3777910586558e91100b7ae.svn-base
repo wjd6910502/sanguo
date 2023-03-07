@@ -1,0 +1,7 @@
+function OnCommand_Ping(player, role, arg, others)
+	--player:Log("OnCommand_Ping, "..DumpTable(arg))
+
+	local resp = NewCommand("Ping_Re")
+	resp.client_send_time = arg.client_send_time
+	player:SendToClient(SerializeCommand(resp))
+end

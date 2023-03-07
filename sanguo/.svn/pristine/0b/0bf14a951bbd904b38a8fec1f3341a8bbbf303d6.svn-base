@@ -1,0 +1,3 @@
+function OnCommand_PveArenaJoinBattle(player, role, arg, others)
+	--player:Log("OnCommand_PveArenaJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+end

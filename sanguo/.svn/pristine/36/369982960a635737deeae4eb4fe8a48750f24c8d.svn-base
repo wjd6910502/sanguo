@@ -1,0 +1,6 @@
+function OnMessage_ClearPveArenaMisc(player, role, arg, others)
+	--player:Log("OnMessage_ClearPveArenaMisc, "..DumpTable(arg).." "..DumpTable(others))
+	--
+	local pve_arena = others.misc._miscdata._pve_arena_map._pve_arena_data_map_data
+	pve_arena:Clear()
+end

@@ -1,0 +1,37 @@
+#ifndef __GNET_STTCLIENT_HPP
+#define __GNET_STTCLIENT_HPP
+
+#include "protocol.h"
+#include "thread.h"
+#include "glog.h"
+
+extern int g_zoneid;
+
+namespace GNET
+{
+class STTClient : public Protocol::Manager
+{
+	static STTClient instance;
+	size_t		accumulate_limit;
+	Session::ID	sid;
+	bool		conn_state;
+	Thread::Mutex2	locker_state;
+	const Session::State *GetInitState() const;
+	bool OnCheckAccumulate(size_t size) const { return accumulate_limit == 0 || size < accumulate_limit; }
+	void OnAddSession(Session::ID sid);
+	void OnDelSession(Session::ID sid);
+	void OnAbortSession(const SockAddr &sa);
+	void OnCheckAddress(SockAddr &) const;
+public:
+	static STTClient *GetInstance() { return &instance; }
+	std::string Identification() const { return "STTClient"; }
+	void SetAccumulate(size_t size) { accumulate_limit = size; }
+	STTClient() : accumulate_limit(0), conn_state(false), locker_state("STTClient::locker_state") { }
+	
+	void Reconnect();
+	bool SendProtocol(const Protocol &protocol) { return conn_state && Send(sid, protocol); }
+	bool SendProtocol(const Protocol *protocol) { return conn_state && Send(sid, protocol); }
+};
+
+};
+#endif

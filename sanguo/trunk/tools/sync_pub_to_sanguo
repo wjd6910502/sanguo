@@ -1,0 +1,46 @@
+#!/bin/sh
+
+echo "<pre>"
+
+cd /export/xayd/sanguo/test
+
+rm -r *
+
+svn export svn://10.68.8.38/SANGUO_data/Data/elementdata.dpc elementdata.dpc --username copy2output --password copy2output --non-interactive 2>&1 >/dev/null
+if [ $? -ne 0 ]
+then
+	echo "svn error!"
+	exit 1
+fi
+echo "svn获取策划文件完毕."
+
+svn export svn://10.68.8.38/SANGUO_ServerSVN/ --username copy2output --password copy2output --non-interactive 2>&1 >/dev/null
+if [ $? -ne 0 ]
+then
+	echo "svn error!"
+	exit 1
+fi
+echo "svn获取程序脚本完毕."
+
+
+echo "svn获取程序.so完毕."
+
+cd /export/xayd/
+cp sanguo/test/SANGUO_ServerSVN/3rd/DataPool/libdatapool.so sanguo/test/SANGUO_ServerSVN/xlib
+cp sanguo/test/SANGUO_ServerSVN/3rd/Rsa/libRsa.so sanguo/test/SANGUO_ServerSVN/xlib
+
+rsync -rLptgoDv sanguo/test/SANGUO_ServerSVN/gamed/scripts rsync://game@10.68.48.30:10089/Dist/for_check/sanguo/test/ --password-file=/export/xayd/passwd 2>&1 >/dev/null
+rsync -rLptgoDv sanguo/test/elementdata.dpc rsync://game@10.68.48.30:10089/Dist/for_check/sanguo/test/ --password-file=/export/xayd/passwd 2>&1 >/dev/null
+rsync -rLptgoDv sanguo/test/SANGUO_ServerSVN/gamed/gamed rsync://game@10.68.48.30:10089/Dist/for_check/sanguo/test/ --password-file=/export/xayd/passwd 2>&1 >/dev/null
+rsync -rLptgoDv sanguo/test/SANGUO_ServerSVN/xlib rsync://game@10.68.48.30:10089/Dist/for_check/sanguo/test/ --password-file=/export/xayd/passwd 2>&1 >/dev/null
+if [ $? -ne 0 ]
+then
+	echo "rsync error!"
+	exit 3
+fi
+
+echo "资源测试服完成, 请继续下一操作."
+echo "</pre>"
+
+exit 0
+

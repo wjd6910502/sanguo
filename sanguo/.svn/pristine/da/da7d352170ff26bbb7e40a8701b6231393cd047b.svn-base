@@ -1,0 +1,60 @@
+	public:
+		int64_t id;
+		int index;
+		std::vector<C2SGameProtocol> protocols;
+		int index_ack;
+		unsigned short client_send_time;
+		unsigned short server_send_time;
+		int signature;
+		int reserved1;
+		int reserved2;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPC2SGAMEPROTOCOLS };
+	public:
+		UDPC2SGameProtocols() { type = PROTOCOL_UDPC2SGAMEPROTOCOLS; }
+		UDPC2SGameProtocols(void*) : Protocol(PROTOCOL_UDPC2SGAMEPROTOCOLS) { }
+		UDPC2SGameProtocols (int64_t l_id,int l_index,const std::vector<C2SGameProtocol>& l_protocols,
+			int l_index_ack,unsigned short l_client_send_time,unsigned short l_server_send_time,
+			int l_signature,int l_reserved1 = 0,int l_reserved2 = 0)
+			 : id(l_id),index(l_index),protocols(l_protocols)
+			,index_ack(l_index_ack),client_send_time(l_client_send_time),server_send_time(l_server_send_time)
+			,signature(l_signature),reserved1(l_reserved1),reserved2(l_reserved2)
+		{
+			type = PROTOCOL_UDPC2SGAMEPROTOCOLS;
+		}
+
+		UDPC2SGameProtocols(const UDPC2SGameProtocols &rhs)
+			: Protocol(rhs),id(rhs.id),index(rhs.index),protocols(rhs.protocols)
+			,index_ack(rhs.index_ack),client_send_time(rhs.client_send_time),server_send_time(rhs.server_send_time)
+			,signature(rhs.signature),reserved1(rhs.reserved1),reserved2(rhs.reserved2) { }
+
+		GNET::Protocol *Clone() const { return new UDPC2SGameProtocols(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << index;
+			os << protocols;
+			os << index_ack;
+			os << client_send_time;
+			os << server_send_time;
+			os << signature;
+			os << reserved1;
+			os << reserved2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> index;
+			os >> protocols;
+			os >> index_ack;
+			os >> client_send_time;
+			os >> server_send_time;
+			os >> signature;
+			os >> reserved1;
+			os >> reserved2;
+			return os;
+		}
+
+		bool SizePolicy(size_t size) const { return size <= 10240; }

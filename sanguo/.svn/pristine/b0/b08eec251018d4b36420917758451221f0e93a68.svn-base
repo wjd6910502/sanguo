@@ -1,0 +1,13 @@
+g_flag = 0
+
+function OnCommand_PvpBegin(player, role, arg, others)
+	API_Log("OnCommand_PvpBegin, "..DumpTable(arg).." "..DumpTable(others))
+
+	if g_flag == 0 then
+		g_flag = g_flag + 1
+		local cmd2 = NewCommand("PvpEnd")
+		cmd2.index = 1
+		cmd2.reason = 99
+		API_SendGameProtocol(SerializeCommand(cmd2))
+	end
+end

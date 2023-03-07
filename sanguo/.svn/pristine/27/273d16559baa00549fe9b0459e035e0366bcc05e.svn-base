@@ -1,0 +1,23 @@
+#ifndef __GNET_STUND_STATE
+#define __GNET_STUND_STATE
+
+#ifdef WIN32
+#include "gnproto.h"
+#else
+#include "protocol.h"
+#endif
+
+namespace GNET
+{
+
+extern GNET::Protocol::Manager::Session::State state_STUNServer;
+
+extern GNET::Protocol::Manager::Session::State state_STUNDeafServer;
+
+extern GNET::Protocol::Manager::Session::State state_STUNGameServer;
+
+extern GNET::Protocol::Manager::Session::State state_Null;
+
+};
+
+#endif

@@ -1,0 +1,32 @@
+	public:
+		int64_t src_id;
+		enum { PROTOCOL_TYPE = PROTOCOL_GETIATEXTINSPEECH };
+	public:
+		GetIATextInSpeech() { type = PROTOCOL_GETIATEXTINSPEECH; }
+		GetIATextInSpeech(void*) : Protocol(PROTOCOL_GETIATEXTINSPEECH) { }
+		GetIATextInSpeech (const int64_t& l_src_id)
+			 : src_id(l_src_id)
+		{
+			type = PROTOCOL_GETIATEXTINSPEECH;
+		}
+
+		GetIATextInSpeech(const GetIATextInSpeech &rhs)
+			: Protocol(rhs),src_id(rhs.src_id) { }
+
+		GNET::Protocol *Clone() const { return new GetIATextInSpeech(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << src_id;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> src_id;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 67108864; }

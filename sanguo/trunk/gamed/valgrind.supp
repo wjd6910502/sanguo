@@ -1,0 +1,14 @@
+{
+   <std::string inner buffer pointer>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:_Znwm
+   fun:_ZNSs4_Rep9_S_createEmmRKSaIcE
+}
+{
+   <GNET::Octets inner buffer pointer>
+   Memcheck:Leak
+   match-leak-kinds: possible
+   fun:malloc
+   fun:_ZN4GNET6Octets3Rep6createEm
+}

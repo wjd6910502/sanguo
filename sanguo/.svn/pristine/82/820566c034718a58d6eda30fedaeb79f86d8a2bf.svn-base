@@ -1,0 +1,52 @@
+#ifndef __GNET_GCENTERSERVER_HPP
+#define __GNET_GCENTERSERVER_HPP
+
+#include "protocol.h"
+//#include "../3rd/leveldb/include/leveldb/db.h"
+//#include "../3rd/leveldb/include/leveldb/write_batch.h"
+
+#include "leveldb.h"
+#include "write_batch.h"
+
+namespace GNET
+{
+
+extern leveldb::DB* g_db;
+
+class GCenterServer : public Protocol::Manager
+{
+	static GCenterServer instance;
+	size_t		accumulate_limit;
+	const Session::State *GetInitState() const;
+	bool OnCheckAccumulate(size_t size) const { return accumulate_limit == 0 || size < accumulate_limit; }
+	void OnAddSession(Session::ID sid);
+	void OnDelSession(Session::ID sid);
+
+	std::map<int,Session::ID> _zone_map; //zoneid => sid
+	std::map<std::string,Session::ID> _ip_map;
+	int _kuafu_zoneid;
+public:
+	static GCenterServer *GetInstance() { return &instance; }
+	std::string Identification() const { return "GCenterServer"; }
+	void SetAccumulate(size_t size) { accumulate_limit = size; }
+	GCenterServer() : accumulate_limit(0) { }
+
+	void BroadcastToAllServer(const Protocol* p);
+	void BroadcastToAllServer(const Protocol& p) { BroadcastToAllServer(&p); }
+	void BroadcastToAllServer(Protocol* p);
+	void BroadcastToAllServer(Protocol& p) { BroadcastToAllServer(&p); }
+
+	bool DispatchProtocol(int zoneid,const Protocol* p);
+	bool DispatchProtocol(int zoneid,const Protocol& p) { return DispatchProtocol(zoneid,&p); }
+	bool DispatchProtocol(const Protocol* p) { return DispatchProtocol(_kuafu_zoneid,p); }
+	bool DispatchProtocol(const Protocol& p) { return DispatchProtocol(_kuafu_zoneid,p); }
+
+	void SetKuafuZoneId(int i) { _kuafu_zoneid = i; }
+	int GetKuafuZoneId() const { return _kuafu_zoneid; }
+	void ZoneRegister(int zoneid, int sid);
+
+	void InitDB();
+};
+
+};
+#endif

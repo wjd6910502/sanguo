@@ -1,0 +1,63 @@
+#!/bin/sh
+
+killall ssh
+sleep 1
+ssh -f -N -C -p 9229 game@211.157.164.224 -L 0.0.0.0:8873:127.0.0.1:873
+
+
+
+
+#rsync -avzL --delete rsync://game@127.0.0.1:8873/Dist/for_check/sanguo/android/update /var/www/sanguo-android
+#
+#cp /var/www/sanguo-android/update/bin/version-open.xml /var/www/sanguo-android/update/bin/version.xml
+#rm -f /var/www/sanguo-android/update/bin/index.html
+#rm -f /var/www/sanguo-android/update/bin/sangoku.html
+#rm -f /var/www/sanguo-android/update/bin/SANGUO.apk
+#
+#chown -R root.root /var/www/sanguo-android
+
+
+
+
+#mv /var/www/sanguo-ios/update/bin/ipa ~/bak/ios
+#rsync -avzLc --delete --exclude="*.ipa" rsync://game@127.0.0.1:8873/Dist/for_check/sanguo/ios/update /var/www/sanguo-ios
+
+#mv ~/bak/ios/ipa /var/www/sanguo-ios/update/bin/
+rsync -avzLc --delete --progress  --password-file=/home/test/wjd/rsyncd.passwd rsync://game@127.0.0.1:8873/Dist/for_check/sanguo/ios/update/bin/* /var/www/sanguo-ios/update/bin/ipa
+cp -f /var/www/sanguo-ios/update/bin/ipa/*.html /var/www/sanguo-ios/update/bin/
+cp -f /var/www/sanguo-ios/update/bin/ipa/*.txt /var/www/sanguo-ios/update/bin/
+cp -f /var/www/sanguo-ios/update/bin/ipa/*.xml /var/www/sanguo-ios/update/bin/
+
+#cp /var/www/sanguo-ios/update/bin/version-open.xml /var/www/sanguo-ios/update/bin/version.xml
+#rm -f /var/www/sanguo-ios/update/bin/index.html
+#rm -f /var/www/sanguo-ios/update/bin/sangoku.html
+#rm -f /var/www/sanguo-ios/update/bin/SANGUO.apk
+
+
+cp -rf /var/www/ios/ca.cer /var/www/sanguo-ios/update/bin/
+#cp -rf /var/www/ios/download.html /var/www/sanguo-ios/update/bin/
+cp -rf /var/www/ios/sanguo-open.plist /var/www/sanguo-ios/update/bin/
+
+#cp -rf /var/www/ios/download.html /var/www/sanguo-ios/update/bin/
+#
+#cp -rf /var/www/ios/ca.cer /var/www/sanguo-ios/update/bin/
+#
+#cp -rf /var/www/ios/sanguo-open.plist /var/www/sanguo-ios/update/bin/
+#
+#cp -rf /var/www/ios/download.html /var/www/sanguo-ios/update/bin/ipa/
+#
+#cp -rf /var/www/ios/ca.cer /var/www/sanguo-ios/update/bin/ipa/
+#
+#cp -rf /var/www/ios/sanguo-open.plist /var/www/sanguo-ios/update/bin/ipa/
+
+
+
+
+chown -R root.root /var/www/sanguo-ios
+
+
+
+
+killall ssh
+sleep 1
+

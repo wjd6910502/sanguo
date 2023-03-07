@@ -1,0 +1,44 @@
+	public:
+		int64_t roleid;
+		int result;
+		int typ;
+		int elo_score;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPLEAVERE };
+	public:
+		PvpLeaveRe() { type = PROTOCOL_PVPLEAVERE; }
+		PvpLeaveRe(void*) : Protocol(PROTOCOL_PVPLEAVERE) { }
+		PvpLeaveRe (const int64_t& l_roleid,int l_result,int l_typ,
+			int l_elo_score)
+			 : roleid(l_roleid),result(l_result),typ(l_typ)
+			,elo_score(l_elo_score)
+		{
+			type = PROTOCOL_PVPLEAVERE;
+		}
+
+		PvpLeaveRe(const PvpLeaveRe &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),result(rhs.result),typ(rhs.typ)
+			,elo_score(rhs.elo_score) { }
+
+		GNET::Protocol *Clone() const { return new PvpLeaveRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << result;
+			os << typ;
+			os << elo_score;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> result;
+			os >> typ;
+			os >> elo_score;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

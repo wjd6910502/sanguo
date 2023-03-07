@@ -1,0 +1,42 @@
+
+G_ERRCODE = {}
+G_ERRCODE["SUCCESS"] = 0
+G_ERRCODE["NO_ROLE"] = 1
+G_ERRCODE["CREATING_ROLE"] = 2
+G_ERRCODE["INVALID_NAME"] = 3
+G_ERRCODE["USED_NAME"] = 4
+G_ERRCODE["SYSTEM_INVALID"] = 5
+G_ERRCODE["NO_MAFIA"] = 101
+G_ERRCODE["CREATING_MAFIA"] = 102
+
+G_ERRCODE["TASK_ID_ERROR"]  = 201
+G_ERRCODE["TASK_NOT_FINISH"]= 202
+
+function NewCommand(typ)
+	cmd = {}
+	cmd.__type__ = typ
+	return cmd
+end
+
+function NewMessage(typ)
+	msg = {}
+	msg.__type__ = typ
+	return msg
+end
+
+function DumpTable(t)
+	s = ""
+	for k,v in pairs(t) do
+		if type(v)=="table" then
+			s = s..k.."={"..DumpTable(v).."};"
+		elseif type(v)=="userdata" then
+			s = s..k.."=USERDATA;"
+		elseif type(v)=="boolean" then
+			s = s..k.."="..tostring(v)..";"
+		else
+			s = s..k.."="..v..";"
+		end
+	end
+	return s
+end
+

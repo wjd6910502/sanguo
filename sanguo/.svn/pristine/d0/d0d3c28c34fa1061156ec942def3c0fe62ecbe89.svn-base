@@ -1,0 +1,18 @@
+function OnMessage_PublicChatnew(player, role, arg, others)
+	player:Log("OnMessage_PublicChatnew, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local cmd = NewCommand("PublicChat")
+	cmd.src = {}
+	cmd.src.id = arg.id
+	cmd.src.name = arg.name
+	cmd.src.photo = arg.photo
+	cmd.src.level = arg.level
+	cmd.src.mafia_id = arg.mafia_id
+	cmd.src.mafia_name = arg.mafia_name
+	cmd.text_content = arg.text_content
+	cmd.speech_content = arg.speech_content
+	cmd.time = arg.time
+--	cmd.channel = arg.channel
+	player:SendToClient(SerializeCommand(cmd))
+
+end

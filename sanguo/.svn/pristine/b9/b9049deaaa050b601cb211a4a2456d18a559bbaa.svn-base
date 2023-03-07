@@ -1,0 +1,6 @@
+function OnCommand_PvpEnter(player, role, arg, others)
+	player:Log("OnCommand_PvpEnter, "..DumpTable(arg).." "..DumpTable(others))
+
+
+	API_PVP_Enter(role._roledata._base._id:ToStr(), arg.index, arg.flag)
+end

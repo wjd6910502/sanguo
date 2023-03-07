@@ -1,0 +1,12 @@
+function OnMessage_MafiaDeclarationBroadCast(player, role, arg, others)
+	player:Log("OnMessage_MafiaDeclarationBroadCast, "..DumpTable(arg).." "..DumpTable(others))
+
+	if role._roledata._mafia._id:ToStr() == "0" then
+		local resp = NewCommand("MafiaDeclarationBroadCast")
+		resp.info = arg.info
+		resp.mafia_id = arg.mafia_id
+		resp.mafia_name = arg.mafia_name
+		resp.time = API_GetTime()
+		player:SendToClient(SerializeCommand(resp))
+	end
+end

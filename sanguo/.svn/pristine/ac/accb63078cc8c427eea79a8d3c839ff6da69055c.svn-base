@@ -1,0 +1,62 @@
+	public:
+		int retcode;
+		Octets trans_ip;
+		unsigned short trans_port;
+		Octets udp_trans_ip;
+		unsigned short udp_trans_port;
+		Octets stund_ip;
+		unsigned short stund_port;
+		Octets trans_token;
+		int signature;
+		enum { PROTOCOL_TYPE = PROTOCOL_AUTHRESULT };
+	public:
+		AuthResult() { type = PROTOCOL_AUTHRESULT; }
+		AuthResult(void*) : Protocol(PROTOCOL_AUTHRESULT) { }
+		AuthResult (int l_retcode,const Octets& l_trans_ip,unsigned short l_trans_port,
+			const Octets& l_udp_trans_ip,unsigned short l_udp_trans_port,const Octets& l_stund_ip,
+			unsigned short l_stund_port,const Octets& l_trans_token,int l_signature)
+			 : retcode(l_retcode),trans_ip(l_trans_ip),trans_port(l_trans_port)
+			,udp_trans_ip(l_udp_trans_ip),udp_trans_port(l_udp_trans_port),stund_ip(l_stund_ip)
+			,stund_port(l_stund_port),trans_token(l_trans_token),signature(l_signature)
+		{
+			type = PROTOCOL_AUTHRESULT;
+		}
+
+		AuthResult(const AuthResult &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),trans_ip(rhs.trans_ip),trans_port(rhs.trans_port)
+			,udp_trans_ip(rhs.udp_trans_ip),udp_trans_port(rhs.udp_trans_port),stund_ip(rhs.stund_ip)
+			,stund_port(rhs.stund_port),trans_token(rhs.trans_token),signature(rhs.signature) { }
+
+		GNET::Protocol *Clone() const { return new AuthResult(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << trans_ip;
+			os << trans_port;
+			os << udp_trans_ip;
+			os << udp_trans_port;
+			os << stund_ip;
+			os << stund_port;
+			os << trans_token;
+			os << signature;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> trans_ip;
+			os >> trans_port;
+			os >> udp_trans_ip;
+			os >> udp_trans_port;
+			os >> stund_ip;
+			os >> stund_port;
+			os >> trans_token;
+			os >> signature;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

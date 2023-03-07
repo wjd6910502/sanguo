@@ -1,0 +1,89 @@
+
+#ifndef __GNET_GETIATEXTINSPEECHRE_HPP
+#define __GNET_GETIATEXTINSPEECHRE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GetIATextInSpeechRe : public GNET::Protocol
+{
+	#include "getiatextinspeechre"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		
+		GLog::log(LOG_INFO, "GetIATextInSpeechRe  chat_type = %d, tt_content = %.*s, sh_content=%.*s ", chat_type,(int)text_content.size(),(char*)text_content.begin(),(int)speech_content.size(), (char*)speech_content.begin());
+		//找到当前用户
+		printf("****************************************************\n");
+		Player* player = CACHE::PlayerManager::GetInstance().FindByRoleId(src_id);
+		if(player == NULL)
+		{
+			printf("找不到用户........");
+			return;
+		}
+
+		//内部类型 chat_type: 0 代表公聊  1 代表私聊
+		std::string msg = "10100:";
+		
+		char roleinfo[8];
+		Octets id, name, mafia_id, mafia_name,tt_context,sp_context;
+		Base64Encoder::Convert(id,Octets(player->_role._roledata._base._id.ToStr(),strlen(player->_role._roledata._base._id.ToStr())));
+		Base64Encoder::Convert(name,Octets(player->_role._roledata._base._name.c_str(),player->_role._roledata._base._name.size() ));
+		
+		Base64Encoder::Convert(mafia_id,Octets(player->_role._roledata._mafia._id.ToStr(),strlen(player->_role._roledata._mafia._id.ToStr())));
+
+		Base64Encoder::Convert(mafia_name,Octets(player->_role._roledata._mafia._name.c_str(),player->_role._roledata._mafia._name.size()));
+		
+		Base64Encoder::Convert(tt_context,text_content);
+		Base64Encoder::Convert(sp_context,speech_content);
+		
+		msg += std::string((char*)id.begin(),id.size());
+		msg += ":";
+		msg += std::string((char*)name.begin(),name.size());
+		msg += ":";
+		int photo = player->_role._roledata._base._photo;
+		int level = player->_role._roledata._status._level;
+		snprintf(roleinfo,sizeof(roleinfo),"%d:%d:",photo,level);	
+		msg += roleinfo;
+		msg += std::string((char*)mafia_id.begin(),mafia_id.size());
+		msg += ":";
+		msg += std::string((char*)mafia_name.begin(),mafia_name.size());
+		msg += ":";
+		char tt[32];
+		snprintf(tt,sizeof(tt),"%d:",time);
+
+		msg += tt;
+		msg += std::string((char*)tt_context.begin(),tt_context.size());
+		msg += ":";
+		msg += std::string((char*)sp_context.begin(),sp_context.size());
+		msg += ":";
+		
+		if( chat_type == 0 )
+		{					
+			MessageManager::GetInstance().Put(src_id, src_id, msg.c_str(), 0);		
+		}	
+
+		if( chat_type == 1 )
+		{
+			std::string msg = "10101:";	
+			//msg = msg + roleinfo + (char*)dest_id.begin() + tt_content + sh_content;
+			
+			//后面好像的加一个dest_id
+			//std::vector<int64_t> extra_roles;
+			//extra_roles.push_back(arg->fighter1);
+			//extra_roles.push_back(arg->fighter2);
+			//extra_roles.push_back(CACHE.Int64:new((char*)dest_id.begin()));
+			//extra_roles.push_back(src_id);
+			MessageManager::GetInstance().Put(src_id, src_id, msg.c_str(), 0);	
+		}		
+	}
+};
+
+};
+
+#endif

@@ -1,0 +1,93 @@
+#ifndef _PWRD_H_
+#define _PWRD_H_
+
+#include <sys/poll.h>
+#include <string>
+#include <map>
+
+#include <protocol.h>
+
+enum PWRD_CONST
+{
+	PWRD_CONST_CMD_BUFF_SIZE			= 1000,
+	PWRD_CONST_RESP_BUFF_SIZE			= 1000,
+	PWRD_CONST_POLLFD_COUNT_MAX			= 100,
+};
+
+class PWRD
+{
+	enum SESSION_STATUS
+	{
+		SESSION_STATUS_READING_GM_CMD		= 0, //等待gm command
+		SESSION_STATUS_WAITING_GAMED_RESP	= 1, //等待gamed处理结果
+		SESSION_STATUS_SENDING_GM_RESP		= 2, //等待发送结果给gm
+		SESSION_STATUS_ERROR			= 3, //出错了，session将被清理，不再做任何工作
+	};
+	enum SESSION_STATUS_TIMEOUT
+	{
+		SESSION_STATUS_READING_GM_CMD_TO	= 3,
+		SESSION_STATUS_WAITING_GAMED_RESP_TO	= 10,
+		SESSION_STATUS_SENDING_GM_RESP_TO	= 3,
+	};
+
+	struct Session //来自gm的链接
+	{
+	public:
+		int _id; //session id
+		int _fd;
+		int _status;
+		time_t _timeout;
+		char _cmd_buff[PWRD_CONST_CMD_BUFF_SIZE+1];
+		int _cmd_buff_index; //新数据写到哪
+		char _resp_buff[PWRD_CONST_RESP_BUFF_SIZE+1];
+		int _resp_buff_index; //已经发送到哪了
+		int _resp_buff_count; //结尾在哪
+		std::string _resp_4_timeout; //gamed超时不返回时给gm的反馈
+		bool _no_more_data;
+
+		Session();
+
+		bool IsError() const { return (_status==SESSION_STATUS_ERROR); }
+		bool NeedRead() const { return (_status==SESSION_STATUS_READING_GM_CMD); }
+		bool NeedWrite() const { return (_status==SESSION_STATUS_SENDING_GM_RESP); }
+		void OnRead();
+		void OnWrite();
+		void OnError(int err);
+		void OnRecvResp(const char *resp); 
+		void OnHeartbeat(time_t now);
+
+	private:
+		bool HaveWholeCmd() const;
+		std::string Pop1Cmd(); //弹出最早收到的cmd
+		void TryProcessCmd();
+	};
+
+	int _listen_fd;
+	int _session_id_stub;
+	std::map<int, Session*> _session_map; //id=>session
+	std::map<int, Session*> _fd_session_map; //fd=>session
+	time_t _prev_heartbeat;
+
+	//临时变量
+	pollfd _pollfd[PWRD_CONST_POLLFD_COUNT_MAX];
+	int _pollfd_count;
+
+	PWRD();
+
+public:
+	static PWRD& GetInstance()
+	{
+		static PWRD instance;
+		return instance;
+	}
+
+	void Start(unsigned short port);
+	void Update();
+	void OnRecvResp(int sess_id, const char *resp);
+
+private:
+	void PreparePollFD();
+};
+
+#endif //_PWRD_H_
+

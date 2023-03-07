@@ -1,0 +1,1744 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="rpcalls.xsl"?>
+
+<application namespace="GNET" project="SANGUO MOBILE">
+	<!-- protocol -->
+	<protocol name="Challenge" maxsize="1024" prior="1" type="1">
+		<variable name="server_rand1" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="Response" maxsize="1024" prior="1" type="2">
+		<variable name="client_rand1_encoded" type="Octets" attr="ref"/>
+		<variable name="account_encoded" type="Octets" attr="ref"/>
+		<variable name="password_encoded" type="Octets" attr="ref"/>
+		<variable name="client_id" type="Octets" attr="ref"/>
+		<variable name="exe_ver" type="Octets" attr="ref"/>
+		<variable name="res_ver" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="AuthResult" maxsize="1024" prior="1" type="3">
+		<variable name="retcode" type="int"/>
+		<variable name="trans_ip" type="Octets" attr="ref"/>
+		<variable name="trans_port" type="unsigned short"/>
+		<variable name="udp_trans_ip" type="Octets" attr="ref"/>
+		<variable name="udp_trans_port" type="unsigned short"/>
+		<variable name="stund_ip" type="Octets" attr="ref"/>
+		<variable name="stund_port" type="unsigned short"/>
+		<variable name="trans_token" type="Octets" attr="ref"/>
+		<variable name="signature" type="int"/>
+	</protocol>
+
+	<protocol name="TransChallenge" maxsize="1024" prior="1" type="4">
+		<variable name="server_rand2" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="TransResponse" maxsize="1024" prior="1" type="5">
+		<variable name="device_id" type="Octets" attr="ref"/>
+		<variable name="trans_token" type="Octets" attr="ref"/>
+		<variable name="client_rand2_encoded" type="Octets" attr="ref"/>
+		<variable name="client_received_count" type="int"/>
+		<variable name="signature" type="int"/>
+	</protocol>
+
+	<protocol name="TransAuthResult" maxsize="1024" prior="1" type="6">
+		<variable name="retcode" type="int"/>
+		<variable name="server_received_count" type="int"/>
+		<variable name="do_reset" type="char"/>
+	</protocol>
+
+	<protocol name="Continue" maxsize="1024" prior="1" type="7">
+		<variable name="reset" type="char"/>
+	</protocol>
+
+	<protocol name="GameProtocol" maxsize="1024000" prior="0" type="8">
+		<variable name="data" type="Octets" attr="ref"/>
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+		<variable name="extra_roles" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_mafias" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_pvps" type="std::vector&lt;int&gt;" attr="ref"/>
+		<variable name="reserved1" type="int" default="0"/>
+		<variable name="reserved2" type="int" default="0"/>
+	</protocol>
+
+	<protocol name="Kickout" maxsize="1024" prior="1" type="9">
+		<variable name="reason" type="int"/>
+	</protocol>
+
+	<protocol name="ServerStatus" maxsize="1024" prior="1" type="10">
+		<variable name="info" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="UDPGameProtocol" maxsize="10240" prior="0" type="11">
+		<variable name="id" type="int64_t"/>
+		<variable name="data" type="Octets" attr="ref"/>
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+		<variable name="signature" type="int"/>
+		<variable name="reserved1" type="int" default="0"/>
+		<variable name="reserved2" type="int" default="0"/>
+	</protocol>
+
+	<protocol name="KeepAlive" maxsize="1024" prior="0" type="12">
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+		<variable name="server_received_count" type="int"/>
+	</protocol>
+
+	<protocol name="UDPKeepAlive" maxsize="1024" prior="1" type="13">
+		<variable name="id" type="int64_t"/>
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+	</protocol>
+	
+	<protocol name="SyncNetime" maxsize="1024" prior="1" type="14">
+		<variable name="id" type="int"/>
+		<variable name="orignate_time" type="int64_t"/>
+		<variable name="offset" type="int64_t"/>
+		<variable name="delay" type="int64_t"/>
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+	</protocol>
+	
+	<protocol name="SyncNetimeRe" maxsize="1024" prior="1" type="15">
+		<variable name="id" type="int"/>
+		<variable name="orignate_time" type="int64_t"/>
+		<variable name="receive_time" type="int64_t"/>
+		<variable name="transmit_time" type="int64_t"/>	
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+	</protocol>
+
+
+
+<!--
+	<protocol name="SyncCmd" maxsize="1024" prior="1" type="14">
+		<variable name="command" type="Octets" attr="ref"/>
+		<variable name="version" type="int"/>
+		<variable name="content" type="Octets" attr="ref"/>
+	</protocol>
+
+	<rpcdata name="Deletion">
+		<variable name="index" type="int"/>
+		<variable name="size" type="int"/>
+	</rpcdata>
+	<rpcdata name="Insertion">
+		<variable name="index" type="int"/>
+		<variable name="adds" type="std::vector&lt;Octets&gt;" attr="ref"/>
+	</rpcdata>
+	<protocol name="UDPIncreSyncCmd" maxsize="1024" prior="1" type="15">
+		<variable name="command" type="Octets" attr="ref"/>
+		<variable name="version" type="int"/>
+		<variable name="src_version" type="int"/>
+		<variable name="deletions" type="std::vector&lt;Deletion&gt;" attr="ref"/>
+		<variable name="insertions" type="std::vector&lt;Insertion&gt;" attr="ref"/>
+	</protocol>
+
+	<protocol name="SyncCmdAck" maxsize="1024" prior="1" type="33">
+		<variable name="command" type="Octets" attr="ref"/>
+		<variable name="version" type="int"/>
+	</protocol>
+-->
+
+	<rpcdata name="C2SGameProtocol">
+		<variable name="data" type="Octets" attr="ref"/>
+	</rpcdata>
+	<protocol name="UDPC2SGameProtocols" maxsize="10240" prior="0" type="35">
+		<variable name="id" type="int64_t"/>
+		<variable name="index" type="int"/>
+		<variable name="protocols" type="std::vector&lt;C2SGameProtocol&gt;" attr="ref"/>
+		<variable name="index_ack" type="int"/>
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+		<variable name="signature" type="int"/>
+		<variable name="reserved1" type="int" default="0"/>
+		<variable name="reserved2" type="int" default="0"/>
+	</protocol>
+	<protocol name="UDPS2CGameProtocols" maxsize="10240" prior="0" type="36">
+		<variable name="index" type="int"/>
+		<variable name="protocols" type="std::vector&lt;Octets&gt;" attr="ref"/>
+		<variable name="index_ack" type="int"/>
+		<variable name="client_send_time" type="unsigned short"/>
+		<variable name="server_send_time" type="unsigned short"/>
+		<variable name="signature" type="int"/>
+		<variable name="reserved1" type="int" default="0"/>
+		<variable name="reserved2" type="int" default="0"/>
+	</protocol>
+
+<!--
+	<protocol name="UDPSyncNetTime" maxsize="1024" prior="1" type="37">
+		<variable name="orignate_time" type="int64_t"/>
+		<variable name="offset" type="int64_t"/>
+		<variable name="delay" type="int64_t"/>
+	</protocol>
+	
+	<protocol name="UDPSyncNetTimeRe" maxsize="1024" prior="1" type="38">
+		<variable name="id" type="int64_t"/>
+		<variable name="orignate_time" type="int64_t"/>
+		<variable name="receive_time" type="int64_t"/>
+		<variable name="transmit_time" type="int64_t"/>	
+	</protocol>
+-->
+
+
+
+
+	<protocol name="PVPServerRegister" maxsize="1024" prior="1" type="39">
+		<variable name="ip" type="Octets" attr="ref"/>
+		<variable name="port" type="unsigned short"/>
+	</protocol>
+
+	<protocol name="PVPServerUpdateStatus" maxsize="1024" prior="1" type="40">
+		<variable name="load" type="int"/>
+	</protocol>
+
+	<rpcdata name="PVPCreateArg">
+		<variable name="id" type="int"/>
+		<variable name="mode" type="int"/>
+		<variable name="fighter1" type="int64_t"/>
+		<variable name="fighter2" type="int64_t"/>
+		<variable name="start_time" type="int"/>
+		<variable name="typ" type="int" comm="´ú±íÁËÏûÏ¢µÄÀ´Ô´ÊÇGamed»¹ÊÇCenter£¬0´ú±íGamed£¬1´ú±íCenter"/>
+		<variable name="robot_flag" type="int" comm="´ú±íÁËÊÇ·ñÊÇ¸ú»úÆ÷ÈË¶ÔÕ½£¬1´ú±íÊÇ"/>
+		<variable name="fighter1_pvpinfo" type="Octets" attr="ref"/>
+		<variable name="fighter2_pvpinfo" type="Octets" attr="ref"/>
+		<variable name="fighter1_zoneid" type="int"/>
+		<variable name="fighter2_zoneid" type="int"/>
+		<variable name="exe_ver" type="Octets" attr="ref"/>
+		<variable name="data_ver" type="Octets" attr="ref"/>
+		<variable name="pvp_ver" type="int"/>
+		<variable name="fighter1_key" type="Octets" attr="ref"/>
+		<variable name="fighter2_key" type="Octets" attr="ref"/>
+		<variable name="match_pvp" type="int"/>
+	</rpcdata>
+	<rpcdata name="PVPCreateRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+	<rpc name="PVPCreate" type="41" maxsize="102400" prior="1" argument="PVPCreateArg" result="PVPCreateRes" timeout="10"/>
+
+<!--
+	<protocol name="PVPLeave" maxsize="1024" prior="1" type="42">
+		<variable name="id" type="int"/>
+		<variable name="fighter" type="int64_t"/>
+	</protocol>
+-->
+
+	<protocol name="PVPDelete" maxsize="1024" prior="1" type="43">
+		<variable name="id" type="int"/>
+		<variable name="video_flag" type="int"/>
+		<variable name="win_flag" type="int"/>
+		<variable name="robot_flag" type="int"/>
+		<variable name="robot_seed" type="int"/>
+		<variable name="robot_type" type="int"/>
+	</protocol>
+
+	<protocol name="PVPEnd" maxsize="1024" prior="1" type="44">
+		<variable name="id" type="int"/>
+		<variable name="fighter1" type="int64_t"/>
+		<variable name="fighter2" type="int64_t"/>
+		<variable name="reason" type="int"/>
+	</protocol>
+
+	<protocol name="PVPPause" maxsize="1024000" prior="1" type="45">
+		<variable name="id" type="int"/>
+		<variable name="fighter" type="int64_t"/>
+		<variable name="fighter_cmds" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="pause_tick" type="int"/>
+		<variable name="role_id" type="int64_t" comm="¶ÏÏßÕß"/>
+	</protocol>
+
+	<protocol name="PVPPause_Re" maxsize="1024" prior="1" type="46">
+		<variable name="id" type="int"/>
+		<variable name="fighter" type="int64_t"/>
+	</protocol>
+
+	<protocol name="PVPContinue" maxsize="1024" prior="1" type="47">
+		<variable name="id" type="int"/>
+		<variable name="fighter" type="int64_t"/>
+		<variable name="continue_time" type="int"/>
+	</protocol>
+
+	<!--  ****************************************************************  -->
+	<!--  Protocols used only logservice and logclient		 	-->
+	<!--  Protocols typeid is 59 - 62 					-->
+	<!--  ***************************************************************** -->
+
+	<protocol name="StatInfoVital" maxsize="1024" prior="1" type="59">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<protocol name="StatInfo" maxsize="1024" prior="2" type="60">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<protocol name="RemoteLogVital" maxsize="4096" prior="1" type="61">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<protocol name="RemoteLog" maxsize="4096" prior="2" type="62">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<state name="LogNull" timeout="3600" attr="null">
+	</state>
+
+	<state name="LogNormal" timeout="3600">
+		<protocol ref="StatInfoVital"/>
+		<protocol ref="StatInfo"/>
+		<protocol ref="RemoteLogVital"/>
+		<protocol ref="RemoteLog"/>
+	</state>
+
+	<service name="logclient">
+		<manager name="Logclient" type="client" initstate="LogNull" reconnect="1"/>
+		<manager name="LogclientTcp" type="client" initstate="LogNull" reconnect="1"/>
+
+		<state ref="LogNull" />
+
+		<protocol ref="StatInfoVital" />
+		<protocol ref="StatInfo" />
+		<protocol ref="RemoteLogVital" />
+		<protocol ref="RemoteLog" />
+	</service>
+
+	<state name="LoggerNull" timeout="3600" attr="null">
+	</state>
+
+
+
+	<rpcdata name="STUNGetServerInfoArg">
+		<variable name="zoneid" type="int"/>
+	</rpcdata>
+	<rpcdata name="STUNGetServerInfoRes">
+		<variable name="retcode" type="int"/>
+		<variable name="public_ip" type="Octets" attr="ref"/>
+		<variable name="public_port" type="unsigned short"/>
+	</rpcdata>
+	<rpc name="STUNGetServerInfo" type="101" maxsize="1024" prior="1" argument="STUNGetServerInfoArg" result="STUNGetServerInfoRes" timeout="10"/>
+
+	<!--62Õâ¸öid²»ÄÜÓÃ???-->
+
+	<protocol name="UDPSTUNRequest" maxsize="1024" prior="1" type="102">
+		<variable name="magic" type="int"/>
+		<variable name="change_ip" type="char"/>
+		<variable name="change_port" type="char"/>
+	</protocol>
+
+	<protocol name="UDPSTUNResponse" maxsize="1024" prior="1" type="103">
+		<variable name="magic" type="int"/>
+		<variable name="client_ip" type="Octets" attr="ref"/>
+		<variable name="client_port" type="unsigned short"/>
+	</protocol>
+
+	<protocol name="ForwardUDPSTUNRequest" maxsize="1024" prior="1" type="104">
+		<variable name="magic" type="int"/>
+		<variable name="client_ip" type="Octets" attr="ref"/>
+		<variable name="client_port" type="unsigned short"/>
+	</protocol>
+
+	<protocol name="UDPP2PMakeHole" maxsize="1024" prior="1" type="105">
+		<variable name="magic" type="int"/>
+		<variable name="request" type="char"/>
+	</protocol>
+
+	<protocol name="ReportUDPInfo" maxsize="1024" prior="1" type="106">
+		<variable name="net_type" type="int"/>
+		<variable name="public_ip" type="Octets" attr="ref"/>
+		<variable name="public_port" type="unsigned short"/>
+		<variable name="local_ip" type="Octets" attr="ref"/>
+		<variable name="local_port" type="unsigned short"/>
+	</protocol>
+
+	<protocol name="ServerLog" maxsize="1024000" prior="1" type="107">
+		<variable name="logs" type="std::vector&lt;Octets&gt;" attr="ref" />
+	</protocol>
+
+	<!--  1001-2000  -->
+	<rpcdata name="DBLoadDataArg">
+		<variable name="handle" type="Octets" attr="ref" default="Octets()"/>
+	</rpcdata>
+
+	<rpcdata name="DBLoadDataRes">
+		<variable name="retcode" type="int"/>
+		<variable name="flag" type="char" default="0"/>
+		<variable name="result_key" type="std::vector&lt;std::string&gt;" attr="ref"/>
+		<variable name="result_value" type="std::vector&lt;std::string&gt;" attr="ref" />
+		<variable name="result_step" type="int64_t" default="0"/>
+		<variable name="handle" type="Octets" attr="ref" default="Octets()"/>
+	</rpcdata>
+
+	<rpc name="DBLoadData" type="1001" maxsize="67108864" prior="1" argument="DBLoadDataArg" result="DBLoadDataRes" timeout="30"/>
+
+	<rpcdata name="DBSaveDataArg">
+		<variable name="result_key" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="result_value" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="find_key" type="Octets" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="DBSaveDataRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="DBSaveData" type="1002" maxsize="67108864" prior="0" argument="DBSaveDataArg" result="DBSaveDataRes" timeout="30"/>
+	
+	<protocol debug="0" name="CenterCommand" maxsize="4096" prior="1" type="1003">
+		<variable name="zone_list" type="std::vector&lt;int&gt;" attr="ref" />
+		<variable name="link_list" type="std::vector&lt;int&gt;" attr="ref" />
+		<variable name="gs_list" type="std::vector&lt;int&gt;" attr="ref" />
+		<variable name="cmd" type="short"/>
+		<variable name="gmsid" type="int"/>
+		<variable name="arg1" type="Octets" attr="ref"/>
+		<variable name="arg2" type="Octets" attr="ref"/>
+		<variable name="arg3" type="Octets" attr="ref"/>
+		<variable name="arg4" type="Octets" attr="ref"/>
+		<variable name="arg5" type="Octets" attr="ref"/>
+		<variable name="arg6" type="Octets" attr="ref"/>
+		<variable name="arg7" type="Octets" attr="ref"/>
+		<variable name="arg8" type="Octets" attr="ref"/>
+		<variable name="arg9" type="Octets" attr="ref"/>
+		<variable name="arg10" type="Octets" attr="ref"/>
+		<variable name="arg11" type="Octets" attr="ref"/>
+		<variable name="arg12" type="Octets" attr="ref"/>
+		<variable name="reserved1" type="int"/>
+		<variable name="reserved2" type="int"/>
+		<variable name="reserved3" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="CenterCommandRe" maxsize="4096" prior="1" type="1004">
+		<variable name="zoneid" type="int"/>
+		<variable name="is_db" type="char"/>
+		<variable name="cmd" type="short"/>
+		<variable name="gmsid" type="int"/>
+		<variable name="retcode" type="int"/>
+		<variable name="res" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol debug="0" name="KuafuZoneRegister" maxsize="1024" prior="1" type="1005">
+		<variable name="zoneid" type="int"/>
+	</protocol>
+
+	<rpcdata name="PvpJoinArg">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="zoneid" type="int" attr="ref" />
+		<variable name="pvpinfo" type="Octets" attr="ref" />
+		<variable name="score" type="int" attr="ref" />
+		<variable name="elo_score" type="int" attr="ref" />
+		<variable name="exe_version" type="Octets" attr="ref" />
+		<variable name="data_version" type="Octets" attr="ref" />
+		<variable name="key" type="Octets" attr="ref" />
+		<variable name="pvp_ver" type="int" attr="ref" />
+		<variable name="win_count" type="int" attr="ref" comm="¸ºÊýµÄÊ±ºò´ú±íµÄÊÇÊäµÄ³¡Êý"/>
+		<variable name="vs_robot" type="char" comm="ÊÇ·ñÖ¸¶¨Æ¥Åäµ½»úÆ÷ÈË"/>
+		<variable name="wait_max_before_vs_robot" type="int" comm="¶à¾ÃÆ¥Åä²»µ½Íæ¼ÒÊ±²Å»áÆ¥Åäµ½»úÆ÷ÈË"/>
+	</rpcdata>
+
+	<rpcdata name="PvpJoinRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="PvpJoin" type="1006" maxsize="4096" prior="1" argument="PvpJoinArg" result="PvpJoinRes" timeout="30"/>
+
+	<protocol debug="0" name="PvpMatchSuccess" maxsize="4096" prior="1" type="1007">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="index" type="int"/>
+		<variable name="retcode" type="int"/>
+		<variable name="time" type="int"/>
+		<variable name="room_id" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpEnter" maxsize="4096" prior="1" type="1008">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="index" type="int"/>
+		<variable name="flag" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpEnterRe" maxsize="4096" prior="1" type="1009">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="pvpinfo" type="Octets" attr="ref" />
+		<variable name="fight_pvpinfo" type="Octets" attr="ref" />
+		<variable name="robot_flag" type="int" attr="ref" />
+		<variable name="robot_seed" type="int" attr="ref" />
+		<variable name="robot_type" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpCenterCreate" maxsize="4096" prior="1" type="1010">
+		<variable name="retcode" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="start_time" type="int" attr="ref" />
+		<variable name="ip" type="Octets" attr="ref" />
+		<variable name="port" type="int" attr="ref" />
+		<variable name="room_id" type="int" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="PvpLeave" maxsize="4096" prior="1" type="1011">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="index" type="int"/>
+		<variable name="reason" type="int"/>
+		<variable name="typ" type="int"/>
+		<variable name="score" type="int"/>
+		<variable name="duration" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpLeaveRe" maxsize="4096" prior="1" type="1012">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="result" type="int"/>
+		<variable name="typ" type="int"/>
+		<variable name="elo_score" type="int"/>
+		<variable name="room_typ" type="int" comm="·¿¼äµÄÀàÐÍ£¬0´ú±íÆ¥Åä£¬1´ú±íÔ¼Õ½¡£"/>
+		<variable name="room_id" type="int" comm="·¿¼äºÅ"/>
+		<variable name="video_flag" type="int" comm="ÊÇ·ñÓÐÂ¼Ïñ"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpReady" maxsize="4096" prior="1" type="1013">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="index" type="int"/>
+	</protocol>
+	
+	<rpcdata name="PvpCancleArg">
+		<variable name="roleid" type="int64_t" attr="ref" />
+	</rpcdata>
+
+	<rpcdata name="PvpCancleRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="PvpCancle" type="1014" maxsize="4096" prior="1" argument="PvpCancleArg" result="PvpCancleRes" timeout="30"/>
+	
+	<protocol debug="0" name="PvpSpeed" maxsize="4096" prior="1" type="1015">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="index" type="int"/>
+		<variable name="speed" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpSpeedRe" maxsize="4096" prior="1" type="1016">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="speed" type="int"/>
+	</protocol>
+	
+	<rpcdata name="CreateRoleNameArg">
+		<variable name="name" type="Octets" attr="ref"/>
+		<variable name="photo" type="int" attr="ref"/>
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="errorinfo" type="Octets" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="CreateRoleNameRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="CreateRoleName" type="1017" maxsize="4096" prior="1" argument="CreateRoleNameArg" result="CreateRoleNameRes" timeout="30"/>
+	
+	<protocol debug="0" name="PvpReset" maxsize="4096" prior="1" type="1018">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="index" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="PvpResetRe" maxsize="4096" prior="1" type="1019">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="retcode" type="int"/>
+	</protocol>
+
+	<rpcdata name="PvpVideo">
+		<variable name="tick" type="int"/>
+		<variable name="first_operation" type="Octets" attr="ref"/>
+		<variable name="second_operation" type="Octets" attr="ref"/>
+	</rpcdata>
+	
+	<protocol debug="0" name="PvpOperation" maxsize="16777216" prior="1" type="1020">
+		<variable name="id" type="int" attr="ref" />
+		<variable name="first" type="int64_t" attr="ref" />
+		<variable name="second" type="int64_t" attr="ref" />
+		<variable name="first_zoneid" type="int" attr="ref" />
+		<variable name="second_zoneid" type="int" attr="ref" />
+		<variable name="first_pvpinfo" type="Octets" attr="ref" />
+		<variable name="second_pvpinfo" type="Octets" attr="ref" />
+		<variable name="operation" type="std::vector&lt;PvpVideo&gt;" />
+		<variable name="win_flag" type="int" attr="ref" />
+		<variable name="robot_flag" type="int" attr="ref" />
+		<variable name="robot_seed" type="int" attr="ref" />
+		<variable name="robot_type" type="int"/>
+		<variable name="exe_ver" type="Octets" attr="ref" />
+		<variable name="data_ver" type="Octets" attr="ref" />
+		<variable name="pvp_ver" type="int"/>
+		<variable name="match_pvp" type="int"/>
+	</protocol>
+
+	<rpcdata name="DanMuInfo">
+		<variable name="role_id" type="int64_t" attr="ref" />
+		<variable name="role_name" type="Octets" attr="ref"/>
+		<variable name="tick" type="int"/>
+		<variable name="danmu" type="Octets" attr="ref"/>
+	</rpcdata>
+	
+	<rpcdata name="PvpVideoData">
+		<variable name="first" type="int64_t" attr="ref" />
+		<variable name="second" type="int64_t" attr="ref" />
+		<variable name="first_pvpinfo" type="Octets" attr="ref"/>
+		<variable name="second_pvpinfo" type="Octets" attr="ref"/>
+		<variable name="operation" type="Octets" attr="ref"/>
+		<variable name="win_flag" type="int" attr="ref" />
+		<variable name="del_flag" type="int" attr="ref" />
+		<variable name="robot_flag" type="int" attr="ref" />
+		<variable name="robot_seed" type="int" attr="ref" />
+		<variable name="robot_type" type="int"/>
+		<variable name="exe_ver" type="Octets" attr="ref" />
+		<variable name="data_ver" type="Octets" attr="ref" />
+		<variable name="danmu_info" type="std::vector&lt;DanMuInfo&gt;" />
+		<variable name="pvp_ver" type="int" attr="ref" />
+	</rpcdata>
+	
+	<protocol debug="0" name="SendPvpVideoID" maxsize="102400" prior="1" type="1021">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="video_id" type="int64_t" attr="ref" />
+		<variable name="first_pvpinfo" type="Octets" attr="ref"/>
+		<variable name="second_pvpinfo" type="Octets" attr="ref"/>
+		<variable name="win_flag" type="int" attr="ref" />
+		<variable name="match_pvp" type="int"/>
+		<variable name="score" type="int"/>
+		<variable name="duration" type="int"/>
+		<variable name="robot_flag" type="int"/>
+	</protocol>
+	
+	<protocol debug="0" name="GetPvpVideo" maxsize="1024" prior="1" type="1022">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="zoneid" type="int" attr="ref" />
+		<variable name="video_id" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="GetPvpVideoRe" maxsize="16777216" prior="1" type="1023">
+		<variable name="retcode" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="video_id" type="Octets" attr="ref" />
+		<variable name="video" type="Octets" attr="ref" />
+		<variable name="danmu_info" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="DelPvpVideo" maxsize="1024" prior="1" type="1024">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="video_id" type="Octets" attr="ref" />
+	</protocol>
+	
+	<rpcdata name="DBLoadRoleDataArg">
+		<variable name="key" type="Octets" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="DBLoadRoleDataRes">
+		<variable name="retcode" type="int"/>
+		<variable name="value" type="Octets" attr="ref" />
+	</rpcdata>
+
+	<rpc name="DBLoadRoleData" type="1025" maxsize="67108864" prior="1" argument="DBLoadRoleDataArg" result="DBLoadRoleDataRes" timeout="30"/>
+	
+	<rpcdata name="CreateMafiaNameArg">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="name" type="Octets" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="CreateMafiaNameRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="CreateMafiaName" type="1026" maxsize="4096" prior="1" argument="CreateMafiaNameArg" result="CreateMafiaNameRes" timeout="30"/>
+	
+	<rpcdata name="ChangeMafiaNameArg">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="name" type="Octets" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="ChangeMafiaNameRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="ChangeMafiaName" type="1027" maxsize="4096" prior="1" argument="ChangeMafiaNameArg" result="ChangeMafiaNameRes" timeout="30"/>
+	
+	<protocol debug="0" name="AudienceOperation" maxsize="4096" prior="1" type="1028">
+		<variable name="room_id" type="int"/>
+		<variable name="operation" type="PvpVideo"/>
+	</protocol>
+
+	<rpcdata name="FightInfo">
+		<variable name="room_id" type="int"/>
+		<variable name="fight1_info" type="Octets" attr="ref"/>
+		<variable name="fight2_info" type="Octets" attr="ref"/>
+	</rpcdata>
+	
+	<protocol debug="0" name="AudienceGetList" maxsize="1024" prior="1" type="1029">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="zoneid" type="int" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceGetListRe" maxsize="16777216" prior="1" type="1030">
+		<variable name="retcode" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="fight_info" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceGetOperation" maxsize="1024" prior="1" type="1031">
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="zoneid" type="int" attr="ref" />
+		<variable name="room_id" type="int" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceGetOperationRe" maxsize="16777216" prior="1" type="1032">
+		<variable name="retcode" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="room_id" type="int" attr="ref" />
+		<variable name="fight_robot" type="int" attr="ref" />
+		<variable name="robot_seed" type="int" attr="ref" />
+		<variable name="robot_type" type="int"/>
+		<variable name="fight1_pvpinfo" type="Octets" attr="ref" />
+		<variable name="fight2_pvpinfo" type="Octets" attr="ref" />
+		<variable name="operation" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceSendOperation" maxsize="16777216" prior="1" type="1033">
+		<variable name="room_id" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="operation" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceLeaveRoom" maxsize="1024" prior="1" type="1034">
+		<variable name="room_id" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceFinishRoom" maxsize="16777216" prior="1" type="1035">
+		<variable name="room_id" type="int" attr="ref" />
+		<variable name="win_flag" type="int" attr="ref" />
+		<variable name="reason" type="int" attr="ref" />
+		<variable name="roleid" type="int64_t" attr="ref" />
+		<variable name="operation" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="YueZhanBegin" maxsize="16777216" prior="1" type="1036">
+		<variable name="create_roleid" type="int64_t" attr="ref" />
+		<variable name="create_pvpinfo" type="Octets" attr="ref" />
+		<variable name="create_key" type="Octets" attr="ref" />
+		<variable name="join_roleid" type="int64_t" attr="ref" />
+		<variable name="join_pvpinfo" type="Octets" attr="ref" />
+		<variable name="join_key" type="Octets" attr="ref" />
+		<variable name="zoneid" type="int" attr="ref" />
+		<variable name="room_id" type="int" attr="ref" />
+		<variable name="exe_version" type="Octets" attr="ref" />
+		<variable name="data_version" type="Octets" attr="ref" />
+		<variable name="pvp_ver" type="int" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="PvpDanMu" maxsize="1024" prior="1" type="1037">
+		<variable name="role_id" type="int64_t" attr="ref" />
+		<variable name="role_name" type="Octets" attr="ref" />
+		<variable name="zone_id" type="int" attr="ref" />
+		<variable name="pvp_id" type="int" attr="ref" />
+		<variable name="video_id" type="int64_t" attr="ref" />
+		<variable name="tick" type="int" attr="ref" />
+		<variable name="danmu_info" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="UpdateDanMuInfo" maxsize="1024" prior="1" type="1038">
+		<variable name="id" type="int64_t" attr="ref" comm="ÄãÒª·¢¸øµÄÍæ¼ÒµÄid"/>
+		<variable name="role_id" type="int64_t" attr="ref" />
+		<variable name="role_name" type="Octets" attr="ref" />
+		<variable name="tick" type="int" attr="ref" />
+		<variable name="danmu_info" type="Octets" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="YueZhanEnd" maxsize="1024" prior="1" type="1039">
+		<variable name="room_id" type="int" attr="ref" />
+		<variable name="video_id" type="int64_t" attr="ref" />
+	</protocol>
+	
+	<protocol debug="0" name="AudienceUpdateNum" maxsize="1024" prior="1" type="1040">
+		<variable name="role_id" type="int64_t" attr="ref" />
+		<variable name="num" type="int" attr="ref" />
+	</protocol>
+
+	<rpcdata name="ChangeRoleNameArg">
+		<variable name="name" type="Octets" attr="ref"/>
+		<variable name="roleid" type="int64_t" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="ChangeRoleNameRes">
+        	<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="ChangeRoleName" type="1041" maxsize="4096" prior="1" argument="ChangeRoleNameArg" result="ChangeRoleNameRes" timeout="30"/>
+
+	<rpcdata name="GetTextInSpeechArg">	
+		<variable name="src_id" type="int64_t" attr="ref"/>
+		<variable name="dest_id" type="Octets" attr="ref"/>
+		<variable name="zone_id" type="int" attr="ref"/>
+		<variable name="time" type="int" attr="ref"/>
+		<variable name="chat_type" type="int" attr="ref"/>
+		<variable name="chat_channel" type="int" attr="ref"/>
+		<variable name="speech_content"  type="Octets" attr="ref"/>	
+	</rpcdata>
+
+	<rpcdata name="GetTextInSpeechRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+	<rpc name="GetTextInSpeech" type="2001" maxsize="67108864" prior="1" argument="GetTextInSpeechArg" result="GetTextInSpeechRes" timeout="10"/>
+	
+	<protocol name="GetIATextInSpeech" maxsize="67108864" prior="1" type="2002"> 
+		<variable name="src_id" type="int64_t" attr="ref"/>	
+	</protocol>
+	<protocol name="GetIATextInSpeechRe" maxsize="67108864" prior="1" type="2003"> 
+		<variable name="src_id" type="int64_t" attr="ref"/>
+		<variable name="dest_id" type="Octets" attr="ref"/>
+		<variable name="zone_id" type="int" attr="ref"/>
+		<variable name="time" type="int" attr="ref"/>
+		<variable name="chat_type" type="int" attr="ref"/>
+		<variable name="chat_channel" type="int" attr="ref"/>
+		<variable name="speech_content" type="Octets" attr="ref"/>
+		<variable name="text_content"  type="Octets" attr="ref"/>
+	</protocol>
+	
+	<protocol debug="0" name="STTZoneRegister" maxsize="1024" prior="1" type="2004">
+		<variable name="zoneid" type="int"/>
+	</protocol>
+
+	<protocol name="RoleinfoRegister" maxsize="1024" prior="1" type="2005"> 
+		<variable name="account" type="Octets" attr="ref"/> 
+		<variable name="name" type="Octets" attr="ref"/>
+		<variable name="zone_id" type="int" attr="ref"/>
+		<variable name="level" type="int" attr="ref"/>
+		<variable name="photo" type="int" attr="ref"/>
+	</protocol>
+	
+	<rpcdata name="Item">
+		<variable name="id" type="int" attr="ref"/>
+		<variable name="num" type="int" attr="ref"/>
+	</rpcdata>
+	
+	<protocol debug="0" name="CustomerRequest" maxsize="1024" prior="1" type="3001">
+		<variable name="typ" type="int" attr="ref" comm="ÃüÁîµÄÀàÐÍ"/>
+		<variable name="role_id" type="int64_t" attr="ref" comm="±»²Ù×÷µÄÍæ¼Ò"/>
+		<variable name="time" type="int" attr="ref" comm="½ûÑÔ»òÕß½ûÖ¹µÇÂ¼µÄÊ±¼ä"/>
+		<variable name="notice" type="Octets" attr="ref" comm="È«·þ¹«¸æ"/>
+		<variable name="mail_id" type="int" attr="ref" comm="¸øÍæ¼Ò·¢ËÍµÄÓÊ¼þ,Èç¹ûÅäÖÃÁËÕâ¸ö£¬ÄÇÃ´ÏÂÃæµÄÈý¸ö¶¼²»»áÉúÐ§"/>
+		<variable name="title" type="Octets" attr="ref" comm="ÓÊ¼þµÄ±êÌâ"/>
+		<variable name="content" type="Octets" attr="ref" comm="ÓÊ¼þµÄÄÚÈÝ"/>
+		<variable name="mail_item" type="std::vector&lt;Item&gt;" attr="ref" comm="ÓÊ¼þµÄ¸½¼ÓÎïÆ·"/>
+	</protocol>
+	
+	<protocol debug="0" name="CustomerRequest_Re" maxsize="1024" prior="1" type="3002">
+		<variable name="retcode" type="int" attr="ref" comm="´¦ÀíµÄ½á¹ûÐÅÏ¢"/>
+		<variable name="typ" type="int" attr="ref" comm="ÃüÁîµÄÀàÐÍ"/>
+		<variable name="role_id" type="int64_t" attr="ref" comm="±»²Ù×÷µÄÍæ¼Ò"/>
+		<variable name="time" type="int" attr="ref" comm="½ûÑÔ»òÕß½ûÖ¹µÇÂ¼µÄÊ±¼ä"/>
+		<variable name="mail_id" type="int" attr="ref" comm="¸øÍæ¼Ò·¢ËÍµÄÓÊ¼þ,Èç¹ûÅäÖÃÁËÕâ¸ö£¬ÄÇÃ´ÏÂÃæµÄÈý¸ö¶¼²»»áÉúÐ§"/>
+		<variable name="title" type="Octets" attr="ref" comm="ÓÊ¼þµÄ±êÌâ"/>
+		<variable name="content" type="Octets" attr="ref" comm="ÓÊ¼þµÄÄÚÈÝ"/>
+		<variable name="mail_item" type="std::vector&lt;Item&gt;" attr="ref" comm="ÓÊ¼þµÄ¸½¼ÓÎïÆ·"/>
+	</protocol>
+	
+	<protocol debug="0" name="VerficationOperation" maxsize="10240000" prior="1" type="3101">
+		<variable name="hero_info" type="std::string" attr="ref"/>
+		<variable name="operation" type="std::string" attr="ref"/>
+		<variable name="stage_id" type="int" attr="ref" comm="´¦ÀíµÄ½á¹ûÐÅÏ¢"/>
+	</protocol>
+	
+	<protocol debug="0" name="VerficationOperation_re" maxsize="10240000" prior="1" type="3102">
+		<variable name="retcode" type="int" attr="ref" comm="´¦ÀíµÄ½á¹ûÐÅÏ¢"/>
+	</protocol>
+	
+	<protocol debug="0" name="Register" maxsize="1024" prior="1" type="3103">
+		<variable name="zoneid" type="int" attr="ref" comm="´¦ÀíµÄ½á¹ûÐÅÏ¢"/>
+		<variable name="battle_ver" type="int" attr="ref" comm="Õ½¶·µÄ°æ±¾"/>
+	</protocol>
+
+	<!-- service -->
+	<service name="client">
+		<manager name="Gate" type="client" initstate="GateClient"/>
+		<manager name="Status" type="client" initstate="StatusClient"/>
+		<manager name="Trans" type="client" initstate="TransClient"/>
+		<manager name="UDPTrans" type="client" initstate="UDPTransClient"/>
+		
+		<state ref="GateClient"/>
+		<state ref="StatusClient"/>
+		<state ref="TransClient"/>
+		<state ref="UDPTransClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="Response"/>
+		<protocol ref="TransResponse"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="UDPC2SGameProtocols"/>
+		<protocol ref="SyncNetimeRe"/>
+<!--
+		<protocol ref="UDPSyncNetTimeRe"/>
+-->
+		<protocol ref="UDPSTUNRequest"/>
+		<protocol ref="ReportUDPInfo"/>
+		<protocol ref="ServerLog"/>
+	</service>
+	<state name="GateClient" timeout="86400">
+		<protocol ref="Challenge"/>
+		<protocol ref="AuthResult"/>
+	</state>
+	<state name="StatusClient" timeout="86400">
+		<protocol ref="ServerStatus"/>
+	</state>
+	<state name="TransClient" timeout="86400">
+		<protocol ref="TransChallenge"/>
+		<protocol ref="TransAuthResult"/>
+		<protocol ref="Continue"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="Kickout"/>
+		<protocol ref="SyncNetime"/>
+	</state>
+	<state name="UDPTransClient" timeout="86400">
+		<protocol ref="UDPGameProtocol"/>
+		<protocol ref="UDPKeepAlive"/>
+		<protocol ref="UDPS2CGameProtocols"/>
+<!--
+		<protocol ref="UDPSyncNetTime"/>
+-->
+		<protocol ref="UDPSTUNResponse"/>
+		<protocol ref="UDPP2PMakeHole"/>
+		<protocol ref="UDPC2SGameProtocols"/>
+	</state>
+	<state name="Null" timeout="5"/>
+
+	<service name="gamed">
+		<manager name="Gate" type="server" initstate="GateServer"/>
+		<manager name="Trans" type="server" initstate="TransServer"/>
+		<manager name="UDPTrans" type="server" initstate="UDPTransServer"/>
+		<manager name="GameDB" type="client" initstate="GameDBClient"/>
+		<manager name="GCenter" type="client" initstate="GCenterClient"/>
+		<manager name="PVPGame" type="server" initstate="PVPGameServer"/>
+		<manager name="STUNGame" type="client" initstate="STUNGameClient" reconnect="1"/>
+		<manager name="STUNDeaf" type="server" initstate="STUNDeafServer"/>
+		<manager name="UniqueName" type="client" initstate="UniqueNameClient" reconnect="1"/>
+		<manager name="STT" type="client" initstate="STTClient" />
+		<manager name="CustomerServive" type="server" initstate="CustomerServiveServer"/>
+		<manager name="VerificationGame" type="server" initstate="VerificationGameServer"/>
+		<manager name="Register" type="client" initstate="RegisterClient" reconnect="1"/>
+		<manager name="GMAdapter" type="server" initstate="GMAdapterServer"/>
+		<manager name="GACCode" type="client" initstate="GACCodeClient" reconnect="1"/>
+
+		<state ref="GateServer"/>
+		<state ref="TransServer"/>
+		<state ref="UDPTransServer"/>
+		<state ref="GameDBClient"/>
+		<state ref="GCenterClient"/>
+		<state ref="PVPGameServer"/>
+		<state ref="STUNGameClient"/>
+		<state ref="STUNDeafServer"/>
+		<state ref="UniqueNameClient"/>
+		<state ref="STTClient"/>
+		<state ref="RegisterClient"/>
+		<state ref="CustomerServiveServer"/>
+		<state ref="VerificationGameServer"/>
+		<state ref="GMAdapterServer"/>
+		<state ref="GACCodeClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="VerficationOperation"/>
+		<protocol ref="VerficationOperation_re"/>
+		<protocol ref="Register"/>
+		<protocol ref="Challenge"/>
+		<protocol ref="AuthResult"/>
+		<protocol ref="TransChallenge"/>
+		<protocol ref="TransAuthResult"/>
+		<protocol ref="Kickout"/>
+<!--
+		<protocol ref="UDPS2CGameProtocols"/>
+-->
+		<protocol ref="SyncNetime"/>
+<!--
+		<protocol ref="UDPSyncNetTime"/>
+-->
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBLoadRoleData"/>
+		<rpc ref="DBSaveData"/>
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+		<protocol ref="KuafuZoneRegister"/>
+		<protocol ref="PvpMatchSuccess"/>
+		<protocol ref="PvpEnter"/>
+		<protocol ref="PvpEnterRe"/>
+		<protocol ref="SendPvpVideoID"/>
+		<protocol ref="PvpCenterCreate"/>
+		<protocol ref="PvpLeave"/>
+		<protocol ref="PvpLeaveRe"/>
+		<protocol ref="PvpReady"/>
+		<protocol ref="PvpSpeed"/>
+		<protocol ref="PvpSpeedRe"/>
+		<protocol ref="PvpReset"/>
+		<protocol ref="PvpResetRe"/>
+		<protocol ref="GetPvpVideo"/>
+		<protocol ref="GetPvpVideoRe"/>
+		<protocol ref="AudienceGetList"/>
+		<protocol ref="AudienceGetListRe"/>
+		<protocol ref="AudienceGetOperation"/>
+		<protocol ref="AudienceGetOperationRe"/>
+		<protocol ref="AudienceUpdateNum"/>
+		<protocol ref="AudienceSendOperation"/>
+		<protocol ref="AudienceLeaveRoom"/>
+		<protocol ref="YueZhanBegin"/>
+		<protocol ref="PvpDanMu"/>
+		<protocol ref="AudienceFinishRoom"/>
+		<protocol ref="UpdateDanMuInfo"/>
+		<protocol ref="YueZhanEnd"/>
+		<protocol ref="DelPvpVideo"/>
+		<!--<protocol ref="PVPLeave"/>-->
+		<protocol ref="PVPDelete"/>
+		<rpc ref="STUNGetServerInfo"/>
+		<protocol ref="UDPSTUNResponse"/>
+		<protocol ref="ForwardUDPSTUNRequest"/>
+		<rpc ref="PvpCancle"/>
+		<rpc ref="CreateRoleName"/>
+		<rpc ref="ChangeRoleName"/>
+		<rpc ref="CreateMafiaName"/>
+		<rpc ref="ChangeMafiaName"/>
+		<rpc ref="GetTextInSpeech"/>
+		<protocol ref="GetIATextInSpeechRe"/>
+		<protocol ref="STTZoneRegister"/>
+		<protocol ref="PVPPause_Re"/>
+
+		<protocol ref="GMCmd_GetAccCharList_Re"/>
+		<protocol ref="GMCmd_GetChar_Re"/>
+		<protocol ref="GMCmd_AddForbidLogin_Re"/>
+		<protocol ref="GMCmd_DelForbidLogin_Re"/>
+		<protocol ref="GMCmd_AddForbidTalk_Re"/>
+		<protocol ref="GMCmd_DelForbidTalk_Re"/>
+		<protocol ref="GMCmd_GetAccID_Re"/>
+		<protocol ref="GMCmd_Bull_Re"/>
+		<protocol ref="GMCmd_MailItemToPlayer_Re"/>
+		<protocol ref="GMCmd_MailToAllPlayer_Re"/>
+		<protocol ref="GMCmd_GetRoleForbidChat_Re"/>
+		<protocol ref="GMCmd_GetRoleForbidLogin_Re"/>
+		<protocol ref="GMCmd_AddForbidWord_Re"/>
+		<protocol ref="GMCmd_DelForbidWord_Re"/>
+		<protocol ref="GMCmd_AddServerReward_Re"/>
+		<protocol ref="GMCmd_ListServerReward_Re"/>
+		<protocol ref="GMCmd_RemoveServerReward_Re"/>
+		<protocol ref="GMCmd_MailToPlayer_Re"/>
+	</service>
+
+	<state name="UniqueNameClient" timeout="86400">
+		<rpc ref="CreateRoleName"/>
+		<rpc ref="ChangeRoleName"/>
+		<rpc ref="CreateMafiaName"/>
+		<rpc ref="ChangeMafiaName"/>
+	</state>
+
+	<state name="STTClient" timeout="86400">
+		<rpc ref="GetTextInSpeech"/>
+		<protocol ref="STTZoneRegister"/>
+		<protocol ref="GetIATextInSpeechRe"/>
+	</state>
+	
+	<state name="RegisterClient" timeout="86400">
+		<protocol ref="RoleinfoRegister"/>
+	</state>
+
+
+	<state name="GateServer" timeout="10">
+		<protocol ref="Response"/>
+	</state>
+	<state name="TransServer" timeout="10">
+		<protocol ref="TransResponse"/>
+		<protocol ref="Continue"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="SyncNetimeRe"/>
+		<protocol ref="ReportUDPInfo"/>
+		<protocol ref="ServerLog"/>
+	</state>
+	<state name="UDPTransServer" timeout="10">
+		<protocol ref="UDPGameProtocol"/>
+		<protocol ref="UDPKeepAlive"/>
+<!--
+		<protocol ref="UDPC2SGameProtocols"/>
+		<protocol ref="UDPSyncNetTimeRe"/>
+-->
+		<protocol ref="UDPSTUNRequest"/>
+	</state>
+	<state name="GameDBClient" timeout="86400">
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBLoadRoleData"/>
+		<rpc ref="DBSaveData"/>
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+	</state>
+
+	<state name="GCenterClient" timeout="86400">
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+		<protocol ref="KuafuZoneRegister"/>
+		<protocol ref="PvpMatchSuccess"/>
+		<protocol ref="PvpEnter"/>
+		<protocol ref="PvpEnterRe"/>
+		<protocol ref="SendPvpVideoID"/>
+		<protocol ref="PvpCenterCreate"/>
+		<protocol ref="PvpLeave"/>
+		<protocol ref="PvpLeaveRe"/>
+		<rpc ref="PvpJoin"/>
+		<protocol ref="PvpReady"/>
+		<protocol ref="PvpSpeed"/>
+		<protocol ref="PvpSpeedRe"/>
+		<protocol ref="PvpReset"/>
+		<protocol ref="PvpResetRe"/>
+		<protocol ref="GetPvpVideo"/>
+		<protocol ref="GetPvpVideoRe"/>
+		<protocol ref="AudienceGetList"/>
+		<protocol ref="AudienceGetListRe"/>
+		<protocol ref="AudienceGetOperation"/>
+		<protocol ref="AudienceGetOperationRe"/>
+		<protocol ref="AudienceUpdateNum"/>
+		<protocol ref="AudienceSendOperation"/>
+		<protocol ref="AudienceLeaveRoom"/>
+		<protocol ref="AudienceFinishRoom"/>
+		<protocol ref="UpdateDanMuInfo"/>
+		<protocol ref="YueZhanEnd"/>
+		<protocol ref="YueZhanBegin"/>
+		<protocol ref="PvpDanMu"/>
+		<protocol ref="DelPvpVideo"/>
+		<protocol ref="PVPPause"/>
+		<protocol ref="PVPContinue"/>
+		<rpc ref="PvpCancle"/>
+	</state>
+
+	<state name="PVPGameServer" timeout="86400">
+		<protocol ref="PVPServerRegister"/>
+		<protocol ref="PVPServerUpdateStatus"/>
+		<protocol ref="PVPEnd"/>
+		<protocol ref="PvpOperation"/>
+		<protocol ref="AudienceOperation"/>
+		<rpc ref="PVPCreate"/>
+		<protocol ref="PVPPause"/>
+		<protocol ref="PVPContinue"/>
+	</state>
+
+	<state name="STUNGameClient" timeout="86400">
+		<rpc ref="STUNGetServerInfo"/>
+	</state>
+
+	<state name="STUNDeafServer" timeout="86400">
+		<!--Ö»·¢²»ÊÕ-->
+	</state>
+
+	<state name="CustomerServiveServer" timeout="86400">
+		<protocol ref="CustomerRequest"/>
+		<protocol ref="CustomerRequest_Re"/>
+	</state>
+
+	<state name="VerificationGameServer" timeout="86400">
+		<protocol ref="VerficationOperation"/>
+		<protocol ref="VerficationOperation_re"/>
+		<protocol ref="Register"/>
+	</state>
+
+	<state name="GMAdapterServer" timeout="86400">
+		<protocol ref="GMCmd_GetAccCharList"/>
+		<protocol ref="GMCmd_GetChar"/>
+		<protocol ref="GMCmd_AddForbidLogin"/>
+		<protocol ref="GMCmd_DelForbidLogin"/>
+		<protocol ref="GMCmd_AddForbidTalk"/>
+		<protocol ref="GMCmd_DelForbidTalk"/>
+		<protocol ref="GMCmd_GetAccID"/>
+		<protocol ref="GMCmd_Bull"/>
+		<protocol ref="GMCmd_MailItemToPlayer"/>
+		<protocol ref="GMCmd_MailToAllPlayer"/>
+		<protocol ref="GMCmd_GetRoleForbidChat"/>
+		<protocol ref="GMCmd_GetRoleForbidLogin"/>
+		<protocol ref="GMCmd_AddForbidWord"/>
+		<protocol ref="GMCmd_DelForbidWord"/>
+		<protocol ref="GMCmd_AddServerReward"/>
+		<protocol ref="GMCmd_ListServerReward"/>
+		<protocol ref="GMCmd_RemoveServerReward"/>
+		<protocol ref="GMCmd_MailToPlayer"/>
+	</state>
+	
+	<state name="GACCodeClient" timeout="86400">
+		<protocol ref="ACZoneRegister" />
+		<rpc ref="GUseActiveCode" />		
+	</state>
+
+	<service name="gamedbd">
+		<manager name="GameDB" type="server" initstate="GameDBServer"/>
+
+		<state ref="GameDBServer"/>
+		
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBLoadRoleData"/>
+		<rpc ref="DBSaveData"/>
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+	</service>
+
+	<state name="GameDBServer" timeout="86400">
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBLoadRoleData"/>
+		<rpc ref="DBSaveData"/>
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+	</state>
+
+	<service name="gcenterd">
+		<manager name="GM" type="server" initstate="GMServer"/>
+		<manager name="GCenter" type="server" initstate="GCenterServer"/>
+		<manager name="PVPGame" type="server" initstate="PVPGameServer"/>
+		
+		<state ref="GMServer"/>
+		<state ref="GCenterServer"/>
+		<state ref="PVPGameServer"/>
+
+		<protocol ref="CenterCommand"/>
+		<protocol ref="PvpMatchSuccess"/>
+		<protocol ref="PvpEnter"/>
+		<protocol ref="PvpEnterRe"/>
+		<protocol ref="SendPvpVideoID"/>
+		<protocol ref="PvpCenterCreate"/>
+		<protocol ref="PvpLeave"/>
+		<protocol ref="PvpLeaveRe"/>
+		<rpc ref="PvpJoin"/>
+		<protocol ref="PVPDelete"/>
+		<protocol ref="PvpReady"/>
+		<protocol ref="PvpSpeed"/>
+		<protocol ref="PvpSpeedRe"/>
+		<protocol ref="PvpReset"/>
+		<protocol ref="PvpResetRe"/>
+		<protocol ref="GetPvpVideo"/>
+		<protocol ref="GetPvpVideoRe"/>
+		<protocol ref="AudienceGetList"/>
+		<protocol ref="AudienceGetListRe"/>
+		<protocol ref="AudienceGetOperation"/>
+		<protocol ref="AudienceGetOperationRe"/>
+		<protocol ref="AudienceUpdateNum"/>
+		<protocol ref="AudienceSendOperation"/>
+		<protocol ref="AudienceLeaveRoom"/>
+		<protocol ref="YueZhanBegin"/>
+		<protocol ref="PvpDanMu"/>
+		<protocol ref="AudienceFinishRoom"/>
+		<protocol ref="UpdateDanMuInfo"/>
+		<protocol ref="YueZhanEnd"/>
+		<protocol ref="DelPvpVideo"/>
+		<rpc ref="PvpCancle"/>
+	</service>
+
+	<state name="GMServer" timeout="86400">
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+	</state>
+
+	<state name="GCenterServer" timeout="86400">
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+		<protocol ref="KuafuZoneRegister"/>
+		<rpc ref="PvpJoin"/>
+		<protocol ref="PvpMatchSuccess"/>
+		<protocol ref="PvpEnter"/>
+		<protocol ref="PvpEnterRe"/>
+		<protocol ref="SendPvpVideoID"/>
+		<protocol ref="PvpLeave"/>
+		<protocol ref="PvpLeaveRe"/>
+		<protocol ref="PvpCenterCreate"/>
+		<protocol ref="PvpReady"/>
+		<protocol ref="PvpSpeed"/>
+		<protocol ref="PvpSpeedRe"/>
+		<protocol ref="PvpReset"/>
+		<protocol ref="PvpResetRe"/>
+		<protocol ref="GetPvpVideo"/>
+		<protocol ref="GetPvpVideoRe"/>
+		<protocol ref="AudienceGetList"/>
+		<protocol ref="AudienceGetListRe"/>
+		<protocol ref="AudienceGetOperation"/>
+		<protocol ref="AudienceGetOperationRe"/>
+		<protocol ref="AudienceUpdateNum"/>
+		<protocol ref="AudienceSendOperation"/>
+		<protocol ref="AudienceLeaveRoom"/>
+		<protocol ref="YueZhanBegin"/>
+		<protocol ref="PvpDanMu"/>
+		<protocol ref="AudienceFinishRoom"/>
+		<protocol ref="UpdateDanMuInfo"/>
+		<protocol ref="YueZhanEnd"/>
+		<protocol ref="DelPvpVideo"/>
+		<protocol ref="PVPPause_Re"/>
+		<rpc ref="PvpCancle"/>
+	</state>
+
+	<service name="gm">
+		<manager name="GM" type="client" initstate="GMClient"/>
+		<state ref="GMClient"/>
+		
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+	</service>
+	
+	<state name="GMClient" timeout="86400">
+		<protocol ref="CenterCommand"/>
+		<protocol ref="CenterCommandRe"/>
+	</state>
+
+	<service name="statusd">
+		<manager name="Status" type="server" initstate="StatusServer"/>
+		
+		<state ref="StatusServer"/>
+		<state ref="Null"/>
+
+		<protocol ref="ServerStatus"/>
+	</service>
+	<state name="StatusServer" timeout="10">
+	</state>
+
+	<service name="pvpd">
+		<manager name="PVPUDPTrans" type="server" initstate="PVPUDPTransServer"/>
+		<manager name="PVPGame" type="client" initstate="PVPGameClient" reconnect="1"/>
+		<manager name="PVPCenter" type="client" initstate="PVPCenterClient" reconnect="1"/>
+		
+		<state ref="PVPUDPTransServer"/>
+		<state ref="PVPGameClient"/>
+		<state ref="PVPCenterClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="UDPS2CGameProtocols"/>
+		<protocol ref="PVPServerRegister"/>
+		<protocol ref="PVPServerUpdateStatus"/>
+		<protocol ref="PVPEnd"/>
+		<protocol ref="PvpOperation"/>
+		<protocol ref="AudienceOperation"/>
+		<protocol ref="PVPPause"/>
+		<protocol ref="PVPContinue"/>
+	</service>
+
+	<state name="PVPUDPTransServer" timeout="30">
+		<protocol ref="UDPKeepAlive"/>
+		<protocol ref="UDPGameProtocol"/>
+		<protocol ref="UDPC2SGameProtocols"/>
+	</state>
+
+	<state name="PVPGameClient" timeout="86400">
+		<rpc ref="PVPCreate"/>
+		<!--<protocol ref="PVPLeave"/>-->
+		<protocol ref="PVPDelete"/>
+	</state>
+	
+	<state name="PVPCenterClient" timeout="86400">
+		<rpc ref="PVPCreate"/>
+		<!--<protocol ref="PVPLeave"/>-->
+		<protocol ref="PVPDelete"/>
+		<protocol ref="PVPPause_Re"/>
+	</state>
+
+	<service name="stund">
+		<manager name="STUN" type="server" initstate="STUNServer"/>
+		<manager name="STUNDeaf" type="server" initstate="STUNDeafServer"/>
+		<manager name="STUNGame" type="server" initstate="STUNGameServer"/>
+		
+		<state ref="STUNServer"/>
+		<state ref="STUNDeafServer"/>
+		<state ref="STUNGameServer"/>
+		<state ref="Null"/>
+
+		<protocol ref="UDPSTUNResponse"/>
+	</service>
+
+	<state name="STUNServer" timeout="10">
+		<protocol ref="UDPSTUNRequest"/>
+	</state>
+
+	<state name="STUNGameServer" timeout="86400">
+		<rpc ref="STUNGetServerInfo"/>
+		<protocol ref="ForwardUDPSTUNRequest"/>
+	</state>
+	
+	<service name="uniquenamed">
+		<manager name="UniqueName" type="server" initstate="UniqueNameServer"/>
+		
+		<state ref="UniqueNameServer"/>
+
+		<rpc ref="CreateRoleName"/>
+		<rpc ref="ChangeRoleName"/>
+		<rpc ref="CreateMafiaName"/>
+		<rpc ref="ChangeMafiaName"/>
+	</service>
+
+	<state name="UniqueNameServer" timeout="86400">
+		<rpc ref="CreateRoleName"/>
+		<rpc ref="ChangeRoleName"/>
+		<rpc ref="CreateMafiaName"/>
+		<rpc ref="ChangeMafiaName"/>
+	</state>
+
+	<service name = "stt">
+		<manager name="STT" type="server" initstate="STTServer"/>	
+		<state ref="STTServer"/>
+		<rpc ref="GetTextInSpeech"/>
+		<protocol ref="STTZoneRegister"/>
+	</service>
+
+	<state name="STTServer" timeout="86400">
+		<protocol ref="GetIATextInSpeechRe"/>
+		<rpc ref="GetTextInSpeech"/>
+		<protocol ref="STTZoneRegister"/>
+	</state>
+
+	<service name="customer">
+		<manager name="CustomerService" type="client" initstate="CustomerServiceClient"/>
+		
+		<state ref="CustomerServiceClient"/>
+		
+		<protocol ref="CustomerRequest"/>
+		<protocol ref="CustomerRequest_Re"/>
+	</service>
+	
+	<state name="CustomerServiceClient" timeout="86400">
+		<protocol ref="CustomerRequest"/>
+		<protocol ref="CustomerRequest_Re"/>
+	</state>
+
+	<service name="verification">
+		<manager name="Verification" type="client" initstate="VerificationClient" reconnect="1"/>
+		
+		<state ref="VerificationClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="VerficationOperation"/>
+		<protocol ref="VerficationOperation_re"/>
+		<protocol ref="Register"/>
+	</service>
+	
+	<state name="VerificationClient" timeout="86400">
+		<protocol ref="VerficationOperation"/>
+		<protocol ref="VerficationOperation_re"/>
+		<protocol ref="Register"/>
+	</state>
+
+	<service name="register">
+		<manager name="Register" type="server" initstate="RegisterServer"/>
+		<state ref="RegisterServer"/>
+	</service>
+	
+	<state name="RegisterServer" timeout="86400">
+		<protocol ref="RoleinfoRegister"/>
+	</state>
+
+	<service name="gmadapterd">
+		<manager name="GMAdapter" type="client" initstate="GMAdapterClient"/>
+
+		<state ref="GMAdapterClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="GMCmd_GetAccCharList"/>
+		<protocol ref="GMCmd_GetChar"/>
+		<protocol ref="GMCmd_AddForbidLogin"/>
+		<protocol ref="GMCmd_DelForbidLogin"/>
+		<protocol ref="GMCmd_AddForbidTalk"/>
+		<protocol ref="GMCmd_DelForbidTalk"/>
+		<protocol ref="GMCmd_GetAccID"/>
+		<protocol ref="GMCmd_Bull"/>
+		<protocol ref="GMCmd_MailItemToPlayer"/>
+		<protocol ref="GMCmd_MailToAllPlayer"/>
+		<protocol ref="GMCmd_GetRoleForbidChat"/>
+		<protocol ref="GMCmd_GetRoleForbidLogin"/>
+		<protocol ref="GMCmd_AddForbidWord"/>
+		<protocol ref="GMCmd_DelForbidWord"/>
+		<protocol ref="GMCmd_AddServerReward"/>
+		<protocol ref="GMCmd_ListServerReward"/>
+		<protocol ref="GMCmd_RemoveServerReward"/>
+		<protocol ref="GMCmd_MailToPlayer"/>
+	</service>
+
+	<state name="GMAdapterClient" timeout="86400">
+		<protocol ref="GMCmd_GetAccCharList_Re"/>
+		<protocol ref="GMCmd_GetChar_Re"/>
+		<protocol ref="GMCmd_AddForbidLogin_Re"/>
+		<protocol ref="GMCmd_DelForbidLogin_Re"/>
+		<protocol ref="GMCmd_AddForbidTalk_Re"/>
+		<protocol ref="GMCmd_DelForbidTalk_Re"/>
+		<protocol ref="GMCmd_GetAccID_Re"/>
+		<protocol ref="GMCmd_Bull_Re"/>
+		<protocol ref="GMCmd_MailItemToPlayer_Re"/>
+		<protocol ref="GMCmd_MailToAllPlayer_Re"/>
+		<protocol ref="GMCmd_GetRoleForbidChat_Re"/>
+		<protocol ref="GMCmd_GetRoleForbidLogin_Re"/>
+		<protocol ref="GMCmd_AddForbidWord_Re"/>
+		<protocol ref="GMCmd_DelForbidWord_Re"/>
+		<protocol ref="GMCmd_AddServerReward_Re"/>
+		<protocol ref="GMCmd_ListServerReward_Re"/>
+		<protocol ref="GMCmd_RemoveServerReward_Re"/>
+		<protocol ref="GMCmd_MailToPlayer_Re"/>
+	</state>
+
+	<protocol debug="0" name="GMCmd_GetAccCharList" maxsize="1024" prior="1" type="4001">
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_GetAccCharList_Re" maxsize="1024" prior="1" type="4002">
+		<variable name="retcode" type="int"/>
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+		<variable name="roleid" type="int64_t"/>
+		<variable name="rolename" type="Octets" attr="ref"/>
+		<variable name="level" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+	</protocol>
+	
+	<protocol debug="0" name="GMCmd_GetChar" maxsize="1024" prior="1" type="4003">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="rolename" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_GetChar_Re" maxsize="1024" prior="1" type="4004">
+		<variable name="retcode" type="int"/>
+		<variable name="roleid" type="int64_t"/>
+		<variable name="rolename" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+		<variable name="zoneid" type="int"/>
+		<variable name="level" type="int"/>
+		<variable name="sex" type="int"/>
+		<variable name="createtime" type="Octets" attr="ref"/>
+		<variable name="lastlogintime" type="Octets" attr="ref"/>
+		<variable name="ip" type="Octets" attr="ref"/>
+		<variable name="exp" type="int64_t"/>
+		<variable name="mafianame" type="Octets" attr="ref"/>
+		<variable name="yuanbao" type="int"/>
+		<variable name="money" type="int"/>
+		<variable name="bdyuanbao" type="int"/>
+		<variable name="vip" type="int"/>
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="totalcash" type="int"/>
+		<variable name="zhanli" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_AddForbidLogin" maxsize="1024" prior="1" type="4005">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="forbidtime" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="notifytouser" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_AddForbidLogin_Re" maxsize="1024" prior="1" type="4006">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_DelForbidLogin" maxsize="1024" prior="1" type="4007">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_DelForbidLogin_Re" maxsize="1024" prior="1" type="4008">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_AddForbidTalk" maxsize="1024" prior="1" type="4009">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="forbidtime" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="notifytouser" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_AddForbidTalk_Re" maxsize="1024" prior="1" type="4010">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_DelForbidTalk" maxsize="1024" prior="1" type="4011">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_DelForbidTalk_Re" maxsize="1024" prior="1" type="4012">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_GetAccID" maxsize="1024" prior="1" type="4013">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="rolename" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_GetAccID_Re" maxsize="1024" prior="1" type="4014">
+		<variable name="retcode" type="int"/>
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="roleid" type="int64_t"/>
+		<variable name="rolename" type="Octets" attr="ref"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_Bull" maxsize="1024" prior="1" type="4015">
+		<variable name="text" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_Bull_Re" maxsize="1024" prior="1" type="4016">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_MailItemToPlayer" maxsize="1024" prior="1" type="4017">
+		<variable name="roleid" type="int64_t" attr="ref"/>
+		<variable name="mailtitle" type="Octets" attr="ref"/>
+		<variable name="mailcontent" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_MailItemToPlayer_Re" maxsize="1024" prior="1" type="4018">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_MailToAllPlayer" maxsize="1024" prior="1" type="4019">
+		<variable name="mailtitle" type="Octets" attr="ref"/>
+		<variable name="mailcontent" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_MailToAllPlayer_Re" maxsize="1024" prior="1" type="4020">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_GetRoleForbidChat" maxsize="1024" prior="1" type="4021">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_GetRoleForbidChat_Re" maxsize="1024" prior="1" type="4022">
+		<variable name="retcode" type="int"/>
+		<variable name="begintime" type="Octets" attr="ref"/>
+		<variable name="lasttime" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_GetRoleForbidLogin" maxsize="1024" prior="1" type="4023">
+		<variable name="roleid" type="int64_t"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_GetRoleForbidLogin_Re" maxsize="1024" prior="1" type="4024">
+		<variable name="retcode" type="int"/>
+		<variable name="begintime" type="Octets" attr="ref"/>
+		<variable name="lasttime" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_AddForbidWord" maxsize="1024" prior="1" type="4025">
+		<variable name="words" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_AddForbidWord_Re" maxsize="1024" prior="1" type="4026">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_DelForbidWord" maxsize="1024" prior="1" type="4027">
+		<variable name="words" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_DelForbidWord_Re" maxsize="1024" prior="1" type="4028">
+		<variable name="retcode" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+
+	<rpcdata name="ServerReward">
+		<variable name="id" type="int" comm="·µ»ØÖµ,ÓÉgamed²úÉú"/>
+		<variable name="begin_time" type="int"/>
+		<variable name="end_time" type="int"/>
+		<variable name="mail_id" type="int"/>
+		<variable name="level_min" type="int"/>
+		<variable name="lifetime_min" type="int"/>
+	</rpcdata>
+
+	<protocol debug="0" name="GMCmd_AddServerReward" maxsize="1024" prior="1" type="4041">
+		<variable name="data" type="ServerReward" attr="ref"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_AddServerReward_Re" maxsize="1024" prior="1" type="4042">
+		<variable name="retcode" type="int"/>
+		<variable name="data" type="ServerReward" attr="ref"/>
+		<variable name="session_id" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_ListServerReward" maxsize="1024" prior="1" type="4043">
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_ListServerReward_Re" maxsize="1024" prior="1" type="4044">
+		<variable name="retcode" type="int"/>
+		<variable name="session_id" type="int"/>
+		<variable name="datas" type="std::vector&lt;ServerReward&gt;" attr="ref"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_RemoveServerReward" maxsize="1024" prior="1" type="4045">
+		<variable name="id" type="int"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_RemoveServerReward_Re" maxsize="1024" prior="1" type="4046">
+		<variable name="retcode" type="int"/>
+		<variable name="id" type="int"/>
+		<variable name="session_id" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol debug="0" name="GMCmd_MailToPlayer" maxsize="1024" prior="1" type="4047">
+		<variable name="roleid" type="int64_t" attr="ref"/>
+		<variable name="mailid" type="int"/>
+		<variable name="session_id" type="int"/>
+	</protocol>
+	<protocol debug="0" name="GMCmd_MailToPlayer_Re" maxsize="1024" prior="1" type="4048">
+		<variable name="retcode" type="int"/>
+		<variable name="session_id" type="int"/>
+		<variable name="desc" type="Octets" attr="ref"/>
+	</protocol>
+
+	<service name="gactivecode">
+		<manager name="GACCode" type="server" initstate="GACCodeServer"/>
+		<state ref="GACCodeServer"/>
+			
+		<protocol ref="ACZoneRegister" />
+		<rpc ref="GUseActiveCode" />
+
+	</service> 
+	
+	<state name="GACCodeServer" timeout="86400">
+		<protocol ref="ACZoneRegister" />
+		<rpc ref="GUseActiveCode" />
+	</state>
+		
+	<rpcdata name="GUseActiveCodeArg">
+		<variable name="code" type="Octets" attr="ref"/> 
+		<variable name="type" type="int"/>
+		<variable name="roleid" type="int64_t"/>
+		<variable name="zoneid" type="int"/>
+	</rpcdata>
+	<rpcdata name="GUseActiveCodeRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+	<rpc name="GUseActiveCode" type="5001" maxsize="102400" prior="1" argument="GUseActiveCodeArg" result="GUseActiveCodeRes" timeout="10"/>
+	
+
+	<protocol debug="0" name="ACZoneRegister" maxsize="1024" prior="1" type="5002">
+		<variable name="zoneid" type="int"/>
+	</protocol>
+
+
+</application>
+

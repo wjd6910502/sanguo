@@ -1,0 +1,528 @@
+#!/usr/bin/env python
+#coding=GBK
+
+import sys, os
+from xml.dom import minidom
+
+SIMPLE_TYPES = ( "int", "std::string", "Int64", "char" )
+dbversion_cur = 0
+
+DEFAULTS = {}
+DEFAULTS["int"] = "0"
+
+g_structs = {}
+
+class ParseError():
+	pass
+
+def abort(desc):
+	print u"FATAL ERROR: "+desc
+	raise ParseError
+
+def warning(desc):
+	print u"WARNING: "+desc
+
+def makeStruct(struct_node, header_fp, pkg_fp):
+	name = ""
+	variables = []
+
+	for (k,v) in struct_node.attributes.items():
+		if k == "name":
+			name = v
+	if len(name) == 0:
+		abort(u"structure缺少name")
+	if g_structs.has_key(name):
+		abort(u"structure(%s) name重复"%name)
+	
+
+	for nd in struct_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "variable":
+			var_name = ""
+			var_type = ""
+			dbversion = 0
+			comments = ""
+			for (k,v) in nd.attributes.items():
+				if k == "name":
+					var_name = v
+				elif k == "type":
+					for t in SIMPLE_TYPES:
+						if t == v:
+							var_type = v
+							break
+					if g_structs.has_key(v):
+						var_type = v
+					if var_type == "":
+						abort(u"command(%s)包含错误的type(%s)"%(name,v))
+				elif k == "dbversion":
+					dbversion = int(v)
+				elif k == "comments":
+					comments = v
+			if len(var_name) == 0:
+				abort(u"structure(%s)变量缺少name"%name)
+			if len(var_type) == 0:
+				abort(u"structure(%s)变量(%s)缺少type"%(name,var_name))
+			if dbversion < 0:
+				abort(u"structure(%s)变量(%s) dbversion有错(%d)"%(name,var_name,dbversion))
+			elif dbversion > dbversion_cur:
+				abort(u"structure(%s)变量(%s) dbversion有错(%d), 太大了"%(name,var_name,dbversion))
+			variables.append((var_name, var_type, dbversion, comments))
+	if len(variables) == 0:
+		abort(u"structure(%s)缺少变量"%name)
+	g_structs[name] = True
+
+	declare = ""
+	default = ": "
+	for (n,t,v,c) in variables:
+		if len(c) != 0:
+			declare += "\t%s %s;//%s\n" % (t,n,c)
+		else:
+			declare += "\t%s %s;\n" % (t,n)
+		if DEFAULTS.has_key(t):
+			default += "%s(%s), " % (n, DEFAULTS[t])
+	#marshal
+	marshal = "\t\tif(os._for_transaction)\n"
+	marshal += "\t\t{\n"
+	for (n,t,v,c) in variables:
+		marshal += "\t\t\tos << %s;\n" % n
+	marshal += "\t\t}\n"
+	marshal += "\t\telse\n"
+	marshal += "\t\t{\n"
+	for (n,t,v,c) in variables:
+		if v>0:
+			marshal += "\t\t\tos << %s;\n" % n
+	marshal += "\t\t}"
+	#unmarshal
+	unmarshal = "\t\tif(os._for_transaction)\n"
+	unmarshal += "\t\t{\n"
+	for (n,t,v,c) in variables:
+		unmarshal += "\t\t\tos >> %s;\n" % n
+	unmarshal += "\t\t}\n"
+	for i in range(1, dbversion_cur+1):
+		unmarshal += "\t\telse if(os._dbversion == %d)\n"%i
+		unmarshal += "\t\t{\n"
+		for (n,t,v,c) in variables:
+			if v>0 and v<=i:
+				unmarshal += "\t\t\tos >> %s;\n" % n
+		unmarshal += "\t\t}\n"
+	d = {}
+	d["name"] = name
+	d["declare"] = declare.rstrip()
+	d["default"] = default.rstrip(" ,:")
+	d["marshal"] = marshal.rstrip()
+	d["unmarshal"] = unmarshal.rstrip()
+
+	header = """
+class %(name)s: public GNET::Marshal
+{
+public:
+%(declare)s
+
+	%(name)s()%(default)s {}
+	virtual ~%(name)s() {}
+
+	virtual OctetsStream& marshal(OctetsStream &os) const
+	{
+%(marshal)s
+		return os;
+	}
+	virtual const OctetsStream& unmarshal(const OctetsStream &os)
+	{
+%(unmarshal)s
+		return os;
+	}
+};"""%d
+	#print header 
+	header_fp.write(header.encode('utf-8','ignore'))
+
+	pkg = """
+class %(name)s
+{
+public:
+%(declare)s
+
+	%(name)s(): %(default)s {}
+};"""%d
+	#print pkg
+	pkg_fp.write(pkg.encode('utf-8'))
+
+def makeList(list_node, header_fp, pkg_fp):
+	name = ""
+	value_type = ""
+
+	for (k,v) in list_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "value_type":
+			value_type = v
+	if len(name) == 0:
+		abort(u"list缺少name")
+	elif len(value_type) == 0:
+		abort(u"list(%s)缺少value_type"%name)
+	if g_structs.has_key(name):
+		abort(u"list(%s) name重复"%name)
+
+	g_structs[name] = True
+
+	d = {}
+	d["name"] = name
+	d["value_type"] = value_type
+
+	header = """
+class %(name)s;
+class %(name)sIter
+{
+	ListIter<%(value_type)s, std::list<%(value_type)s>::iterator, %(name)s> _rep;
+
+public:
+	%(name)sIter(std::list<%(value_type)s>::iterator it, void *list, int tag): _rep(it, list, tag) {}
+
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+
+	void Pop() { _rep.Pop(); }
+	void PushBefore(const %(value_type)s& v) { _rep.PushBefore(v); }
+	void PushAfter(const %(value_type)s& v) { _rep.PushAfter(v); }
+};
+class %(name)s: public GNET::Marshal
+{
+	List<%(value_type)s, std::list<%(value_type)s>::iterator, %(name)sIter> _rep;
+
+public:
+	%(name)s(): _rep(this) {}
+	%(name)s(const %(name)s& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+	virtual ~%(name)s() {}
+
+	%(name)s& operator= (const %(name)s& rhs)
+	{
+		_rep = rhs._rep;
+		_rep.SetShell(this);
+		return *this;
+	}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::list<%(value_type)s>::iterator End() { return _rep.End(); }
+	void Erase(std::list<%(value_type)s>::iterator it) { _rep.Erase(it); }
+	void Insert(std::list<%(value_type)s>::iterator it, const %(value_type)s& v) { _rep.Insert(it, v); }
+
+	int Size() const { return _rep.Size(); }
+
+	void PopFront() { _rep.PopFront(); }
+	void PushFront(const %(value_type)s& v) { _rep.PushFront(v); }
+	void PopBack() { _rep.PopBack(); }
+	void PushBack(const %(value_type)s& v) { _rep.PushBack(v); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+};""" % d
+	#print header 
+	header_fp.write(header)
+
+	pkg = """
+class %(name)sIter
+{
+public:
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+
+	void Pop() { _rep.Pop(); }
+	void PushBefore(const %(value_type)s& v) { _rep.PushBefore(v); }
+	void PushAfter(const %(value_type)s& v) { _rep.PushAfter(v); }
+};
+class %(name)s
+{
+public:
+	%(name)s(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	void PopFront() { _rep.PopFront(); }
+	void PushFront(const %(value_type)s& v) { _rep.PushFront(v); }
+	void PopBack() { _rep.PopBack(); }
+	void PushBack(const %(value_type)s& v) { _rep.PushBack(v); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+};"""%d
+	#print pkg 
+	pkg_fp.write(pkg)
+
+def makeMap(map_node, header_fp, pkg_fp):
+	name = ""
+	key_type = ""
+	value_type = ""
+
+	for (k,v) in map_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "key_type":
+			key_type = v
+		elif k == "value_type":
+			value_type = v
+	if len(name) == 0:
+		abort(u"list缺少name")
+	elif len(key_type) == 0:
+		abort(u"list(%s)缺少key_type"%name)
+	elif len(value_type) == 0:
+		abort(u"list(%s)缺少value_type"%name)
+	if g_structs.has_key(name):
+		abort(u"map(%s) name重复"%name)
+
+	g_structs[name] = True
+
+	d = {}
+	d["name"] = name
+	d["key_type"] = key_type 
+	d["value_type"] = value_type
+
+	header = """
+class %(name)s;
+class %(name)sIter
+{
+	MapIter<%(key_type)s, %(value_type)s, std::map<%(key_type)s, %(value_type)s>::iterator, %(name)s> _rep;
+
+public:
+	%(name)sIter(std::map<%(key_type)s, %(value_type)s>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+};
+class %(name)s: public GNET::Marshal
+{
+	Map<%(key_type)s, %(value_type)s, std::map<%(key_type)s, %(value_type)s>::iterator, %(name)sIter> _rep;
+
+public:
+	%(name)s(): _rep(this) {}
+	%(name)s(const %(name)s& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+	virtual ~%(name)s() {}
+
+	%(name)s& operator= (const %(name)s& rhs)
+	{
+		_rep = rhs._rep;
+		_rep.SetShell(this);
+		return *this;
+	}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::map<%(key_type)s, %(value_type)s>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	%(value_type)s* Find(const %(key_type)s& k) { return _rep.Find(k); }
+	void Insert(const %(key_type)s& k, const %(value_type)s& v) { _rep.Insert(k, v); }
+	void Delete(const %(key_type)s& k) { _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	%(name)sIter Seek(const %(key_type)s& k) const { return _rep.Seek(k); }
+	%(name)sIter SeekToLast() const { return _rep.SeekToLast(); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+};"""%d
+	#print header 
+	header_fp.write(header)
+
+	pkg = """
+class %(name)sIter
+{
+public:
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+};
+class %(name)s
+{
+public:
+	%(name)s(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	%(value_type)s* Find(const %(key_type)s& k) { return _rep.Find(k); }
+	void Insert(const %(key_type)s& k, const %(value_type)s& v) { _rep.Insert(k, v); }
+	void Delete(const %(key_type)s& k) { _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	%(name)sIter Seek(const %(key_type)s& k) const { return _rep.Seek(k); }
+	%(name)sIter SeekToLast() const { return _rep.SeekToLast(); }
+};"""%d
+	#print pkg 
+	pkg_fp.write(pkg)
+
+def makeMultiMap(map_node, header_fp, pkg_fp):
+	name = ""
+	key_type = ""
+	value_type = ""
+
+	for (k,v) in map_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "key_type":
+			key_type = v
+		elif k == "value_type":
+			value_type = v
+	if len(name) == 0:
+		abort(u"multimap缺少name")
+	elif len(key_type) == 0:
+		abort(u"multimap(%s)缺少key_type"%name)
+	elif len(value_type) == 0:
+		abort(u"multimap(%s)缺少value_type"%name)
+
+	g_structs[name] = True
+
+	d = {}
+	d["name"] = name
+	d["key_type"] = key_type 
+	d["value_type"] = value_type
+
+	header = """
+class %(name)s;
+class %(name)sIter
+{
+	MultiMapIter<%(key_type)s, %(value_type)s, std::multimap<%(key_type)s, %(value_type)s>::iterator, %(name)s> _rep;
+
+public:
+	%(name)sIter(std::multimap<%(key_type)s, %(value_type)s>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+	std::multimap<%(key_type)s, %(value_type)s>::iterator GetIter() { return _rep.GetIter(); }
+};
+class %(name)s: public GNET::Marshal
+{
+	MultiMap<%(key_type)s, %(value_type)s, std::map<%(key_type)s, %(value_type)s>::iterator, %(name)sIter> _rep;
+
+public:
+	%(name)s(): _rep(this) {}
+	%(name)s(const %(name)s& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+	virtual ~%(name)s() {}
+
+	%(name)s& operator= (const %(name)s& rhs)
+	{
+		_rep = rhs._rep;
+		_rep.SetShell(this);
+		return *this;
+	}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::multimap<%(key_type)s, %(value_type)s>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	%(value_type)s* Find(const %(key_type)s& k) { return _rep.Find(k); }
+	void Insert(const %(key_type)s& k, const %(value_type)s& v) { _rep.Insert(k, v); }
+	void Delete(const %(key_type)s& k) { _rep.Delete(k); }
+	void Delete(%(name)sIter& k){ _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+	int Count(const %(key_type)s& k){ return _rep.Count(k);}
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	%(name)sIter Seek(const %(key_type)s& k) const { return _rep.Seek(k); }
+	%(name)sIter SeekToLast() const { return _rep.SeekToLast(); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+};"""%d
+	#print header 
+	header_fp.write(header)
+
+	pkg = """
+class %(name)sIter
+{
+public:
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+};
+class %(name)s
+{
+public:
+	%(name)s(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	%(value_type)s* Find(const %(key_type)s& k) { return _rep.Find(k); }
+	void Insert(const %(key_type)s& k, const %(value_type)s& v) { _rep.Insert(k, v); }
+	void Delete(const %(key_type)s& k) { _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	%(name)sIter Seek(const %(key_type)s& k) const { return _rep.Seek(k); }
+	%(name)sIter SeekToLast() const { return _rep.SeekToLast(); }
+};"""%d
+	#print pkg 
+	pkg_fp.write(pkg)
+
+def main():
+	global dbversion_cur
+
+	xmldoc = minidom.parse("./structs.xml")
+	if xmldoc.firstChild.tagName != "structures":
+		abort(u"structs.xml文件格式有错误")
+
+	header_fp = open("./structs.h", "w")
+	header_begin = """
+#ifndef _STRUCTS_H_
+#define _STRUCTS_H_
+
+#include <string>
+#include <map>
+#include <list>
+
+#include "marshal.h"
+#include "forlua.h"
+
+namespace CACHE
+{
+
+"""
+	header_fp.write(header_begin)
+
+	src_pkg_fp = open("./forlua.pkg", "r")
+	pkg_fp = open("./structs.pkg", "w")
+	#前半部分来自于forlua.pkg
+	ln = src_pkg_fp.readline()
+	while ln!="":
+		if ln.find("$$$REPLACE ME!$$$")!=-1:
+			break
+		pkg_fp.write(ln)
+		ln = src_pkg_fp.readline()
+
+	root_node = xmldoc.firstChild
+	for (k,v) in root_node.attributes.items():
+		if k == "dbversion":
+			dbversion_cur = int(v)
+	if dbversion_cur<=0:
+		abort(u"structs.xml文件dbversion有错误")
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "structure":
+			makeStruct(nd, header_fp, pkg_fp)
+		elif nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "list":
+			makeList(nd, header_fp, pkg_fp)
+		elif nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "map":
+			makeMap(nd, header_fp, pkg_fp)
+		elif nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "multimap":
+			makeMultiMap(nd, header_fp, pkg_fp)
+
+	header_end = """
+};
+
+#endif //_STRUCTS_H_
+"""
+	header_fp.write(header_end)
+	header_fp.close()
+
+	#后半部分
+	ln = src_pkg_fp.readline()
+	while ln!="":
+		pkg_fp.write(ln)
+		ln = src_pkg_fp.readline()
+	pkg_fp.close()
+
+if __name__ == "__main__":
+	main()
+

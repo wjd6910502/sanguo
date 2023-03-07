@@ -1,0 +1,92 @@
+
+1, normal
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.074s
+user    0m1.070s
+sys     0m0.001s
+
+2, lua mt
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.749s
+user    0m1.744s
+sys     0m0.001s
+
+3, c mt
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.581s
+user    0m1.575s
+sys     0m0.003s
+
+4, userdata
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.451s
+user    0m1.448s
+sys     0m0.001s
+
+5, version table
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m3.777s
+user    0m3.768s
+sys     0m0.001s
+
+
+
+JIT:
+1, normal
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m0.037s
+user    0m0.034s
+sys     0m0.002s
+
+2, lua mt
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m0.037s
+user    0m0.035s
+sys     0m0.002s
+
+3, c mt
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m1.637s
+user    0m1.633s
+sys     0m0.002s
+
+4, userdata
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m1.353s
+user    0m1.348s
+sys     0m0.002s
+
+5, version table
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m0.039s
+user    0m0.036s
+sys     0m0.002s
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

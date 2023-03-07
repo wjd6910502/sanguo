@@ -1,0 +1,145 @@
+
+#ifndef __GNET_GUSEACTIVECODE_HPP
+#define __GNET_GUSEACTIVECODE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "math.h"
+
+#include "guseactivecodearg"
+#include "guseactivecoderes"
+
+namespace GNET
+{
+
+class GUseActiveCode : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "guseactivecode"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// GUseActiveCodeArg *arg = (GUseActiveCodeArg *)argument;
+		// GUseActiveCodeRes *res = (GUseActiveCodeRes *)result;
+	}
+
+	static char ConvertChar(char c)
+	{
+		switch (c)
+		{
+			case 'A':
+			case 'B':
+			case 'C':
+			case 'D':
+			case 'E':
+			case 'F':
+			case 'G':
+			case 'H':
+			case 'J':
+			case 'K':
+			case 'L':
+			case 'M':
+			case 'N':
+			case 'P':
+			case 'R':
+			case 'S':
+				return c;
+			case 'a':
+			case 'b':
+			case 'c':
+			case 'd':
+			case 'e':
+			case 'f':
+			case 'g':
+			case 'h':
+			case 'j':
+			case 'k':
+			case 'l':
+			case 'm':
+			case 'n':
+			case 'p':
+			case 'r':
+			case 's':
+				return c+('A'-'a');
+			default:
+				return 0;
+		}
+	}
+
+	static int hex_char_value(char c)
+	{
+    	//const char *buf = "GHJKLMNPRS";
+    	static std::map<char,int> buf; 
+    	buf.insert(std::make_pair('G',0));
+    	buf.insert(std::make_pair('H',1));
+    	buf.insert(std::make_pair('J',2));
+    	buf.insert(std::make_pair('K',3));
+    	buf.insert(std::make_pair('L',4));
+    	buf.insert(std::make_pair('M',5));
+    	buf.insert(std::make_pair('N',6));
+    	buf.insert(std::make_pair('P',7));
+    	buf.insert(std::make_pair('R',8));
+    	buf.insert(std::make_pair('S',9));
+	
+    	if(c >= 'a' && c <= 'f') 
+        	return  ((c - 'a' + 10)&0xFF);
+    	else if(c >= 'A' && c <= 'F') 
+        	return ((c - 'A' + 10)&0xFF);
+    	else 
+    	{    
+        	if (buf.find(c) != buf.end())
+            	return (buf[c]&0xFF);
+        	else 
+        	{   
+            	std::cout<<"不存在的类型"<<std::endl;
+            	return 0;
+        	}    
+    	}    
+
+    	return 0;
+	}
+
+	static int ParseType(const char* activecode, int len) 
+	{
+ 		int t = 0;
+ 		int k = 0;	
+ 		for(unsigned int i =0; i < strlen(activecode); i++)
+ 		{  
+			if(k >= len)
+				break;
+ 			char c = ConvertChar(activecode[i]);
+ 			if(c)
+ 			{	
+ 				t += (int)pow(16,len-i-1)*hex_char_value(c);	
+ 				k++;	
+ 			}
+ 		}
+ 		return t; 
+   	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GUseActiveCodeArg *arg = (GUseActiveCodeArg *)argument;
+		GUseActiveCodeRes *res = (GUseActiveCodeRes *)result;
+		int type = 0;
+		if(res->retcode == 0)
+		{
+			//验证成功，返回类型
+			std::string tmp = std::string((char*)arg->code.begin(), arg->code.size());	
+			type = ParseType((char*)tmp.c_str(), 4);
+		}
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10037:%d:%d:", res->retcode, type);
+		MessageManager::GetInstance().Put(arg->roleid, arg->roleid, msg, 0);
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

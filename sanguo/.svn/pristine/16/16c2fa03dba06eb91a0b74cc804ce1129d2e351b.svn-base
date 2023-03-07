@@ -1,0 +1,34 @@
+
+#ifndef __GNET_KEEPALIVE_HPP
+#define __GNET_KEEPALIVE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class KeepAlive : public GNET::Protocol
+{
+	#include "keepalive"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//GLog::log(LOG_INFO, "KeepAlive::Process");
+
+		Player *player = PlayerManager::GetInstance().FindByTransSid(sid, true);
+		if(!player) return;
+
+		Thread::Mutex::Scoped keeper(player->_lock);
+
+		player->UpdateActiveTime();
+
+		manager->Send(sid, this);
+	}
+};
+
+};
+
+#endif

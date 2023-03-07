@@ -1,0 +1,21 @@
+#!/bin/sh
+
+topdir=/export/home/backup/10.68.8.38
+log_path=${topdir}/backup.log
+
+echo "-------------------------Begin---------------------------" >>${log_path}
+date >>${log_path}
+
+weekday=`date +%u`
+echo ${weekday} >>${log_path}
+
+cd ${topdir}/svn/${weekday}
+./pull_util_no_more_change
+echo "svn done!" >>${log_path}
+
+cd ${topdir}/ver/${weekday}
+./pull_util_no_more_change
+echo "ver done!" >>${log_path}
+
+
+

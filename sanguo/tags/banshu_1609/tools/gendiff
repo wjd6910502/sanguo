@@ -1,0 +1,6 @@
+#!/bin/sh
+
+sed 's/Command/Message/g' cmdgen | sed 's/command/message/g' | sed 's/COMMAND/MESSAGE/g' | sed 's/Cmd/Msg/g' | sed 's/cmd/msg/g' | diff - msggen
+
+
+

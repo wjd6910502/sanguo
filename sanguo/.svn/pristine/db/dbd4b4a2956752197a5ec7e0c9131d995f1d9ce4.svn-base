@@ -1,0 +1,89 @@
+
+#include "gateserver.hpp"
+#include "state.hxx"
+//#include "connection.h"
+#include "challenge.hpp"
+#include "commonmacro.h"
+#include "glog.h"
+
+extern int g_server_state;
+
+namespace GNET
+{
+
+GateServer GateServer::instance;
+
+const Protocol::Manager::Session::State* GateServer::GetInitState() const
+{
+	return &state_GateServer;
+}
+
+void GateServer::OnAddSession(Session::ID sid)
+{
+	GLog::log(LOG_INFO, "GateServer::OnAddSession, sid=%u, thread=%u", sid, (unsigned int)pthread_self());
+	
+	if(g_server_state != SERVER_STATE_RUNNING)
+	{
+		Close(sid);
+		return;
+	}
+
+	SessionInfo session;
+	session._status = SESSION_STATUS_WAITING_RESPONSE;
+	//_server_rand1
+	Security *random = Security::Create(RANDOM);
+	random->Update(session._server_rand1.resize(CONN_CONST_RAND1_SIZE));
+	//_trans_token
+	random->Update(session._trans_token.resize(CONN_CONST_TRANS_TOKEN_SIZE));
+	random->Destroy();
+
+	Challenge prot;
+	prot.server_rand1 = session._server_rand1;
+	Send(sid, prot);
+
+	Thread::Mutex::Scoped keeper(_session_map_lock);
+	_session_map[sid] = session;
+	
+	//fprintf(stderr, "GateServer::OnAddSession, sid=%u, _server_rand1=%s, _trans_token=%s\n",
+	//        sid, B16EncodeOctets(session._server_rand1).c_str(), B16EncodeOctets(session._trans_token).c_str());
+}
+
+void GateServer::OnDelSession(Session::ID sid)
+{
+	GLog::log(LOG_INFO, "GateServer::OnDelSession, sid=%u, thread=%u", sid, (unsigned int)pthread_self());
+
+	Thread::Mutex::Scoped keeper(_session_map_lock);
+	_session_map.erase(sid);
+}
+
+//bool GateServer::FindSession(Session::ID sid, int& status, Octets& server_rand1, Octets& trans_token) const
+bool GateServer::FindSessionAndChangeStatus(Session::ID sid, int cur_status, int to_status, Octets& server_rand1, Octets& trans_token)
+{
+	Thread::Mutex::Scoped keeper(_session_map_lock);
+
+	auto it = _session_map.find(sid);
+	if(it == _session_map.end()) return false;
+
+	SessionInfo& session = it->second;
+
+	if(session._status!=cur_status) return false;
+	session._status = (SESSION_STATUS)to_status;
+
+	server_rand1 = session._server_rand1;
+	trans_token = session._trans_token;
+	return true;
+}
+
+//void GateServer::MapAccount(const Octets& account, Session::ID sid)
+//{
+//	_account_map[account] = sid;
+//}
+//
+//Protocol::Manager::Session::ID GateServer::FindSIDByAccount(const Octets& account) const
+//{
+//	auto it = _account_map.find(account);
+//	if(it == _account_map.end()) return 0;
+//	return it->second;
+//}
+
+};

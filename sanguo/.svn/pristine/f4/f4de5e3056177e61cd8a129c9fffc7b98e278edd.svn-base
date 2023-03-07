@@ -1,0 +1,39 @@
+function OnMessage_PVPEnterRe(player, role, arg, others)
+	player:Log("OnMessage_PVPEnterRe, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("PvpEnter_Re")
+	resp.retcode = 0
+	resp.mode = 1
+	resp.N = 4
+	
+	--resp.p2p_magic = math.random(1000000)
+
+	--if role._roledata._device_info._net_type>=2 then
+	--	resp.p2p_peer_ip = role._roledata._device_info._udp_ip
+	--	resp.p2p_peer_port = role._roledata._device_info._udp_port
+	--else
+	--	resp.p2p_peer_ip = ""
+	--	resp.p2p_peer_port = 0
+	--end
+
+	--开始发送PVP信息
+	resp.rolepvpinfo = {}
+	resp.fightpvpinfo = {}
+	is_idx,resp.player1 = DeserializeStruct(arg.role_pvpinfo, 1, "RolePVPInfo")
+	is_idx,resp.player2 = DeserializeStruct(arg.fight_pvpinfo, 1, "RolePVPInfo")
+
+	--进行数据的统一
+	if resp.player1.brief.id == role._roledata._base._id:ToStr() then
+		resp.p2p_peer_ip = resp.player2.p2p_peer_ip
+		resp.p2p_peer_port = resp.player2.p2p_peer_port
+	else
+		resp.p2p_peer_ip = resp.player1.p2p_peer_ip
+		resp.p2p_peer_port = resp.player1.p2p_peer_port
+	end
+	if resp.player1.p2p_magic >= resp.player2.p2p_magic then
+		resp.p2p_magic = resp.player2.p2p_magic
+	else
+		resp.p2p_magic = resp.player1.p2p_magic
+	end
+	player:SendToClient(SerializeCommand(resp))
+end

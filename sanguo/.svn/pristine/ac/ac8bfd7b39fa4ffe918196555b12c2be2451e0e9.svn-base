@@ -1,0 +1,5 @@
+
+--make _G readonly
+if getmetatable(_G)~=nil then error("why?!") end
+setmetatable(_G, { __newindex=function(_,n) error("new global var is forbidden! name="..n) end, })
+

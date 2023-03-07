@@ -1,0 +1,28 @@
+
+#include "udptransserver.hpp"
+#include "state.hxx"
+
+#include "transchallenge.hpp"
+#include "commonmacro.h"
+//#include "thread.h"
+#include "glog.h"
+
+namespace GNET
+{
+
+UDPTransServer UDPTransServer::instance;
+
+const Protocol::Manager::Session::State* UDPTransServer::GetInitState() const
+{
+	return &state_UDPTransServer;
+}
+
+void UDPTransServer::OnAddSession(Session::ID sid)
+{
+}
+
+void UDPTransServer::OnDelSession(Session::ID sid)
+{
+}
+
+};

@@ -1,0 +1,3 @@
+function OnCommand_RoleLogin(player, role, arg, others)
+	--player:Log("OnCommand_RoleLogin, "..DumpTable(arg).." "..DumpTable(others))
+end

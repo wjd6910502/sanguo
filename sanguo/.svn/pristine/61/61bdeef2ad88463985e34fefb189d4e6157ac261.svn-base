@@ -1,0 +1,42 @@
+
+function Serialize(value)
+	if value == nil then return ":" end
+
+	os = ""
+	if type(value) == "number" then
+		os = value..":"
+	elseif type(value) == "boolean" then
+		os = tostring(value)..":"
+	elseif type(value) == "string" then
+		os = enc(value)..":"
+	else
+		error("Serialize, 1")
+	end
+	return os
+end
+
+function Deserialize(is, idx, typ)
+	local b = string.sub(is, idx, -1)
+	local e, _ = string.find(b, ":")
+	if not e then error("Deserialize, 1") end --error: ≤ª“‘':'Ω· ¯
+	--if e == 1 then error("Deserialize, 2") end --error: ø’¥Æ
+	local s = string.sub(b, 1, e-1)
+	--print(s)
+	
+	if typ == "number" then
+		local r = 0
+		if string.len(s)~=0 then r=tonumber(s) end
+		return idx+string.len(s)+1, r
+	elseif typ  == "boolean" then
+		if s == "true" then
+			return idx+string.len(s)+1, true
+		else
+			return idx+string.len(s)+1, false
+		end
+	elseif typ == "string" then
+		return idx+string.len(s)+1, dec(s)
+	end
+
+	error("Deserialize, 3")
+end
+

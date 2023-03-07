@@ -1,0 +1,47 @@
+	public:
+		int retcode;
+		int64_t roleid;
+		int start_time;
+		Octets ip;
+		int port;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPCENTERCREATE };
+	public:
+		PvpCenterCreate() { type = PROTOCOL_PVPCENTERCREATE; }
+		PvpCenterCreate(void*) : Protocol(PROTOCOL_PVPCENTERCREATE) { }
+		PvpCenterCreate (const int& l_retcode,const int64_t& l_roleid,const int& l_start_time,
+			const Octets& l_ip,const int& l_port)
+			 : retcode(l_retcode),roleid(l_roleid),start_time(l_start_time)
+			,ip(l_ip),port(l_port)
+		{
+			type = PROTOCOL_PVPCENTERCREATE;
+		}
+
+		PvpCenterCreate(const PvpCenterCreate &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),start_time(rhs.start_time)
+			,ip(rhs.ip),port(rhs.port) { }
+
+		GNET::Protocol *Clone() const { return new PvpCenterCreate(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << start_time;
+			os << ip;
+			os << port;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> start_time;
+			os >> ip;
+			os >> port;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

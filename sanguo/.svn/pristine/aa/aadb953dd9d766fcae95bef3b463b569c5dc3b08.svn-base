@@ -1,0 +1,8 @@
+ba9056f31d2a04abda6701b7e47e3f14  laohuinform.cgi
+7f2b1ac031fd2602db3904dbc8b7a060  laohuinformclient.o
+d7fb8833cae89ac5ffcc13fd4407fc2b  state.o
+754eba81d999ef235c9e1e6eaeec88f9  stubs.o
+68c397856344c0e0297467ba35d7d279  laohuinform.o
+4d1b203b28c21848c7a3ab5e446755b8  http_get_request.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

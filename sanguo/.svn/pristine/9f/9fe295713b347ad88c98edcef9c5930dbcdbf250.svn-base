@@ -1,0 +1,33 @@
+function OnCommand_PrivateChat(player, role, arg, others)
+	player:Log("PrivateChat, dest_id="..arg.dest_id..", content="..arg.chat.content)
+
+	--内容长度有限制
+	if string.len(arg.chat.content)>200 then return end
+
+	local d_player = others:FindPlayer(CACHE.Int64:new(arg.dest_id))
+	if d_player==nil then return end
+	--不要发给自己
+	if d_player._role_base._id:ToStr()==player._role_base._id:ToStr() then return end
+
+	local chats = player._role_chat._received_private_chats
+
+	--留言太多, 则删掉早期的留言
+	while chats:Size()>=10 do chats:PopFront() end
+
+	--保存留言
+	local c = CACHE.PrivateChat:new()
+	c._id = player._role_base._id
+	c._time = CACHE.API_GetTime()
+	c._content = arg.chat.content
+	chats:PushBack(c)
+	
+	--通知目标
+	local cmd = NewCommand("PrivateChat")
+	cmd.dest_id = arg.dest_id
+	cmd.chat = {}
+	cmd.chat.src_id = player._role_base._id:ToStr()
+	cmd.chat.src_name = player._role_base._name
+	cmd.chat.time = c._time
+	cmd.chat.content = arg.chat.content
+	d_player:SendToClient(SerializeCommand(cmd))
+end

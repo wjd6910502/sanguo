@@ -1,0 +1,19 @@
+
+#ifndef __GNET_GMADAPTERD_CALLID
+#define __GNET_GMADAPTERD_CALLID
+
+namespace GNET
+{
+
+enum CallID
+{
+};
+
+enum ProtocolType
+{
+	PROTOCOL_GMCMD_GETACCCHARLIST	=	4001,
+	PROTOCOL_GMCMD_GETACCCHARLIST_RE	=	4002,
+};
+
+};
+#endif

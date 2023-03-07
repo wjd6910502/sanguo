@@ -1,0 +1,6 @@
+function OnCommand_PvpJoin_Re(player, role, arg, others)
+	API_Log("OnCommand_PvpJoin_Re, "..DumpTable(arg).." "..DumpTable(others))
+
+	local cmd2 = NewCommand("PvpCancle")
+	API_SendGameProtocol(SerializeCommand(cmd2))
+end

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+ulimit -c unlimited
+
+pid=0
+timeout=0
+
+killall client
+
+while true
+do
+	if [ $pid -eq 0 ]
+	then
+		prefix=`date +%s`
+		./client gamesys.stress.conf 16_$prefix TestPing 100 1 >&/dev/null &
+		sleep 0.1
+		pid=`cat client.pid`
+		echo "pid=$pid"
+		timeout=0
+	else
+		kill -0 $pid
+		if [ $? -eq 0 ]
+		then
+			#echo "exist"
+			#exist
+			timeout=`echo "$timeout + 1" | bc`
+			#echo "timeout=$timeout"
+			if [ $timeout -gt 30 ]
+			then
+				echo "timeout -gt 30, timeout=$timeout"
+				kill -9 $pid
+				pid=0
+			fi
+		else
+			echo "not exist"
+			#not exist
+			pid=0
+		fi
+	fi
+
+	sleep 1
+done
+
+
+
+

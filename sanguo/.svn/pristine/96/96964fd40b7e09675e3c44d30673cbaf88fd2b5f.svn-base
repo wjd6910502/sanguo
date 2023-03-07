@@ -1,0 +1,56 @@
+	public:
+		int64_t src_id;
+		Octets dest_id;
+		int zone_id;
+		int time;
+		int chat_type;
+		Octets speech_content;
+		Octets text_content;
+		enum { PROTOCOL_TYPE = PROTOCOL_GETIATEXTINSPEECHRE };
+	public:
+		GetIATextInSpeechRe() { type = PROTOCOL_GETIATEXTINSPEECHRE; }
+		GetIATextInSpeechRe(void*) : Protocol(PROTOCOL_GETIATEXTINSPEECHRE) { }
+		GetIATextInSpeechRe (const int64_t& l_src_id,const Octets& l_dest_id,const int& l_zone_id,
+			const int& l_time,const int& l_chat_type,const Octets& l_speech_content,
+			const Octets& l_text_content)
+			 : src_id(l_src_id),dest_id(l_dest_id),zone_id(l_zone_id)
+			,time(l_time),chat_type(l_chat_type),speech_content(l_speech_content)
+			,text_content(l_text_content)
+		{
+			type = PROTOCOL_GETIATEXTINSPEECHRE;
+		}
+
+		GetIATextInSpeechRe(const GetIATextInSpeechRe &rhs)
+			: Protocol(rhs),src_id(rhs.src_id),dest_id(rhs.dest_id),zone_id(rhs.zone_id)
+			,time(rhs.time),chat_type(rhs.chat_type),speech_content(rhs.speech_content)
+			,text_content(rhs.text_content) { }
+
+		GNET::Protocol *Clone() const { return new GetIATextInSpeechRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << src_id;
+			os << dest_id;
+			os << zone_id;
+			os << time;
+			os << chat_type;
+			os << speech_content;
+			os << text_content;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> src_id;
+			os >> dest_id;
+			os >> zone_id;
+			os >> time;
+			os >> chat_type;
+			os >> speech_content;
+			os >> text_content;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 67108864; }

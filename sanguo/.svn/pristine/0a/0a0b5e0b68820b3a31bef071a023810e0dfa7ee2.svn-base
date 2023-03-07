@@ -1,0 +1,60 @@
+function OnCommand_WuZheShiLianJoinBattle(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("WuZheShiLianJoinBattle_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+
+	local hero_trial = role._roledata._wuzhe_shilian 
+	
+	--需要验证当前难度的关卡信息是否开启	
+	if arg.difficulty ~= hero_trial._cur_difficulty then
+		--当前难度不正确
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_DIFFICULTY_WRONG"] 
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--这个_cur_stage 你在selectdifficulty协议中的设置的值好像是可以大于8的啊
+	if arg.stage < 1 or arg.stage > 8 or hero_trial._cur_stage ~= arg.stage then
+		--关卡参数不正确
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_STAGE_WRONG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end	
+	
+	--每次进入做一下武将增量
+	for hero in DataPool_Array(arg.heros) do
+		--判断是否在英雄列表中
+		local f = role._roledata._hero_hall._heros:Find(hero.id)
+		if f == nil then	
+			--武将不存在
+			resp.restcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_HERO_NOT_EXIST"]
+			player:SendToClient(SerializeCommand(resp))	
+			return
+		end
+		
+		local f = hero_trial.injured_hero:Find(hero.id)
+		local s = hero_trial.dead_hero:Find(hero.id)
+		if s ~= nil then
+			--死亡英雄不可以上阵
+			resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_HERO_DEAD"] 
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		
+		--如果这里面找不到 插入数据
+		--在这里做这个有什么意义吗。难道在这里做了在EndBattle的时候就不需要做了吗？
+		if f == nil and s == nil  then
+			local trialhero = Cache.ShiLianHeroInfo()
+			trialhero._id  = hero.id
+			trialhero._hp  = hero.hp
+			trialhero._anger  = hero.anger
+			hero_trial.injured_hero:Insert(hero.id,trialhero)
+		else
+			--如果这个id 在死亡列表和受伤列表中 直接什么都不用做 跳过
+		end
+	end
+	
+	player:SendToClient(SerializeCommand(resp))
+
+end

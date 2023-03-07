@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<singletons>
+	<singleton name="TopList" service="gamed" id="1" lock_name="toplist" comments="ÅÅÐÐ°ñ"/>
+
+	<singleton name="Misc" service="gamed" id="2" lock_name="misc" comments="ÔÓÏî"/>
+
+	<singleton name="PveArena" service="gamed" id="3" lock_name="pvearena" comments="PVE¾º¼¼³¡"/>
+
+	<!--ÕâÀï×¢ÒâÒ»ÏÂ£¬Èç¹ûÊÇ¸Õ¿ªÊ¼¿ª·þµÄÊ±ºòÕâ¸öËøÑ¹Á¦»á±È½Ï´ó-->
+	<singleton name="NoLoadPlayer" service="gamed" id="4" lock_name="noloadplayer" comments="ÒÑ¾­´´½¨µ«ÊÇÃ»ÓÐLoadµÄÓÎÏ·½ÇÉ«"/>
+	
+	<singleton name="TongQueTai" service="gamed" id="5" lock_name="tongquetai" comments="Í­È¸Ì¨ÏµÍ³Manager"/>
+
+	<singleton name="TopList_All_Role" service="gamed" id="6" lock_name="toplist_all_role" comments="ËùÓÐÍæ¼ÒµÄÅÅÐÐ°ñ"/>
+
+	<singleton name="Mafia_Info" service="gamed" id="7" lock_name="mafia_info" comments="°ï»áµÄ¼òÒ×ÐÅÏ¢"/>
+
+	<singleton name="JieYi_Info" service="gamed" id="8" lock_name="jieyi_info" comments="½áÒåÐÅÏ¢"/>
+
+	<singleton name="YueZhan_Info" service="gamed" id="9" lock_name="yuezhan_info" comments="Ô¼Õ½ÐÅÏ¢"/>
+	
+	<singleton name="Version_Info" service="gamed" id="10" lock_name="version_info" comments="°æ±¾ÐÅÏ¢"/>
+	
+	<singleton name="Chat_Info" service="gamed" id="11" lock_name="chat_info" comments="È«·þÁÄÌìÐÅÏ¢"/>
+
+	<singleton name="RoleNameCache" service="gamed" id="12" lock_name="rolenamecache" comments="Ä£ºý²éÕÒ½ÇÉ«"/>
+</singletons>
+

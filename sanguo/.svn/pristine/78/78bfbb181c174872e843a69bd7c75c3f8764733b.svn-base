@@ -1,0 +1,3 @@
+function OnCommand_RoleCommonLimit(player, role, arg, others)
+	--player:Log("OnCommand_RoleCommonLimit, "..DumpTable(arg).." "..DumpTable(others))
+end

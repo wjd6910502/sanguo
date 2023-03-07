@@ -1,0 +1,963 @@
+#ifndef _FOR_LUA_H_
+#define _FOR_LUA_H_
+
+#include <map>
+#include <list>
+#include <assert.h>
+#include "marshal.h"
+
+extern __thread int64_t g_transaction_id;
+
+namespace CACHE
+{
+
+class Int64: public GNET::Marshal
+{
+	int64_t _v;
+	std::string _s;
+
+	int64_t _transaction_id;
+	GNET::Octets _transaction_data;
+
+public:
+	Int64(): _v(0), _s("0"), _transaction_id(0) {}
+	Int64(int64_t v): _transaction_id(0)
+	{
+		_v = v;
+		Update();
+	}
+	Int64(const char *s): _transaction_id(0)
+	{
+		_v = strtoll(s, 0, 10);
+		Update();
+	}
+	virtual ~Int64() {}
+
+	operator int64_t() const { return _v; }
+	Int64& operator =(int64_t v)
+	{
+		_v = v;
+		Update();
+		return *this;
+	}
+	
+	const char* ToStr() const { return _s.c_str(); }
+	
+	void Set(const char *s)
+	{
+		Backup();
+		_v = strtoll(s, 0, 10);
+		Update();
+	}
+	void Set(const int &s)
+	{
+		Backup();
+		_v = s;
+		Update();
+	}
+	void Set(const Int64 &s)
+	{
+		Backup();
+		if(this != &s)
+		{
+			*this = s;
+		}
+	}
+	
+	void Add(const char *s)
+	{
+		Backup();
+		int64_t tmp = strtoll(s, 0, 10);
+		_v += tmp;
+		Update();
+	}
+	void Add(const int &s)
+	{
+		Backup();
+		_v += s;
+		Update();
+	}
+	void Add(const Int64 &s)
+	{
+		Backup();
+		_v += s._v;
+		Update();
+	}
+	
+	void Sub(const char *s)
+	{
+		Backup();
+		int64_t tmp = strtoll(s, 0, 10);
+		_v -= tmp;
+		Update();
+	}
+	void Sub(const int &s)
+	{
+		Backup();
+		_v -= s;
+		Update();
+	}
+	void Sub(const Int64 &s)
+	{
+		Backup();
+		_v -= s._v;
+		Update();
+	}
+	
+	void Mul(const char *s)
+	{
+		Backup();
+		int64_t tmp = strtoll(s, 0, 10);
+		_v *= tmp;
+		Update();
+	}
+	void Mul(const int &s)
+	{
+		Backup();
+		_v *= s;
+		Update();
+	}
+	void Mul(const Int64 &s)
+	{
+		Backup();
+		_v *= s._v;
+		Update();
+	}
+	
+	void Div(const char *s)
+	{
+		Backup();
+		int64_t tmp = strtoll(s, 0, 10);
+		_v /= tmp;
+		Update();
+	}
+	void Div(const int &s)
+	{
+		Backup();
+		_v /= s;
+		Update();
+	}
+	void Div(const Int64 &s)
+	{
+		Backup();
+		_v /= s._v;
+		Update();
+	}
+
+	int Mod(const char *s) const
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v%tmp;
+	}
+	int Mod(const int &s) const
+	{
+		return _v%s;
+	}
+	int Mod(const Int64 &s) const
+	{
+		return _v%s._v;
+	}
+	
+	bool Less(const char *s) const
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v<tmp;
+	}
+	bool Less(const int &s) const
+	{
+		return _v<s;
+	}
+	bool Less(const Int64 &s) const
+	{
+		return *this<s;
+	}
+	
+	bool Great(const char *s) const
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v>tmp;
+	}
+	bool Great(const int &s) const
+	{
+		return _v>s;
+	}
+	bool Great(const Int64 &s) const
+	{
+		return s<*this;
+	}
+	
+	bool Equal(const char *s) const
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v==tmp;
+	}
+	bool Equal(const int &s) const
+	{
+		return _v==s;
+	}
+	bool Equal(const Int64 &s) const
+	{
+		return *this==s;
+	}
+
+	bool operator <(const Int64& rhs) const { return (_v<rhs._v); }
+	bool operator ==(const Int64& rhs) const { return (_v==rhs._v); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << _v;
+		return os;
+	}
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		os >> _v;
+		Update();
+		return os;
+	}
+
+	void restore(int64_t transaction_id)
+	{
+		if(transaction_id == _transaction_id)
+		{
+			GNET::Marshal::OctetsStream os(_transaction_data);
+			os._for_transaction = true;
+			os >> _v;
+			Update();
+		}
+
+		_transaction_id = 0;
+		_transaction_data.clear();
+	}
+	void cleanup()
+	{
+		_transaction_id = 0;
+		_transaction_data.clear();
+	}
+
+private:
+	void Update()
+	{
+		char buf[64];
+		snprintf(buf, sizeof(buf), "%ld", _v);
+		_s = buf;
+	}
+	void Backup()
+	{
+		if(g_transaction_id != _transaction_id)
+		{
+			_transaction_id = g_transaction_id;
+			_transaction_data.clear();
+		}
+		if(_transaction_data.size() == 0)
+		{
+			GNET::Marshal::OctetsStream os;
+			os._for_transaction = true;
+			os << _v;
+			_transaction_data = os;
+		}
+	}
+};
+
+template<typename K, typename V, typename Iter, typename Map>
+class MapIter
+{
+	Iter _it;
+	void *_map; //其实是map的shell
+	int _saved_tag;
+
+public:
+	MapIter(Iter it, void* map, int tag): _it(it), _map(map), _saved_tag(tag) {}
+
+	void Next()
+	{
+		if(_saved_tag != ((Map*)_map)->Tag()) return;
+		if(_it != ((Map*)_map)->End()) ++_it;
+	}
+	void Prev()
+	{
+		if(_saved_tag != ((Map*)_map)->Tag()) return;
+		if(_it == ((Map*)_map)->End()) return;
+		if(_it == ((Map*)_map)->Begin()) 
+		{
+			_it = ((Map*)_map)->End();
+			return;
+		}
+		--_it;
+	}
+	V* GetValue()
+	{
+		if(_saved_tag != ((Map*)_map)->Tag()) return 0;
+		if(_it == ((Map*)_map)->End()) return 0;
+		return &_it->second;
+	}
+};
+
+template<typename T> inline void RESTORE(T& t, int64_t transaction_id) { t.restore(transaction_id); }
+//template<> inline void RESTORE(char& t, int64_t transaction_id) {}
+//template<> inline void RESTORE(int& t, int64_t transaction_id) {}
+//template<> inline void RESTORE(std::string& t, int64_t transaction_id) {}
+
+template<typename T> inline void CLEANUP(T& t) { t.cleanup(); }
+//template<> inline void CLEANUP(char& t) {}
+//template<> inline void CLEANUP(int& t) {}
+//template<> inline void CLEANUP(std::string& t) {}
+
+template<typename K, typename V, typename Iter, typename MapIter>
+class Map
+{
+	mutable std::map<K, V> _map;
+	int _tag;
+	void *_shell;
+
+	int64_t _transaction_id;
+	std::set<K> _transaction_data_empty; //原来没有K, 后插入的
+	std::map<K, GNET::Octets> _transaction_data; //原来就有(K,V), 后来被修改(包括删除)过
+
+public:
+	Map(void *shell): _tag(0), _shell(shell), _transaction_id(0) {}
+	void SetShell(void *p) { _shell = p; }
+
+	void OnChanged() { _tag++; }
+	int Tag() const { return _tag; }
+	Iter Begin() { return _map.begin(); }
+	Iter End() { return _map.end(); }
+
+	int Size() const { return _map.size(); }
+
+	V* Find(const K& k)
+	{
+		Iter it = _map.find(k);
+		if(it == _map.end()) return 0;
+		return &it->second;
+	}
+	void Insert(const K& k, const V& v)
+	{
+		if(g_transaction_id != _transaction_id)
+		{
+			_transaction_id = g_transaction_id;
+			_transaction_data_empty.clear();
+			_transaction_data.clear();
+		}
+
+		if(_transaction_data_empty.find(k)!=_transaction_data_empty.end() || _transaction_data.find(k)!=_transaction_data.end())
+		{
+			_map[k] = v;
+		}
+		else
+		{
+			auto it = _map.find(k);
+			if(it == _map.end())
+			{
+				_transaction_data_empty.insert(k);
+				_map.insert(std::make_pair(k, v));
+			}
+			else
+			{
+				V& old_v = it->second;
+				RESTORE(old_v, g_transaction_id);
+
+				GNET::Marshal::OctetsStream os;
+				os._for_transaction = true;
+				os << old_v;
+				_transaction_data[k] = os;
+
+				it->second = v;
+			}
+		}
+		OnChanged();
+	}
+	void Delete(const K& k)
+	{
+		if(g_transaction_id != _transaction_id)
+		{
+			_transaction_id = g_transaction_id;
+			_transaction_data_empty.clear();
+			_transaction_data.clear();
+		}
+
+		if(_transaction_data_empty.find(k)!=_transaction_data_empty.end() || _transaction_data.find(k)!=_transaction_data.end())
+		{
+			_map.erase(k);
+		}
+		else
+		{
+			auto it = _map.find(k);
+			if(it != _map.end())
+			{
+				V& old_v = it->second;
+				RESTORE(old_v, g_transaction_id);
+
+				GNET::Marshal::OctetsStream os;
+				os._for_transaction = true;
+				os << old_v;
+				_transaction_data[k] = os;
+
+				_map.erase(it);
+			}
+			else
+			{
+				_map.erase(k);
+			}
+		}
+		OnChanged();
+	}
+	void Clear()
+	{
+		restore(g_transaction_id);
+
+		if(g_transaction_id != _transaction_id)
+		{
+			_transaction_id = g_transaction_id;
+			_transaction_data_empty.clear();
+			_transaction_data.clear();
+		}
+
+		for(auto it=_map.begin(); it!=_map.end(); ++it)
+		{
+			const K& k = it->first;
+			GNET::Marshal::OctetsStream os;
+			os._for_transaction = true;
+			os << it->second;
+			_transaction_data[k] = os;
+		}
+
+		_map.clear();
+		OnChanged();
+	}
+
+	MapIter SeekToBegin() const { return MapIter(_map.begin(), _shell, _tag); }
+	MapIter Seek(const K& k) const { return MapIter(_map.find(k), _shell, _tag); }
+	MapIter SeekToLast() const
+	{ 
+		if (_map.size() == 0)
+			return MapIter(_map.begin(), _shell, _tag);
+		else
+			return MapIter(--_map.end(), _shell, _tag); 
+	}
+
+	GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << (int)_map.size();
+		for(auto it=_map.begin(); it!=_map.end(); ++it)
+		{
+			os << it->first << it->second;
+		}
+		return os;
+	}
+	const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		_map.clear();
+		int size = 0;
+		os >> size;
+		for(; size>0; size--)
+		{
+			K k;
+			V v;
+			os >> k >> v;
+			_map.insert(std::make_pair(k,v));
+		}
+		return os;
+	}
+
+	void restore(int64_t transaction_id)
+	{
+		if(transaction_id == _transaction_id)
+		{
+			for(auto it=_map.begin(); it!=_map.end(); ++it)
+			{
+				const K& k = it->first;
+				V& v = it->second;
+				if(_transaction_data_empty.find(k)==_transaction_data_empty.end() && _transaction_data.find(k)==_transaction_data.end())
+				{
+					RESTORE(v, transaction_id);
+				}
+			}
+			for(auto it=_transaction_data_empty.begin(); it!=_transaction_data_empty.end(); ++it)
+			{
+				const K& k = *it;
+				_map.erase(k);
+			}
+			for(auto it=_transaction_data.begin(); it!=_transaction_data.end(); ++it)
+			{
+				const K& k = it->first;
+				GNET::Marshal::OctetsStream os(it->second);
+				os._for_transaction = true;
+				V v;
+				os >> v;
+				_map[k] = v;
+			}
+		}
+		else
+		{
+			for(auto it=_map.begin(); it!=_map.end(); ++it)
+			{
+				V& v = it->second;
+				RESTORE(v, transaction_id);
+			}
+		}
+
+		_transaction_id = 0;
+		_transaction_data_empty.clear();
+		_transaction_data.clear();
+
+		//OnChanged(); TODO:
+	}
+	
+	void cleanup()
+	{
+		_transaction_id = 0;
+		_transaction_data_empty.clear();
+		_transaction_data.clear();
+	
+		for(auto it=_map.begin(); it!=_map.end(); ++it)
+		{
+			V& v = it->second;
+			CLEANUP(v);
+		}
+	}
+};
+//class VALUEMap;
+//class VALUEMapIter
+//{
+//	MapIter<KEY, VALUE, std::map<KEY, VALUE>::iterator, VALUEMap> _rep;
+//
+//public:
+//	VALUEMapIter(std::map<KEY, VALUE>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+//
+//	void Next() { _rep.Next(); }
+//	void Prev() { _rep.Prev(); }
+//	VALUE* GetValue() { return _rep.GetValue(); }
+//};
+//class VALUEMap: public GNET::Marshal
+//{
+//	Map<KEY, VALUE, std::map<KEY, VALUE>::iterator, VALUEMapIter> _rep;
+//
+//public:
+//	VALUEMap(): _rep(this) {}
+//	VALUEMap(const VALUEMap& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+//	virtual ~VALUEMap() {}
+//
+//	VALUEMap& operator= (const VALUEMap& rhs)
+//	{
+//		_rep = rhs._rep;
+//		_rep.SetShell(this);
+//		return *this;
+//	}
+//
+//	void OnChanged() { _rep.OnChanged(); }
+//	int Tag() const { return _rep.Tag(); }
+//	std::map<KEY, VALUE>::iterator Begin() { return _rep.Begin(); }
+//	std::map<KEY, VALUE>::iterator End() { return _rep.End(); }
+//
+//	int Size() const { return _rep.Size(); }
+//
+//	VALUE* Find(const KEY& k) { return _rep.Find(k); }
+//	void Insert(const KEY& k, const VALUE& v) { _rep.Insert(k, v); }
+//	void Delete(const KEY& k) { _rep.Delete(k); }
+//	void Clear() { _rep.Clear(); }
+//
+//	VALUEMapIter SeekToBegin() const { return _rep.SeekToBegin(); }
+//	VALUEMapIter Seek(const KEY& k) const { return _rep.Seek(k); }
+//	VALUEMapIter SeekToLast() const { return _rep.SeekToLast(); }
+//
+//	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+//	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+//
+//	void restore(int64_t transaction_id) { _rep.restore(transaction_id); }
+//	void cleanup() { _rep.cleanup(); }
+//};
+
+template<typename V, typename Iter, typename List>
+class ListIter
+{
+	Iter _it;
+	int _index;
+	void *_list;
+	int _saved_tag;
+
+public:
+	ListIter(Iter it, void *list, int tag): _it(it), _index(0), _list(list), _saved_tag(tag) {}
+
+	void Next()
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it != list->End())
+		{
+			_it++;
+			_index++;
+		}
+	}
+	V* GetValue()
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return 0;
+		if(_it == list->End()) return 0;
+		return &*_it;
+	}
+
+	void Pop()
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it != list->End()) list->Erase(_it, _index);
+	}
+	void PushBefore(const V& v)
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it == list->End())
+		{
+			list->PushBack(v);
+		}
+		else
+		{
+			list->Insert(_it, v, _index);
+		}
+	}
+	void PushAfter(const V& v)
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it == list->End())
+		{
+			list->PushBack(v);
+		}
+		else
+		{
+			_it++; //PushBefore会导致it失效, 所以这里修改it也无所谓了
+			PushBefore(v);
+		}
+	}
+};
+template<typename V, typename Iter, typename ListIter>
+class List
+{
+	mutable std::list<V> _list;
+	int _tag;
+	void *_shell;
+
+	int64_t _transaction_id;
+	struct _node_t
+	{
+		bool _original; //是原有项
+		bool _deleted; //是被删除的原有项, 不参与计数
+		GNET::Octets _data; //原有项备份数据
+	public:
+		_node_t(bool original): _original(original), _deleted(false) {}
+	};
+	std::list<_node_t> _transaction_data;
+
+public:
+	List(void *shell): _tag(0), _shell(shell), _transaction_id(0) {}
+	void SetShell(void *p) { _shell=p; }
+
+	void OnChanged() { _tag++; }
+	int Tag() const { return _tag; }
+	Iter End() { return _list.end(); }
+
+	void TransactionData_Init()
+	{
+		if(g_transaction_id != _transaction_id)
+		{
+			_transaction_id = g_transaction_id;
+			_transaction_data.clear();
+
+			//_transaction_data.reserve(_list.size());
+			for(auto it=_list.begin(); it!=_list.end(); ++it)
+			{
+				_transaction_data.push_back(_node_t(true));
+			}
+		}
+	}
+	void TransactionData_Insert(int index, const _node_t& node)
+	{
+		assert(_transaction_id==g_transaction_id);
+
+		if(index == (int)_list.size())
+		{
+			_transaction_data.push_back(node);
+			return;
+		}
+
+		int n = 0;
+		for(auto it=_transaction_data.begin(); it!=_transaction_data.end(); ++it) 
+		{
+			_node_t& nd = *it;
+			if(nd._deleted)
+			{
+				continue;
+			}
+			if(n == index)
+			{
+				_transaction_data.insert(it, node);
+				return;
+			}
+			n++;
+		}
+		assert(false);
+	}
+	void TransactionData_Delete(int index, V& v)
+	{
+		assert(_transaction_id==g_transaction_id);
+
+		int n = 0;
+		for(auto it=_transaction_data.begin(); it!=_transaction_data.end(); ++it) 
+		{
+			_node_t& nd = *it;
+			if(nd._deleted)
+			{
+				continue;
+			}
+			if(n == index)
+			{
+				if(nd._original)
+				{
+					nd._deleted = true;
+
+					RESTORE(v, g_transaction_id);
+
+					GNET::Marshal::OctetsStream os;
+					os._for_transaction = true;
+					os << v;
+					nd._data = os;
+				}
+				else
+				{
+					_transaction_data.erase(it);
+				}
+				return;
+			}
+			n++;
+		}
+		assert(false);
+	}
+	void TransactionData_Restore(int64_t transaction_id)
+	{
+		auto it_trans = _transaction_data.begin();
+		auto it_list = _list.begin();
+		while(it_trans!=_transaction_data.end() && it_list!=_list.end())
+		{
+			_node_t& nd = *it_trans;
+			if(nd._original)
+			{
+				if(nd._deleted)
+				{
+					GNET::Marshal::OctetsStream os(nd._data);
+					os._for_transaction = true;
+					V v;
+					os >> v;
+					_list.insert(it_list, v);
+					it_trans++;
+				}
+				else
+				{
+					RESTORE(*it_list, transaction_id);
+					it_trans++;
+					it_list++;
+				}
+			}
+			else
+			{
+				it_trans = _transaction_data.erase(it_trans);
+				it_list = _list.erase(it_list);
+			}
+		}
+		if(it_trans!=_transaction_data.end() && it_list==_list.end())
+		{
+			while(it_trans != _transaction_data.end())
+			{
+				_node_t& nd = *it_trans;
+				assert(nd._original);
+				assert(nd._deleted);
+				GNET::Marshal::OctetsStream os(nd._data);
+				os._for_transaction = true;
+				V v;
+				os >> v;
+				_list.push_back(v);
+				it_trans++;
+			}
+		}
+		assert(it_trans==_transaction_data.end());
+		assert(it_list==_list.end());
+		assert(_transaction_data.size()==_list.size());
+	}
+
+	void Erase(Iter it, int index)
+	{
+		TransactionData_Init();
+		TransactionData_Delete(index, *it);
+		_list.erase(it);
+		OnChanged();
+	}
+	void Insert(Iter it, const V& v, int index)
+	{
+		TransactionData_Init();
+		TransactionData_Insert(index, _node_t(false));
+		_list.insert(it, v);
+		OnChanged();
+	}
+
+	int Size() const { return _list.size(); }
+
+	void PopFront()
+	{
+		TransactionData_Init();
+		if(!_list.empty())
+		{
+			TransactionData_Delete(0, _list.front());
+			_list.pop_front();
+			OnChanged();
+		}
+	}
+	void PushFront(const V& v)
+	{
+		TransactionData_Init();
+		TransactionData_Insert(0, _node_t(false));
+		_list.push_front(v);
+		OnChanged();
+	}
+	void PopBack()
+	{
+		TransactionData_Init();
+		if(!_list.empty())
+		{
+			TransactionData_Delete(_list.size()-1, _list.back());
+			_list.pop_back();
+			OnChanged();
+		}
+	}
+	void PushBack(const V& v)
+	{
+		TransactionData_Init();
+		TransactionData_Insert(_list.size(), _node_t(false));
+		_list.push_back(v);
+		OnChanged();
+	}
+	void Clear()
+	{
+		TransactionData_Init();
+		auto it = _list.begin();
+		while(it != _list.end())
+		{
+			TransactionData_Delete(0, *it);
+			_list.pop_front();
+			//next
+			it = _list.begin();
+		}
+		OnChanged();
+	}
+
+	ListIter SeekToBegin() const { return ListIter(_list.begin(), _shell, _tag); }
+
+	GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << (int)_list.size(); //FIXME:
+		for(auto it=_list.begin(); it!=_list.end(); ++it)
+		{
+			os << *it;
+		}
+		return os;
+	}
+	const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		_list.clear();
+		int size = 0;
+		os >> size;
+		for(; size>0; size--)
+		{
+			V v;
+			os >> v;
+			_list.push_back(v);
+		}
+		return os;
+	}
+
+	void restore(int64_t transaction_id)
+	{
+		if(transaction_id == _transaction_id)
+		{
+			TransactionData_Restore(transaction_id);
+		}
+		else
+		{
+			for(auto it=_list.begin(); it!=_list.end(); ++it)
+			{
+				V& v = *it;
+				RESTORE(v, transaction_id);
+			}
+		}
+		_transaction_id = 0;
+		_transaction_data.clear();
+	}
+	
+	void cleanup()
+	{
+		_transaction_id = 0;
+		_transaction_data.clear();
+	
+		for(auto it=_list.begin(); it!=_list.end(); ++it)
+		{
+			V& v = *it;
+			CLEANUP(v);
+		}
+	}
+};
+//class VALUEList;
+//class VALUEListIter
+//{
+//	ListIter<VALUE, std::list<VALUE>::iterator, VALUEList> _rep;
+//
+//public:
+//	VALUEListIter(std::list<VALUE>::iterator it, void *list, int tag): _rep(it, list, tag) {}
+//
+//	void Next() { _rep.Next(); }
+//	VALUE* GetValue() { return _rep.GetValue(); }
+//
+//	void Pop() { _rep.Pop(); }
+//	void PushBefore(const VALUE& v) { _rep.PushBefore(v); }
+//	void PushAfter(const VALUE& v) { _rep.PushAfter(v); }
+//};
+//class VALUEList: public GNET::Marshal
+//{
+//	List<VALUE, std::list<VALUE>::iterator, VALUEListIter> _rep;
+//
+//public:
+//	VALUEList(): _rep(this) {}
+//	VALUEList(const VALUEList& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+//	virtual ~VALUEList() {}
+//
+//	VALUEList& operator= (const VALUEList& rhs)
+//	{
+//		_rep = rhs._rep;
+//		_rep.SetShell(this);
+//		return *this;
+//	}
+//
+//	void OnChanged() { _rep.OnChanged(); }
+//	int Tag() const { return _rep.Tag(); }
+//	std::list<VALUE>::iterator End() { return _rep.End(); }
+//	void Erase(std::list<VALUE>::iterator it) { _rep.Erase(it); }
+//	void Insert(std::list<VALUE>::iterator it, const VALUE& v) { _rep.Insert(it, v); }
+//
+//	int Size() const { return _rep.Size(); }
+//
+//	void PopFront() { _rep.PopFront(); }
+//	void PushFront(const VALUE& v) { _rep.PushFront(v); }
+//	void PopBack() { _rep.PopBack(); }
+//	void PushBack(const VALUE& v) { _rep.PushBack(v); }
+//	void Clear() { _rep.Clear(); }
+//
+//	VALUEListIter SeekToBegin() const { return _rep.SeekToBegin(); }
+//
+//	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+//	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+//
+//	void restore(int64_t transaction_id) { _rep.restore(transaction_id); }
+//	void cleanup() { _rep.cleanup(); }
+//};
+
+};
+
+#endif //_FOR_LUA_H_
+

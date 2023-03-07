@@ -1,0 +1,50 @@
+[LogUDPClient]
+type                    =       udp
+port                    =       21101
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       32768
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[LogTCPClient]
+type                    =       tcp
+port                    =       21101
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       32768
+obuffermax              =       1048576
+accumulate              =       1048576
+
+[storagewdb]
+homedir                 =       ./uname
+datadir                 =       dbdata
+logdir                  =       dblogs
+backupdir               =       ./unamebackup
+checkpoint_interval     =       60
+times_incbackup         =       1
+tables                  =       role_name,mafia_name
+cache_high_default      =       50000
+cache_low_default       =       45000
+backup_lockfile         =       /tmp/.lockuniquenamed
+quit_lockfile           =       /tmp/.quituniquenamed
+
+[ThreadPool]
+threads                 =       (0,1)(1,5)(100,1)(101,1)
+max_queuesize   =       1048576
+prior_strict    =       1
+accumulate              =       16777216
+
+[UniqueNameServer]
+type                    =       tcp
+port                    =       9246
+address                 =       0.0.0.0
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216

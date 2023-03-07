@@ -1,0 +1,47 @@
+	public:
+		int64_t roleid;
+		int64_t video_id;
+		Octets first_pvpinfo;
+		Octets second_pvpinfo;
+		int win_flag;
+		enum { PROTOCOL_TYPE = PROTOCOL_SENDPVPVIDEOID };
+	public:
+		SendPvpVideoID() { type = PROTOCOL_SENDPVPVIDEOID; }
+		SendPvpVideoID(void*) : Protocol(PROTOCOL_SENDPVPVIDEOID) { }
+		SendPvpVideoID (const int64_t& l_roleid,const int64_t& l_video_id,const Octets& l_first_pvpinfo,
+			const Octets& l_second_pvpinfo,const int& l_win_flag)
+			 : roleid(l_roleid),video_id(l_video_id),first_pvpinfo(l_first_pvpinfo)
+			,second_pvpinfo(l_second_pvpinfo),win_flag(l_win_flag)
+		{
+			type = PROTOCOL_SENDPVPVIDEOID;
+		}
+
+		SendPvpVideoID(const SendPvpVideoID &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),video_id(rhs.video_id),first_pvpinfo(rhs.first_pvpinfo)
+			,second_pvpinfo(rhs.second_pvpinfo),win_flag(rhs.win_flag) { }
+
+		GNET::Protocol *Clone() const { return new SendPvpVideoID(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << video_id;
+			os << first_pvpinfo;
+			os << second_pvpinfo;
+			os << win_flag;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> video_id;
+			os >> first_pvpinfo;
+			os >> second_pvpinfo;
+			os >> win_flag;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

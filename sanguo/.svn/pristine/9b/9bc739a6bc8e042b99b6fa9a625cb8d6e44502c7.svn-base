@@ -1,0 +1,7 @@
+function OnMessage_PVPJoinRe(player, role, arg, others)
+	player:Log("OnMessage_PVPJoinRe, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("PvpJoin_Re")
+	resp.retcode = 0
+	player:SendToClient(SerializeCommand(resp))
+end

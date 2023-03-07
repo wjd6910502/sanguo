@@ -1,0 +1,18 @@
+#include "mistmanager.h"
+
+namespace CACHE
+{
+
+void MistManager::BeginTransaction()
+{
+}
+
+void MistManager::CommitTransaction()
+{
+}
+
+void MistManager::CancelTransaction()
+{
+}
+
+}

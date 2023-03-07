@@ -1,0 +1,57 @@
+	public:
+		Octets data;
+		unsigned short client_send_time;
+		unsigned short server_send_time;
+		std::vector<int64_t> extra_roles;
+		std::vector<int64_t> extra_mafias;
+		std::vector<int> extra_pvps;
+		int reserved1;
+		int reserved2;
+		enum { PROTOCOL_TYPE = PROTOCOL_GAMEPROTOCOL };
+	public:
+		GameProtocol() { type = PROTOCOL_GAMEPROTOCOL; }
+		GameProtocol(void*) : Protocol(PROTOCOL_GAMEPROTOCOL) { }
+		GameProtocol (const Octets& l_data,unsigned short l_client_send_time,unsigned short l_server_send_time,
+			const std::vector<int64_t>& l_extra_roles,const std::vector<int64_t>& l_extra_mafias,const std::vector<int>& l_extra_pvps,
+			int l_reserved1 = 0,int l_reserved2 = 0)
+			 : data(l_data),client_send_time(l_client_send_time),server_send_time(l_server_send_time)
+			,extra_roles(l_extra_roles),extra_mafias(l_extra_mafias),extra_pvps(l_extra_pvps)
+			,reserved1(l_reserved1),reserved2(l_reserved2)
+		{
+			type = PROTOCOL_GAMEPROTOCOL;
+		}
+
+		GameProtocol(const GameProtocol &rhs)
+			: Protocol(rhs),data(rhs.data),client_send_time(rhs.client_send_time),server_send_time(rhs.server_send_time)
+			,extra_roles(rhs.extra_roles),extra_mafias(rhs.extra_mafias),extra_pvps(rhs.extra_pvps)
+			,reserved1(rhs.reserved1),reserved2(rhs.reserved2) { }
+
+		GNET::Protocol *Clone() const { return new GameProtocol(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << data;
+			os << client_send_time;
+			os << server_send_time;
+			os << extra_roles;
+			os << extra_mafias;
+			os << extra_pvps;
+			os << reserved1;
+			os << reserved2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> data;
+			os >> client_send_time;
+			os >> server_send_time;
+			os >> extra_roles;
+			os >> extra_mafias;
+			os >> extra_pvps;
+			os >> reserved1;
+			os >> reserved2;
+			return os;
+		}
+
+		bool SizePolicy(size_t size) const { return size <= 1024000; }

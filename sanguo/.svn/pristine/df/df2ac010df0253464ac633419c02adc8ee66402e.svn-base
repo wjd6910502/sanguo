@@ -1,0 +1,63 @@
+function OnCommand_TongQueTaiGetReward(player, role, arg, others)
+	player:Log("OnCommand_TongQueTaiGetReward, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("TongQueTaiGetReward_Re")
+	if role._roledata._tongquetai_data._reward_flag ~= 1 then
+		resp.retcode = G_ERRCODE["TONGQUETAI_REWARD_NOT_EXIST"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.double_flag = role._roledata._tongquetai_data._double_flag
+	resp.reward = {}
+	
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	local level_reward = ed:FindBy("level_reward", role._roledata._status._level)
+	local reward_id = 0
+	local drop_item_id = 0
+
+	for huodong_reward in DataPool_Array(level_reward.huodong_reward) do
+		if huodong_reward.huodong_type == 1 then
+			reward_id = huodong_reward.huodong_rewardid
+			drop_item_id = huodong_reward.huodong_dropid
+			break
+		end
+	end
+	
+	local drop_item = DROPITEM_DropItem(role, drop_item_id)
+	local reward = DROPITEM_Reward(role, reward_id)
+
+	for index = 1,table.getn(drop_item) do
+		local tmp_item = {}
+		tmp_item.tid = drop_item[index].id
+		tmp_item.count = drop_item[index].count
+		resp.reward[#resp.reward+1] = tmp_item
+	end
+
+	for index = 1,table.getn(reward.item) do
+		local tmp_item = {}
+		tmp_item.tid = reward.item[index].itemid
+		tmp_item.count = reward.item[index].itemnum
+		resp.reward[#resp.reward+1] = tmp_item
+	end
+
+	local double_count = 1
+	if role._roledata._tongquetai_data._double_flag == 1 then
+		double_count = double_count*3
+	end
+
+	if LIMIT_GetUseLimit(role, quanju.party_for_flag_limit_id) <= 3 then
+		double_count = double_count*2
+	end
+	for index = 1,table.getn(resp.reward) do
+		resp.reward[index].count = resp.reward[index].count*double_count
+		BACKPACK_AddItem(role, resp.reward[index].tid, resp.reward[index].count)
+	end
+
+	role._roledata._tongquetai_data._reward_flag = 0
+	role._roledata._tongquetai_data._double_flag = 0
+
+	player:SendToClient(SerializeCommand(resp))
+end

@@ -1,0 +1,27 @@
+function OnMessage_HotPvpVideoHeartBeat(arg, others)
+	--API_Log("OnMessage_HotPvpVideoHeartBeat, "..DumpTable(arg))
+
+	local manager = others.hot_pvp_video._data
+	local now = API_GetTime()
+	if now-manager._prev_time<60 then return end
+
+	API_Log("OnMessage_HotPvpVideoHeartBeat, "..DumpTable(arg))
+
+	manager._prev_time = now;
+
+	--TODO:
+	local c = 0
+	for v in Cache_List(manager._pending_list) do
+		c = c+1
+		if c>5 then break end
+
+		local hpv = CACHE.HotPvpVideo()
+		manager._seq_stub = manager._seq_stub+1
+		hpv._seq = manager._seq_stub
+		hpv._video = v
+		hpv._replayed_count = 0
+		manager._map:Insert(hpv._seq, hpv)
+	end
+
+	manager._pending_list:Clear()
+end

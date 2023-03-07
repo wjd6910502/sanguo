@@ -1,0 +1,3 @@
+function OnCommand_MafiaOperateApplyList(player, role, arg, others)
+	--player:Log("OnCommand_MafiaOperateApplyList, "..DumpTable(arg).." "..DumpTable(others))
+end

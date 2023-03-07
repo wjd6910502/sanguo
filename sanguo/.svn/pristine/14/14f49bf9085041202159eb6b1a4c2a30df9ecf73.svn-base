@@ -1,0 +1,17 @@
+function OnMessage_TopListHeartBeat(toplist, arg, others)
+	API_Log("OnMessage_TopListHeartBeat, "..DumpTable(arg).." "..DumpTable(others))
+
+	local now = API_GetTime()
+	local top = toplist
+	local tit = top:SeekToBegin()
+	local toplist = tit:GetValue()
+	while toplist ~= nil do
+		if now >= toplist._new_top_list_by_data._timestamp then
+			toplist._old_top_list = toplist._new_top_list_by_data._data
+			toplist._new_top_list_by_data._timestamp = API_MakeTodayTime(5, 0, 0) + 3600*24
+			API_Log("OnMessage_TopListHeartSuccess    OnMessage_TopListHeartSuccess    OnMessage_TopListHeartSuccess")
+		end
+		tit:Next()
+		toplist = tit:GetValue()
+	end
+end

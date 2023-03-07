@@ -1,0 +1,56 @@
+#ifndef __GNET_GATESERVER_HPP
+#define __GNET_GATESERVER_HPP
+
+#include "protocol.h"
+#include "thread.h"
+#include "mutex.h"
+
+namespace GNET
+{
+
+class GateServer : public Protocol::Manager
+{
+public:
+	enum SESSION_STATUS
+	{
+		SESSION_STATUS_NONE = 0,
+		SESSION_STATUS_WAITING_RESPONSE,
+		SESSION_STATUS_PROCESSING_RESPONSE,
+		SESSION_STATUS_OK,
+	};
+
+	struct SessionInfo
+	{
+		SESSION_STATUS _status;
+		Octets _server_rand1;
+		Octets _trans_token;
+
+		SessionInfo(): _status(SESSION_STATUS_NONE) {}
+	};
+
+private:
+	static GateServer instance;
+	size_t		accumulate_limit;
+
+	std::map<Session::ID,SessionInfo> _session_map;
+	mutable Thread::Mutex2 _session_map_lock;
+	//std::map<Octets,Session::ID> _account_map;
+
+	const Session::State *GetInitState() const;
+	bool OnCheckAccumulate(size_t size) const { return accumulate_limit == 0 || size < accumulate_limit; }
+	void OnAddSession(Session::ID sid);
+	void OnDelSession(Session::ID sid);
+public:
+	static GateServer *GetInstance() { return &instance; }
+	std::string Identification() const { return "GateServer"; }
+	void SetAccumulate(size_t size) { accumulate_limit = size; }
+	GateServer() : accumulate_limit(0), _session_map_lock("GateServer::_session_map_lock") { }
+
+	//bool FindSession(Session::ID sid, int& status, Octets& server_rand1, Octets& trans_token) const;
+	bool FindSessionAndChangeStatus(Session::ID sid, int cur_status, int to_status, Octets& server_rand1, Octets& trans_token);
+	//void MapAccount(const Octets& account, Session::ID sid);
+	//Session::ID FindSIDByAccount(const Octets& account) const;
+};
+
+};
+#endif

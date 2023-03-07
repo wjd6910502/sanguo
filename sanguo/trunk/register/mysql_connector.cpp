@@ -1,0 +1,84 @@
+
+
+#include <iostream>
+#include <cstdlib>
+#include "mysql_connector.hpp"
+using namespace std;
+
+MysqlConnector::MysqlConnector()
+{
+	connection = mysql_init(NULL);
+	if(connection == NULL)
+	{
+		cout<< "ERROR:" << mysql_error(connection);	
+		exit(1);	
+	}
+	else
+	{
+		cout<< "Init OK!"<<endl;	
+	}
+}
+
+MysqlConnector::~MysqlConnector()
+{
+	if(connection != NULL)
+	{
+		mysql_close(connection);			
+	}
+}
+
+bool MysqlConnector::initDB(string host,string user,string pwd, string db_name)
+{
+	//函数mysql_real_connect建立一个数据库连接
+	//成功返回MYSQL*连接句柄 失败返回NULL
+	connection = mysql_real_connect(connection, host.c_str(), user.c_str(), pwd.c_str(), db_name.c_str(), 0, NULL, 0);
+
+	if(connection == NULL)
+	{
+		cout << "wrong connection" <<endl;
+		cout<< "ERROR" << mysql_error(connection);	
+		return false;
+	}
+	
+	cout<< "InitDb Success!" << endl;
+	return true;
+	
+	
+}
+
+bool MysqlConnector::exeSQL(string sql)
+{
+	if(mysql_query(connection, sql.c_str()))
+	{
+		cout << "Query Error:" << mysql_error(connection);	
+		return false;
+	}
+	else
+	{
+		cout << "Query Success"<< endl;	
+		/*int res = mysql_query(connection,"select * from t2");
+		if(!res)
+		{
+			result =mysql_store_result(connection);
+			if(result)
+			{
+				cout<<"account      "<<"account2zoneid     "<<"zoneid      "<<"name       "<<"level       "<<"photo     "<<endl;
+				while ( (row = mysql_fetch_row(result)) )
+				{
+					cout<<row[0]<<"    "<<row[1]<<"   "<<row[2]<<"    "<<row[3]<<"   "<<row[4]<<"    "<<row[5]<<endl;
+				}
+				
+			}
+			
+		}
+		else
+		{
+			cout<< "query sql failed " << endl;
+		}*/
+		
+	}
+	return true;	
+}
+
+
+

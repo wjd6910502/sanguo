@@ -1,0 +1,220 @@
+--注意一下这里面所有的函数在使用的时候，都要判断一下返回值。
+function LIMIT_TestUseLimit(role, id, count)
+	local ed = DataPool_Find("elementdata")
+	local template_common = ed:FindBy("limit_id", id)
+	if template_common == nil then
+		return false
+	end
+	local vip_level = ROLE_GetVIP(role)
+	local tem_count = 0
+	local flag = 0
+	for vip_count in DataPool_Array(template_common.vip_level_max) do
+		
+		if flag == 0 then
+			tem_count = vip_count
+		end
+		if vip_level == flag then
+			if vip_count ~= 0 then
+				tem_count = vip_count
+			end
+		end
+		flag = flag + 1
+	end
+	local common_use_limit = role._roledata._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		if tem_count >= inv._count+count then
+			return true
+		end
+	else
+		if tem_count >= count then
+			return true
+		end
+	end
+	return false
+end
+
+function LIMIT_AddUseLimit(role, id, count)
+	local common_use_limit = role._roledata._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	local tmp_count = 0
+	if inv~=nil then
+		inv._count = inv._count + count
+		tmp_count = inv._count
+	else
+		local ed = DataPool_Find("elementdata")
+		local template_common = ed:FindBy("limit_id", id)
+		if template_common == nil then
+			return false
+		end
+		local limit = CACHE.CommonUseLimit()
+		limit._tid = id
+		limit._count = count
+		limit._type = template_common.limitmode
+		common_use_limit:Insert(id, limit)
+		tmp_count = count
+	end
+	local resp = NewCommand("RoleCommonLimit")
+	resp.tid = id
+	resp.count = tmp_count
+	role:SendToClient(SerializeCommand(resp))
+	return true
+end
+
+--在玩家买次数的时候，需要用这个判断一下，要是系统直接重置次数的时候就不需要了
+function LIMIT_TestResetUseLimit(role, id)
+	local common_use_limit = role._roledata._status._common_use_limit
+	local ed = DataPool_Find("elementdata")
+	local template_common = ed:FindBy("limit_id", id)
+	if template_common == nil then
+		return false
+	end
+	
+	local vip_level = ROLE_GetVIP(role)
+	local tem_count = 0
+	local flag = 0
+	for vip_count in DataPool_Array(template_common.vip_level_max) do
+		if flag == 0 then
+			tem_count = vip_count
+		end
+		if vip_level == flag then
+			if vip_count ~= 0 then
+				tem_count = vip_count
+			end
+		end
+		flag = flag + 1
+	end
+	
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		if tem_count == inv._count then
+			return true
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
+
+function LIMIT_ResetUseLimit(role, id)
+	local common_use_limit = role._roledata._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		inv._count = 0
+		local resp = NewCommand("RoleCommonLimit")
+		resp.tid = id
+		resp.count = 0
+		role:SendToClient(SerializeCommand(resp))
+		--这里是为了减少数据
+		common_use_limit:Delete(id)
+		return true
+	else
+		return false
+	end
+end
+
+function LIMIT_GetUseLimit(role, id)
+	local common_use_limit = role._roledata._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		return inv._count
+	else
+		return 0
+	end
+end
+
+function LIMIT_RefreshUseLimit(role, diff_time)
+	local ed = DataPool_Find("elementdata")
+	
+	local need_reset_id = {}
+	local common_use_limit = role._roledata._status._common_use_limit
+	local inv = common_use_limit:SeekToBegin()
+	local value = inv:GetValue()
+	while value ~= nil do
+		
+		local template_common = ed:FindBy("limit_id", value._tid)
+
+		if value._type == 3 then
+			if diff_time.last_year ~= diff_time.cur_year then
+				need_reset_id[#need_reset_id+1] = value._tid
+			end
+		elseif value._type == 2 then
+			if diff_time.last_month ~= diff_time.cur_month then
+				if diff_time.cur_day >= template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			else
+				if diff_time.cur_day >= template_common.resettime and diff_time.last_day < template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+				if diff_time.last_year ~= diff_time.cur_year then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			end
+		elseif value._type == 1 then
+			local cur_day = diff_time.cur_day
+			if diff_time.last_year ~= diff_time.cur_year then
+				local mday = 365
+				if diff_time.last_year%100 == 0 then
+					if diff_time.last_year%400 == 0 then
+						mday = 366
+					end
+				elseif diff_time.last_year%4 == 0 then
+					mday = 366
+				end
+				cur_day = mday + diff_time.cur_day
+			end
+
+			if cur_day - diff_time.last_day > 7 then	--表示跨周了，并且超过了7天
+				need_reset_id[#need_reset_id+1] = value._tid
+			elseif cur_day - diff_time.last_day == 7 then	--表示跨周了，并且超过了7天
+				if diff_time.last_week ~= template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			elseif diff_time.cur_week > diff_time.last_week then	--表示在同一周内
+				if diff_time.cur_week >= template_common.resettime and diff_time.last_week < template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			elseif diff_time.cur_week < diff_time.last_week then --这个表示跨周了，但是没有超过7天
+				if template_common.resettime > diff_time.last_week then
+					need_reset_id[#need_reset_id+1] = value._tid
+				elseif diff_time.cur_week >= template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			end
+		elseif value._type == 0 then
+			local cur_day = diff_time.cur_day
+			if diff_time.last_year ~= diff_time.cur_year then
+				local mday = 365
+				if diff_time.last_year%100 == 0 then
+					if diff_time.last_year%400 == 0 then
+						mday = 366
+					end
+				elseif diff_time.last_year%4 == 0 then
+					mday = 366
+				end
+				cur_day = mday + diff_time.cur_day
+			end
+
+			if diff_time.last_day ~= cur_day then
+				if diff_time.cur_hour >= template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				elseif cur_day - diff_time.last_day >= 2 then --跨天没有登录
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			else
+				if diff_time.cur_hour >= template_common.resettime and diff_time.last_hour < template_common.resettime then
+					need_reset_id[#need_reset_id+1] = value._tid
+				end
+			end
+		end
+		
+		inv:Next()
+		value = inv:GetValue()
+	end
+
+	for i = 1, table.getn(need_reset_id) do
+		LIMIT_ResetUseLimit(role, need_reset_id[i])
+	end
+end

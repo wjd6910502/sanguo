@@ -1,0 +1,110 @@
+
+#ifndef __GNET_DBLOADDATA_HPP
+#define __GNET_DBLOADDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "glog.h"
+
+#include "storage.h"
+#include "storagetool.h"
+
+#include "gamedbserver.hpp"
+#include "gamedbmanager.h"
+
+
+#include "dbloaddataarg"
+#include "dbloaddatares"
+
+namespace GNET
+{
+
+class DBLoadDataQuery : public StorageEnv::IQuery
+{
+	std::vector<string>* plist_key;
+	std::vector<string>* plist_value;
+	int total;
+	string data;
+	Octets last;
+public:
+	DBLoadDataQuery(std::vector<string>* p_key, std::vector<string>* p_value) : plist_key(p_key), plist_value(p_value), total(0)
+	{
+	}
+
+	bool Update( StorageEnv::Transaction& txn, Octets& key, Octets& value)
+	{
+		string load_key;
+		try
+		{
+			if(total >= 1)
+			{
+				last = key;
+				return false;
+			}
+			//load_key = std::string((char*)key.begin(), key.size());
+			//data = std::string((char*)value.begin(), value.size());
+			Marshal::OctetsStream(key) >> load_key;
+			Marshal::OctetsStream(value) >> data;
+			plist_key->push_back(load_key);
+			plist_value->push_back(data);
+			total++;
+		} 
+		catch ( Marshal::Exception & ) 
+		{
+			//Log::log( LOG_ERR, "DBLoadDataQuery, error unmarshal. key=%d", fid);
+		}
+		return true;
+	}
+		
+	const Octets& GetHandle() { return last; }
+};
+
+
+class DBLoadData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloaddata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		DBLoadDataRes *res = (DBLoadDataRes *)result;
+
+		LOG_TRACE("DB::DBLoadData, handle=%d\n", res->handle.size());
+
+		//Marshal::OctetsStream key, value;
+		CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+		LOCK_TABLE(db_data)
+		START_TRANSACTION
+		{
+			DBLoadDataQuery q(&(res->result_key), &(res->result_value));
+			StorageEnv::Storage::Cursor cursor = db_data->cursor( txnobj );
+			cursor.walk(arg->handle, q );
+			res->handle = q.GetHandle();
+			res->retcode = 0;
+		}
+		END_TRANSACTION
+
+		if(txnerr)
+		{
+			Log::log( txnlog, "DB::DBLoadData(%d) %s", txnerr, GamedbException::GetError(txnerr));
+			res->retcode = -1;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		// DBLoadDataRes *res = (DBLoadDataRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

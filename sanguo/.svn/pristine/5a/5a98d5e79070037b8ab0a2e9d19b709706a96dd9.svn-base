@@ -1,0 +1,76 @@
+#ifndef _GLOBALMESSAGE_H_
+#define _GLOBALMESSAGE_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_GlobalMessage: public Singleton, public TransactionBase
+{
+	bool _in_transaction;
+	int64_t _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	GlobalMessageData _data;
+
+	struct _node_t //这个结构会被多线程不加锁访问，所以其成员变量坚决不能使用复杂结构和类
+	{
+		time_t _put_time;
+		int _type; //0:msg, 1:cmd for direct send
+		char _msg[SERVER_CONST_GLOBAL_MESSAGE_LENGTH_MAX];
+		int _checksum;
+	};
+	_node_t _msgs[SERVER_CONST_GLOBAL_MESSAGE_COUNT];
+
+	/*volatile*/ int _index;
+	int _index2;
+
+private:
+	SGT_GlobalMessage();
+
+public:
+	static SGT_GlobalMessage& GetInstance()
+	{
+		static SGT_GlobalMessage _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "GlobalMessage"; }
+	virtual int GetID() const { return 13; }
+	virtual const char* GetLockName() const { return "global_message"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int64_t transaction_id);
+	void restore(int64_t transaction_id);
+	void cleanup();
+
+	void Put(const char *msg, int checksum) { _Put(0, msg, checksum); }
+	void PutCmd(const char *cmd, int checksum) { _Put(1, cmd, checksum); } //针对简单广播用途的优化接口，避免serialize/deserialize开销
+
+	void Put_NOLOCK(const char *msg, int checksum) { _Put_NOLOCK(0, msg, checksum); }
+	void PutCmd_NOLOCK(const char *cmd, int checksum) { _Put_NOLOCK(1, cmd, checksum); }
+
+	GlobalMessageGetResult* Get_NOLOCK(int login_time, int prev_index);
+	void ReleaseResult_NOLOCK(GlobalMessageGetResult *p) { delete p; }
+
+private:
+	void _Put(int type, const char *msg, int checksum);
+	void _Put_NOLOCK(int type, const char *msg, int checksum);
+};
+
+}
+
+inline CACHE::SGT_GlobalMessage* API_GetLuaGlobalMessage(void *r) { return (CACHE::SGT_GlobalMessage*)r; }
+inline CACHE::SGT_GlobalMessage* API_GetLuaGlobalMessage() { return (InBigLock() ? &CACHE::SGT_GlobalMessage::GetInstance() : 0); }
+inline CACHE::SGT_GlobalMessage* API_GetLuaGlobalMessage_NOLOCK() { return &CACHE::SGT_GlobalMessage::GetInstance(); }
+
+#endif //_GLOBALMESSAGE_H_
+

@@ -1,0 +1,47 @@
+
+#ifndef __GNET_PVPCREATE_HPP
+#define __GNET_PVPCREATE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "pvpmanager.h"
+#include "glog.h"
+
+#include "pvpcreatearg"
+#include "pvpcreateres"
+
+namespace GNET
+{
+
+class PVPCreate : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "pvpcreate"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		PVPCreateArg *arg = (PVPCreateArg *)argument;
+		PVPCreateRes *res = (PVPCreateRes *)result;
+
+		GLog::log(LOG_INFO, "PVPD::PVPCreate::Server, id=%d, mode=%d, fighter1=%ld, fighter2=%ld, start_time=%d, sid=%u",
+		          arg->id, arg->mode, arg->fighter1, arg->fighter2, arg->start_time, sid);
+		
+		res->retcode = PVPManager::GetInstance().Create(arg->id, arg->mode, arg->fighter1, arg->fighter2, arg->start_time);
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// PVPCreateArg *arg = (PVPCreateArg *)argument;
+		// PVPCreateRes *res = (PVPCreateRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

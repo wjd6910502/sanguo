@@ -1,0 +1,405 @@
+#include "playermanager.h"
+#include "glog.h"
+#include "script_wrapper.h"
+#include "mafiamanager.h"
+#include "pvpmanager.h"
+#include "message.h"
+#include "topmanager.h"
+#include "transaction.h"
+#include "miscmanager.h"
+
+using namespace CACHE;
+
+extern __thread lua_State *g_L;
+extern lua_State *g_L_new;
+extern int g_reload_lua;
+extern __thread int g_reload_lua_local;
+extern lua_State* InitLuaEnv();
+
+extern int64_t AllocTransactionId();
+extern __thread int64_t g_transaction_id;
+
+extern std::map<int, std::string> g_msg_receiver2; //msg=>receiver2
+extern std::set<int> g_msg_lock_toplist_map; //msg=>lock_toplist
+extern std::set<int> g_msg_lock_mist_map; //msg=>lock_mist
+
+int g_wait_count = 0;
+GNET::Thread::Mutex g_wait_count_lock;
+GNET::Thread::Mutex g_big_lock;
+
+class WaitBigTask: public GNET::Runnable
+{
+public:
+	virtual void Run()
+	{
+		{
+		GNET::Thread::Mutex::Scoped keeper(g_wait_count_lock);
+		g_wait_count++;
+		}
+		{
+		GNET::Thread::Mutex::Scoped keeper(g_big_lock);
+		GNET::Thread::Mutex::Scoped keeper2(g_wait_count_lock);
+		g_wait_count--;
+		}
+	}
+};
+
+class MessageTask: public GNET::Runnable
+{
+	Message _msg;
+
+public:
+	MessageTask(const Message& msg): _msg(msg) {}
+
+	virtual void Run()
+	{
+		StatisticManager::GetInstance().IncMsgRunCount();
+
+		//get msg type
+		int msg_type = atoi(_msg._data.c_str());
+		if(msg_type <= 0)
+		{
+			GLog::log(LOG_ERR, "MessageTask::Run, wrong msg type(%d)\n", msg_type);
+			delete this;
+			return;
+		}
+
+		auto it = g_msg_receiver2.find(msg_type);
+		if(it == g_msg_receiver2.end())
+		{
+			GLog::log(LOG_ERR, "MessageTask::Run, cannot found the msg_type(%d) in g_msg_receiver2\n", msg_type);
+			delete this;
+			return;
+		}
+		std::string receiver2 = it->second;
+
+
+		LuaParameter lp;
+		if(receiver2 == "player")
+		{
+			Player *player = PlayerManager::GetInstance().FindByRoleId(_msg._target);
+			if(!player)
+			{
+				GLog::log(LOG_ERR, "MessageTask::Run, no player: %ld\n", _msg._target);
+				delete this;
+				return;
+			}
+			lp.AddParameter(player);
+			_Run(player, 0, 0, 0, 0, lp);
+		}
+		else if(receiver2 == "mafia")
+		{
+			Mafia *mafia = MafiaManager::GetInstance().Find(_msg._target);
+			if(!mafia)
+			{
+				GLog::log(LOG_ERR, "MessageTask::Run, no mafia: %ld\n", _msg._target);
+				delete this;
+				return;
+			}
+			lp.AddParameter(mafia);
+			_Run(0, mafia, 0, 0, 0, lp);
+		}
+		else if(receiver2 == "pvp")
+		{
+			PVP *pvp = PVPManager::GetInstance().Find((int)_msg._target);
+			if(!pvp)
+			{
+				GLog::log(LOG_ERR, "MessageTask::Run, no pvp: %ld\n", _msg._target);
+				delete this;
+				return;
+			}
+			lp.AddParameter(pvp);
+			_Run(0, 0, pvp, 0, 0, lp);
+		}
+		else if(receiver2 == "toplist")
+		{
+			TopManager *top = TopManager::GetInstance();
+			if(!top)
+			{
+				GLog::log(LOG_ERR, "MessageTask::Run, no toplist\n");
+				delete this;
+				return;
+			}
+			lp.AddParameter(top);
+			_Run(0, 0, 0, top, 0, lp);
+		}
+		else if(receiver2 == "mist")
+		{
+			MiscManager *mist = MiscManager::GetInstance();
+			if(!mist)
+			{
+				GLog::log(LOG_ERR, "MessageTask::Run, no mist\n");
+				delete this;
+				return;
+			}
+			lp.AddParameter(mist);
+			_Run(0, 0, 0, 0, mist, lp);
+		}
+		else if(receiver2 == "big")
+		{
+			{
+			GNET::Thread::Mutex::Scoped keeper(g_wait_count_lock);
+			g_wait_count++;
+			}
+
+			GNET::Thread::Mutex::Scoped keeper(g_big_lock);
+
+			//上wait task
+			for(int i=0; i<100; i++)
+			{
+				GNET::Thread::Pool::_pool.AddTask(new WaitBigTask());
+			}
+			//等待直到所有worker都停下来
+			int c = 0;
+			while(true)
+			{
+				usleep(1000);
+
+				GNET::Thread::Mutex::Scoped keeper2(g_wait_count_lock);
+				if(g_wait_count == SERVER_CONST_WORKER_THREAD_COUNT+2) break; //TODO: 直接数有点危险
+				//很久还没锁住worker，再补点wait task?
+				c++;
+				if(c%1000 == 0)
+				{
+					for(int i=0; i<100; i++)
+					{
+						GNET::Thread::Pool::_pool.AddTask(new WaitBigTask());
+					}
+				}
+				if(c%10000 == 0) 
+				{
+					printf("%d\n", g_wait_count);
+					abort();
+				}
+			}
+
+			lp.AddParameter(0/*ud*/);
+			_Run(0, 0, 0, 0, 0, lp);
+
+			if(g_L_new) //big _Run时可能会发生lua热加载
+			{
+				lua_close(g_L);
+
+				g_L = g_L_new;
+				g_L_new = 0;
+				g_reload_lua++; //通知其他线程也要reload
+				g_reload_lua_local = g_reload_lua; //本线程已经reload过了
+				GLog::log(LOG_INFO, "MessageTask::Run, lua reload ok, g_reload_lua=%d, thread=%u\n", g_reload_lua, (unsigned int)pthread_self());
+			}
+
+			GNET::Thread::Mutex::Scoped keeper3(g_wait_count_lock);
+			g_wait_count--;
+		}
+		else
+		{
+			GLog::log(LOG_ERR, "MessageTask::Run, wrong receiver2: %s\n", receiver2.c_str());
+			delete this;
+			return;
+		}
+
+		delete this;
+	}
+
+private:
+	void _Run(Player *player, Mafia *mafia, PVP *pvp, TopManager *toplist, MiscManager *mist_manager, LuaParameter& lp)
+	{
+		//GLog::log(LOG_INFO, "MessageTask::_Run, _msg._data=%s, thread=%u", _msg._data.c_str(), (unsigned int)pthread_self());
+
+		lp.AddParameter(_msg._data);
+
+		std::set<Player*> player_set;
+		std::set<Mafia*> mafia_set;
+		std::set<PVP*> pvp_set;
+		std::set<TopManager*> toplist_set;
+
+		//extra_roles
+		for(auto it=_msg._extra_roles.begin(); it!=_msg._extra_roles.end(); ++it)
+		{
+			Player *p = PlayerManager::GetInstance().FindByRoleId(*it);
+			if(p) player_set.insert(p);
+		}
+		lp.AddParameter((int)player_set.size()); //extra_roles size
+		for(auto it=player_set.begin(); it!=player_set.end(); ++it)
+		{
+			lp.AddParameter(*it);
+		}
+		if(player) player_set.insert(player); //最后把自己放进去
+		//extra_mafias
+		for(auto it=_msg._extra_mafias.begin(); it!=_msg._extra_mafias.end(); ++it)
+		{
+			Mafia *p = MafiaManager::GetInstance().Find(*it);
+			if(p) mafia_set.insert(p);
+		}
+		lp.AddParameter((int)mafia_set.size()); //extra_mafias size
+		for(auto it=mafia_set.begin(); it!=mafia_set.end(); ++it)
+		{
+			lp.AddParameter(*it);
+		}
+		if(mafia) mafia_set.insert(mafia); //最后把自己放进去
+		//extra_pvps
+		for(auto it=_msg._extra_pvps.begin(); it!=_msg._extra_pvps.end(); ++it)
+		{
+			PVP *p = PVPManager::GetInstance().Find(*it);
+			if(p) pvp_set.insert(p);
+		}
+		lp.AddParameter((int)pvp_set.size()); //extra_pvps size
+		for(auto it=pvp_set.begin(); it!=pvp_set.end(); ++it)
+		{
+			lp.AddParameter(*it);
+		}
+		if(pvp) pvp_set.insert(pvp); //最后把自己放进去
+		//top
+		TopManager *top = NULL;
+		{
+			//TODO: toplist
+			int msg_type = atoi(_msg._data.c_str());
+			auto it = g_msg_lock_toplist_map.find(msg_type);
+			if(it != g_msg_lock_toplist_map.end())
+			{
+				top = TopManager::GetInstance();
+			}
+			lp.AddParameter(top);
+		}
+		//mist
+		MiscManager *mist = NULL;
+		{
+			//TODO: mist
+			int msg_type = atoi(_msg._data.c_str());
+			auto it = g_msg_lock_mist_map.find(msg_type);
+			if(it != g_msg_lock_mist_map.end())
+			{
+				mist = MiscManager::GetInstance();
+			}
+			lp.AddParameter(top);
+		}
+		//顺序多锁
+		std::list<MyScoped> keeper_list;
+		for(auto it=player_set.begin(); it!=player_set.end(); ++it)
+		{
+			Player *p = *it;
+			keeper_list.push_back(MyScoped(p->_lock));
+		}
+		for(auto it=mafia_set.begin(); it!=mafia_set.end(); ++it)
+		{
+			Mafia *p = *it;
+			keeper_list.push_back(MyScoped(p->_lock));
+		}
+		for(auto it=pvp_set.begin(); it!=pvp_set.end(); ++it)
+		{
+			PVP *p = *it;
+			keeper_list.push_back(MyScoped(p->_lock));
+		}
+		//TODO: toplist
+		if(toplist || top)
+		{
+			top = TopManager::GetInstance();
+			keeper_list.push_back(MyScoped(top->_lock));
+		}
+		//TODO: mist
+		if(mist_manager || mist)
+		{
+			mist = MiscManager::GetInstance();
+			keeper_list.push_back(MyScoped(mist->_lock));
+		}
+
+		//transaction
+		std::list<TransactionKeeper> transaction_list;
+		for(auto it=player_set.begin(); it!=player_set.end(); ++it)
+		{
+			Player *p = *it;
+			transaction_list.push_back(TransactionKeeper(p));
+		}
+		for(auto it=mafia_set.begin(); it!=mafia_set.end(); ++it)
+		{
+			Mafia *p = *it;
+			transaction_list.push_back(TransactionKeeper(p));
+		}
+		for(auto it=pvp_set.begin(); it!=pvp_set.end(); ++it)
+		{
+			PVP *p = *it;
+			transaction_list.push_back(TransactionKeeper(p));
+		}
+		if(toplist || top)
+		{
+			top = TopManager::GetInstance();
+			transaction_list.push_back(TransactionKeeper(top));
+		}
+		if(mist_manager || mist)
+		{
+			mist = MiscManager::GetInstance();
+			transaction_list.push_back(TransactionKeeper(mist));
+		}
+
+		if(!g_L)
+		{
+			g_L = InitLuaEnv();
+			g_reload_lua_local = g_reload_lua;
+		}
+		else if(g_reload_lua > g_reload_lua_local) //需要热更新lua
+		{
+			//需要考虑热加载失败
+			lua_State *g_L_new = InitLuaEnv();
+			if(g_L_new)
+			{
+				lua_close(g_L);
+				g_L = g_L_new;
+				g_reload_lua_local = g_reload_lua;
+				GLog::log(LOG_INFO, "MessageTask::_Run, lua reload ok, g_reload_lua=%d, thread=%u\n", g_reload_lua, (unsigned int)pthread_self());
+			}
+			else
+			{
+				GLog::log(LOG_ERR, "MessageTask::_Run, error, reload lua");
+			}
+		}
+		if(g_L)
+		{
+			g_transaction_id = AllocTransactionId();
+
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("DeserializeAndProcessMessage", lp))
+			{
+				fprintf(stderr, "\033[31mMessageTask::Run, gExec, error, DeserializeAndProcessMessage, thread=%u, %.*s\033[0m\n",
+				        (unsigned int)pthread_self(), (int)_msg._data.size(), (char*)_msg._data.c_str());
+				GLog::log(LOG_ERR, "MessageTask::Run, gExec, error, DeserializeAndProcessMessage, thread=%u, %.*s",
+				          (unsigned int)pthread_self(), (int)_msg._data.size(), (char*)_msg._data.c_str());
+
+				//cancel
+				for(auto it=transaction_list.begin(); it!=transaction_list.end(); ++it)
+				{
+					it->SetCancel();
+				}
+			}
+		}
+	}
+
+};
+
+void MessageManager::OnTimer(int tick, time_t now)
+{
+	std::list<Message> msgs;
+	{
+		GNET::Thread::Mutex::Scoped keeper(_lock);
+		msgs.swap(_msgs);
+	}
+	std::vector<int64_t> roles;
+	for(auto it=msgs.begin(); it!=msgs.end(); ++it)
+	{
+		Message& msg = *it;
+
+		if(msg._target == -1)
+		{
+			//broadcast to all role
+			if(roles.size() == 0) PlayerManager::GetInstance().GetActiveRoles(roles);
+			for(auto it=roles.begin(); it!=roles.end(); ++it)
+			{
+				msg._target = *it;
+				GNET::Thread::Pool::_pool.AddSeqTask(*it%100, new MessageTask(msg)); //TODO: seq?
+			}
+		}
+		else
+		{
+			GNET::Thread::Pool::_pool.AddSeqTask(msg._target%100, new MessageTask(msg)); //TODO: seq?
+		}
+	}
+}
+

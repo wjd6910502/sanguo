@@ -1,0 +1,5 @@
+
+iconv -f gbk -t utf8 text.gbk > text.utf8
+xxd -i text.utf8
+
+

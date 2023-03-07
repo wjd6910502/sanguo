@@ -1,0 +1,8 @@
+function OnMessage_PVPJoinRe(player, role, arg, others)
+	player:Log("OnMessage_PVPJoinRe, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("PvpJoin_Re")
+	resp.retcode = arg.retcode
+	resp.time = role._roledata._pvp_info._pvp_time
+	player:SendToClient(SerializeCommand(resp))
+end

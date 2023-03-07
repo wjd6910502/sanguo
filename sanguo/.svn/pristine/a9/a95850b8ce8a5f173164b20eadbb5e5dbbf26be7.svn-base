@@ -1,0 +1,8 @@
+function OnMessage_PveArenaHeartBeat(arg, others)
+	--API_Log("OnMessage_PveArenaHeartBeat, "..DumpTable(arg))
+	local pve_arena = others.pvearena._data
+	local now = API_GetTime()
+
+	if now >= pve_arena._time_stamp then
+	end
+end

@@ -1,0 +1,47 @@
+
+#ifndef __GNET_PVPCANCLE_HPP
+#define __GNET_PVPCANCLE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "pvpcanclearg"
+#include "pvpcancleres"
+
+namespace GNET
+{
+
+class PvpCancle : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "pvpcancle"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// PvpCancleArg *arg = (PvpCancleArg *)argument;
+		// PvpCancleRes *res = (PvpCancleRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		PvpCancleArg *arg = (PvpCancleArg *)argument;
+		PvpCancleRes *res = (PvpCancleRes *)result;
+		
+		GLog::log(LOG_INFO, "GAMED::Client:PvpCancle, roleid=%ld, retcode=%d", arg->roleid, res->retcode);
+
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10015:%d:", res->retcode); //PVPJoinRe
+		MessageManager::GetInstance().Put(arg->roleid, arg->roleid, msg);
+
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

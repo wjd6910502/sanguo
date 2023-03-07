@@ -1,0 +1,81 @@
+function OnMessage_PVPAutoSync(pvp, arg, others)
+	--API_Log("OnMessage_PVPAutoSync, "..DumpTable(arg).." "..DumpTable(others))
+
+	--local cur_ver = pvp._auto_sync:GetVersion()
+	--if cur_ver==0 then return end
+
+	--local op_tick_ack_min = 1000000 --TODO:
+	--local it = pvp._fighters:SeekToBegin()
+	--local ft = it:GetValue()
+	--while ft~=nil do
+	--	if op_tick_ack_min>ft._op_tick_ack then op_tick_ack_min=ft._op_tick_ack end
+	--	it:Next()
+	--	ft = it:GetValue()
+	--end
+
+	--local cur_content = ""
+	--if not pvp._auto_sync:HaveContent(cur_ver) then
+	--	local cmd = NewCommand("PVPStatus")
+	--	cmd.op_ticks = {}
+	--	local it = pvp._op_ticks:SeekToBegin()
+	--	local op_tick = it:GetValue()
+	--	while op_tick~=nil do
+	--		if op_tick._tick>op_tick_ack_min then
+	--			local cmd_op_tick = {}
+	--			cmd_op_tick.tick = op_tick._tick
+	--			cmd_op_tick.fighters = {}
+	--			local it2 = op_tick._fighters:SeekToBegin()
+	--			local ft = it2:GetValue()
+	--			while ft~=nil do
+	--				local cmd_ft = {}
+	--				cmd_ft.id = ft._id:ToStr()
+	--				cmd_ft.ops = {}
+	--				local it3 = ft._ops:SeekToBegin()
+	--				local ft_op = it3:GetValue()
+	--				while ft_op~=nil do
+	--					cmd_ft.ops[#cmd_ft.ops+1] = ft_op._value
+	--					it3:Next()
+	--					ft_op = it3:GetValue()
+	--				end
+	--				cmd_op_tick.fighters[#cmd_op_tick.fighters+1] = cmd_ft
+	--				it2:Next()
+	--				ft = it2:GetValue()
+	--			end
+	--			cmd.op_ticks[#cmd.op_ticks+1] = cmd_op_tick
+	--		end
+	--		it:Next()
+	--		op_tick = it:GetValue()
+	--	end
+	--	cur_content = SerializeCommand(cmd)
+	--	pvp._auto_sync:SetContent(cur_ver, cur_content)
+	--end
+
+	--local synced_ver_min = 1000000 --TODO:
+	--local fighters = pvp._fighters
+	--local it = fighters:SeekToBegin()
+	--local ft = it:GetValue()
+	--while ft~=nil do
+	--	local role = others.roles[ft._id:ToStr()]
+	--	if role~=nil then
+	--		local synced_ver = 0
+	--		local v = role._synced_version:Find("PVPStatus")
+	--		if v~=nil then synced_ver = v._value end
+	--		if synced_ver_min>synced_ver then synced_ver_min=synced_ver end
+	--		if synced_ver<cur_ver then
+	--			if pvp._auto_sync:HaveContent(synced_ver) then
+	--				--incre
+	--				local content_diff = pvp._auto_sync:GetContentDiff(synced_ver, cur_ver)
+	--				role:UDPIncreSyncCmd("PVPStatus", cur_ver, synced_ver, content_diff)
+	--			else
+	--				--full
+	--				if cur_content=="" then cur_content=pvp._auto_sync:GetContent(cur_ver) end
+	--				role:SyncCmd("PVPStatus", cur_ver, cur_content)
+	--			end
+	--		end
+	--	end
+	--	it:Next()
+	--	ft = it:GetValue()
+	--end
+
+	--pvp._auto_sync:DiscardVersionContent(synced_ver_min)
+end

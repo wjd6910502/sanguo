@@ -1,0 +1,30 @@
+--注意pvp_ver是从1开始的，不存在pvp_ver是0的情况
+--BundleID：
+--安卓开发版	PW.ProjectsEL.sangoku
+--安卓稳定版	PW.ProjectsEL.sangokumusou
+--苹果稳定版	PW.ProjectsEL.sangoku2
+--苹果APP抢注	PW.ProjectsEL.sangokumusou（和安卓稳定版一样）
+
+G_VERSION_INFO = {}
+
+G_VERSION_INFO["PW.ProjectsEL.sangoku"] = {
+{exe_ver = "1", res_ver = "0.0.1", pvp_ver = "1"}, 
+{exe_ver = "608", res_ver = "0.1.598", pvp_ver = "2"}, 
+{exe_ver = "626", res_ver = "0.1.631", pvp_ver = "3"}, 
+{exe_ver = "629", res_ver = "0.1.634", pvp_ver = "4"},
+}
+G_VERSION_INFO["PW.ProjectsEL.sangokumusou"] = {
+{exe_ver = "1", res_ver = "0.0.1", pvp_ver = "1"}, 
+{exe_ver = "608", res_ver = "0.1.598", pvp_ver = "2"}, 
+{exe_ver = "626", res_ver = "0.1.631", pvp_ver = "3"},
+{exe_ver = "629", res_ver = "0.1.634", pvp_ver = "4"}, 
+}
+G_VERSION_INFO["PW.ProjectsEL.sangoku2"] = {
+{exe_ver = "1", res_ver = "0.0.1", pvp_ver = "1"}, 
+{exe_ver = "5", res_ver = "0.1.21", pvp_ver = "2"}, 
+{exe_ver = "6", res_ver = "0.1.22", pvp_ver = "3"},
+{exe_ver = "9", res_ver = "0.1.23", pvp_ver = "4"}, 
+}
+G_VERSION_INFO["Robot"] = {
+{exe_ver = "1", res_ver = "0.1.23", pvp_ver = "4"}, 
+}

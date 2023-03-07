@@ -1,0 +1,19 @@
+function OnCommand_DaTiUseTime(player, role, arg, others)
+	player:Log("OnCommand_DaTiUseTime, "..DumpTable(arg).." "..DumpTable(others))
+
+	if arg.use_time < 0 then
+		return
+	end
+
+	role._roledata._dati_data._use_time = role._roledata._dati_data._use_time + math.ceil(arg.use_time)
+	role._roledata._dati_data._use_time = role._roledata._dati_data._history_use_time + math.ceil(arg.use_time)
+
+	if role._roledata._dati_data._history_right_num > 0 then
+		local msg = NewMessage("TopListInsertInfo")
+		msg.typ = 12
+		msg.data = tostring(role._roledata._dati_data._history_right_num)
+		msg.data2 = tostring(role._roledata._dati_data._use_time)
+		player:SendMessage(role._roledata._base._id, SerializeMessage(msg), 0)
+	end
+
+end

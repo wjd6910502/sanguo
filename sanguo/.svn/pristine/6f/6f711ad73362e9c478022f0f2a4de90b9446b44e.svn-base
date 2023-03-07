@@ -1,0 +1,9 @@
+function OnCommand_PVPPrepare(player, role, arg, others)
+	API_Log("OnCommand_PVPPrepare, "..DumpTable(arg))
+
+	g_in_pvp = true
+	g_pvp_id = arg.id
+
+	if g_role_id==arg.player1.id then g_opponent_id=arg.player2.id end
+	if g_role_id==arg.player2.id then g_opponent_id=arg.player1.id end
+end

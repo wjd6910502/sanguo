@@ -1,0 +1,43 @@
+#ifndef __GNET_STATUSCLIENT_HPP
+#define __GNET_STATUSCLIENT_HPP
+
+#include "protocol.h"
+#include "thread.h"
+
+namespace GNET
+{
+
+class StatusClient : public Protocol::Manager
+{
+	static StatusClient instance;
+	size_t		accumulate_limit;
+	Session::ID	sid;
+	bool		conn_state;
+	Thread::Mutex	locker_state;
+
+	Session::ID	_discard_sid_le_than;
+
+	const Session::State *GetInitState() const;
+	bool OnCheckAccumulate(size_t size) const { return accumulate_limit == 0 || size < accumulate_limit; }
+	void OnAddSession(Session::ID sid);
+	void OnDelSession(Session::ID sid);
+	void OnAbortSession(const SockAddr &sa);
+	void OnCheckAddress(SockAddr &) const;
+public:
+	static StatusClient *GetInstance() { return &instance; }
+	std::string Identification() const { return "StatusClient"; }
+	void SetAccumulate(size_t size) { accumulate_limit = size; }
+	StatusClient() : accumulate_limit(0), sid(0), conn_state(false), locker_state("StatusClient::locker_state"), _discard_sid_le_than(0) { }
+
+	int GetCurSID() const;
+
+	bool SendProtocol(const Protocol &protocol) { return conn_state && Send(sid, protocol); }
+	bool SendProtocol(const Protocol *protocol) { return conn_state && Send(sid, protocol); }
+
+	virtual bool LoadSessionConfig(GNET::NetSession::Config &cnf);
+	void DiscardPendingSession() { _discard_sid_le_than = _session_id; }
+	void CloseCur();
+};
+
+};
+#endif

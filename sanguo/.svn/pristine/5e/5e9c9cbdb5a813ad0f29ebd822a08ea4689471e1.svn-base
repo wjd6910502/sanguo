@@ -1,0 +1,165 @@
+#include "message.h"
+#include "ServerReward.h"
+
+namespace CACHE
+{
+
+SGT_ServerReward::SGT_ServerReward(): Singleton("SGT_ServerReward")
+{
+	_in_transaction = false;
+	_transaction_id = 0;
+
+	SingletonManager::GetInstance().Register(15, this);
+}
+
+void SGT_ServerReward::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_ServerReward::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void SGT_ServerReward::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+void SGT_ServerReward::backup(const char *name, int64_t transaction_id)
+{
+	if(transaction_id != _transaction_id)
+	{
+		_transaction_id = transaction_id;
+		_transaction_data.clear();
+	}
+	else if(_transaction_data.find(name) != _transaction_data.end())
+	{
+		return;
+	}
+
+	if(false)
+	{
+	}
+	else if(strcmp(name, "_data") == 0)
+	{
+		_data.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _data;
+		_transaction_data["_data"] = os;
+	}
+	else
+	{
+		abort();
+	}
+}
+
+void SGT_ServerReward::restore(int64_t transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_data");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _data;
+			_data.cleanup();
+		}
+		else
+		{
+			_data.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_data.restore(transaction_id);
+	}
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_ServerReward::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_data.cleanup();
+}
+
+int SGT_ServerReward::Add(const GNET::ServerReward& gsr)
+{
+	if(gsr.mail_id<=0) return -1;
+
+	Thread::Mutex2::Scoped keeper(_lock);
+
+	_data._id_stub++;
+
+	CACHE::ServerReward csr;
+	csr._id = _data._id_stub;
+	csr._begin_time = gsr.begin_time;
+	csr._end_time = gsr.end_time;
+	csr._mail_id = gsr.mail_id;
+	csr._level_min = gsr.level_min;
+	csr._lifetime_min = gsr.lifetime_min;
+
+	_data._map.Insert(csr._id, csr);
+	return csr._id;
+}
+
+int SGT_ServerReward::List(std::vector<GNET::ServerReward>& gsrs)
+{
+	Thread::Mutex2::Scoped keeper(_lock);
+
+	auto it = _data._map.SeekToBegin();
+	CACHE::ServerReward *csr = it.GetValue();
+	while(csr)
+	{
+		GNET::ServerReward gsr;
+		gsr.id = csr->_id;
+		gsr.begin_time = csr->_begin_time;
+		gsr.end_time = csr->_end_time;
+		gsr.mail_id = csr->_mail_id;
+		gsr.level_min = csr->_level_min;
+		gsr.lifetime_min = csr->_lifetime_min;
+
+		gsrs.push_back(gsr);
+
+		it.Next();
+		csr = it.GetValue();
+	}
+	return 0;
+}
+
+int SGT_ServerReward::Remove(int id)
+{
+	Thread::Mutex2::Scoped keeper(_lock);
+
+	_data._map.Delete(id);
+	return 0;
+}
+
+void SGT_ServerReward::OnTimer(int tick, int now)
+{
+	if(tick%(SERVER_CONST_TICK_PER_SECOND*10) == 0)
+	{
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10222:"); //ServerRewardHeartBeat
+		MessageManager::GetInstance().Put(0, 0, msg, 0);
+	}
+}
+
+}
+

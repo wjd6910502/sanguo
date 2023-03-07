@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<structures>
+	<structure name="RoleBase">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+	</structure>
+
+	<structure name="RoleInstance">
+		<variable name="tid" type="number"/>
+		<variable name="score" type="number"/>
+	</structure>
+
+	<structure name="CommonUseLimit">
+		<variable name="tid" type="number"/>
+		<variable name="count" type="number"/>
+	</structure>
+
+	<structure name="RoleStatus">
+		<variable name="level" type="number"/>
+		<variable name="exp" type="string"/>
+		<variable name="vp" type="number"/>
+		<variable name="instances" type="RoleInstance" vector="true"/>
+		<variable name="money" type="number"/>
+		<variable name="yuanbao" type="number"/>
+		<variable name="common_use_limit" type="CommonUseLimit" vector="true"/>
+	</structure>
+
+	<structure name="RoleHero">
+		<variable name="tid" type="number"/>
+	</structure>
+
+	<structure name="RoleHeroHall">
+		<variable name="heros" type="RoleHero" vector="true"/>
+	</structure>
+
+	<structure name="Item">
+		<variable name="tid" type="number"/>
+		<variable name="count" type="number"/>
+	</structure>
+
+	<structure name="RoleBackPack">
+		<variable name="capacity" type="number"/>
+		<variable name="items" type="Item" vector="true"/>
+	</structure>
+
+	<structure name="RoleMafia">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+	</structure>
+
+	<structure name="RoleInfo">
+		<variable name="base" type="RoleBase"/>
+		<variable name="status" type="RoleStatus"/>
+		<variable name="hero_hall" type="RoleHeroHall"/>
+		<variable name="backpack" type="RoleBackPack"/>
+		<variable name="mafia" type="RoleMafia"/>
+	</structure>
+
+	<structure name="Chat">
+		<variable name="src_id" type="string"/>
+		<variable name="src_name" type="string"/>
+		<variable name="time" type="number"/>
+		<variable name="content" type="string"/>
+	</structure>
+
+	<structure name="RoleBrief">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="mafia_id" type="string"/>
+		<variable name="mafia_name" type="string"/>
+	</structure>
+
+	<structure name="Friend">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+	</structure>
+
+	<structure name="MafiaMember">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="activity" type="number"/>
+	</structure>
+
+	<structure name="Mafia">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="flag" type="number"/>
+		<variable name="announce" type="string"/>
+		<variable name="level" type="number"/>
+		<variable name="activity" type="number"/>
+		<variable name="boss_id" type="string"/>
+		<variable name="boss_name" type="string"/>
+		<variable name="members" type="MafiaMember" vector="true"/>
+	</structure>
+
+	<structure name="MafiaBrief">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="flag" type="number"/>
+		<variable name="announce" type="string"/>
+		<variable name="level" type="number"/>
+		<variable name="activity" type="number"/>
+		<variable name="boss_id" type="string"/>
+		<variable name="boss_name" type="string"/>
+	</structure>
+
+	<structure name="TopListData">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="data" type="string"/>
+	</structure>
+
+	<structure name="PVPFighter">
+		<variable name="id" type="string"/>
+		<variable name="ops" type="number" vector="true"/>
+	</structure>
+	
+	<structure name="DropItem">
+		<variable name="id" type="number"/>
+		<variable name="count" type="number"/>
+	</structure>
+
+	<structure name="SweepInstanceData">
+		<variable name="exp" type="number"/>
+		<variable name="money" type="number"/>
+		<variable name="item" type="DropItem" vector="true"/>
+	</structure>
+	
+	<structure name="InstanceInfo">
+		<variable name="id" type="number"/>
+		<variable name="star" type="number"/>
+	</structure>
+
+	<structure name="Instance_Star_Condition">
+		<variable name="tid" type="number"/>
+		<variable name="flag" type="number"/>
+	</structure>
+	
+</structures>

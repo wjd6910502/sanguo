@@ -1,0 +1,178 @@
+function OnCommand_TowerBuyBuff(player, role, arg, others)
+	player:Log("OnCommand_TowerBuyBuff, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("TowerBuyBuff_Re")
+	if role._roledata._tower_data._cur_layer ~= arg.layer then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_LEVEL"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+    end
+
+	if arg.id == 0 then
+		role._roledata._tower_data._cur_layer = role._roledata._tower_data._cur_layer + 1
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.id = 0
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local buffs = role._roledata._tower_data._buff_info:Find(arg.layer)
+	if buffs == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_BUFF"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local layer = arg.layer
+	if role._roledata._tower_data._difficulty == 2 then
+		layer = layer + 100
+	end
+
+	local towerstage = ed:FindBy("tower_stage", layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local index = 0
+	local lit = buffs._buff:SeekToBegin()
+	local l = lit:GetValue()
+	while l ~= nil do
+		index = index + 1	
+		if l._id == arg.id then
+			if l._buy_flag == 1 then
+				resp.retcode = G_ERRCODE["TOWER_ERROR_GET_BUFF"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+
+			if role._roledata._tower_data._cur_star < towerstage.buffs_cost[index] then
+				resp.retcode = G_ERRCODE["TOWER_ERROR_LESS_STAR"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+
+			local ed = DataPool_Find("elementdata")
+			local buff_info = ed:FindBy("tower_adds", arg.id)
+			if buff_info == nil then
+				resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+
+			if buff_info.buff_category == 4 or buff_info.buff_category == 6 then
+				if arg.hero_id == 0 then
+					resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+					player:SendToClient(SerializeCommand(resp))
+					return
+				end
+
+				local f = role._roledata._hero_hall._heros:Find(arg.hero_id)
+				if f == nil then
+					resp.restcode = G_ERRCODE["TOWER_PARAM_HERO_NOT_EXIST"]
+					player:SendToClient(SerializeCommand(resp))
+					return
+				end
+			end
+
+			role._roledata._tower_data._cur_star = role._roledata._tower_data._cur_star - towerstage.buffs_cost[index]
+			l._buy_flag = 1
+			local insert_data = CACHE.Int()
+			insert_data._value = arg.id
+			role._roledata._tower_data._buff:PushBack(insert_data)
+			
+			if buff_info.buff_category == 4 then
+				--注意判断一下，当前血量是否超过了最大血量。这里是有问题的，其余的地方自己检查一下是否正确吧。
+				local f = role._roledata._tower_data._injured_hero:Find(arg.hero_id)
+				if f == nil then
+					resp.restcode = G_ERRCODE["TOWER_PARAM_HERO_NOT_EXIST"]
+					player:SendToClient(SerializeCommand(resp))
+					return
+				end
+				local zhanli, max_hp = HERO_CalZhanli(role, arg.hero_id)
+				--判断有没有增加血量上限的buff
+				local buff_it = role._roledata._tower_data._buff:SeekToBegin()
+				local buff = buff_it:GetValue()
+				while buff ~= nil do
+					local buff_info = ed:FindBy("tower_adds", buff)
+					if buff_info ~= nil and buff_info.buff_category == 3 then
+						max_hp = max_hp + max_hp*buff_info.scale_maxhp/1000
+					end
+					buff_it:Next()
+					buff = buff_it:GetValue()
+				end
+
+				f._hp = f._hp + max_hp * buff_info.buff_data / 1000
+				if f._hp > max_hp then
+					f._hp = max_hp
+				end
+				resp.hero = {}
+				resp.hero[#resp.hero + 1] = f
+			elseif buff_info.buff_category == 5 then
+				local injured_it = role._roledata._tower_data._injured_hero:SeekToBegin()
+				local injured = injured_it:GetValue()
+				resp.hero = {}
+				while injured ~= nil do
+					local zhanli, max_hp = HERO_CalZhanli(role, injured._id)
+					--判断有没有增加血量上限的buff
+					local buff_it = role._roledata._tower_data._buff:SeekToBegin()
+					local buff = buff_it:GetValue()
+					while buff ~= nil do
+						local buff_info = ed:FindBy("tower_adds", buff)
+						if buff_info ~= nil and buff_info.buff_category == 3 then
+							max_hp = max_hp + max_hp*buff_info.scale_maxhp/1000
+						end
+						buff_it:Next()
+						buff = buff_it:GetValue()	
+					end
+
+					injured._hp = injured._hp + max_hp * buff_info.buff_data / 1000
+					if injured._hp > max_hp then
+						injured._hp = max_hp
+					end
+					resp.hero[#resp.hero + 1] = injured
+					injured_it:Next()
+					injured = injured_it:GetValue()
+				end
+
+			elseif buff_info.buff_category == 6 then
+				local f = role._roledata._tower_data._dead_hero:Find(arg.hero_id)
+				if f == nil then
+					resp.restcode = G_ERRCODE["TOWER_PARAM_HERO_NOT_EXIST"]
+					player:SendToClient(SerializeCommand(resp))
+					return	
+				end
+				role._roledata._tower_data._dead_hero:Delete(arg.hero_id)
+				local hero = CACHE.ShiLianHeroInfo()	
+				hero._id = arg.hero_id
+				local zhanli, max_hp = HERO_CalZhanli(role, arg.hero_id)
+				--判断有没有增加血量上限的buff
+				local buff_it = role._roledata._tower_data._buff:SeekToBegin()
+				local buff = buff_it:GetValue()
+				while buff ~= nil do
+					local buff_info = ed:FindBy("tower_adds", buff)
+					if buff_info ~= nil and buff_info.buff_category == 3 then
+						max_hp = max_hp + max_hp*buff_info.scale_maxhp/1000
+					end
+					buff_it:Next()
+					buff = buff_it:GetValue()
+				end				
+
+				hero._hp = max_hp * buff_info.buff_data / 1000
+				role._roledata._tower_data._injured_hero:Insert(hero._id, hero)
+				resp.hero = {}
+				resp.hero[#resp.hero + 1] = hero
+			end	
+
+			resp.retcode = G_ERRCODE["SUCCESS"]
+			resp.layer = role._roledata._tower_data._cur_layer
+			resp.id = arg.id
+			resp.cur_star = role._roledata._tower_data._cur_star
+			player:SendToClient(SerializeCommand(resp))
+			break
+		end
+		lit:Next()
+		l = lit:GetValue()
+	end
+end

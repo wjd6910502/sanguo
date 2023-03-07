@@ -1,0 +1,38 @@
+	public:
+		int retcode;
+		int64_t roleid;
+		Octets video;
+		enum { PROTOCOL_TYPE = PROTOCOL_GETPVPVIDEORE };
+	public:
+		GetPvpVideoRe() { type = PROTOCOL_GETPVPVIDEORE; }
+		GetPvpVideoRe(void*) : Protocol(PROTOCOL_GETPVPVIDEORE) { }
+		GetPvpVideoRe (const int& l_retcode,const int64_t& l_roleid,const Octets& l_video)
+			 : retcode(l_retcode),roleid(l_roleid),video(l_video)
+		{
+			type = PROTOCOL_GETPVPVIDEORE;
+		}
+
+		GetPvpVideoRe(const GetPvpVideoRe &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),roleid(rhs.roleid),video(rhs.video) { }
+
+		GNET::Protocol *Clone() const { return new GetPvpVideoRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << roleid;
+			os << video;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> roleid;
+			os >> video;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16777216; }

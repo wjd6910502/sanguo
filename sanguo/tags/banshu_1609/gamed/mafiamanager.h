@@ -1,0 +1,133 @@
+#ifndef _MAFIA_MANAGER_H_
+#define _MAFIA_MANAGER_H_
+
+#include <string>
+#include <map>
+
+#include "forlua.h"
+#include "structs.h"
+#include "thread.h"
+#include "mutex.h"
+#include "transaction.h"
+#include "commonmacro.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class Mafia: public Marshal, public TransactionBase
+{
+	bool _in_transaction;
+	int _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	MafiaData _data;
+
+	Mafia();
+	virtual ~Mafia() {}
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const;
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os);
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int transaction_id);
+	void restore(int transaction_id);
+	void cleanup();
+	
+	void OnTimer(int now);
+
+public:
+	mutable Thread::Mutex _lock;
+};
+
+class MafiaMap;
+class MafiaMapIter
+{
+	MapIter<Int64, Mafia, std::map<Int64, Mafia>::iterator, MafiaMap> _rep;
+
+public:
+	MafiaMapIter(std::map<Int64, Mafia>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() { _rep.Next(); }
+	void Prev() { _rep.Prev(); }
+	Mafia* GetValue() { return _rep.GetValue(); }
+};
+class MafiaMap: public GNET::Marshal
+{
+	Map<Int64, Mafia, std::map<Int64, Mafia>::iterator, MafiaMapIter> _rep;
+
+public:
+	MafiaMap(): _rep(this) {}
+	MafiaMap(const MafiaMap& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+	virtual ~MafiaMap() {}
+
+	MafiaMap& operator= (const MafiaMap& rhs)
+	{
+		_rep = rhs._rep;
+		_rep.SetShell(this);
+		return *this;
+	}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::map<Int64, Mafia>::iterator Begin() { return _rep.Begin(); }
+	std::map<Int64, Mafia>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	Mafia* Find(const Int64& k) { return _rep.Find(k); }
+	void Insert(const Int64& k, const Mafia& v) { _rep.Insert(k, v); }
+	void Delete(const Int64& k) { _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+
+	MafiaMapIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	MafiaMapIter Seek(const Int64& k) const { return _rep.Seek(k); }
+	MafiaMapIter SeekToLast() const { return _rep.SeekToLast(); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+};
+
+class MafiaManager
+{
+	MafiaMap _map;
+
+	mutable Thread::Mutex _lock;
+
+private:
+	MafiaManager() {}
+	virtual ~MafiaManager() {}
+
+public:
+	static MafiaManager& GetInstance()
+	{
+		static MafiaManager _instance;
+		return _instance;
+	}
+	void OnTimer(int tick, time_t now);
+
+	Mafia* Find(const Int64& k);
+	void Insert(const Int64& k, const Mafia& v);
+	MafiaMap& GetMap() { return _map; } //_map只在big锁状态下才会传给lua，此时系统处于单线程模式，无所谓锁不锁
+
+	//设置心跳
+
+	//数据存取
+	void Load(Octets &key, Octets &value);
+	void Save();
+};
+
+}
+
+inline CACHE::Mafia* API_GetLuaMafia(void *r) { return (CACHE::Mafia*)r; }
+CACHE::Int64 API_Mafia_AllocId();
+void API_Mafia_Insert(const CACHE::Int64& id, const CACHE::MafiaData& data);
+inline CACHE::MafiaMap* API_Mafia_GetMap() { return (InBigLock() ? &CACHE::MafiaManager::GetInstance().GetMap() : 0); }
+
+#endif //_MAFIA_MANAGER_H_
+

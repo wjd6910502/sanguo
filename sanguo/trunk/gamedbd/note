@@ -1,0 +1,10 @@
+数据库继续使用的wdb
+添加了share,include,logclient
+执行configure来建立相应的软连接
+ln -snf share/mk
+ln -snf share/common new_common
+ln -snf share/io
+ln -snf share/storage
+ln -snf share/perf
+ln -snf share/rpc
+注意common这个建立以后的名字成为了new_common.因为common这个文件夹已经存在了。

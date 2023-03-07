@@ -1,0 +1,102 @@
+function OnMessage_TongQueTaiHeartBeat(arg, others)
+	--API_Log("OnMessage_TongQueTaiHeartBeat, "..DumpTable(arg))
+	
+	local tongquetai = others.tongquetai._data
+	
+	local easy_difficulty = tongquetai._easy_difficulty
+	local hard_difficulty = tongquetai._hard_difficulty
+	
+	local easy_count = 0
+	local hard_count = 0
+
+	local easy_difficulty_role_it = easy_difficulty:SeekToBegin()
+	local easy_difficulty_role = easy_difficulty_role_it:GetValue()
+	while easy_difficulty_role ~= nil do
+		easy_count = easy_count + easy_difficulty_role:Size()
+
+		easy_difficulty_role_it:Next()
+		easy_difficulty_role = easy_difficulty_role_it:GetValue()
+	end
+
+	local hard_difficulty_role_it = hard_difficulty:SeekToBegin()
+	local hard_difficulty_role = hard_difficulty_role_it:GetValue()
+	while hard_difficulty_role ~= nil do
+		hard_count = hard_count + hard_difficulty_role:Size()
+
+		hard_difficulty_role_it:Next()
+		hard_difficulty_role = hard_difficulty_role_it:GetValue()
+	end
+
+	if easy_count >= 3 then
+		MatchPlayer(easy_difficulty)
+	end
+
+	if hard_count >= 3 then
+		MatchPlayer(hard_difficulty)
+	end
+
+	--对匹配成功的数据进行查看
+	--_cur_state 0代表等待所有的玩家进行Load，如果超过30秒还有玩家没有Load完，那么就会直接开始
+	--_cur_state 1代表给玩家发送出去让他进行打，如果超过3秒还没有给服务器进行回复，那么直接认为他掉线
+	--_cur_state 2代表玩家正在战斗状态，如果超过3分钟，还不给服务器发送结束的消息，那么服务器直接认为他掉线
+	local match_data_it = tongquetai._match_data:SeekToBegin()
+	local match_data = match_data_it:GetValue()
+	while match_data ~= nil do
+		MatchDataState(match_data)
+		
+		match_data_it:Next()
+		match_data = match_data_it:GetValue()
+	end
+end
+
+function MatchDataState()
+	if match_data._cur_state == 0 then
+	elseif match_data._cur_state == 1 then
+	elseif match_data._cur_state == 2 then
+	end
+end
+
+function MatchPlayer(difficulty_map)
+	local target_player = CACHE.Int64()
+	local lock_player = CACHE.Int64List()
+	local tmp_player = CACHE.Int64()
+
+	local difficulty_list_it = difficulty_map:SeekToBegin()
+	local difficulty_list = difficulty_list_it:GetValue()
+	while difficulty_list ~= nil do
+		local difficulty_info_it = difficulty_list:SeekToBegin()
+		local difficulty_info = difficulty_info_it:GetValue()
+		while difficulty_info ~= nil do
+			if difficulty_info._match_success == 0 then
+				if target_player == tmp_player then
+					target_player = difficulty_info._role_base._id
+				else
+					lock_player:PushBack(difficulty_info._role_base._id)
+				end
+	
+				difficulty_info._match_success = 1
+
+				if lock_player:Size() == 2 then
+					--在这里扔一个消息
+					local msg = NewMessage("TongQueTaiMatchSuccess")
+					local tmp_roleid_it = lock_player:SeekToBegin()
+					local tmp_roleid = tmp_roleid_it:GetValue()
+					msg.player_roleid1 = tmp_roleid:ToStr()
+					
+					tmp_roleid_it:Next()
+					tmp_roleid = tmp_roleid_it:GetValue()
+					msg.player_roleid2 = tmp_roleid:ToStr()
+					API_SendMessage(target_player, SerializeMessage(msg), lock_player, CAHCE.Int64List(), CAHCE.Int64List())
+					target_player = tmp_player
+					lock_player:Clear()
+				end
+			end
+			
+			difficulty_info_it:Next()
+			difficulty_info = difficulty_info_it:GetValue()
+		end
+
+		difficulty_list_it:Next()
+		difficulty_list = difficulty_list_it:GetValue()
+	end
+end

@@ -1,0 +1,3 @@
+function OnCommand_WeaponDecompose(player, role, arg, others)
+	--player:Log("OnCommand_WeaponDecompose, "..DumpTable(arg).." "..DumpTable(others))
+end

@@ -1,0 +1,27 @@
+#ifdef WIN32
+#include <winsock2.h>
+#include "gncompress.h"
+#else
+//#include "binder.h"
+#endif
+#include "pvpjoin.hrp"
+#include "centercommand.hpp"
+#include "pvpmatchsuccess.hpp"
+#include "pvpenter.hpp"
+#include "pvpenterre.hpp"
+#include "centercommandre.hpp"
+#include "kuafuzoneregister.hpp"
+
+namespace GNET
+{
+
+static PvpJoin __stub_PvpJoin (RPC_PVPJOIN, new PvpJoinArg, new PvpJoinRes);
+static CenterCommand __stub_CenterCommand((void*)0);
+static PvpMatchSuccess __stub_PvpMatchSuccess((void*)0);
+static PvpEnter __stub_PvpEnter((void*)0);
+static PvpEnterRe __stub_PvpEnterRe((void*)0);
+static CenterCommandRe __stub_CenterCommandRe((void*)0);
+static KuafuZoneRegister __stub_KuafuZoneRegister((void*)0);
+void make_compile_unit_stubs_o_md5sum_no_change_no_use_but_do_not_delete_it___for_gcenterd() {} //非常山寨的解决重新编译md5sum保持不变的问题
+};
+

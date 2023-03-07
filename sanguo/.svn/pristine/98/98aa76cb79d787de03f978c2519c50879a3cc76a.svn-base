@@ -1,0 +1,125 @@
+function OnCommand_BattleFieldFinishBattle(player, role, arg, others)
+	player:Log("OnCommand_BattleFieldFinishBattle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("BattleFieldFinishBattle_Re")
+	resp.battle_id = arg.battle_id
+	resp.win_flag = arg.win_flag
+	resp.npc_id = arg.npc_id
+	resp.heros = arg.heros
+	
+	local battle = role._roledata._battle_info:Find(arg.battle_id)
+	if battle == nil then
+		return
+	end
+	local position = battle._position_info:Find(battle._cur_position)
+	
+	local id = 0
+	local army_id = 0
+	local npc_it = position._npc_info:SeekToBegin()
+	local npc = npc_it:GetValue()
+	while npc ~= nil do
+		if npc._camp == 2 then
+			id = npc._id
+			army_id = npc._armyid
+			break
+		end
+		npc_it:Next()
+		npc = npc_it:GetValue()
+	end
+
+	if id == 0 or id ~= arg.npc_id then
+		resp.retcode = G_ERRCODE["SYSTEM_INVALID"]
+		player:SendToClient(SerializeCommand(resp))
+
+		battle._cur_position = battle._last_position
+		resp = NewCommand("BattleFieldCancel_Re")
+		resp.battle_id = arg.battle_id
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.position = battle._cur_position
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local battlearmy_info = ed:FindBy("battlearmy_id", army_id)
+	--关卡类型（0普通，1马战）
+	--1代表的成功，2代表的是失败，3代表的是放弃
+	if arg.win_flag == 1 then
+		position.flag = 1
+		position._event_flag = 1
+		
+		local npc_it = position._npc_info:SeekToBegin()
+		local npc = npc_it:GetValue()
+		while npc ~= nil do
+			if npc._camp == 2 then
+				npc._alive = 0
+			end
+			npc_it:Next()
+			npc = npc_it:GetValue()
+		end
+		
+		--for i = 1, table.getn(arg.heros) do
+		--	local find_hero = battle._hero_info:Find(arg.heros[i].hero_id)
+		--	if find_hero ~= nil then
+		--		find_hero._hp = arg.heros[i].hp
+		--	end
+		--end
+	
+		--这个协议用来表示这次移动结束的
+		local resp = NewCommand("BattleFieldCapturedPosition")
+		resp.battle_id = arg.battle_id
+		resp.position_info = ROLE_MakeBattleCurPositionInfo(role, arg.battle_id)
+		resp.event = 0
+		player:SendToClient(SerializeCommand(resp))
+
+	elseif arg.win_flag == 2 then
+		--在这里不仅要回到上一个位置，而且还要告诉他这次战役已经失败了。
+		if battlearmy_info.stagetype == 0 then
+			local cur_hero_it = battle._cur_hero_info:SeekToBegin()
+			local cur_hero = cur_hero_it:GetValue()
+			while cur_hero ~= nil do
+				local find_hero = battle._hero_info:Find(cur_hero._value)
+				if find_hero ~= nil then
+					find_hero._hp = 0
+				end
+				cur_hero_it:Next()
+				cur_hero = cur_hero_it:GetValue()
+			end
+		else
+			local cur_hero_it = battle._cur_hero_horse_info._heroinfo:SeekToBegin()
+			local cur_hero = cur_hero_it:GetValue()
+			while cur_hero ~= nil do
+				local find_hero = battle._hero_info:Find(cur_hero._value)
+				if find_hero ~= nil then
+					find_hero._hp = 0
+				end
+				cur_hero_it:Next()
+				cur_hero = cur_hero_it:GetValue()
+			end
+		end
+
+		--判断是否是所有的人都死了，是的话就直接让这次战役失败吧
+		local hero_info_it = battle._hero_info:SeekToBegin()
+		local hero_info = hero_info_it:GetValue()
+		local fail_flag = 1
+		while hero_info ~= nil do
+			if hero_info._hp ~= 0 then
+				fail_flag = 0
+				break
+			end
+		end
+
+		resp.fail_flag = fail_flag
+		player:SendToClient(SerializeCommand(resp))
+	elseif arg.win_flag == 3 then
+		
+		--放弃,什么都不改变，直接让他退回到上一次的位置
+		resp = NewCommand("BattleFieldCancel_Re")
+		resp.battle_id = arg.battle_id
+		battle._cur_position = battle._last_position
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.position = battle._cur_position
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+end

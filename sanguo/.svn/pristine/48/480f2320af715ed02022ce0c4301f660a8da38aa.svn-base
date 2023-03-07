@@ -1,0 +1,31 @@
+function OnMessage_YueZhanUpdateState(arg, others)
+	API_Log("OnMessage_YueZhanUpdateState, "..DumpTable(arg))
+	
+	local yuezhan_info = others.yuezhan_info._data
+	local yuezhan_data = yuezhan_info._yuezhan_info:Find(arg.room_id)
+	
+	if arg.typ > yuezhan_data._typ then
+		if arg.typ == 3 or arg.typ == 5 then
+			yuezhan_data._center_id = arg.index
+		end
+		yuezhan_data._typ = arg.typ
+		--就可以在这里广播观看信息了
+		local msg = NewMessage("YueZhanInfo")
+		msg.id = arg.room_id
+		msg.channel = yuezhan_data._channel
+		msg.typ = arg.typ
+		msg.info_id = arg.index
+		msg.creater = {}
+		msg.joiner = {}
+		msg.creater.id = yuezhan_data._create_id:ToStr()
+		msg.creater.name = yuezhan_data._create_name
+		msg.joiner.id = yuezhan_data._join_id:ToStr()
+		msg.joiner.name = yuezhan_data._join_name
+
+		API_SendMessageToAllRole(SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+
+		if arg.typ == 5 then
+			yuezhan_info._yuezhan_info:Delete(arg.room_id)
+		end
+	end
+end

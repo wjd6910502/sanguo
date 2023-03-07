@@ -1,0 +1,70 @@
+#ifndef _STATISTIC_MANAGER_H_
+#define _STATISTIC_MANAGER_H_
+
+#include "iatomic.h"
+#include "glog.h"
+
+class StatisticManager
+{
+	struct _data_t
+	{
+		atomic_t _cmd_count;
+		atomic_t _udp_cmd_count;
+		atomic_t _udp_c2s_cmd_count; //包含重传的cmd
+		atomic_t _udp_s2c_cmd_count; //包含重传的cmd
+		atomic_t _msg_put_count;
+		atomic_t _msg_run_count;
+	};
+
+	_data_t _cur;
+	_data_t _prev_dump;
+
+	StatisticManager()
+	{
+		memset(&_cur, 0, sizeof(_cur));
+		memset(&_prev_dump, 0, sizeof(_prev_dump));
+	}
+
+public:
+	static StatisticManager& GetInstance()
+	{
+		static StatisticManager _instance;
+		return _instance;
+	}
+
+	inline void IncCmdCount() { atomic_inc(&_cur._cmd_count); }
+	inline void IncUDPCmdCount() { atomic_inc(&_cur._udp_cmd_count); }
+	inline void IncUDPC2SCmdCount(int n) { atomic_add(n, &_cur._udp_c2s_cmd_count); }
+	inline void IncUDPS2CCmdCount(int n) { atomic_add(n, &_cur._udp_s2c_cmd_count); }
+	inline void IncMsgPutCount() { atomic_inc(&_cur._msg_put_count); }
+	inline void IncMsgRunCount() { atomic_inc(&_cur._msg_run_count); }
+
+	void Dump()
+	{
+		//printf("STAT, _cmd=%d(+%d), _udp_cmd=%d(+%d), _udp_c2s=%d(+%d), _udp_s2c=%d(+%d), _msg_put=%d(+%d), _msg_run=%d(+%d)\n",
+		//       atomic_read(&_cur._cmd_count), atomic_read(&_cur._cmd_count)-atomic_read(&_prev_dump._cmd_count),
+		//       atomic_read(&_cur._udp_cmd_count), atomic_read(&_cur._udp_cmd_count)-atomic_read(&_prev_dump._udp_cmd_count),
+		//       atomic_read(&_cur._udp_c2s_cmd_count), atomic_read(&_cur._udp_c2s_cmd_count)-atomic_read(&_prev_dump._udp_c2s_cmd_count),
+		//       atomic_read(&_cur._udp_s2c_cmd_count), atomic_read(&_cur._udp_s2c_cmd_count)-atomic_read(&_prev_dump._udp_s2c_cmd_count),
+		//       atomic_read(&_cur._msg_put_count), atomic_read(&_cur._msg_put_count)-atomic_read(&_prev_dump._msg_put_count),
+		//       atomic_read(&_cur._msg_run_count), atomic_read(&_cur._msg_run_count)-atomic_read(&_prev_dump._msg_run_count)
+		//      );
+		//fflush(stdout);
+
+		_data_t tmp;
+		memcpy(&tmp, &_cur, sizeof(_cur));
+
+		GLog::log(LOG_INFO, "STAT, _cmd=%d(+%d), _udp_cmd=%d(+%d), _udp_c2s=%d(+%d), _udp_s2c=%d(+%d), _msg_put=%d(+%d), _msg_run=%d(+%d)\n",
+		           atomic_read(&tmp._cmd_count), atomic_read(&tmp._cmd_count)-atomic_read(&_prev_dump._cmd_count),
+		           atomic_read(&tmp._udp_cmd_count), atomic_read(&tmp._udp_cmd_count)-atomic_read(&_prev_dump._udp_cmd_count),
+		           atomic_read(&tmp._udp_c2s_cmd_count), atomic_read(&tmp._udp_c2s_cmd_count)-atomic_read(&_prev_dump._udp_c2s_cmd_count),
+		           atomic_read(&tmp._udp_s2c_cmd_count), atomic_read(&tmp._udp_s2c_cmd_count)-atomic_read(&_prev_dump._udp_s2c_cmd_count),
+		           atomic_read(&tmp._msg_put_count), atomic_read(&tmp._msg_put_count)-atomic_read(&_prev_dump._msg_put_count),
+		           atomic_read(&tmp._msg_run_count), atomic_read(&tmp._msg_run_count)-atomic_read(&_prev_dump._msg_run_count)
+		          );
+
+		memcpy(&_prev_dump, &tmp, sizeof(tmp));
+	}
+};
+
+#endif //_STATISTIC_MANAGER_H_

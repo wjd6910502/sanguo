@@ -1,0 +1,60 @@
+
+#ifndef __GNET_GMCMD_GETACCCHARLIST_HPP
+#define __GNET_GMCMD_GETACCCHARLIST_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "gmcmd_getacccharlist_re.hpp"
+#include "playermanager.h"
+
+namespace GNET
+{
+
+class GMCmd_GetAccCharList : public GNET::Protocol
+{
+	#include "gmcmd_getacccharlist"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetAccCharList::Process, accid=%.*s, session_id=%d", 
+				(int)accid.size(), (char*)accid.begin(), session_id);
+
+		GMCmd_GetAccCharList_Re resp;
+
+		const Player *player = PlayerManager::GetInstance().FindByAccount(accid);
+		if(!player)
+		{
+			GLog::log(LOG_INFO, "gamed::GMCmd_GetAccCharList::Process, Failure, accid=%.*s, session_id=%d, not found", 
+					(int)accid.size(), (char*)accid.begin(), session_id);
+
+			//TODO: noload player
+			resp.retcode = -1;
+			resp.accid = accid;
+			resp.session_id = session_id;
+			const char *desc = "not found";
+			resp.desc = Octets(desc, strlen(desc));
+			manager->Send(sid, resp);
+			return;
+		}
+
+		{
+		Thread::Mutex2::Scoped keeper2(player->_lock);
+
+		resp.retcode = 0;
+		resp.accid = accid;
+		resp.session_id = session_id;
+		resp.roleid = player->GetRoleId();
+		if(resp.roleid)
+		{
+			resp.rolename = Octets(player->_role._roledata._base._name.c_str(), player->_role._roledata._base._name.size());
+			resp.level = player->_role._roledata._status._level;
+		}
+		}
+		manager->Send(sid, resp);
+	}
+};
+
+};
+
+#endif

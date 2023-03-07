@@ -1,0 +1,21 @@
+function OnCommand_GetMyPveArenaInfo(player, role, arg, others)
+	player:Log("OnCommand_GetMyPveArenaInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("GetMyPveArenaInfo_Re")
+
+	resp.score = role._roledata._pve_arena_info._score
+	resp.rank = 1
+	resp.last_attack_time = role._roledata._pve_arena_info._last_attack_time
+	resp.defence_hero = {}
+
+	local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+	local heroid = heroid_it:GetValue()
+	while heroid ~= nil do
+		resp.defence_hero[#resp.defence_hero+1] = heroid._value
+		heroid_it:Next()
+		heroid = heroid_it:GetValue()
+	end
+
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

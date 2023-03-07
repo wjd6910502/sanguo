@@ -1,0 +1,4 @@
+#! /bin/sh
+
+##ÄÚ·þ
+rsync -avz *.so game@10.68.8.16:/home/game/new_XOM2/lib

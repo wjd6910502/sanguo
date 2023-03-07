@@ -1,0 +1,141 @@
+function OnCommand_Lottery(player, role, arg, others)
+	player:Log("OnCommand_Lottery, "..DumpTable(arg).." "..DumpTable(others))
+	
+
+	--
+	local resp = NewCommand("Lottery_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+
+	--free
+	local ed = DataPool_Find("elementdata")
+	local lottery = ed:FindBy("lottery_id",arg.lottery_id)
+	
+	if lottery == nil then
+		resp.retcode = G_ERRCODE[" "] --
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local cost_type = arg.cost_type
+	
+
+	--钱的类型 1-金币 2-勾玉 7-招募券  
+	--find the cost type
+	--
+	--
+	--free 抽奖 -1  -2  -7
+	local price = 0
+	local drop_id = 0
+	local lottery_cnt = 0
+	for costdrop in DataPool_Array(lottery.costdrop) do	
+		
+		if costdrop.lottery_cost_type == cost_type or cost_type < 0 then			
+			price = costdrop.lottery_price
+			drop_id = costdrop.drop_id
+			lottery_cnt = costdrop.lottery_times
+		end			
+	end
+
+	--免费抽取
+	if cost_type < 0 then 			
+		lottery_cnt = 1	
+		return
+	end
+	
+	--1代表的是铜币购买，2代表的是元宝购买, 7代表的是
+	if cost_type == 1 then
+		if role._roledata._status._money < price then
+			resp.retcode = G_ERRCODE["HERO_BUY_MONEY_LESS"] --?
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		ROLE_SubMoney(role, need_money)
+	elseif cost_type == 2 then
+		if role._roledata._status._yuanbao < price then
+			resp.retcode = G_ERRCODE["VP_LESS_YUANBAO"] --?
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		ROLE_SubYuanBao(role, need_yuanbao)
+	elseif arg.typ == 3 then
+		if BACKPACK_HaveItem(role, hero.soulID, need_soul) == false then
+			resp.retcode = G_ERRCODE["HERO_BUY_SOUL_LESS"] --?
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		BACKPACK_DelItem(role, hero.soulID, need_soul)
+		--ROLE_SubSoul(role, hero.soulID, need_soul)
+	else
+		resp.retcode = G_ERRCODE["HERO_BUY_TYPE_ERROR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+
+	local lottery_info = {}
+	local i = 1
+	while lottery_cnt > 0 do
+
+		local item = DROPITEM_DropItem(role, drop_id)
+		if item == nil then 
+			return
+		end
+
+		local item_count = table.getn(Item)
+		
+		if item_count ~= 1 then
+			throw()
+		end
+		local tmp_item = {}
+		tmp_item.id = item[item_count].id
+		tmp_item.cnt = item[item_count].count
+		
+		--找武将 是否首次获取看背包有没有
+		--是不是武将 还是物品
+		local lottery = ed:FindBy("hero_id",tmp_item.id)
+	
+		if lottery == nil then
+			tmp_item.firstget = 0
+			tmp_item.bproorhreo = 0
+		end
+		
+		local heroid =  tmp_item.id 
+		local hero_map = role._roledata._hero_hall._heros
+		local h = hero_map:Find(heroid)
+		if h ~= nil then
+			--转换成武魂物品
+			BACKPACK_AddItem(role, hero.soulID, hero.convertsoul)
+			tmp_item.firstget = 0
+			tmp_item.bproorhreo = 1
+		else
+			local tmp_hero = CACHE.RoleHero:new()
+			tmp_hero._tid = heroid
+			tmp_hero._level = 1
+			tmp_hero._order = hero.originalgrade
+			tmp_hero._exp = 0
+			tmp_hero._star = hero.originalstar
+			hero_map:Insert(heroid, tmp_hero)
+
+			HERO_UpdateHeroSkill(role, heroid)
+			HERO_SetSelectSkill(role, heroid)
+			HERO_UpdateHeroInfo(role, heroid)
+			tmp_item.firstget = 1 --第一次获取
+			tmp_item.bproorhreo = 1
+		
+		end
+		
+		resp.reward_ids[i].id = tmp_item.id 
+		resp.reward_ids[i].num = tmp_item.count	
+		resp.reward_ids[i].firstget = tmp_item.firstget
+		resp.reward_ids[i].bproorhreo = tmp_item.bproorhreo
+
+		i++
+		lottery_cnt = lottery_cnt - 1		
+	end
+
+	--发送物品给客户端
+	player:SendToClient(SerializeCommand(resp)) 		
+end
+
+
+

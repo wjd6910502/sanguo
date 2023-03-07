@@ -1,0 +1,50 @@
+	public:
+		int zoneid;
+		char is_db;
+		short cmd;
+		int gmsid;
+		int retcode;
+		Octets res;
+		enum { PROTOCOL_TYPE = PROTOCOL_CENTERCOMMANDRE };
+	public:
+		CenterCommandRe() { type = PROTOCOL_CENTERCOMMANDRE; }
+		CenterCommandRe(void*) : Protocol(PROTOCOL_CENTERCOMMANDRE) { }
+		CenterCommandRe (int l_zoneid,char l_is_db,short l_cmd,
+			int l_gmsid,int l_retcode,const Octets& l_res)
+			 : zoneid(l_zoneid),is_db(l_is_db),cmd(l_cmd)
+			,gmsid(l_gmsid),retcode(l_retcode),res(l_res)
+		{
+			type = PROTOCOL_CENTERCOMMANDRE;
+		}
+
+		CenterCommandRe(const CenterCommandRe &rhs)
+			: Protocol(rhs),zoneid(rhs.zoneid),is_db(rhs.is_db),cmd(rhs.cmd)
+			,gmsid(rhs.gmsid),retcode(rhs.retcode),res(rhs.res) { }
+
+		GNET::Protocol *Clone() const { return new CenterCommandRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << zoneid;
+			os << is_db;
+			os << cmd;
+			os << gmsid;
+			os << retcode;
+			os << res;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> zoneid;
+			os >> is_db;
+			os >> cmd;
+			os >> gmsid;
+			os >> retcode;
+			os >> res;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

@@ -1,0 +1,32 @@
+	public:
+		int64_t id;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPKEEPALIVE };
+	public:
+		UDPKeepAlive() { type = PROTOCOL_UDPKEEPALIVE; }
+		UDPKeepAlive(void*) : Protocol(PROTOCOL_UDPKEEPALIVE) { }
+		UDPKeepAlive (int64_t l_id)
+			 : id(l_id)
+		{
+			type = PROTOCOL_UDPKEEPALIVE;
+		}
+
+		UDPKeepAlive(const UDPKeepAlive &rhs)
+			: Protocol(rhs),id(rhs.id) { }
+
+		GNET::Protocol *Clone() const { return new UDPKeepAlive(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

@@ -1,0 +1,78 @@
+#ifndef _TOP_MANAGER_H_
+#define _TOP_MANAGER_H_
+
+#include <string>
+#include <map>
+#include <list>
+#include <set>
+
+#include "octets.h"
+#include "forlua.h"
+#include "itimer.h"
+#include "thread.h"
+#include "mutex.h"
+#include "role.h"
+#include "commonmacro.h"
+#include "glog.h"
+#include "structs.h"
+#include "transaction.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+#define TOPLIST_TYPE_LEVEL 	1  //等级榜
+#define TOPLIST_TYPE_CAPACITY	2  //战力榜
+
+	
+#define TOPLIST_TIME_NOW 	1  //实时榜
+#define TOPLIST_TIME_HISTORY 	2  //历史榜
+
+class TopManager: public TransactionBase
+{
+private:
+	TopManagerMap _top_manager;
+
+public:
+	mutable Thread::Mutex _lock;
+
+	static TopManager* GetInstance()
+	{
+		static TopManager _instance;
+		return &_instance;
+	}
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+	
+	//for TopManagerMap
+	void OnChanged();
+	int Tag() const;
+	std::map<int, TopList>::iterator End();
+
+	//for lua
+	int Size() const;
+
+	TopList* Find(const int& k);
+	//void Insert(const Int64& k, const TopList& v);
+	//void Delete(const int& k);
+
+	TopManagerMapIter SeekToBegin();
+	TopManagerMapIter Seek(const int& k);
+
+
+	//for DB
+	void Load(Octets &key, Octets &value);
+	void Save();
+	void SaveToDB();
+
+	//Test
+	void SaveTest();
+};
+
+}
+
+inline CACHE::TopManager* API_GetLuaTopManager(void *r) { return (CACHE::TopManager*)r; }
+
+#endif //_TOP_MANAGER_H_
+

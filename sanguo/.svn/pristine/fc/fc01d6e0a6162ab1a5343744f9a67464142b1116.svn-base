@@ -1,0 +1,12 @@
+function OnMessage_PVPPause(player, role, arg, others)
+	player:Log("OnMessage_PVPPause, "..DumpTable(arg).." "..DumpTable(others))
+
+	local cmd = NewCommand("PVPPause")
+	cmd.pause_tick = arg.pause_tick
+	cmd.role_id = arg.role_id
+	player:SendToClient(SerializeCommand(cmd));
+
+	for i=1,#arg.cmds do
+		player:SendToClient(arg.cmds[i]);
+	end
+end

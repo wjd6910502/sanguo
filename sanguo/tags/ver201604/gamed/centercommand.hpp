@@ -1,0 +1,90 @@
+
+#ifndef __GNET_CENTERCOMMAND_HPP
+#define __GNET_CENTERCOMMAND_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "packagemanager.h"
+#include "structs.h"
+
+namespace GNET
+{
+extern int g_zoneid;
+
+class CenterCommand : public GNET::Protocol
+{
+	#include "centercommand"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		std::vector<int>::iterator it = find(zone_list.begin(), zone_list.end(), g_zoneid);
+		if(it != zone_list.end() || (zone_list.size() == 1 && zone_list[0] == -1))
+		{
+			// 0-500的命令分给了center,501-1000的命令是gamed,1001-1500的命令是gamedbd
+			if(cmd >= GAMED_BEGIN && cmd <= GAMED_END)
+			{
+				if(cmd == GAMED_SEND_SERVER_GIFT)
+				{
+					//在这里是发全服奖励的,这里注意一下，查看是否需要上锁
+					Compensate gift;
+					std::string seq = std::string((char*)arg1.begin(),arg1.size());
+					std::string day = std::string((char*)arg2.begin(),arg2.size());
+					std::string msgid = std::string((char*)arg3.begin(),arg3.size());
+					std::string itemid = std::string((char*)arg4.begin(),arg4.size());
+					std::string subject = std::string((char*)arg5.begin(),arg5.size());
+					std::string context = std::string((char*)arg6.begin(),arg6.size());
+					std::string level = std::string((char*)arg7.begin(),arg7.size());
+					std::string type = std::string((char*)arg8.begin(),arg8.size());
+					std::string date = std::string((char*)arg9.begin(),arg9.size()); //每月的几号定时发
+					std::string week = std::string((char*)arg10.begin(),arg10.size());//每周的周几定时发
+					
+					time_t now = Timer::GetTime();
+					struct tm tmp;
+					localtime_r(&now, &tmp);
+					tmp.tm_hour = 0;
+					tmp.tm_min = 0;
+					tmp.tm_sec = 0;
+					time_t begin_time = mktime(&tmp);
+					time_t end_time = begin_time + atoi(day.c_str())*3600*24;
+				
+					
+					gift._seq = atoi(seq.c_str());
+					gift._begin = begin_time;
+					gift._end = end_time;
+					gift._msgid = atoi(msgid.c_str());
+					gift._itemid = atoi(itemid.c_str());
+					gift._subject = subject;
+					gift._context = context;
+					gift._level = atoi(level.c_str());
+					gift._type = atoi(type.c_str());
+					gift._date = atoi(date.c_str());
+					gift._week = atoi(week.c_str());
+
+					if(gift._date != 0 || gift._week != 0)
+					{
+						gift._end = 0;
+					}
+
+					PackagManager::GetInstance().Insert(gift._seq, gift);
+				}
+				else if (cmd == GAMED_SEND_ROLE_GIFT)
+				{
+				}
+				else if (cmd == GAMED_CLEAR_ROLE_GIFT)
+				{
+					std::string type = std::string((char*)arg1.begin(),arg1.size());
+					PackagManager::GetInstance().Delete(atoi(type.c_str()));
+				}
+			}
+			else
+			{
+				GameDBClient::GetInstance()->SendProtocol(this);
+			}
+		}
+	}
+};
+
+};
+
+#endif

@@ -1,0 +1,313 @@
+--全局状态变量
+--pvp
+g_pvp_invites = {}
+g_pvp_id = 0
+g_opponent_id = 0
+g_got_PVPBegin = false
+g_pvp_fight_start_time = 0
+g_received_client_tick_max = 0
+g_player1_hash = 5381
+g_player2_hash = 5381
+g_got_PVPEnd = false
+
+--模拟PVP过程
+function TestPVP()
+	Init()
+	Login()
+
+	--主循环
+	while true
+	do
+		g_pvp_invites = {}
+		g_pvp_id = 0
+		g_opponent_id = 0
+		g_got_PVPBegin = false
+		g_pvp_fight_start_time = 0
+		g_received_client_tick_max = 0
+		g_player1_hash = 5381
+		g_player2_hash = 5381
+		g_got_PVPEnd = false
+
+		while g_pvp_id==0
+		do
+			--大世界喊话，让别人知道自己
+			local cmd = NewCommand("PublicChat")
+			cmd.content = "hello, all, I'm Player"..g_main_thread_index.."!"
+			API_SendGameProtocol(SerializeCommand(cmd))
+			Sleep(1)
+			--看到有人喊话，邀请PVP
+			for k,_ in pairs(g_others)
+			do
+				if k~=g_role_id then
+					local cmd = NewCommand("PVPInvite")
+					cmd.dest_id = k
+					API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+					g_others[k] = nil
+				end
+			end
+			Sleep(1)
+			--处理已收到的PVP邀请
+			for k,_ in pairs(g_pvp_invites)
+			do
+				local cmd = NewCommand("PVPReply")
+				cmd.src_id = k
+				cmd.accept = true
+				API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+				g_pvp_invites[k] = nil
+			end
+			Sleep(1)
+		end
+
+		API_SendGameProtocol(SerializeCommand(NewCommand("PVPReady")), "P"..g_pvp_id)
+		while not g_got_PVPBegin do Nop() end
+
+		--local cmd3 = NewCommand("UDPPing")
+		--cmd3.client_send_time = API_GetTime2();
+		--API_SendUDPGameProtocol(SerializeCommand(cmd3))
+
+		API_FastSess_Reset()
+
+		while true
+		do
+			--local now = API_GetServerTime()
+			local now = API_GetTime()
+			if now>=g_pvp_fight_start_time then break end
+			Nop()
+		end
+
+		local client_tick = 0
+		while not g_got_PVPEnd
+		do
+			client_tick = client_tick+1
+
+			while client_tick-g_received_client_tick_max>3 --网络帧=10*client_tick
+			do
+				--API_Log("waiting...")
+				Nop() --卡住等
+				if g_got_PVPEnd then break end
+			end
+			if g_got_PVPEnd then break end
+
+			if g_received_client_tick_max >= 1000 then break end
+
+			local cmd = NewCommand("PVPOperation")
+			cmd.client_tick = client_tick
+			cmd.op = ""..math.random(0,99)
+			API_FastSess_Send(SerializeCommand(cmd), "R"..g_opponent_id, "P"..g_pvp_id)
+
+			Nop()
+		end
+
+		API_Log("END: "..g_player1_hash.." "..g_player2_hash.." "..g_player1_hash-g_player2_hash)
+
+		if not g_got_PVPEnd then
+			local cmd = NewCommand("PVPEnd")
+			cmd.result = g_player1_hash-g_player2_hash
+			API_SendGameProtocol(SerializeCommand(cmd), "P"..g_pvp_id)
+			while not g_got_PVPEnd do Nop() end
+		end
+
+		Nop()
+	end
+end
+
+--PVP之友(mode 1): 陪练, 只挨揍不还手, 只接受邀请不主动邀请别人
+function TestPVPFriend()
+	Init()
+	Login()
+
+	--主循环
+	while true
+	do
+		g_pvp_invites = {}
+		g_pvp_id = 0
+		g_opponent_id = 0
+		g_got_PVPBegin = false
+		g_pvp_fight_start_time = 0
+		g_received_client_tick_max = 0
+		g_got_PVPEnd = false
+
+		while g_pvp_id==0
+		do
+			--处理已收到的PVP邀请
+			for k,_ in pairs(g_pvp_invites)
+			do
+				local cmd = NewCommand("PVPReply")
+				cmd.src_id = k
+				cmd.accept = true
+				API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+				g_pvp_invites[k] = nil
+			end
+			Sleep(1)
+		end
+
+		API_SendGameProtocol(SerializeCommand(NewCommand("PVPReady")), "P"..g_pvp_id)
+		while not g_got_PVPBegin do Nop() end
+
+		--local cmd3 = NewCommand("UDPPing")
+		--cmd3.client_send_time = API_GetTime2();
+		--API_SendUDPGameProtocol(SerializeCommand(cmd3))
+
+		API_FastSess_Reset()
+
+		while true
+		do
+			--local now = API_GetServerTime()
+			local now = API_GetTime()
+			if now>=g_pvp_fight_start_time then break end
+			Nop()
+		end
+
+		local client_tick = 0
+		while not g_got_PVPEnd
+		do
+			client_tick = client_tick+1
+
+			while client_tick-g_received_client_tick_max>3 --网络帧=10*client_tick
+			do
+				--API_Log("waiting...")
+				Nop() --卡住等
+				if g_got_PVPEnd then break end
+			end
+			if g_got_PVPEnd then break end
+
+			local cmd = NewCommand("PVPOperation")
+			cmd.client_tick = client_tick
+			cmd.op = "300"
+			API_FastSess_Send(SerializeCommand(cmd), "R"..g_opponent_id, "P"..g_pvp_id)
+
+			Nop()
+		end
+
+		API_Log("END")
+
+		Nop()
+	end
+end
+
+function TestGetServerTime()
+	Init()
+	Login()
+
+	--主循环
+	while Nop()
+	do
+		Sleep(10)
+
+		API_Log("server time: "..API_GetServerTime())
+		API_Log("local time: "..API_GetTime())
+	end
+end
+
+function TestSTUN()
+	Init()
+	Login()
+
+	--主循环
+	loop = 0
+	while Nop()
+	do
+		loop = loop+1
+
+		Sleep(3)
+
+		API_STUN_Request()
+	end
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--function TestFastSess()
+--	Init()
+--	Login()
+--
+--	API_FastSess_Reset()
+--
+--	local client_tick = 0
+--	while true
+--	do
+--		client_tick = client_tick+1
+--		if client_tick>3 then break end
+--
+--		local cmd = NewCommand("PVPOperation")
+--		cmd.client_tick = client_tick
+--		cmd.op = ""..math.random(0,99)
+--		API_FastSess_Send(SerializeCommand(cmd))
+--
+--		Nop()
+--	end
+--end
+--
+----PVP之友(mode 2): 陪练, 只挨揍不还手, 只接受邀请
+--function TestPVPFriend2()
+--	Init()
+--	Login()
+--
+--	--主循环
+--	while Nop()
+--	do
+--		g_pvp_invites = {}
+--		g_pvp_id = 0
+--		g_opponent_id = 0
+--		g_got_PVPBegin = false
+--		g_pvp_fight_start_time = 0
+--		g_received_client_tick_max = 0
+--		g_got_PVPEnd = false
+--
+--		while g_pvp_id==0
+--		do
+--			--处理已收到的PVP邀请
+--			for k,_ in pairs(g_pvp_invites)
+--			do
+--				local cmd = NewCommand("PVPReply")
+--				cmd.src_id = k
+--				cmd.accept = true
+--				API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+--				g_pvp_invites[k] = nil
+--			end
+--			Sleep(1)
+--		end
+--
+--		API_SendGameProtocol(SerializeCommand(NewCommand("PVPReady")), "P"..g_pvp_id)
+--		while not g_got_PVPBegin do Nop() end
+--
+--		local cmd3 = NewCommand("UDPPing")
+--		cmd3.client_send_time = API_GetTime2();
+--		API_SendUDPGameProtocol(SerializeCommand(cmd3))
+--
+--		--while Nop()
+--		--do
+--		--	local now = API_GetServerTime()
+--		--	if now>=g_pvp_fight_start_time then break end
+--		--end
+--
+--		local client_tick = 0
+--		while not g_got_PVPEnd
+--		do
+--			client_tick = client_tick+1
+--
+--			Nop()
+--		end
+--
+--		API_Log("END")
+--	end
+--end
+

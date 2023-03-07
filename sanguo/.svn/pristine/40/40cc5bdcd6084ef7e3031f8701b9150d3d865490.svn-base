@@ -1,0 +1,35 @@
+function OnCommand_WuZheShiLianGetOpponentInfo(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianGetOpponentInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+
+	--还有这个协议设计的最初目的就是只有在玩家选择了难度以后再来获取对手信息的，再没有选择难度的时候
+	--原则上是不应该收到这个协议的。你愿意改成现在这个样子就改成现在的样子
+	local resp = NewCommand("WuZheShiLianGetOpponentInfo_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]	
+	
+	resp.opponent_info = {}
+	local f = hero_trial._attack_info:Find(arg.difficulty)	
+	if f ~= nil then
+		local sit = f._difficulty_attackinfo:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local opp_info ={}
+			opp_info.id = s._id
+			opp_info.level = s._level
+			opp_info.alive = s._alive_flag		
+			opp_info.stage = s._stage
+			opp_info.hp = s._hp
+			opp_info.anger = s._anger
+			resp.opponent_info[#resp.opponent_info+1] = opp_info 
+			sit:Next()
+			s = sit:GetValue()		
+		end
+	else
+		--这种情况最后给客户端发回去一个错误码，也可以知道服务器出了问题。
+		--其次，咱们客户端有时候做一些界面的时候，你要是不返回去协议，这个界面就被锁死了，玩家再点击都不会给服务器发这个协议的
+		--数据库中找不到 一般不可能出现
+		throw()
+	end
+	
+	player:SendToClient(SerializeCommand(resp))	
+end

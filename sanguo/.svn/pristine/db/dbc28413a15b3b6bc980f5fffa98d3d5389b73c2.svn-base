@@ -1,0 +1,50 @@
+function OnMessage_RoleUpdateServerEvent(player, role, arg, others)
+	player:Log("OnMessage_RoleUpdateServerEvent, "..DumpTable(arg).." "..DumpTable(others))
+
+	local server_event = others.mist._server_event._event_info
+
+	local event_it = server_event:SeekToBegin()
+	local event = event_it:GetValue()
+	while event ~= nil do
+		if event._event_time > role._roledata._status._update_server_event then
+			if event._event_type == G_EVENT_TYPE["MAIL_PVP_DAILY"] then
+				local msg = NewMessage("SendMail")
+				local mail_id = 0
+				if role._roledata._pvp_info._pvp_grade == 0 then
+					mail_id = 1001
+				elseif role._roledata._pvp_info._pvp_grade <= 5 then
+					mail_id = 1002
+				elseif role._roledata._pvp_info._pvp_grade <= 10 then
+					mail_id = 1003
+				elseif role._roledata._pvp_info._pvp_grade <= 20 then
+					mail_id = 1004
+				elseif role._roledata._pvp_info._pvp_grade <= 25 then
+					--当这个玩家是25段位的时候，需要判断一下这个玩家是否玩过这个活动
+					if role._roledata._pvp_info._pvp_grade == 25 then
+						if role._roledata._pvp_info._win_count == 0 and role._roledata._pvp_info._fail_count == 0 then
+							mail_id = 0
+						else
+							mail_id = 1004
+						end
+					else
+						mail_id = 1004
+					end
+				end
+				if mail_id ~= 0 then
+					msg.mail_id = mail_id
+					msg.arg1 = tostring(role._roledata._pvp_info._pvp_grade)
+					player:SendMessage(role._roledata._base._id, SerializeMessage(msg))
+				end
+			elseif event._event_type == G_EVENT_TYPE["PVP_SEASON_FINISH"] then
+				role._roledata._pvp_info._pvp_server_season_end_time = mist._pvp_season_end_time
+				--给客户端进行更新
+				local resp = NewCommand("UpdatePvpEndTime")
+				resp.end_time = role._roledata._pvp_info._pvp_server_season_end_time
+				player:SendToClient(SerializeCommand(resp))
+			end
+		end
+
+		event_it:Next()
+		event = event_it:GetValue()
+	end
+end

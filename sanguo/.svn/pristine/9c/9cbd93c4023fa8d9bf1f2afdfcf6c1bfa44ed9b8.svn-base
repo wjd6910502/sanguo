@@ -1,0 +1,96 @@
+#!/usr/bin/env python
+#encoding=GBK
+
+import random, time
+
+FPS = 30 #帧率
+
+now = 0 #时间(ms)
+
+clients_tick_max = {} #各客户端已产生的最大tick
+clients_tick_arrive_time = {} #客户端操作到达服务器的时刻
+
+clients_in_wrong_state = {}
+
+def GetRTT(index):
+	if index==2:
+		return 24.1
+
+	if clients_in_wrong_state.has_key(index):
+		if clients_in_wrong_state[index]>0:
+			clients_in_wrong_state[index] -= 1
+			return 99999999 #lost
+
+	i = random.randint(0,99) #[lower,upper]
+	if i<1: #odd==1%
+		clients_in_wrong_state[index] = 9 #进入连续丢包状态
+		return 99999999 #lost
+	else:
+		return 24.1 #ms
+
+def CommitOP(index, tick, rtt):
+	global now, clients_tick_max, clients_tick_arrive_time
+
+	clients_tick_max[index] = tick
+
+	if not clients_tick_arrive_time.has_key(index):
+		clients_tick_arrive_time[index] = {}
+	if not clients_tick_arrive_time[index].has_key(tick):
+		clients_tick_arrive_time[index][tick] = now+rtt
+
+def ReadOPSet():
+	global now, clients_tick_max, clients_tick_arrive_time
+
+	if not clients_tick_max.has_key(1):
+		return 0
+	if not clients_tick_max.has_key(2):
+		return 0
+
+	tk = clients_tick_max[1]
+	if tk>clients_tick_max[2]:
+		tk = clients_tick_max[2]
+
+	while tk>0:
+		if clients_tick_arrive_time[1][tk]>now or clients_tick_arrive_time[2][tk]>now:
+			tk -= 1
+			continue
+		return tk
+
+def clientRunTick(index, tick, opset_tick_max):
+	global now, clients_tick_max, clients_tick_arrive_time
+
+	opset_tick = ReadOPSet()
+	if opset_tick>opset_tick_max:
+		opset_tick_max = opset_tick
+
+	if tick < opset_tick_max+10:
+		rtt = GetRTT(index)
+		CommitOP(index, tick, rtt)
+		tick += 1
+	else:
+		print "%d, Waiting, %d" % (index, tick)
+
+	return (tick, opset_tick_max)
+
+def main():
+	global now, clients_tick_max, clients_tick_arrive_time
+
+	random.seed(time.time())
+
+	c1_tick = 1
+	c1_opset_tick_max = 0
+	c2_tick = 1
+	c2_opset_tick_max = 0
+
+	while True:
+		now += 1000/FPS
+		if now>10*60*1000:
+			break
+
+		(c1_tick,c1_opset_tick_max) = clientRunTick(1, c1_tick, c1_opset_tick_max)
+		(c2_tick,c2_opset_tick_max) = clientRunTick(2, c2_tick, c2_opset_tick_max)
+		#print c1_tick,c1_opset_tick_max,c2_tick,c2_opset_tick_max
+
+if __name__ == "__main__":
+	main()
+

@@ -1,0 +1,66 @@
+
+G_ERRCODE = {}
+G_ERRCODE["SUCCESS"] = 0
+G_ERRCODE["NO_ROLE"] = 1
+G_ERRCODE["CREATING_ROLE"] = 2
+G_ERRCODE["INVALID_NAME"] = 3
+G_ERRCODE["USED_NAME"] = 4
+G_ERRCODE["SYSTEM_INVALID"] = 5
+G_ERRCODE["NO_MAFIA"] = 101
+G_ERRCODE["CREATING_MAFIA"] = 102
+
+G_ERRCODE["TASK_ID_ERROR"]  = 201
+G_ERRCODE["TASK_NOT_FINISH"]= 202
+
+G_ERRCODE["NO_TONGGUAN"] = 301 --不足3星，无法扫荡
+G_ERRCODE["NO_ENOUGHVP"] = 302 --体力不足，无法扫荡
+G_ERRCODE["NO_COUNT"]	 = 303 --副本次数不足，无法扫荡
+G_ERRCODE["NO_SWEEPITEM"]= 304 --扫荡令不足，无法扫荡
+G_ERRCODE["NO_TONGGUAN"] = 305 --还没有通关副本，无法扫荡
+
+function NewCommand(typ)
+	cmd = {}
+	cmd.__type__ = typ
+	return cmd
+end
+
+function NewMessage(typ)
+	msg = {}
+	msg.__type__ = typ
+	return msg
+end
+
+function DumpTable(t)
+	s = ""
+	for k,v in pairs(t) do
+		if type(v)=="table" then
+			s = s..k.."={"..DumpTable(v).."};"
+		elseif type(v)=="userdata" then
+			s = s..k.."=USERDATA;"
+		elseif type(v)=="boolean" then
+			s = s..k.."="..tostring(v)..";"
+		else
+			s = s..k.."="..v..";"
+		end
+	end
+	return s
+end
+
+-- debug info --
+local error=function( ... )
+
+	local info= debug.getinfo(1,"Sln")		
+	print("info.line :" .. (info.currentline or "null") .. "\ninfo.func :" .. (info.name or "") .. "\ninfo.source :" .. (info.source or "") )
+	
+	local info= debug.getinfo(2,"Sln")
+	print("info.line :" .. (info.currentline or "null") .. "\ninfo.func :" .. (info.name or "") .. "\ninfo.source" .. (info.source or ""));
+	return line
+end
+
+trycatch=function(fun)
+	local ret,info=xpcall(fun,error,6)
+	print("ret:" .. ( ret and "true" or "false"  ) .. "\nerrMessage:" .. ( errMessage or "null") );
+--	print("line : " .. info.currentline .. "name:" .. info.name .. "source" .. info.source );
+end
+
+

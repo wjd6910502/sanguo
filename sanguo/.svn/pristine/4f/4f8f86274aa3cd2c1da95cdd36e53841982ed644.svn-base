@@ -1,0 +1,29 @@
+
+#ifndef __GNET_SERVERSTATUS_HPP
+#define __GNET_SERVERSTATUS_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "commonmacro.h"
+#include "connection.h"
+
+namespace GNET
+{
+
+class ServerStatus : public GNET::Protocol
+{
+	#include "serverstatus"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		fprintf(stderr, "ServerStatus::Process, info=%s\n", B16EncodeOctets(info).c_str());
+
+		Connection::GetInstance().OnServerStatus(manager, sid, info);
+	}
+};
+
+};
+
+#endif

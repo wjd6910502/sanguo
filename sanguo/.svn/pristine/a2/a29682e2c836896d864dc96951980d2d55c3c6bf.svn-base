@@ -1,0 +1,332 @@
+--全局状态变量
+
+--常量
+g_COUNT = 1000
+
+--pvp
+g_pvp_invites = {}
+g_pvp_id = 0
+g_opponent_id = 0
+g_i_am_player1 = false
+g_got_PVPBegin = false
+g_pvp_fight_start_time = 0
+g_received_client_tick_max = 0
+g_received_client_tick_max_p2p = 0
+g_player1_hash = 5381
+g_player2_hash = 5381
+g_player1_hash_p2p = 5381
+g_player2_hash_p2p = 5381
+g_got_PVPEnd = false
+
+--模拟PVP过程
+function TestPVP()
+	Init()
+	Login()
+
+	--主循环
+	while true
+	do
+		g_pvp_invites = {}
+		g_pvp_id = 0
+		g_opponent_id = 0
+		g_i_am_player1 = false
+		g_got_PVPBegin = false
+		g_pvp_fight_start_time = 0
+		g_received_client_tick_max = 0
+		g_received_client_tick_max_p2p = 0
+		g_player1_hash = 5381
+		g_player2_hash = 5381
+		g_player1_hash_p2p = 5381
+		g_player2_hash_p2p = 5381
+		g_got_PVPEnd = false
+
+		while g_pvp_id==0
+		do
+			--大世界喊话，让别人知道自己
+			local cmd = NewCommand("PublicChat")
+			cmd.content = "hello, all, I'm Player"..g_main_thread_index.."!"
+			API_SendGameProtocol(SerializeCommand(cmd))
+			Sleep(1)
+			--看到有人喊话，邀请PVP
+			for k,_ in pairs(g_others)
+			do
+				if k~=g_role_id then
+					local cmd = NewCommand("PVPInvite")
+					cmd.dest_id = k
+					API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+					g_others[k] = nil
+				end
+			end
+			Sleep(1)
+			--处理已收到的PVP邀请
+			for k,_ in pairs(g_pvp_invites)
+			do
+				local cmd = NewCommand("PVPReply")
+				cmd.src_id = k
+				cmd.accept = true
+				API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+				g_pvp_invites[k] = nil
+			end
+			Sleep(1)
+		end
+
+		API_SendGameProtocol(SerializeCommand(NewCommand("PVPReady")), "P"..g_pvp_id)
+		while not g_got_PVPBegin do Nop() end
+
+		--local cmd3 = NewCommand("UDPPing")
+		--cmd3.client_send_time = API_GetTime2();
+		--API_SendUDPGameProtocol(SerializeCommand(cmd3))
+
+		API_FastSess_Open()
+
+		while true
+		do
+			--local now = API_GetServerTime()
+			local now = API_GetTime()
+			if now>=g_pvp_fight_start_time then break end
+			Nop()
+		end
+
+		local client_tick = 0
+		while not g_got_PVPEnd
+		do
+			client_tick = client_tick+1
+
+			while client_tick-g_received_client_tick_max>3 and client_tick-g_received_client_tick_max_p2p>3--网络帧=10*client_tick
+			do
+				--API_Log("waiting...")
+				Nop() --卡住等
+				if g_got_PVPEnd then break end
+			end
+			if g_got_PVPEnd then break end
+
+			if client_tick>g_COUNT then break end
+
+			local cmd = NewCommand("PVPOperation")
+			cmd.client_tick = client_tick
+			cmd.op = ""..math.random(0,99)
+			API_FastSess_Send(SerializeCommand(cmd), "R"..g_opponent_id, "P"..g_pvp_id)
+
+			API_Log("latency: "..API_GetLatency().." pvp latency: "..API_GetPVPLatency())
+
+			if g_i_am_player1 then
+				g_player1_hash_p2p = g_player1_hash_p2p*33 + cmd.op
+				if g_player1_hash_p2p>=65536 then g_player1_hash_p2p=g_player1_hash_p2p%65536 end
+			else
+				g_player2_hash_p2p = g_player2_hash_p2p*33 + cmd.op
+				if g_player2_hash_p2p>=65536 then g_player2_hash_p2p=g_player2_hash_p2p%65536 end
+			end
+
+			Nop()
+		end
+
+		while g_received_client_tick_max<g_COUNT and g_received_client_tick_max_p2p<g_COUNT do Nop() end --wait all
+
+		API_Log("END: "..g_player1_hash.." "..g_player2_hash.." "..g_player1_hash-g_player2_hash)
+		API_Log("P2P: "..g_player1_hash_p2p.." "..g_player2_hash_p2p.." "..g_player1_hash_p2p-g_player2_hash_p2p)
+
+		if not g_got_PVPEnd then
+			local cmd = NewCommand("PVPEnd")
+			cmd.result = g_player1_hash-g_player2_hash
+			API_SendGameProtocol(SerializeCommand(cmd), "P"..g_pvp_id)
+			while not g_got_PVPEnd do Nop() end
+		end
+
+		API_FastSess_Reset()
+
+		Nop()
+	end
+end
+
+--PVP之友(mode 1): 陪练, 只挨揍不还手, 只接受邀请不主动邀请别人
+function TestPVPFriend()
+	Init()
+	Login()
+
+	--主循环
+	while true
+	do
+		g_pvp_invites = {}
+		g_pvp_id = 0
+		g_opponent_id = 0
+		g_got_PVPBegin = false
+		g_pvp_fight_start_time = 0
+		g_received_client_tick_max = 0
+		g_received_client_tick_max_p2p = 0
+		g_got_PVPEnd = false
+
+		while g_pvp_id==0
+		do
+			--处理已收到的PVP邀请
+			for k,_ in pairs(g_pvp_invites)
+			do
+				local cmd = NewCommand("PVPReply")
+				cmd.src_id = k
+				cmd.accept = true
+				API_SendGameProtocol(SerializeCommand(cmd), "R"..k)
+				g_pvp_invites[k] = nil
+			end
+			Sleep(1)
+		end
+
+		Sleep(3)
+
+		API_SendGameProtocol(SerializeCommand(NewCommand("PVPReady")), "P"..g_pvp_id)
+		while not g_got_PVPBegin do Nop() end
+
+		--local cmd3 = NewCommand("UDPPing")
+		--cmd3.client_send_time = API_GetTime2();
+		--API_SendUDPGameProtocol(SerializeCommand(cmd3))
+
+		API_FastSess_Open()
+
+		while true
+		do
+			--local now = API_GetServerTime()
+			local now = API_GetTime()
+			if now>=g_pvp_fight_start_time then break end
+			Nop()
+		end
+
+		local client_tick = 0
+		while not g_got_PVPEnd
+		do
+			client_tick = client_tick+1
+
+			--while client_tick-g_received_client_tick_max>3 --网络帧=10*client_tick
+			while client_tick-g_received_client_tick_max>3 and client_tick-g_received_client_tick_max_p2p>3--网络帧=10*client_tick
+			do
+				--API_Log("waiting...     client_tick="..client_tick.." g_received_client_tick_max_p2p="..g_received_client_tick_max_p2p)
+				Nop() --卡住等
+				if g_got_PVPEnd then break end
+			end
+			if g_got_PVPEnd then break end
+
+			local cmd = NewCommand("PVPOperation")
+			cmd.client_tick = client_tick
+			cmd.op = "300"
+			API_FastSess_Send(SerializeCommand(cmd), "R"..g_opponent_id, "P"..g_pvp_id)
+
+			Nop()
+		end
+
+		API_FastSess_Reset()
+
+		API_Log("END")
+
+		Nop()
+	end
+end
+
+function TestGetServerTime()
+	Init()
+	Login()
+
+	--主循环
+	while Nop()
+	do
+		Sleep(10)
+
+		API_Log("server time: "..API_GetServerTime())
+		API_Log("local time: "..API_GetTime())
+	end
+end
+
+function TestGetNetType()
+	Init()
+	Login()
+
+	Sleep(3)
+
+	local net_type = API_GetNetType()
+	--if net_type==0 then
+	--	if not API_IsGettingNetType() then API_TryGetNetType() end
+	--	while API_IsGettingNetType() do Sleep(1) end
+	--	net_type = API_GetNetType()
+	--end
+
+	API_Log("net type: "..net_type)
+end
+
+function TestTransaction0()
+	Init()
+	Login()
+
+	local N = 1
+	while Nop()
+	do
+		local cmd = NewCommand("DebugCommand")
+		cmd.typ = "TestTransaction"
+		cmd.count1 = 0
+		cmd.count2 = N
+		API_SendGameProtocol(SerializeCommand(cmd))
+
+		N = N+1
+		Sleep(1)
+	end
+end
+
+function TestTransaction1()
+	Init()
+	Login()
+
+	local N = 111
+	while Nop()
+	do
+		local cmd = NewCommand("DebugCommand")
+		cmd.typ = "TestTransaction"
+		cmd.count1 = 1
+		cmd.count2 = N
+		API_SendGameProtocol(SerializeCommand(cmd))
+
+		--N = N+1
+		Sleep(1)
+	end
+end
+
+function TestTransaction2()
+	Init()
+	Login()
+
+	local N = 111
+	while Nop()
+	do
+		local cmd = NewCommand("DebugCommand")
+		cmd.typ = "TestTransaction"
+		cmd.count1 = 2
+		cmd.count2 = N
+		API_SendGameProtocol(SerializeCommand(cmd))
+
+		--N = N+1
+		Sleep(1)
+	end
+end
+
+function TestTransaction3()
+	Init()
+	Login()
+
+	local cmd = NewCommand("DebugCommand")
+	cmd.typ = "TestTransaction"
+	cmd.count1 = 3
+	API_SendGameProtocol(SerializeCommand(cmd))
+end
+
+function TestDuxg()
+	Init()
+	Login()
+
+	while Nop()
+	do
+		local cmd2 = NewCommand("Ping")
+		cmd2.client_send_time = API_GetTime2();
+		API_SendGameProtocol(SerializeCommand(cmd2))
+
+		API_Log("latency: "..API_GetLatency())
+
+		Sleep(1)
+	end
+end
+
+
+

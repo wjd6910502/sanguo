@@ -1,0 +1,31 @@
+
+#include "statusserver.hpp"
+#include "state.hxx"
+#include "serverstatus.hpp"
+#include "glog.h"
+
+namespace GNET
+{
+
+StatusServer StatusServer::instance;
+
+const Protocol::Manager::Session::State* StatusServer::GetInitState() const
+{
+	return &state_StatusServer;
+}
+
+void StatusServer::OnAddSession(Session::ID sid)
+{
+	GLog::log(LOG_INFO, "StatusServer::OnAddSession, sid=%u", sid);
+	
+	ServerStatus prot;
+	prot.info = Octets("UNKNOWN", 8);
+	Send(sid, prot);
+}
+
+void StatusServer::OnDelSession(Session::ID sid)
+{
+	GLog::log(LOG_INFO, "StatusServer::OnDelSession, sid=%u", sid);
+}
+
+};

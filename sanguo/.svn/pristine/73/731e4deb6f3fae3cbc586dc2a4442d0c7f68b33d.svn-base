@@ -1,0 +1,4 @@
+function OnMessage_MafiaAddMember(player, role, arg, others)
+	--player:Log("OnMessage_MafiaAddMember, "..DumpTable(arg).." "..DumpTable(others))
+
+end

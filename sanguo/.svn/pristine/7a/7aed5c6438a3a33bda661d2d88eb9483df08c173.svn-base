@@ -1,0 +1,39 @@
+
+#ifndef __GNET_SYNCNETIME_HPP
+#define __GNET_SYNCNETIME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include <time.h>
+
+namespace GNET
+{
+
+	class SyncNetime : public GNET::Protocol
+	{
+	#include "syncnetime"
+	
+	mutable Thread::Mutex ntp_lock;  
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//	fprintf(stderr,"-----------------Sync NTP------ orignatetime = %.*s \n", orignatetime.size(),(char*)orignatetime.begin() );				
+		Thread::Mutex::Scoped keeper(ntp_lock);;	
+		struct timeval r_time,t_time;
+		gettimeofday(&r_time, NULL);
+		gettimeofday(&t_time, NULL);
+
+		//计算的精度单位为微妙
+		this->receivetime  = r_time.tv_sec*1000000 + r_time.tv_usec; 
+		this->transmittime = t_time.tv_sec*1000000 + t_time.tv_usec;
+		this->orignatetime = orignatetime;
+		
+		//测试调用这个接口会消耗5-10微秒的时间
+		manager->Send(sid, this); 
+		
+	}
+};
+
+};
+
+#endif

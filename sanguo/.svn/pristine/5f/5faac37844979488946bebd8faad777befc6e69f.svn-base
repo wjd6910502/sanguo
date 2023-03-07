@@ -1,0 +1,14 @@
+function OnMessage_Heartbeat(player, role, arg, others)
+	--player:Log("OnMessage_Heartbeat, "..DumpTable(arg))
+
+	local now = API_GetTime()
+	if (now%3==0 and player:NetTime_NeedSync()) or (now%300==0) then
+		player:NetTime_Sync2Client()
+	end
+
+	if now%10==0 then
+		if role._status._vp_refreshtime ~= 0 and now - role._status._vp_refreshtime >= 360 then
+			ROLE_Addvp(role, math.floor((now - role._status._vp_refreshtime)/360), 0)
+		end
+	end
+end

@@ -1,0 +1,441 @@
+#include "pvpmatch.h"
+#include "gcenterserver.hpp"
+#include "pvpmatchsuccess.hpp"
+#include "pvpenterre.hpp"
+#include "pvpcreate.hrp"
+#include "pvpgameserver.hpp"
+#include "pvpleavere.hpp"
+#include "pvpdelete.hpp"
+
+namespace GNET
+{
+
+int PVPMatch::pvp_index = 0;
+
+PVPMatch::PVPMatch()
+{
+	Initialize();
+}
+
+void PVPMatch::AddPVPServer(const char *ip, unsigned short port, unsigned int sid)
+{
+	for(auto it=_pvpds.begin(); it!=_pvpds.end(); ++it)
+	{
+		if(it->_ip==ip && it->_port==port)
+		{
+	                it->_sid = sid;
+	                it->_last_active_time = Now();
+	                it->_load = 0;
+	                return;
+	        }
+	}
+	pvp_server_data pvpd;
+	pvpd._ip = ip;
+	pvpd._port = port;
+	pvpd._sid = sid;
+	pvpd._last_active_time = Now();
+	pvpd._load = 0;
+	_pvpds.push_back(pvpd);
+}
+
+void PVPMatch::UpdatePVPServerLoad(unsigned int sid, int load)
+{
+	for(auto it=_pvpds.begin(); it!=_pvpds.end(); ++it)
+	{
+		if(it->_sid == sid)
+		{
+			it->_last_active_time = Now();
+			it->_load = load;
+			return;
+		}
+	}
+}
+
+const pvp_server_data* PVPMatch::AllocPVPServer() const
+{
+	if(_pvpds.empty()) return 0;
+	
+	time_t now = Now();
+	for(auto it=_pvpds.begin(); it!=_pvpds.end(); ++it)
+	{
+		if(now-it->_last_active_time<10 && it->_load<80) return &*it;
+	}
+	return 0;
+}
+
+int PVPMatch::AddPVPData(int64_t roleid, pvp_data data)
+{
+	//首先查找这个玩家是否已经在进行匹配了
+	std::map<int64_t, pvp_data>::iterator it = _data.find(roleid);
+	if(it != _data.end())
+	{
+		return 1;
+	}
+	_data[roleid] = data;
+	return 0;
+}
+
+bool PVPMatch::Initialize()
+{
+	IntervalTimer::Attach(this, (1000000) / IntervalTimer::Resolution());
+	return true;
+}
+
+bool PVPMatch::Update()
+{
+	while (_data.size() >= 2)
+	{
+		std::map<int64_t, pvp_data>::iterator it = _data.begin();
+		pvp_match_data tmp;
+		tmp.fight1_id = it->second.role_id;
+		tmp.fight1_zoneid = it->second.zoneid;
+		tmp.fight1_hero = it->second.hero;
+
+		_data.erase(it++);
+
+		tmp.fight2_id = it->second.role_id;
+		tmp.fight2_zoneid = it->second.zoneid;
+		tmp.fight2_hero = it->second.hero;
+
+		tmp.notice_flag = false;
+
+		_data.erase(it++);
+		
+		pvp_index++;
+		_match_data[pvp_index] = tmp;
+
+		//给这两个玩家发送匹配成功的消息
+		PvpMatchSuccess pro;
+		pro.retcode = 0;
+		pro.index = pvp_index;
+		pro.roleid = tmp.fight1_id;
+		GCenterServer::GetInstance()->DispatchProtocol(tmp.fight1_zoneid, pro);
+		pro.roleid = tmp.fight2_id;
+		GCenterServer::GetInstance()->DispatchProtocol(tmp.fight2_zoneid, pro);
+
+	}
+
+	//开始判断是否可以通知玩家双方都已经同意，可以进入战场了
+	std::map<int, pvp_match_data>::iterator it = _match_data.begin();
+	while(it != _match_data.end())
+	{
+		if(it->second.fight2_flag == 1 && it->second.fight1_flag == 1 && it->second.notice_flag == false)
+		{
+			//给玩家发送消息，并且把玩家从当前的队列中删除
+			PvpEnterRe pro;
+			pro.roleid = it->second.fight1_id;
+			pro.fightid = it->second.fight2_id;
+			pro.hero_list = it->second.fight1_hero;
+			pro.fight_hero_list = it->second.fight2_hero;
+			
+			GCenterServer::GetInstance()->DispatchProtocol(it->second.fight1_zoneid, pro);
+
+			pro.roleid = it->second.fight2_id;
+			pro.fightid = it->second.fight1_id;
+			pro.hero_list = it->second.fight2_hero;
+			pro.fight_hero_list = it->second.fight1_hero;
+			
+			GCenterServer::GetInstance()->DispatchProtocol(it->second.fight2_zoneid, pro);
+
+			it->second.notice_flag = true;
+
+			//在这里通知PVPD服务器,相应的信息
+			const pvp_server_data* pvpd = AllocPVPServer();
+			if(!pvpd)
+			{
+				GLog::log(LOG_ERR, "GAMED::PVPD_Create, AllocPVPServer error");
+				return true;
+			}
+				
+			int begin_time = Now() + 5;
+			it->second.ip = pvpd->_ip;
+			it->second.ip_port = pvpd->_port;
+			it->second.pvp_sid = pvpd->_sid;
+			it->second.begin_time = begin_time;
+						 
+			PVPCreateArg arg;
+			arg.id = it->first;
+			arg.mode = 1;
+			//arg.mode = 0;
+			arg.fighter1 = it->second.fight1_id;
+			arg.fighter2 = it->second.fight2_id;
+			arg.start_time = begin_time;
+
+			PVPCreate *rpc = (PVPCreate*)Rpc::Call(RPC_PVPCREATE, arg);
+			PVPGameServer::GetInstance()->Send(pvpd->_sid, rpc);
+			it++;
+		}
+		else if(it->second.end_time != 0 && (Now() - it->second.end_time) > 3)
+		{
+			//首先需要注意，只要进到这里肯定是有一个玩家已经发了过来的。
+			//直接按照当前服务器知道的信息来判断胜负
+			PvpLeaveRe pro;
+			pro.roleid = it->second.fight1_id;
+			if(it->second.fight1_id == it->second.winner)
+				pro.result = SUCCESS;
+			else
+				pro.result = FAIL;
+			GCenterServer::GetInstance()->DispatchProtocol(it->second.fight1_zoneid, pro);
+
+			pro.roleid = it->second.fight2_id;
+			if(it->second.fight2_id == it->second.winner)
+				pro.result = SUCCESS;
+			else
+				pro.result = FAIL;
+			GCenterServer::GetInstance()->DispatchProtocol(it->second.fight2_zoneid, pro);
+			
+			//通知PVPD服务器删除
+			PVPDelete prot;
+			prot.id = it->first;
+			PVPGameServer::GetInstance()->Send(it->second.pvp_sid, prot);
+			
+			//删除这个房间
+			_match_data.erase(it++);
+		}
+		else
+		{
+			it++;
+		}
+	}
+	return true;
+}
+
+int PVPMatch::RolePvpEnter(int64_t roleid, int index, int flag)
+{
+	std::map<int, pvp_match_data>::iterator it = _match_data.find(index);
+	if(it != _match_data.end())
+	{
+		if(roleid == it->second.fight1_id)
+		{
+			it->second.fight1_flag = 1;
+		}
+		else if(roleid == it->second.fight2_id)
+		{
+			it->second.fight2_flag = 1;
+		}
+		else
+		{
+			return 2;
+		}
+	}
+	else
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+pvp_match_data * PVPMatch::GetPvpMatchData(int key)
+{
+	std::map<int, pvp_match_data>::iterator it = _match_data.find(key);
+	if(it != _match_data.end())
+	{
+		return &it->second;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+
+int PVPMatch::RolePvpLeave(int64_t roleid, int index, int reason)
+{
+	//0代表获胜离开，1代表失败，99代表投降
+	std::map<int, pvp_match_data>::iterator it = _match_data.find(index);
+	if(it != _match_data.end())
+	{
+		//开始查看这个玩家是否在这个房间里面
+		if(it->second.fight1_id == roleid || it->second.fight2_id == roleid)
+		{
+			//这个是为了判断出来谁是获胜的人。
+			if(reason == 0)
+			{
+				if(it->second.winner != 0)
+				{
+					if(it->second.winner == roleid)
+					{
+						//没有任何的问题
+					}
+					else
+					{
+						//在这里就存在问题了。为什么两个人发来的信息不一致呢。目前先按照两个玩家都是输了来进行处理
+						PvpLeaveRe pro;
+						pro.roleid = it->second.fight1_id;
+						pro.result = FAIL_DOUBLE;
+						GCenterServer::GetInstance()->DispatchProtocol(it->second.fight1_zoneid, pro);
+
+						pro.roleid = it->second.fight2_id;
+						pro.result = FAIL_DOUBLE;
+						GCenterServer::GetInstance()->DispatchProtocol(it->second.fight2_zoneid, pro);
+						
+						//通知PVPD服务器删除
+						PVPDelete prot;
+						prot.id = index;
+						PVPGameServer::GetInstance()->Send(it->second.pvp_sid, prot);
+						
+						//删除这个房间
+						_match_data.erase(it);
+
+						return 0;
+					}
+				}
+				else
+				{
+					it->second.winner = roleid;
+				}
+			}
+			else if(reason == 1)
+			{
+				if(it->second.fight1_id == roleid)
+				{
+					it->second.winner = it->second.fight2_id;
+				}
+				else
+				{
+					it->second.winner = it->second.fight1_id;
+				}
+			}
+			else if(reason == 99)
+			{
+				//这个是直接投降，所以直接就可以结束这个副本了
+				PvpLeaveRe pro;
+				pro.roleid = it->second.fight1_id;
+				if(it->second.fight1_id == roleid)
+					pro.result = FAIL_SURRENDER;
+				else
+					pro.result = SUCCESS_SURRENDER;
+				GCenterServer::GetInstance()->DispatchProtocol(it->second.fight1_zoneid, pro);
+
+				pro.roleid = it->second.fight2_id;
+				if(it->second.fight2_id == roleid)
+					pro.result = FAIL_SURRENDER;
+				else
+					pro.result = SUCCESS_SURRENDER;
+				GCenterServer::GetInstance()->DispatchProtocol(it->second.fight2_zoneid, pro);
+				
+				//通知PVPD服务器删除
+				PVPDelete prot;
+				prot.id = index;
+				PVPGameServer::GetInstance()->Send(it->second.pvp_sid, prot);
+				
+				//删除这个房间
+				_match_data.erase(it);
+
+				return 0;
+			}
+		
+			//这里是为了判断是否两个玩家都发来了结束消息的
+			if(it->second.end_time == 0)
+			{
+				it->second.end_time = Now();
+			}
+			else
+			{
+				//在这里就可以给玩家回去消息，然后通知PVPD来进行副本删除
+				PvpLeaveRe pro;
+				pro.roleid = it->second.fight1_id;
+				if(it->second.fight1_id == it->second.winner)
+					pro.result = SUCCESS;
+				else
+					pro.result = FAIL;
+				GCenterServer::GetInstance()->DispatchProtocol(it->second.fight1_zoneid, pro);
+
+				pro.roleid = it->second.fight2_id;
+				if(it->second.fight2_id == it->second.winner)
+					pro.result = SUCCESS;
+				else
+					pro.result = FAIL;
+				GCenterServer::GetInstance()->DispatchProtocol(it->second.fight2_zoneid, pro);
+				
+				//通知PVPD服务器删除
+				PVPDelete prot;
+				prot.id = index;
+				PVPGameServer::GetInstance()->Send(it->second.pvp_sid, prot);
+				
+				//删除这个房间
+				_match_data.erase(it);
+
+				return 0;
+			}
+		}
+		else
+		{
+			//不进行任何的处理
+		}
+	}
+	else
+	{
+		//不进行任何的处理
+	}
+	return 0;
+}
+
+void PVPMatch::PvpdPvpEnd(int index, int64_t fight1, int64_t fight2, int reason)
+{
+	std::map<int, pvp_match_data>::iterator it = _match_data.find(index);
+
+	if(it != _match_data.end())
+	{
+		//验证信息
+		if((fight1 == it->second.fight1_id || fight1 == it->second.fight2_id) && (fight2 == it->second.fight1_id || fight2 == it->second.fight2_id))
+		{
+			int64_t winner = 0;
+			if(it->second.winner != 0)
+			{
+				winner = it->second.winner;
+			}
+			else
+			{
+				if(reason > 100)
+				{
+					winner = fight1;
+				}
+				else
+				{
+					winner = fight2;
+				}
+			}
+			
+			PvpLeaveRe pro;
+			pro.roleid = it->second.fight1_id;
+			if(it->second.fight1_id == winner)
+			{
+				if(it->second.winner != 0)
+					pro.result = SUCCESS;
+				else
+					pro.result = SUCCESS_OVERTIME;
+			}
+			else
+			{
+				if(it->second.winner != 0)
+					pro.result = FAIL;
+				else
+					pro.result = FAIL_OVERTIME;
+			}
+			GCenterServer::GetInstance()->DispatchProtocol(it->second.fight1_zoneid, pro);
+
+			pro.roleid = it->second.fight2_id;
+			if(it->second.fight2_id == winner)
+			{
+				if(it->second.winner != 0)
+					pro.result = SUCCESS;
+				else
+					pro.result = SUCCESS_OVERTIME;
+			}
+			else
+			{
+				if(it->second.winner != 0)
+					pro.result = FAIL;
+				else
+					pro.result = FAIL_OVERTIME;
+			}
+			GCenterServer::GetInstance()->DispatchProtocol(it->second.fight2_zoneid, pro);
+			
+			//删除这个房间
+			_match_data.erase(it);
+		}
+	}
+}
+
+};

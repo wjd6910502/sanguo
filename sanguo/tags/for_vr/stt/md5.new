@@ -1,0 +1,9 @@
+356c045e54bdad6cabbb777f01b36297  STT
+3134ae91740330a1c6ab31e5576de9b8  sttserver.o
+fa5641b3b7192d421af5fc250a543d8a  stt.o
+ca1580bdcdca5f4adfce6a18ec072fad  state.o
+c7fcb01abf8dd1fa7373f6ba664bc8a5  stubs.o
+d69cf95f41834f42b6ae291ff2406742  messagemanager.o
+261a13f6aeb17e31beba4ec09ea89dc5  objectmanager.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

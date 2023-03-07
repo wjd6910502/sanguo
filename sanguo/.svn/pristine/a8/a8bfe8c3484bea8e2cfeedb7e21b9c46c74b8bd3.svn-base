@@ -1,0 +1,3037 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<commands>
+	<command name="EnterInstance" maxsize="1024" type="7" receiver="gamed">
+		<variable name="inst_tid" type="number"/>
+		<variable name="heros" type="number" vector="true"/>
+		<variable name="req_heros" type="number" vector="true"/>
+	</command>
+	<command name="EnterInstance_Re" type="8" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="inst_tid" type="number"/>
+		<variable name="seed" type="number"/>
+	</command>
+
+	<command name="CompleteInstance" maxsize="819200" type="9" receiver="gamed">
+		<variable name="inst_tid" type="number"/>
+		<variable name="flag" type="number"/>
+		<variable name="score" type="number"/>
+		<variable name="heros" type="number" vector="true"/>
+		<variable name="req_heros" type="number" vector="true"/>
+		<variable name="operations" type="PVEOperation" vector="true"/>
+		<variable name="star" type="Instance_Star_Condition" vector="true"/>
+		<variable name="moneypiles" type="number" comments="Ç®¶ÑµôÂäÊý"/>
+		<variable name="chests" type="number" comments="±¦ÏäµôÂäÊý"/>
+	</command>
+	<command name="CompleteInstance_Re" type="10" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="inst_tid" type="number"/>
+		<variable name="score" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="rewards" type="SweepInstanceData"/>
+		<variable name="first_flag" type="number" comments="ÊÇ·ñÊ×´ÎÈýÐÇÍ¨¹Ø"/>
+		<variable name="first_finish" type="number" comments="ÊÇ·ñÊ×´ÎÍ¨¹Ø"/>
+	</command>
+
+	<command name="SyncRoleInfo" type="11" receiver="client">
+	</command>
+
+	<command name="OPStat" maxsize="1024" type="12" receiver="gamed">
+		<variable name="opset_count" type="number"/>
+		<variable name="op_count" type="number"/>
+	</command>
+
+	<command name="SweepInstance" maxsize="1024" type="100" receiver="gamed">
+		<variable name="instance" type="number"/>
+		<variable name="count" type="number"/>
+	</command>
+	<command name="SweepInstance_Re" type="101" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="info" type="SweepInstanceData" vector="true"/>
+		<variable name="info2" type="SweepInstanceData"/>
+	</command>
+	
+	<command name="GetBackPack" maxsize="1024" type="102" receiver="gamed">
+	</command>
+	<command name="GetBackPack_Re" type="103" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="info" type="Item" vector="true"/>
+		<variable name="weaponitems" type="WeaponItem" vector="true"/>
+		<variable name="equipmentitems" type="EquipmentItem" vector="true"/>
+		<variable name="skinitems" type="SkinItem" vector="true"/>
+	</command>
+	
+	<command name="GetInstance" maxsize="1024" type="104" receiver="gamed">
+	</command>
+	<command name="GetInstance_Re" type="105" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="info" type="InstanceInfo" vector="true"/>
+	</command>
+
+	<command name="Role_Mon_Exp" type="106" receiver="client">
+		<variable name="level" type="number"/>
+		<variable name="exp" type="string"/>
+		<variable name="money" type="number"/>
+		<variable name="yuanbao" type="number"/>
+		<variable name="vp" type="number"/>
+	</command>
+	
+	<command name="BuyVp" maxsize="1024" type="107" receiver="gamed">
+	</command>
+	<command name="BuyVp_Re" type="108" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="num" type="number"/>
+	</command>
+	
+	<command name="BuyInstanceCount" maxsize="1024" type="109" receiver="gamed">
+		<variable name="inst_tid" type="number"/>
+	</command>
+	<command name="BuyInstanceCount_Re" type="110" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="RoleCommonLimit" type="111" receiver="client">
+		<variable name="tid" type="number"/>
+		<variable name="count" type="number"/>
+	</command>
+	
+	<command name="ChongZhi_Re" type="114" receiver="client">
+		<variable name="chongzhi" type="number"/>
+	</command>
+	
+	<command name="TaskFinish" maxsize="1024" type="115" receiver="gamed">
+		<variable name="task_id" type="number"/>
+	</command>
+	<command name="TaskFinish_Re" type="116" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="task_id" type="number"/>
+		<variable name="rewards" type="SweepInstanceData"/>
+	</command>
+	
+	<command name="Task_Condition" type="117" receiver="client">
+		<variable name="tid" type="number"/>
+		<variable name="condition" type="Condition" vector="true"/>
+	</command>
+
+	<command name="Client_User_Define" maxsize="1024" type="118" receiver="gamed">
+		<variable name="user_key" type="number"/>
+		<variable name="user_value" type="string"/>
+	</command>
+	
+	<command name="BuyHero" maxsize="1024" type="119" receiver="gamed">
+		<variable name="tid" type="number"/>
+		<variable name="typ" type="number"/>
+	</command>
+	<command name="BuyHero_Re" type="120" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="HeroList_Re" type="121" receiver="client">
+		<variable name="hero_hall" type="RoleHero"/>
+	</command>
+	
+	<command name="UseItem" maxsize="1024" type="122" receiver="gamed">
+		<variable name="tid" type="number"/>
+		<variable name="hero_id" type="number"/>
+		<variable name="count" type="number"/>
+	</command>
+	
+	<command name="AddHero" type="123" receiver="client">
+		<variable name="hero_hall" type="RoleHero"/>
+		<variable name="flag" type="number"/>
+	</command>
+	
+	<command name="UpdateHeroInfo" type="124" receiver="client">
+		<variable name="hero_hall" type="RoleHero"/>
+	</command>
+
+	<command name="UseItem_Re" type="125" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<command name="One_Level_Up" maxsize="1024" type="126" receiver="gamed">
+		<variable name="hero_id" type="number"/>
+		<variable name="item" type="Item" vector="true"/>
+	</command>
+	<command name="One_Level_Up_Re" type="127" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="Hero_Up_Grade" maxsize="1024" type="128" receiver="gamed">
+		<variable name="hero_id" type="number"/>
+	</command>
+	<command name="Hero_Up_Grade_Re" type="129" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero_id" type="number"/>
+	</command>
+	
+	<command name="ErrorInfo" type="130" receiver="client">
+		<variable name="error_id" type="number"/>
+	</command>
+	
+	<command name="BuyHorse" maxsize="1024" type="131" receiver="gamed">
+		<variable name="tid" type="number"/>
+		<variable name="typ" type="number"/>
+	</command>
+	<command name="BuyHorse_Re" type="132" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="AddHorse" type="133" receiver="client">
+		<variable name="horse" type="RoleHorse"/>
+	</command>
+	
+	<command name="GetLastHero" maxsize="1024" type="134" receiver="gamed">
+	</command>
+	<command name="GetLastHero_Re" type="135" receiver="client">
+		<variable name="info" type="number" vector="true"/>
+	</command>
+	
+	<command name="PvpJoin" maxsize="1024" type="136" receiver="gamed">
+		<variable name="typ" type="number"/>
+		<variable name="heroinfo" type="number" vector="true"/>
+	</command>
+	<command name="PvpJoin_Re" type="137" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="time" type="number"/>
+	</command>
+	
+	<command name="PvpMatchSuccess" type="138" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="index" type="number"/>
+	</command>
+	
+	<command name="PvpEnter" maxsize="1024" type="139" receiver="gamed">
+		<variable name="index" type="number"/>
+		<variable name="flag" type="number"/>
+	</command>
+	
+	<command name="PvpEnter_Re" type="140" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="N" type="number"/>
+		<variable name="mode" type="number"/>
+		<variable name="p2p_magic" type="number"/>
+		<variable name="p2p_peer_ip" type="string"/>
+		<variable name="p2p_peer_port" type="number"/>
+		<variable name="robot_flag" type="number"/>
+		<variable name="robot_seed" type="number"/>
+		<variable name="robot_type" type="number" comments="»úÆ÷ÈËÖÖÀà: 1,Éµ¹Ï»úÆ÷ÈË(²¹³¥ÓÃ); 2,Õý³£»úÆ÷ÈË(ÔÚÏßÍæ¼ÒÈËÊý²»¹»ÓÃ); ..."/>
+	</command>
+	
+	<command name="PvpCancle" maxsize="1024" type="141" receiver="gamed">
+	</command>
+	
+	<command name="PvpCancle_Re" type="142" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="PvpSpeed" maxsize="1024" type="143" receiver="gamed,client">
+		<variable name="speed" type="number"/>
+	</command>
+	
+	<command name="ResetRoleInfo" maxsize="1024" type="144" receiver="gamed">
+	</command>
+	
+	<command name="SendNotice" type="145" receiver="client">
+		<variable name="notice_id" type="number"/>
+		<variable name="time" type="number"/>
+		<variable name="notice_para" type="NoticeParaInfo" vector="true"/>
+	</command>
+	
+	<command name="UpdateTask" type="146" receiver="client">
+		<variable name="current" type="RoleCurrentTask" vector="true"/>
+		<variable name="finish" type="number" vector="true"/>
+	</command>
+	
+	<command name="FinishedTask" type="147" receiver="client">
+		<variable name="finish" type="number" vector="true"/>
+	</command>
+	
+	<command name="GetTask" maxsize="1024" type="148" receiver="gamed">
+	</command>
+
+	<command name="ItemCountChange" type="149" receiver="client">
+		<variable name="itemid" type="number"/>
+		<variable name="count" type="number"/>
+	</command>
+	
+	<command name="HeroUpgradeSkill" maxsize="1024" type="150" receiver="gamed">
+		<variable name="hero_id" type="number"/>
+		<variable name="skill_info" type="UpgradeSkillInfo" vector="true"/>
+	</command>
+	
+	<command name="HeroUpgradeSkill_Re" type="151" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="GetHeroComments" maxsize="1024" type="152" receiver="gamed" lock="misc">
+		<variable name="hero_id" type="number"/>
+	</command>
+	
+	<command name="GetHeroComments_Re" type="153" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="comment" type="HeroComment" vector="true"/>
+		<variable name="hero_id" type="number"/>
+	</command>
+	
+	<command name="AgreeHeroComments" maxsize="1024" type="154" receiver="gamed" lock="misc">
+		<variable name="hero_id" type="number"/>
+		<variable name="role_id" type="string"/>
+		<variable name="time_stamp" type="number"/>
+	</command>
+	
+	<command name="AgreeHeroComments_Re" type="155" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero_id" type="number"/>
+		<variable name="role_id" type="string"/>
+		<variable name="time_stamp" type="number"/>
+	</command>
+	
+	<command name="WriteHeroComments" maxsize="1024" type="156" receiver="gamed" lock="misc">
+		<variable name="hero_id" type="number"/>
+		<variable name="comments" type="string"/>
+	</command>
+	
+	<command name="WriteHeroComments_Re" type="157" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero_id" type="number"/>
+	</command>
+	
+	<command name="ReWriteHeroComments" maxsize="1024" type="158" receiver="gamed" lock="misc">
+		<variable name="hero_id" type="number"/>
+		<variable name="comments" type="string"/>
+	</command>
+	
+	<command name="ReWriteHeroComments_Re" type="159" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero_id" type="number"/>
+	</command>
+	
+	<command name="UpdateHeroSkillPoint" type="160" receiver="client">
+		<variable name="point" type="number"/>
+	</command>
+	
+	<command name="GetVPRefreshTime" maxsize="1024" type="161" receiver="gamed">
+	</command>
+
+	<command name="GetVPRefreshTime_Re" type="162" receiver="client">
+		<variable name="refresh_time" type="number"/>
+	</command>
+	
+	<command name="GetSkillPointRefreshTime" maxsize="1024" type="163" receiver="gamed">
+	</command>
+	
+	<command name="GetSkillPointRefreshTime_Re" type="164" receiver="client">
+		<variable name="refresh_time" type="number"/>
+	</command>
+	
+	<command name="RoleLogin" maxsize="1024" type="165" receiver="gamed">
+	</command>
+	
+	<command name="BuySkillPoint" maxsize="1024" type="166" receiver="gamed">
+	</command>
+
+	<command name="BuySkillPoint_Re" type="167" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="point" type="number"/>
+	</command>
+	
+	<command name="UpdatePvpVideo" type="168" receiver="client">
+		<variable name="video" type="string"/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="time" type="number"/>
+		<variable name="match_pvp" type="number"/>
+	</command>
+	
+	<command name="GetVideo" maxsize="1024" type="169" receiver="gamed">
+		<variable name="video_id" type="string"/>
+	</command>
+	
+	<command name="GetVideo_Re" type="170" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="operation" type="PvpVideo"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="robot_flag" type="number"/>
+		<variable name="robot_seed" type="number"/>
+		<variable name="robot_type" type="number" comments="»úÆ÷ÈËÖÖÀà: 1,Éµ¹Ï»úÆ÷ÈË(²¹³¥ÓÃ); 2,Õý³£»úÆ÷ÈË(ÔÚÏßÍæ¼ÒÈËÊý²»¹»ÓÃ); ..."/>
+		<variable name="exe_ver" type="string"/>
+		<variable name="data_ver" type="string"/>
+		<variable name="video_id" type="string"/>
+		<variable name="pvp_ver" type="number"/>
+	</command>
+	
+	<command name="PrivateChatHistory" type="171" receiver="client">
+		<variable name="private_chat" type="ChatInfo" vector="true"/>
+	</command>
+
+	<command name="AddBlackList" maxsize="1024" type="172" receiver="gamed" extra_roles_max="1">
+		<variable name="roleid" type="string"/>
+	</command>
+	
+	<command name="AddBlackList_Re" type="173" receiver="client">
+		<variable name="roleinfo" type="RoleBrief"/>
+	</command>
+
+	<command name="DelBlackList" maxsize="1024" type="174" receiver="gamed">
+		<variable name="roleid" type="string"/>
+	</command>
+	
+	<command name="DelBlackList_Re" type="175" receiver="client">
+		<variable name="roleid" type="string"/>
+	</command>
+	
+	<command name="SeeAnotherRole" maxsize="1024" type="176" receiver="gamed" extra_roles_max="1">
+		<variable name="roleid" type="string"/>
+	</command>
+	
+	<command name="SeeAnotherRole_Re" type="177" receiver="client">
+		<variable name="roleinfo" type="AnotherRoleData"/>
+	</command>
+
+	<command name="GetPrivateChatHistory" maxsize="1024" type="178" receiver="gamed">
+	</command>
+
+	<command name="ReadMail" maxsize="1024" type="179" receiver="gamed">
+		<variable name="mail_id" type="number"/>
+	</command>
+	
+	<command name="ReadMail_Re" type="180" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<command name="GetAttachment" maxsize="1024" type="181" receiver="gamed">
+		<variable name="mail_id" type="number"/>
+	</command>
+	
+	<command name="GetAttachment_Re" type="182" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="UpdateMail" type="183" receiver="client">
+		<variable name="mail_info" type="MailInfo" />
+	</command>
+	
+	<command name="UpdatePvpEndTime" type="184" receiver="client">
+		<variable name="end_time" type="number" />
+	</command>
+	
+	<command name="UpdateHeroPvpInfo" type="185" receiver="client">
+		<variable name="hero_pvpinfo" type="HeroPvpInfoData" vector="true"/>
+	</command>
+	
+	<command name="DeleteTask" type="186" receiver="client">
+		<variable name="task_id" type="number"/>
+	</command>
+
+	<command name="BroadcastPvpVideo" maxsize="1024" type="187" receiver="gamed">
+		<variable name="typ" type="number"/>
+		<variable name="video_id" type="string"/>
+		<variable name="content" type="string"/>
+		<variable name="channel" type="number"/>
+	</command>
+	
+	<command name="BroadcastPvpVideo_Re" type="188" receiver="client">
+		<variable name="typ" type="number"/>
+		<variable name="src" type="RoleBrief"/>
+		<variable name="content" type="string"/>
+		<variable name="video_id" type="string"/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="time" type="number"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="channel" type="number"/>
+		<variable name="match_pvp" type="number"/>
+	</command>
+	
+	<command name="ChangeHeroSelectSkill" maxsize="1024" type="189" receiver="gamed">
+		<variable name="hero_id" type="number"/>
+		<variable name="skill_id" type="number" vector="true"/>
+	</command>
+	
+	<command name="ChangeHeroSelectSkill_Re" type="190" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero_id" type="number"/>
+		<variable name="skill_id" type="number" vector="true"/>
+	</command>
+	
+	<command name="UpdatePvpInfo" type="191" receiver="client">
+		<variable name="join_count" type="number"/>
+		<variable name="win_count" type="number"/>
+	</command>
+	
+	<command name="UpdateRep" type="192" receiver="client">
+		<variable name="rep_id" type="number"/>
+		<variable name="rep_num" type="number"/>
+	</command>
+	
+	<command name="MallBuyItem" maxsize="1024" type="193" receiver="gamed">
+		<variable name="item_id" type="number"/>
+		<variable name="item_num" type="number"/>
+	</command>
+	
+	<command name="MallBuyItem_Re" type="194" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="item" type="Item" vector="true"/>
+	</command>
+	
+	<command name="UpdatePvpStar" type="195" receiver="client">
+		<variable name="typ" type="number"/>
+		<variable name="star" type="number"/>
+	</command>
+	
+	<command name="UpdateHeroSoul" type="197" receiver="client">
+		<variable name="soul_id" type="number"/>
+		<variable name="soul_num" type="number"/>
+	</command>
+	
+	<command name="LevelUpHeroStar" maxsize="1024" type="198" receiver="gamed">
+		<variable name="hero_id" type="number"/>
+	</command>
+	
+	<command name="LevelUpHeroStar_Re" type="199" receiver="client">
+		<variable name="hero_id" type="number"/>
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="ClearHeroPvpInfo" type="200" receiver="client">
+	</command>
+	
+	<command name="UpdateMysteryShopInfo" type="201" receiver="client">
+		<variable name="shop_id" type="number"/>
+		<variable name="refresh_time" type="number"/>
+		<variable name="shop_item" type="MysteryShopItem" vector="true"/>
+	</command>
+	
+	<command name="MysteryShopBuyItem" maxsize="1024" type="202" receiver="gamed">
+		<variable name="shop_id" type="number"/>
+		<variable name="position" type="number"/>
+		<variable name="item_id" type="number"/>
+		<variable name="item_num" type="number"/>
+	</command>
+	
+	<command name="MysteryShopBuyItem_Re" type="203" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="shop_id" type="number"/>
+		<variable name="position" type="number"/>
+		<variable name="item_id" type="number"/>
+		<variable name="item_num" type="number"/>
+		<variable name="buy_count" type="number"/>
+		<variable name="item" type="Item" vector="true"/>
+	</command>
+	
+	<command name="RefreshMysteryShop" maxsize="1024" type="204" receiver="gamed">
+		<variable name="shop_id" type="number"/>
+	</command>
+	
+	<command name="RefreshMysteryShop_Re" type="205" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="shop_id" type="number"/>
+	</command>
+	
+	<command name="ResetBattleField" maxsize="1024" type="206" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+		<variable name="typ" type="number"/>
+	</command>
+	
+	<command name="ResetBattleField_Re" type="207" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="battle_info" type="BattleInfo"/>
+	</command>
+	
+	<command name="BattleFieldBegin" maxsize="1024" type="208" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+		<variable name="heros" type="BattleHeroInfo" vector="true"/>
+	</command>
+	
+	<command name="BattleFieldBegin_Re" type="209" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+	</command>
+	
+	<command name="BattleFieldMove" maxsize="1024" type="210" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+		<variable name="src_id" type="number"/>
+		<variable name="src_position" type="number"/>
+		<variable name="dst_id" type="number"/>
+		<variable name="dst_position" type="number"/>
+	</command>
+	
+	<command name="BattleFieldMove_Re" type="211" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="src_id" type="number"/>
+		<variable name="src_position" type="number"/>
+		<variable name="dst_id" type="number"/>
+		<variable name="dst_position" type="number"/>
+	</command>
+	
+	<command name="BattleFieldJoinBattle" maxsize="1024" type="212" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+		<variable name="npc_id" type="number"/>
+	</command>
+	
+	<command name="BattleFieldJoinBattle_Re" type="213" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="npc_id" type="number"/>
+		<variable name="seed" type="number"/>
+	</command>
+	
+	<command name="BattleFieldFinishBattle" maxsize="1024" type="214" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+		<variable name="win_flag" type="number" comments="1´ú±í»ñÊ¤£¬2´ú±íÊ§°Ü£¬3´ú±íÖÐ¼ä·ÅÆú"/>
+		<variable name="npc_id" type="number"/>
+		<variable name="heros" type="BattleHeroInfo" vector="true"/>
+		<variable name="operations" type="PVEOperation" vector="true"/>
+	</command>
+	
+	<command name="BattleFieldFinishBattle_Re" type="215" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="win_flag" type="number" comments="1´ú±í»ñÊ¤£¬2´ú±íÊ§°Ü£¬3´ú±íÖÐ¼ä·ÅÆú"/>
+		<variable name="fail_flag" type="number" comments="0´ú±íÕ½ÒÛ»¹Ã»ÓÐÊ§°Ü£¬1´ú±íÕâ´ÎÕ½ÒÛÒÑ¾­Ê§°ÜÁË"/>
+		<variable name="npc_id" type="number"/>
+		<variable name="heros" type="BattleHeroInfo" vector="true"/>
+		<variable name="rewards" type="SweepInstanceData"/>
+	</command>
+	
+	<command name="BattleFieldEnd" type="216" receiver="client">
+		<variable name="battle_id" type="number"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="rewards" type="SweepInstanceData"/>
+	</command>
+
+	<command name="BattleFieldGetPrize" maxsize="1024" type="217" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+	</command>
+	
+	<command name="BattleFieldGetPrize_Re" type="218" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="rewards" type="SweepInstanceData"/>
+	</command>
+
+	<command name="SetInstanceHeroInfo" maxsize="1024" type="219" receiver="gamed">
+		<variable name="typ" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="heros" type="number" vector="true"/>
+		<variable name="horse" type="number"/>
+	</command>
+
+	<command name="SetInstanceHeroInfo_Re" type="220" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="heros" type="number" vector="true"/>
+		<variable name="horse" type="number"/>
+	</command>
+
+	<command name="Lottery" maxsize="1024" type="221" receiver="gamed">
+		<variable name="lottery_id" type="number"/>
+		<variable name="cost_type" type="number" comments="0´ú±íÃâ·Ñ£¬1´ú±íÁî£¬2´ú±íÔª±¦"/>
+	</command>
+			
+	<command name="Lottery_Re" type="222" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="lottery_id" type="number"/>
+		<variable name="cost_type" type="number" comments="0´ú±íÃâ·Ñ£¬1´ú±íÁî£¬2´ú±íÔª±¦"/>
+		<variable name="reward_ids" type="LotteryRewardInfo" vector="true"/>
+	</command>
+	
+
+	<command name="GetBattleFieldInfo" maxsize="1024" type="223" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+	</command>
+
+	<command name="GetBattleFieldInfo_Re" type="224" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="battle_info" type="BattleInfo"/>
+	</command>
+
+	<command name="ChangeBattleState" type="225" receiver="client">
+		<variable name="battle_id" type="number"/>
+		<variable name="state" type="number"/>
+	</command>
+
+	<command name="BattleFieldCancel" maxsize="1024" type="226" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+	</command>
+	
+	<command name="BattleFieldCancel_Re" type="227" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="position" type="number"/>
+	</command>
+
+	<command name="BattleFieldGetEvent" maxsize="1024" type="228" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+	</command>
+	
+	<command name="BattleFieldGetEvent_Re" type="229" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="event" type="number" vector="true"/>
+		<variable name="event_info" type="BattleEventInfo" vector="true"/>
+	</command>
+
+	<command name="BattleFieldCapturedPosition" type="230" receiver="client">
+		<variable name="battle_id" type="number"/>
+		<variable name="position_info" type="BattlePositionInfo"/>
+		<variable name="event" type="number"/>
+		<variable name="event_info" type="BattleEventInfo"/>
+	</command>
+
+	<command name="GetCurBattleField" maxsize="1024" type="231" receiver="gamed">
+	</command>
+
+	<command name="GetCurBattleField_Re" type="232" receiver="client">
+		<variable name="battle_id" type="number"/>
+		<variable name="state" type="number"/>
+	</command>
+	
+	<command name="BattleFieldFinishEvent" maxsize="1024" type="233" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+	</command>
+	
+	<command name="BattleFieldFinishEvent_Re" type="234" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="join_battle_flag" type="number"/>
+		<variable name="event" type="number"/>
+	</command>
+	
+	<command name="GiveUpCurBattleField" maxsize="1024" type="235" receiver="gamed">
+	</command>
+
+	<command name="GiveUpCurBattleField_Re" type="236" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<command name="GetRefreshTime" maxsize="1024" type="237" receiver="gamed">
+		<variable name="typ" type="number"/>
+	</command>
+			
+	<command name="GetRefreshTime_Re" type="238" receiver="client">
+		<variable name="typ" type="number"/>
+		<variable name="last_refreshtime" type="number"/>
+	</command>
+	
+	<command name="DailySign" maxsize="1024" type="239" receiver="gamed">
+		<variable name="typ" type="number" comments="0´ú±íµÄÊÇÕý³£µÄÇ©µ½£¬1´ú±íµÄÊÇ²¹Ç©"/>
+	</command>
+			
+	<command name="DailySign_Re" type="240" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="number" comments="0´ú±íµÄÊÇÕý³£µÄÇ©µ½£¬1´ú±íµÄÊÇ²¹Ç©"/>
+		<variable name="item" type="Item" vector="true"/>
+		<variable name="sign_date" type="number" comments="Ç©µ½µÄ×ÜÌìÊý"/>
+		<variable name="today_flag" type="number" comments="½ñÌìÊÇ·ñÇ©µ½£¬1´ú±íÇ©µ½£¬0´ú±íÃ»ÓÐÇ©µ½"/>
+	</command>
+
+	<!--¾º¼¼³¡µÄÏà¹ØÐ­Òé--> 
+	
+	<command name="GetMyPveArenaInfo" maxsize="1024" type="241" receiver="gamed" lock="pvearena">
+	</command>
+			
+	<command name="GetMyPveArenaInfo_Re" type="242" receiver="client">
+		<variable name="score" type="number" comments="»ý·Ö"/>
+		<variable name="rank" type="number" comments="Ãû´Î"/>
+		<variable name="defence_hero" type="number" vector="true" comments="·ÀÊØÎä½«"/>
+		<variable name="last_attack_time" type="number" comments="Íæ¼ÒÉÏ´ÎµÄÌôÕ½Ê±¼ä"/>
+		<variable name="pve_refreshtime" type="number" comments="Íæ¼ÒÌôÕ½´ÎÊý»Ö¸´Ê±¼ä"/>
+	</command>
+	
+	<command name="GetOtherPveArenaInfo" maxsize="1024" type="243" receiver="gamed" extra_roles_max="1" lock="pvearena">
+		<variable name="roleid" type="string"/>
+	</command>
+			
+	<command name="GetOtherPveArenaInfo_Re" type="244" receiver="client">
+		<variable name="info" type="PveArenaFighterInfo" comments="Íæ¼ÒÐÅÏ¢"/>
+	</command>
+	
+	<command name="GetFighterInfo" maxsize="1024" type="245" receiver="gamed" lock="pvearena">
+	</command>
+			
+	<command name="GetFighterInfo_Re" type="246" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="fightinfo" type="PveArenaFighterInfo" vector="true"/>
+	</command>
+	
+	<command name="PveArenaJoinBattle" maxsize="1024" type="247" receiver="gamed" lock="pvearena">
+		<variable name="rank" type="number" comments="ÄãÒª½ø¹¥µÄÃû´Î"/>
+	</command>
+			
+	<command name="PveArenaJoinBattle_Re" type="248" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="last_attack_time" type="number"/>
+		<variable name="self_info" type="RolePveArenaInfo" comments="×Ô¼ºµÄÎä½«ÕóÈÝ"/>
+		<variable name="role_info" type="PveArenaFighterInfo" comments="¶ÔÃæµÄÐÅÏ¢"/>
+		<variable name="seed" type="number" comments="Õ½¶·Ê¹ÓÃµÄÖÖ×Ó"/>
+	</command>
+	
+	<command name="PveArenaEndBattle" maxsize="1024" type="249" receiver="gamed" lock="pvearena">
+		<variable name="win_flag" type="number"/>
+		<variable name="win_type" type="number" comments="1£ºÐ¡ 2£ºÖÐ 3£º´ó"/>
+		<variable name="replay_flag" type="number"/>
+		<variable name="operation" type="PveArenaOperation"/>
+	</command>
+			
+	<command name="PveArenaEndBattle_Re" type="250" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="win_type" type="number" comments="1£ºÐ¡ 2£ºÖÐ 3£º´ó"/>
+		<variable name="score_change" type="number"/>
+		<variable name="item" type="Item" vector="true"/>
+	</command>
+	
+	<!--ÖØÖÃJJCµÄÊ±¼äCD-->
+	<command name="PveArenaResetTime" maxsize="1024" type="251" receiver="gamed">
+	</command>
+			
+	<command name="PveArenaResetTime_Re" type="252" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="last_time" type="number"/>
+	</command>
+
+	<!--¹ºÂòJJCµÄ´ÎÊý-->
+	<command name="PveArenaResetCount" maxsize="1024" type="253" receiver="gamed">
+	</command>
+			
+	<command name="PveArenaResetCount_Re" type="254" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<!--Ê¹ÓÃµÀ¾ßÌôÕ½Íæ¼Ò-->
+	<command name="ChallengeRoleByItem" maxsize="1024" type="255" receiver="gamed" extra_roles_max="1">
+		<variable name="roleid" type="string" comments="ÄãÒª½ø¹¥Íæ¼ÒµÄID"/>
+		<variable name="name" type="string" comments="ÄãÒª½ø¹¥Íæ¼ÒµÄÃû×Ö"/>
+	</command>
+			
+	<command name="ChallengeRoleByItem_Re" type="256" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="self_info" type="RolePveArenaInfo" comments="×Ô¼ºµÄÎä½«ÕóÈÝ"/>
+		<variable name="role_info" type="PveArenaFighterInfo" comments="¶ÔÃæµÄÎä½«ÕóÈÝ"/>
+	</command>
+
+	<!--µÃµ½×Ô¼ºµÄÀúÊ·¼ÇÂ¼-->
+	<command name="GetPveArenaHistory" maxsize="1024" type="257" receiver="gamed">
+	</command>
+			
+	<command name="GetPveArenaHistory_Re" type="258" receiver="client">
+		<variable name="hisroty_info" type="RolePveArenaHistoryInfo" vector="true"/>
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<!--»Ø·ÅÕ½¶·¼ÇÂ¼-->
+	<command name="GetPveArenaOperation" maxsize="1024" type="259" receiver="gamed">
+		<variable name="id" type="number"/>
+	</command>
+			
+	<command name="GetPveArenaOperation_Re" type="260" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="self_hero_info" type="RolePveArenaInfo" comments="½ø¹¥Õß"/>
+		<variable name="oppo_hero_info" type="RolePveArenaInfo" comments="·ÀÊØÕß"/>
+		<variable name="operation" type="PveArenaOperation"/>
+		<variable name="exe_ver" type="string" comments="¿Í»§¶ËµÄ°æ±¾ºÅ"/>
+		<variable name="data_ver" type="string" comments="¿Í»§¶ËµÄ°æ±¾ºÅ"/>
+	</command>
+
+	<!--ÉèÖÃJJC·ÀÊØÕóÈÝ-->
+	<command name="SetPveArenaHero" maxsize="1024" type="261" receiver="gamed">
+		<variable name="heros" type="number" vector="true"/>
+	</command>
+			
+	<command name="SetPveArenaHero_Re" type="262" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<!--¼¼ÄÜÖØÖÃ-->	
+	<command name="ResetSkilllevel" maxsize="1024" type="263" receiver="gamed">
+		<variable name="hero_id" type="number"/>
+	</command>
+	<command name="ResetSkilllevel_Re" type="264" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+
+	<!--Îä½«ÎäÆ÷Ïà¹ØÐ­Òé-->
+
+	<!--×°±¸ÎäÆ÷-->
+	<command name="WeaponEquip" maxsize="1024" type="265" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="weapon_id" type="number"/>
+	</command>
+			
+	<command name="WeaponEquip_Re" type="266" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="weapon_id" type="number"/>
+	</command>
+
+	<!--Éý¼¶ÎäÆ÷-->
+	<command name="WeaponLevelUp" maxsize="1024" type="267" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="weapon_id" type="number"/>
+		<variable name="weapon_cost_ids" vector="true" type="number" comments="ÏûºÄÎäÆ÷ids"/>
+	</command>
+			
+	<command name="WeaponLevelUp_Re" type="268" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="weapon_id" type="number"/>
+		<variable name="weapon_cost_ids" vector="true" type="number" comments="ÏûºÄÎäÆ÷ids"/>
+		<variable name="level" type="number"/>
+		<variable name="exp" type="number"/>
+		<variable name="skill_id" vector="true" type="number"/>
+	</command>
+
+	<!--Ç¿»¯ÎäÆ÷-->
+	<command name="WeaponStrength" maxsize="1024" type="269" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="weapon_id" type="number"/>
+	</command>
+			
+	<command name="WeaponStrength_Re" type="270" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="weapon_id" type="number"/>
+		<variable name="weapon_skill" type="number"/>
+	</command>
+
+	<!--·Ö½âÎäÆ÷-->
+	<command name="WeaponDecompose" maxsize="1024" type="271" receiver="gamed">
+		<variable name="weapon_id" type="number"/>
+	</command>
+			
+	<command name="WeaponDecompose_Re" type="272" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="money" type="number"/>
+		<variable name="item_info" type="Item" vector="true"/>
+	</command>
+
+	<!--Ð¶ÏÂÎäÆ÷-->
+	<command name="WeaponUnequip" maxsize="1024" type="273" receiver="gamed">
+		<variable name="hero" type="number"/>
+	</command>
+			
+	<command name="WeaponUnequip_Re" type="274" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<!--Ìí¼ÓÎäÆ÷-->
+	<command name="WeaponAdd" type="275" receiver="client">
+		<variable name="weapon_info" type="WeaponItem"/>
+		<variable name="show_panel" type="boolean"/>
+	</command>
+
+	<!--É¾³ýÎäÆ÷-->
+	<command name="WeaponDel" type="276" receiver="client">
+		<variable name="id" type="number"/>
+	</command>
+
+	<!--¸üÐÂÎäÆ÷-->
+	<command name="WeaponUpdate" type="277" receiver="client">
+		<variable name="weapon_info" type="WeaponItem"/>
+	</command>
+
+	<!--¸üÐÂ³é½±ÐÅÏ¢-->
+	<command name="LotteryUpdate" type="278" receiver="client">
+		<variable name="typ" type="number"/>
+		<variable name="flag" type="number"/>
+	</command>
+
+	<!--ÎäÕßÊÔÁ¶µÄÐ­ÒéÐÅÏ¢-->
+
+	<!--µÃµ½ÎäÕßÊÔÁ¶µÄÄÑ¶ÈÐÅÏ¢-->
+	<command name="WuZheShiLianGetDifficultyInfo" maxsize="1024" type="279" receiver="gamed">
+	</command>
+	
+
+	<command name="WuZheShiLianGetDifficultyInfo_Re" type="280" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="cur_difficulty" type="number" comments="µ±Ç°Ñ¡Ôñ½ø¹¥µÄÄÑ¶È£¬0´ú±íÃ»ÓÐ"/>
+		<variable name="high_difficulty" type="number" comments="´òÍ¨µÄ×î¸ßÄÑ¶È,0´ú±íÃ»ÓÐ"/>
+		<variable name="difficulty_info" type="DifficultyInfo" vector="true" comments="ÄÑ¶ÈµÄÐÅÏ¢"/>
+	</command>
+
+	<!--ÎäÕßÊÔÁ¶Ñ¡ÔñÄÑ¶È-->
+	<command name="WuZheShiLianSelectDifficulty" maxsize="1024" type="281" receiver="gamed">
+		<variable name="difficulty" type="number"/>
+	</command>
+			
+	<command name="WuZheShiLianSelectDifficulty_Re" type="282" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="cur_diffculty" type="number" />
+	</command>
+
+	<!--µÃµ½ÎäÕßÊÔÁ¶µÄ¶ÔÊÖÐÅÏ¢-->
+	<command name="WuZheShiLianGetOpponentInfo" maxsize="1024" type="283" receiver="gamed">
+		<variable name="difficulty" type="number"/>
+	</command>
+			
+	<command name="WuZheShiLianGetOpponentInfo_Re" type="284" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="opponent_info" type="OpponentInfo" vector="true" comments="¶ÔÊÖµÄÐÅÏ¢"/>
+	</command>
+
+	<!--ÎäÕßÊÔÁ¶µÃµ½×Ô¼ºµÄÎä½«ÐÅÏ¢-->
+	<command name="WuZheShiLianGetHeroInfo" maxsize="1024" type="285" receiver="gamed">
+	</command>
+	
+	<!--Õâ¸öÐ­ÒéÔÚÖØÖÃÊÔÁ¶ÒÔºóÒ²»á·¢ËÍµÄ-->
+	<command name="WuZheShiLianGetHeroInfo_Re" type="286" receiver="client">
+		<variable name="dead_hero" type="number" vector="true" comments="ÒÑ¾­ËÀÍöµÄÎä½«"/>
+		<variable name="injured_hero" type="InjuredHeroInfo" vector="true" comments="ÊÜÉËµÄÎä½«"/>
+	</command>
+
+	<!--ÎäÕßÊÔÁ¶½øÈëÕ½¶·-->
+	<command name="WuZheShiLianJoinBattle" maxsize="1024" type="287" receiver="gamed">
+		<variable name="difficulty" type="number"/>
+		<variable name="stage" type="number"/>
+		<variable name="heros" type="number" vector="true" comments="Ñ¡Ôñ½øÈëÕ½¶·µÄÎä½«"/>
+	</command>
+			
+	<command name="WuZheShiLianJoinBattle_Re" type="288" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="seed" type="number"/>
+	</command>
+
+	<!--ÎäÕßÊÔÁ¶½áÊøÕ½¶·-->
+	<command name="WuZheShiLianFinishBattle" maxsize="1024" type="289" receiver="gamed">
+		<variable name="difficulty" type="number"/>
+		<variable name="stage" type="number"/> 
+		<variable name="hero" type="ShiLianHeroInfo" vector="true" comments="Îä½«µÄÐÅÏ¢"/>
+		<variable name="opponent" type="OpponentInfo" comments="µÐ·½Îä½«µÄÐÅÏ¢"/>
+		<variable name="winflag" type="number" comments="Ê¤ÀûµÄ±êÊ¶" />
+		<variable name="operations" type="PVEOperation" vector="true"/>
+	</command>
+			
+	<command name="WuZheShiLianFinishBattle_Re" type="290" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="money" type="number"/>
+		<!--<variable name="rewards" type="Item" vector="true"/>-->
+	</command>
+	
+
+
+	<!--ÎäÕßÊÔÁ¶ÖØÖÃ-->
+	<command name="WuZheShiLianReset" maxsize="1024" type="291" receiver="gamed">
+	</command>
+			
+	<command name="WuZheShiLianReset_Re" type="292" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+			
+	<command name="PveArenaUpdateVideoFlag" type="293" receiver="client">
+		<variable name="video_flag" type="number"/>
+	</command>
+	
+	<!--ÎäÕßÊÔÁ¶µã»÷»ñÈ¡½±Àø-->
+	<command name="WuZheShiLianGetReward" maxsize="1024" type="294" receiver="gamed">
+		<variable name="difficulty" type="number"/>
+		<variable name="stage" type="number"/>
+	</command>
+
+	<command name="WuZheShiLianGetReward_Re" type="295" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="difficulty" type="number"/>
+		<variable name="stage" type="number"/>
+		<variable name="rewards" type="Item" vector="true"/>
+	</command>
+	
+	<!--ÎäÕßÊÔÁ¶Ò»¼üÉ¨µ´-->
+	<command name="WuZheShiLianSweep" maxsize ="1024" type="296" receiver="gamed">
+		<variable name="difficulty" type="number"/>
+	</command>
+	
+	<command name="WuZheShiLianSweep_Re" type="297" receiver="client">
+		<variable name="difficulty" type="number"/>
+		<variable name="retcode" type="number"/>
+	</command>
+	<!--Îä½«×°±¸µÄÏà¹ØÐ­Òé-->
+
+	<!--301-350-->
+	<!--×°±¸×°±¸-->
+	<command name="EquipmentEquip" maxsize="1024" type="301" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="cost_flag" type="number" comment="1´ú±í»¨Ç®Ð¶ÏÂ£¬0´ú±í²»»¨Ç®Ð¶ÏÂ"/>
+	</command>
+			
+	<command name="EquipmentEquip_Re" type="302" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="cost_flag" type="number" comment="1´ú±í»¨Ç®Ð¶ÏÂ£¬0´ú±í²»»¨Ç®Ð¶ÏÂ"/>
+	</command>
+
+	<!--Éý¼¶×°±¸-->
+	<command name="EquipmentLevelUp" maxsize="1024" type="303" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+	</command>
+			
+	<command name="EquipmentLevelUp_Re" type="304" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="crit_flag" type="number"/>
+	</command>
+
+	<!--Éý½××°±¸-->
+	<command name="EquipmentGradeUp" maxsize="1024" type="305" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+	</command>
+			
+	<command name="EquipmentGradeUp_Re" type="306" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+	</command>
+
+	<!--Ï´Á·×°±¸-->
+	<command name="EquipmentRefinable" maxsize="1024" type="307" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="refinable_typ" type="number"/>
+		<variable name="refinable_count" type="number"/>
+	</command>
+			
+	<command name="EquipmentRefinable_Re" type="308" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="refinable_typ" type="number"/>
+		<variable name="refinable_count" type="number"/>
+		<variable name="tmp_refinable_pro" type="RefinableData" vector="true"/>
+	</command>
+	
+	<!--·Ö½â×°±¸-->
+	<command name="EquipmentDecompose" maxsize="1024" type="309" receiver="gamed">
+		<variable name="equipment_id" type="number" vector="true"/>
+	</command>
+			
+	<command name="EquipmentDecompose_Re" type="310" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="equipment_id" type="number" vector="true"/>
+		<variable name="money" type="number"/>
+		<variable name="item_info" type="Item" vector="true"/>
+	</command>
+
+	<!--Ð¶ÏÂ×°±¸-->
+	<command name="EquipmentUnequip" maxsize="1024" type="311" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="cost_flag" type="number" comment="1´ú±í»¨Ç®Ð¶ÏÂ£¬0´ú±í²»»¨Ç®Ð¶ÏÂ"/>
+	</command>
+			
+	<command name="EquipmentUnequip_Re" type="312" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="cost_flag" type="number"/>
+	</command>
+
+	<!--Ìí¼Ó×°±¸-->
+	<command name="EquipmentAdd" type="313" receiver="client">
+		<variable name="equipment_info" type="EquipmentItem"/>
+	</command>
+
+	<!--É¾³ý×°±¸-->
+	<command name="EquipmentDel" type="314" receiver="client">
+		<variable name="id" type="number"/>
+	</command>
+
+	<!--¸üÐÂ×°±¸-->
+	<command name="EquipmentUpdate" type="315" receiver="client">
+		<variable name="equipment_info" type="EquipmentItem"/>
+	</command>
+
+	<!--Ï´Á·×°±¸ÊôÐÔÊÇ·ñ±£´æ-->
+	<command name="EquipmentRefinableSave" maxsize="1024" type="316" receiver="gamed">
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="save_flag" type="number" commoents="0´ú±í²»±£´æ£¬1´ú±í±£´æ"/>
+	</command>
+			
+	<command name="EquipmentRefinableSave_Re" type="317" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="equipment_id" type="number"/>
+		<variable name="save_flag" type="number" commoents="0´ú±í²»±£´æ£¬1´ú±í±£´æ"/>
+	</command>
+
+	<command name="EquipmentEasyLevelUp" maxsize="1024" type="318" receiver="gamed">
+		<variable name="hero" type="number"/>
+	</command>
+			
+	<command name="EquipmentEasyLevelUp_Re" type="319" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number"/>
+		<variable name="equipment_id" type="number" vector="true" commoents="×°±¸id"/>
+		<variable name="money" type="number" commoents="»¨·Ñ½ðÇ®"/>
+	</command>
+
+	<!--351-400-->
+	<!--Í­È¸Ì¨Ð­Òé-->
+	<command name="TongQueTaiSetHeroInfo" maxsize="1024" type="351" receiver="gamed">
+		<variable name="hero" type="number" vector="true"/>
+	</command>
+			
+	<command name="TongQueTaiSetHeroInfo_Re" type="352" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero" type="number" vector="true"/>
+	</command>
+	
+	<command name="TongQueTaiBeginMatch" maxsize="1024" type="353" receiver="gamed" lock="tongquetai">
+		<variable name="difficulty" type="number"/>
+		<variable name="double_flag" type="number"/>
+		<variable name="auto_flag" type="number"/>
+	</command>
+			
+	<command name="TongQueTaiBeginMatch_Re" type="354" receiver="client">
+		<variable name="difficulty" type="number"/>
+		<variable name="double_flag" type="number"/>
+		<variable name="auto_flag" type="number"/>
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<command name="TongQueTaiCancleMatch" maxsize="1024" type="355" receiver="gamed" lock="tongquetai">
+		<variable name="difficulty" type="number"/>
+	</command>
+			
+	<command name="TongQueTaiCancleMatch_Re" type="356" receiver="client">
+		<variable name="difficulty" type="number"/>
+		<variable name="retcode" type="number"/>
+	</command>
+			
+	<command name="TongQueTaiMatchSuccess" type="357" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="join_index" type="number" comment="Õâ´ÎÐèÒª½øÈëÕ½¶·µÄIndex"/>
+		<variable name="monster_index" type="number"/>
+		<variable name="player_info" type="TongQueTaiPlayerInfo" vector="true"/>
+		<variable name="monster_info" type="TongQueTaiMonsterInfo" vector="true"/>
+	</command>
+			
+	<!--Í¨ÖªÂÖµ½Õâ¸öÍæ¼Ò½øÐÐÍ­È¸Ì¨Õ½¶·ÁË-->
+	<command name="TongQueTaiNoticeRoleJoin" type="358" receiver="client">
+	</command>
+	
+	<command name="TongQueTaiJoin" maxsize="1024" type="359" receiver="gamed" lock="tongquetai" extra_roles_max="2">
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+	</command>
+			
+	<command name="TongQueTaiJoin_Re" type="360" receiver="client">
+		<variable name="role_id" type="string"/>
+		<variable name="retcode" type="number"/>
+		<variable name="seed" type="number"/>
+	</command>
+	
+	<command name="TongQueTaiOperation" maxsize="1024" type="361" receiver="gamed" lock="tongquetai" extra_roles_max="2">
+		<variable name="operation" type="TongQueTaiOperation" vector="true"/>
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+	</command>
+			
+	<command name="TongQueTaiOperation_Re" type="362" receiver="client">
+		<variable name="operation" type="TongQueTaiOperation" vector="true"/>
+	</command>
+	
+	<command name="TongQueTaiFinish" maxsize="1024" type="363" receiver="gamed" lock="tongquetai" extra_roles_max="2">
+		<variable name="win_flag" type="number" comment="1´ú±íÓ®£¬0´ú±íÊä"/>
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+		<variable name="hero_info" type="TongQueTaiMonsterState" vector="true" comment="Íæ¼Ò×Ô¼ºÎä½«µÄÐÅÏ¢"/>
+		<variable name="monster_info" type="TongQueTaiMonsterState" vector="true" comment="¹ÖÎïµÄÑªÁ¿"/>
+		<variable name="operations" type="PVEOperation" vector="true"/>
+	</command>
+			
+	<command name="TongQueTaiFinish_Re" type="364" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="monster_index" type="number"/>
+		<variable name="hero_info" type="TongQueTaiMonsterState" vector="true" comment="Íæ¼Ò×Ô¼ºÎä½«µÄÐÅÏ¢"/>
+		<variable name="monster_info" type="TongQueTaiMonsterState" vector="true" comment="¹ÖÎïµÄÑªÁ¿"/>
+	</command>
+			
+	<command name="TongQueTaiReward" type="365" receiver="client">
+	</command>
+	
+	<command name="TongQueTaiSpeed" maxsize="1024" type="366" receiver="gamed" lock="tongquetai" extra_roles_max="2">
+		<variable name="speed" type="number"/>
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+	</command>
+			
+	<command name="TongQueTaiSpeed_Re" type="367" receiver="client">
+		<variable name="role_id" type="string"/>
+		<variable name="speed" type="number"/>
+	</command>
+	
+	<command name="TongQueTaiLoad" maxsize="1024" type="368" receiver="gamed" lock="tongquetai" extra_roles_max="2">
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+	</command>
+			
+	<command name="TongQueTaiLoad_Re" type="369" receiver="client">
+		<variable name="role_id" type="string"/>
+	</command>
+		
+	<!--Õâ¸öÐ­ÒéÊÇÓÃÀ´¸æËß¿Í»§¶Ë½øÐÐÖÐ¼äÊý¾ÝµÄload½çÃæµÄ£¬ÔÚÕâÀïÒÑ¾­Ã»ÓÐ±ØÒªÔÙ°ÑÍæ¼ÒµÄÐÅÏ¢ÔÙ·¢Ò»´ÎÁË£¬ÒòÎª¿Í»§¶ËÊÇÓÐµÄ-->
+	<command name="TongQueTaiReLoad" type="370" receiver="client">
+		<variable name="role_index" type="number"/>
+		<variable name="monster_index" type="number"/>
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<!--Õâ¸öÐ­ÒéÊÇÓÃÀ´¸æËß¿Í»§¶ËÍ­È¸Ì¨½áÊøµÄ-->
+	<command name="TongQueTaiEnd" type="371" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+	
+	<!--¿Í»§¶ËÖ÷¶¯À´ÁìÈ¡Í­È¸Ì¨µÄ½±Àø-->
+	<command name="TongQueTaiGetReward" maxsize="1024" type="372" receiver="gamed">
+	</command>
+			
+	<command name="TongQueTaiGetReward_Re" type="373" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="double_flag" type="number"/>
+		<variable name="reward" type="Item" vector="true"/>
+	</command>
+	
+	<!--¿Í»§¶Ë»ñÈ¡Í­È¸Ì¨µÄÐÅÏ¢£¬Ä¿Ç°Ö»ÓÐ³öÕ½Îä½«ÐÅÏ¢£¬ÒÔ¼°ÊÇ·ñÓÐÎ´ÁìÈ¡µÄ½±Àø-->
+	<command name="TongQueTaiGetInfo" maxsize="1024" type="374" receiver="gamed">
+	</command>
+			
+	<command name="TongQueTaiGetInfo_Re" type="375" receiver="client">
+		<variable name="hero" type="number" vector="true"/>
+		<variable name="reward_flag" type="number" comment="1´ú±íÓÐÃ»ÓÐÁìÈ¡µÄ½±Àø"/>
+	</command>
+
+	<!--401-420-->
+	<!--Õ½ÒÛ²¹³äÐ­Òé-->
+
+	<!--Õâ¸öÐ­ÒéÊÇÓÃÀ´»ñÈ¡µ±Ç°»ØºÏÐ­ÒéÐÅÏ¢µÄ-->
+	<command name="BattleFieldGetRoundStateInfo" maxsize="1024" type="401" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+		<variable name="round_state" type="number"/>
+	</command>
+			
+	<command name="BattleFieldGetRoundStateInfo_Re" type="402" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="round_state" type="number"/>
+		<variable name="event_info" type="BattleEventInfo" vector="true"/>
+		<variable name="npc_info" type="BattleFieldNpcMoveInfo" vector="true"/>
+		<variable name="info_history" type="number" vector="true"/>
+		<variable name="move_pos" type="MovePos" vector="true"/>
+		<variable name="morale_change" type="MoraleData" vector="true"/>
+		<variable name="cur_morale" type="number" comments="×Ô¼ºµÄÊ¿Æø±ä»¯"/>
+	</command>
+			
+	<!--ÓÃÀ´¸ø¿Í»§¶Ë¸üÐÂµ±Ç°µÄ»ØºÏ×´Ì¬-->
+	<command name="BattleFieldUpdateRoundState" type="403" receiver="client">
+		<variable name="battle_id" type="number"/>
+		<variable name="round_num" type="number"/>
+		<variable name="round_state" type="number"/>
+	</command>
+
+	<!--ÅÐ¶Ïµ±Ç°ÊÇ·ñÒòÎª»ØºÏ½áÊøÁË-->
+	<command name="BattleFieldRoundCount" maxsize="1024" type="404" receiver="gamed">
+		<variable name="battle_id" type="number"/>
+	</command>
+			
+	<command name="BattleFieldRoundCount_Re" type="405" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="battle_id" type="number"/>
+	</command>
+	
+	<!--421-499-->
+	<!--ÔÓÏîÐ­Òé¡£Ã»ÓÐÍ³Ò»¹¦ÄÜµÄÐ­Òé-->
+
+	<!--±³°üÖÐÊ¹ÓÃÎïÆ·-->
+	<command name="BackPackUseItem" maxsize="1024" type="421" receiver="gamed">
+		<variable name="item_id" type="number"/>
+		<variable name="item_num" type="number"/>
+	</command>
+			
+	<command name="BackPackUseItem_Re" type="422" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="item_id" type="number"/>
+		<variable name="item_num" type="number"/>
+		<variable name="items" type="Item" vector="true"/>
+	</command>
+
+	<!--ÁÙÊ±±³°üµÄÏà¹ØÐ­Òé-->
+
+	<!--»ñÈ¡ÁÙÊ±±³°üÖÐµÄËùÓÐÎïÆ·-->
+	<command name="TemporaryBackPackGetInfo" maxsize="1024" type="423" receiver="gamed">
+	</command>
+			
+	<command name="TemporaryBackPackGetInfo_Re" type="424" receiver="client">
+		<variable name="items" type="TemporaryBackPackData" vector="true"/>
+	</command>
+
+	<!--ÁìÈ¡ÁÙÊ±±³°üÖÐµÄÏà¹ØÎïÆ·-->
+	<command name="TemporaryBackPackReceiveItem" maxsize="1024" type="425" receiver="gamed">
+		<variable name="id" type="number" comments="Î¨Ò»µÄID£¬ÁìÈ¡µÄÊ±ºòÊÇ·¢µÄÕâ¸öID ÐÅÏ¢µÄ"/>
+	</command>
+			
+	<command name="TemporaryBackPackReceiveItem_Re" type="426" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number" comments="Î¨Ò»µÄID£¬ÁìÈ¡µÄÊ±ºòÊÇ·¢µÄÕâ¸öID ÐÅÏ¢µÄ"/>
+	</command>
+			
+	<!--¸üÐÂÍæ¼ÒµÄÁÙÊ±±³°üµÄÊý¾ÝÐÅÏ¢-->
+	<command name="TemporaryBackPackUpdate" type="427" receiver="client">
+		<variable name="item" type="TemporaryBackPackData"/>
+	</command>
+
+	<!--Îä½«ÉýÐÇ-->
+	<command name="HeroAddStar" maxsize="1024" type="428" receiver="gamed">
+		<variable name="hero_id" type="number" comments="ÒªÉýÐÇµÄÎä½«id"/>
+	</command>
+			
+	<command name="HeroAddStar_Re" type="429" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="hero_id" type="number" comments="ÒªÉýÐÇµÄÎä½«id"/>
+		<variable name="star" type="number" comments="ÉýÐÇ³É¹¦ÒÔºóµÄÐÇ¼¶"/>
+	</command>
+			
+	<command name="PveArenaUpdateInfo" type="430" receiver="client">
+		<variable name="defence_hero" type="number" vector="true" comments="·ÀÊØÎä½«"/>
+	</command>
+			
+	<command name="UpdateLotteryInfo" type="431" receiver="client">
+		<variable name="lottery_info" type="LotteryInfo" vector="true"/>
+	</command>
+	
+	<command name="GetRankPveArenaInfo" maxsize="1024" type="432" receiver="gamed" lock="pvearena">
+		<variable name="rank" type="number"/>
+	</command>
+			
+	<command name="GetRankPveArenaInfo_Re" type="433" receiver="client">
+		<variable name="info" type="PveArenaFighterInfo" comments="Íæ¼ÒÐÅÏ¢"/>
+	</command>
+	
+	<command name="ChangeLotterySelect" maxsize="1024" type="434" receiver="gamed" lock="pvearena">
+		<variable name="lottery_id" type="number"/>
+		<variable name="select_id" type="number"/>
+	</command>
+			
+	<command name="ChangeLotterySelect_Re" type="435" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="lottery_id" type="number"/>
+		<variable name="select_id" type="number"/>
+	</command>
+		
+	<!--500-599-->
+	<!--¾üÍÅµÄÐÅÏ¢£¬ËùÓÐµÄ¾üÍÅÐ­Òé¶¼ÔÚÕâÀï-->
+
+	<!--»ñÈ¡¾üÍÅµÄÐÅÏ¢-->
+	<command name="LegionGetInfo" maxsize="1024" type="500" receiver="gamed">
+	</command>
+			
+	<command name="LegionGetInfo_Re" type="501" receiver="client">
+		<variable name="junxueguan_level" type="number" comments="¾üÑ§¹ÝµÄµÈ¼¶£¬0´ú±í»¹Ã»ÓÐ¿ªÆô"/>
+	</command>
+
+	<!--µÃµ½¾üÑ§¹ÝÀïÃæµÄ×¨¾«ÒÔ¼°ÏîÄ¿ÐÅÏ¢-->
+	<command name="LegionJunXueGuanGetInfo" maxsize="1024" type="502" receiver="gamed">
+	</command>
+			
+	<command name="LegionJunXueGuanGetInfo_Re" type="503" receiver="client">
+		<variable name="info" type="LegionJunXueGuanData" vector="true" comments="¾üÑ§¹ÝµÄÐÅÏ¢"/>
+	</command>
+
+	<!--Éý¼¶¾üÑ§¹ÝÀïÃæµÄ×¨¾«-->
+	<command name="LegionJunXueZhuanJingLevelUp" maxsize="1024" type="504" receiver="gamed">
+		<variable name="id" type="number" comments="¾üÑ§×¨¾«µÄID"/>
+	</command>
+			
+	<command name="LegionJunXueZhuanJingLevelUp_Re" type="505" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number" comments="¾üÑ§×¨¾«µÄID"/>
+		<variable name="level" type="number" comments="Éý¼¶³É¹¦ÒÔºóµÄµÈ¼¶"/>
+		<variable name="xiangmu_open" type="number" comments="ÊÇ·ñ¿ªÆôÁË¾üÑ§ÏîÄ¿"/>
+		<variable name="xiangmu_id" type="number" comments="¿ªÆôµÄ¾üÑ§ÏîÄ¿ID"/>
+	</command>
+
+	<!--Ñ§Ï°¾üÑ§¹ÝÀïÃæµÄÏîÄ¿-->
+	<command name="LegionLearnJunXueXiangMu" maxsize="1024" type="506" receiver="gamed">
+		<variable name="id" type="number" comments="¾üÑ§×¨¾«µÄID"/>
+		<variable name="learn_id" type="number" comments="Ñ§Ï°µÄ¾üÑ§ÏîÄ¿µÄID"/>
+	</command>
+			
+	<command name="LegionLearnJunXueXiangMu_Re" type="507" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number" comments="¾üÑ§×¨¾«µÄID"/>
+		<variable name="learn_id" type="number" comments="Ñ§Ï°µÄ¾üÑ§ÏîÄ¿µÄID"/>
+	</command>
+
+	<!--Ìí¼ÓÐÂµÄÐÂµÄ¾üÑ§×¨¾«-->
+	<command name="LegionAddJunXueGuanInfo" type="508" receiver="client">
+		<variable name="info" type="LegionJunXueGuanData" comments="Ìí¼Ó¾üÑ§¹ÝµÄÐÅÏ¢"/>
+	</command>
+
+	<!--¿ªÆô¾üÑ§¹Ý-->
+	<command name="LegionOpenJunXueGuan" type="509" receiver="client">
+		<variable name="level" type="number" comments="¿ªÆô¾üÑ§¹Ý"/>
+	</command>
+
+	<!--¼¤»î¾üÑ§¹ÝÀïÃæµÄ×¨¾«-->
+	<command name="LegionActivationZhuanJing" maxsize="1024" type="510" receiver="gamed">
+		<variable name="id" type="number" comments="¾üÑ§×¨¾«µÄID"/>
+	</command>
+			
+	<command name="LegionActivationZhuanJing_Re" type="511" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number" comments="¾üÑ§×¨¾«µÄID"/>
+		<variable name="info" type="LegionJunXueGuanData" comments="¾üÑ§×¨¾«µÄÐÅÏ¢"/>
+	</command>
+
+	<!--Îä»ê·Ö½â-->
+	<command name="LegionDecomposeWuHun" maxsize="1024" type="512" receiver="gamed">
+		<variable name="item" type="Item" vector="true" comments="ÐèÒª·Ö½âµÄÎä»êID"/>
+	</command>
+			
+	<command name="LegionDecomposeWuHun_Re" type="513" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="item" type="Item" vector="true" comments="ÐèÒª·Ö½âµÄÎä»êID"/>
+		<variable name="count" type="number" comments="·Ö½âÎä»êÒÔºóµÃµ½µÄ»êÆÇÐÅÏ¢"/>
+	</command>
+
+	<!--600-650-->
+	<!--ÂíÊõ´óÈüµÄÏà¹ØÐ­Òé-->
+
+	<!--ÂíÊõ´óÈüµÄ»ù±¾ÐÅÏ¢-->
+	<command name="MaShuGetRoleInfo" maxsize="1024" type="600" receiver="gamed" lock="toplist_all_role">
+	</command>
+			
+	<command name="MaShuGetRoleInfo_Re" type="601" receiver="client">
+		<variable name="rank" type="number" comments="½ñÈÕÅÅÃû"/>
+		<variable name="yestaday_rank" type="number" comments="×òÈÕÅÅÃû"/>
+		<variable name="today_score" type="number" comments="½ñÈÕ×î¸ßµÃ·Ö"/>
+		<variable name="hisroty_score" type="number" comments="ÀúÊ·×î¸ßµÃ·Ö"/>
+		<variable name="today_stage" type="number" comments="½ñÈÕÍ¨¹ýµÄ×î¸ß¹Ø¿¨"/>
+		<variable name="history_stage" type="number" comments="ÀúÊ·Í¨¹ýµÄ×î¸ß¹Ø¿¨"/>
+		<variable name="get_prize_flag" type="number" comments="ÊÇ·ñÁìÈ¡ÁË×òÈÕ½±Àø£¬1´ú±íÁìÈ¡ÁË£¬0´ú±íÃ»ÓÐ"/>
+		<variable name="hero_info" type="MaShuHeroInfo" comments="ÂíÊõµÄÕóÈÝ"/>
+		<variable name="friend_info" type="MaShuFriendInfo" vector="true" comments="ÂíÊõµÄºÃÓÑÐÅÏ¢"/>
+		<variable name="buff_info" type="MaShuBuffInfo" vector="true" comments="ÂíÊõµÄbuffÐÅÏ¢"/>
+		<variable name="fight_friend" type="MaShuFightFriendInfo" comments="ÖúÕ½ºÃÓÑµÄÐÅÏ¢"/>
+	</command>
+
+	<!--ÂíÊõ´óÈüºÃÓÑÖúÕó-->
+	<command name="MaShuSelectFriendToHelp" maxsize="1024" type="602" receiver="gamed">
+		<variable name="roleid" type="string" comments="Ñ¡ÔñµÄºÃÓÑµÄID"/>
+	</command>
+			
+	<command name="MaShuSelectFriendToHelp_Re" type="603" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="roleid" type="string" comments="Ñ¡ÔñµÄºÃÓÑµÄID"/>
+	</command>
+
+	<!--ÂíÊõ´óÈü»ñµÃBUFF-->
+	<command name="MaShuGetBuff" maxsize="1024" type="604" receiver="gamed">
+		<variable name="id" type="number" comments="Ñ¡Ôñ»ñµÃµÄBuffID"/>
+	</command>
+			
+	<command name="MaShuGetBuff_Re" type="605" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number" comments="Ñ¡Ôñ»ñµÃµÄBuffID"/>
+		<variable name="buff_info" type="MaShuBuffInfo" comments="Ñ¡Ôñ»ñµÃµÄBuffÐÅÏ¢"/>
+	</command>
+
+	<!--ÂíÊõ´óÈü¿ªÊ¼½øÈë-->
+	<command name="MaShuBegin" maxsize="1024" type="606" receiver="gamed">
+		<variable name="id" type="number" comments="Ñ¡Ôñ½øÈëµÄÂíÊõ´óÈüµÄID£¬·ÀÖ¹ºóÃæËûÃÇÓÐ¶à¸öÑ¡Ôñ"/>
+	</command>
+			
+	<command name="MaShuBegin_Re" type="607" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number"/>
+		<variable name="seed" type="number"/>
+		<variable name="scene" type="number"/>
+	</command>
+
+	<!--ÂíÊõ´óÈüÖÐ¼äÍê³ÉÄ³Ò»¸ö¹Ø¿¨£¬ÄÃµ½½±Àø-->
+	<command name="MaShuGetPrize" maxsize="1024" type="608" receiver="gamed">
+		<variable name="stage" type="number" comments="Íê³ÉµÄÖÐ¼äµÄ¹Ø¿¨µÄID,»òÕßÊÇ·ÖÊý£¬¿´²ß»®ºóÃæÔõÃ´ÅäÖÃÁË"/>
+	</command>
+			
+	<command name="MaShuGetPrize_Re" type="609" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="stage" type="number"/>
+		<variable name="item" type="Item" vector="true"/>
+		<variable name="money" type="number"/>
+	</command>
+
+	<!--ÂíÊõ´óÈüÖÐ¼ä¸üÐÂ·ÖÊý-->
+	<command name="MaShuUpdateScore" maxsize="1024" type="610" receiver="gamed">
+		<variable name="score" type="number" comments="¸üÐÂµ±Ç°µÄ·ÖÊý"/>
+	</command>
+			
+	<command name="MaShuUpdateScore_Re" type="611" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="score" type="number"/>
+	</command>
+
+	<!--ÂíÊõ´óÈü½áÊø-->
+	<command name="MaShuEnd" maxsize="1024" type="612" receiver="gamed" lock="toplist_all_role,toplist">
+		<variable name="id" type="number" comments="Ñ¡Ôñ½øÈëµÄÂíÊõ´óÈüµÄID£¬·ÀÖ¹ºóÃæËûÃÇÓÐ¶à¸öÑ¡Ôñ"/>
+		<variable name="score" type="number" comments="¸üÐÂµ±Ç°µÄ·ÖÊý"/>
+		<variable name="stage" type="number" comments="¹Ø¿¨"/>
+		<variable name="box_num" type="number" comments="Ïä×Ó¸öÊý"/>
+		<variable name="money" type="number" comments="½ðÇ®"/>
+		<variable name="operations" type="PVEOperation" vector="true"/>
+	</command>
+			
+	<command name="MaShuEnd_Re" type="613" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="number" comments="Ñ¡Ôñ½øÈëµÄÂíÊõ´óÈüµÄID£¬·ÀÖ¹ºóÃæËûÃÇÓÐ¶à¸öÑ¡Ôñ"/>
+		<variable name="score" type="number"/>
+		<variable name="stage" type="number" comments="¹Ø¿¨"/>
+		<variable name="box_num" type="number" comments="Ïä×Ó¸öÊý"/>
+		<variable name="money" type="number" comments="½ðÇ®"/>
+		<variable name="item" type="TemporaryBackPackData"/>
+		<variable name="server_money" type="number"/>
+		<variable name="last_rank" type="number"/>
+		<variable name="cur_rank" type="number"/>
+	</command>
+
+	<!--ÂíÊõ´óÈüÅÅÃû½±ÀøµÄÁìÈ¡-->
+	<command name="MaShuGetRankPrize" maxsize="1024" type="614" receiver="gamed">
+	</command>
+			
+	<command name="MaShuGetRankPrize_Re" type="615" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="item" type="TemporaryBackPackData"/>
+		<variable name="yestaday_rank" type="number" comments="×òÈÕÅÅÃû"/>
+		<variable name="get_prize_flag" type="number" comments="ÊÇ·ñÁìÈ¡ÁË×òÈÕ½±Àø£¬1´ú±íÁìÈ¡ÁË£¬0´ú±íÃ»ÓÐ"/>
+	</command>
+			
+	<!--ÂíÊõ´óÈü¸üÐÂÐÅÏ¢-->
+	<command name="MaShuUpdateRoleInfo" type="616" receiver="client">
+		<variable name="rank" type="number" comments="½ñÈÕÅÅÃû"/>
+		<variable name="yestaday_rank" type="number" comments="×òÈÕÅÅÃû"/>
+		<variable name="today_score" type="number" comments="½ñÈÕ×î¸ßµÃ·Ö"/>
+		<variable name="today_stage" type="number" comments="½ñÈÕÍ¨¹ýµÄ×î¸ß¹Ø¿¨"/>
+		<variable name="get_prize_flag" type="number" comments="ÊÇ·ñÁìÈ¡ÁË×òÈÕ½±Àø£¬1´ú±íÁìÈ¡ÁË£¬0´ú±íÃ»ÓÐ"/>
+		<variable name="friend_info" type="MaShuFriendInfo" vector="true" comments="ÂíÊõµÄºÃÓÑÐÅÏ¢"/>
+	</command>
+
+	<!--651-699-->
+	<!--½áÒåµÄÏà¹ØÐ­Òé-->
+
+	<!--µÃµ½½áÒåµÄ»ù±¾ÐÅÏ¢-->
+	<command name="JieYiGetRoleInfo" maxsize="1024" type="651" receiver="gamed" lock="jieyi_info">
+	</command>
+			
+	<command name="JieYiGetRoleInfo_Re" type="652" receiver="client">
+		<variable name="id" type="string" comments="½áÒåµÄID"/>
+		<variable name="name" type="string" comments="½áÒåµÄÃû×Ö"/>
+		<variable name="level" type="number"  comments="½áÒåµÄµÈ¼¶"/>
+		<variable name="exp" type="number"  comments="½áÒåµÄ¾­Ñé"/>
+		<variable name="cur_operate_id" type="string" comments="µ±Ç°ÕýÔÚ´¦ÀíµÄ½áÒåID"/>
+		<variable name="cur_operate_typ" type="number" comments="µ±Ç°ÕýÔÚ´¦ÀíµÄ½áÒåÀàÐÍ"/>
+	</command>
+			
+	<command name="JieYiUpdateRoleInfo" type="653" receiver="client">
+		<variable name="id" type="string" comments="½áÒåµÄID"/>
+		<variable name="name" type="string" comments="½áÒåµÄÃû×Ö"/>
+	</command>
+
+	<!--µÃµ½½áÒåµÄÏêÏ¸ÐÅÏ¢-->
+	<command name="JieYiGetInfo" maxsize="1024" type="654" receiver="gamed" lock="jieyi_info">
+		<variable name="id" type="string" comments="½áÒåµÄID"/>
+	</command>
+			
+	<command name="JieYiGetInfo_Re" type="655" receiver="client">
+		<variable name="id" type="string" comments="½áÒåµÄID"/>
+		<variable name="name" type="string" comments="½áÒåµÄÃû×Ö"/>
+		<variable name="level" type="number"  comments="½áÒåµÄµÈ¼¶"/>
+		<variable name="exp" type="number"  comments="½áÒåµÄ¾­Ñé"/>
+		<variable name="bossinfo" type="JieYiInfo" comments="´ó¸çµÄÐÅÏ¢" />	
+		<variable name="brotherinfo" type="JieYiInfo" vector="true" />
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ" />
+	</command>
+	
+	<command name="JieYiUpdateInfo" type="656" receiver="client">
+	</command>
+
+	<!--´´½¨½áÒå-->
+	<command name="JieYiCreate" maxsize="1024" type="657" receiver="gamed" lock="jieyi_info">
+		<variable name="name" type="string" comments="½áÒåµÄÃû×Ö"/>
+	</command>
+			
+	<command name="JieYiCreate_Re" type="658" receiver="client">
+		<variable name="cur_operate_id" type="string" comments="ÕæÔÚ´¦ÀíµÄ½áÒåÀàÐÍ"/>
+		<variable name="cur_operate_typ" type="number" comments="ÕæÔÚ´¦ÀíµÄ½áÒåÀàÐÍ"/>
+	</command>
+
+	<!--ÑûÇëÍæ¼Ò½áÒå-->
+	<command name="JieYiInviteRole" maxsize="1024" type="659" receiver="gamed" extra_roles_max="1" lock="jieyi_info">
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ£¬ÕâÀï×¢ÒâÒ»ÏÂ£¬ÒòÎª½áÒåÓÐ³õ´Î½áÒå£¬ÒÔ¼°ÍùÒÑ¾­ÓÐµÄ½áÒåÀïÃæ¼ÓÈË"/>
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="dest_id" type="string" comments="ÑûÇë½øÈëµÄ½ÇÉ«id"/>
+	</command>
+			
+	<command name="JieYiInviteRole_Re" type="660" receiver="client">
+		<variable name="retcode" type="number" />
+		<variable name="role_id" type="string" comments="±»ÑûÇëÈËµÄid"/>
+	</command>
+
+	<!--Íæ¼Ò±»ÑûÇë½áÒå-->
+	<command name="JieYiInvite_Re" type="661" receiver="client">
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ£¬ÕâÀï×¢ÒâÒ»ÏÂ£¬ÒòÎª½áÒåÓÐ³õ´Î½áÒå£¬ÒÔ¼°ÍùÒÑ¾­ÓÐµÄ½áÒåÀïÃæ¼ÓÈË"/>
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+	</command>
+
+	<!--Íæ¼Ò½áÒå»Ø¸´-->
+	<command name="JieYiReply" maxsize="1024" type="662" receiver="gamed" extra_roles_max="2" lock="jieyi_info">
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ£¬ÕâÀï×¢ÒâÒ»ÏÂ£¬ÒòÎª½áÒåÓÐ³õ´Î½áÒå£¬ÒÔ¼°ÍùÒÑ¾­ÓÐµÄ½áÒåÀïÃæ¼ÓÈË"/>
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="agreement" type="number" comments="ÊÇ·ñÍ¬Òâ½øÈë½çÃæ"/>
+		<variable name="boss_id" type="string" comments="ÑûÇë·¢ÆðÕßid"/>
+		<variable name="brother_id" type="string" comments="ÑûÇëÁíÒ»¸öÐÖµÜid"/>
+	</command>
+			
+	<command name="JieYiReply_Re" type="663" receiver="client">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ£¬ÕâÀï×¢ÒâÒ»ÏÂ£¬ÒòÎª½áÒåÓÐ³õ´Î½áÒå£¬ÒÔ¼°ÍùÒÑ¾­ÓÐµÄ½áÒåÀïÃæ¼ÓÈË"/>
+		<variable name="retcode" type="number" comments="·µ»ØÍ¬ÒâÑûÇë"/>
+		<variable name="role_id" type="string" comments="Í¬ÒâÑûÇëµÄÈË"/>
+	</command>
+
+	<!--Íæ¼ÒÊÇ·ñ½ÓÊÜÑûÇë-->
+	<command name="JieYiOperateInvite" maxsize="1024" type="664" receiver="gamed" extra_roles_max="2" lock="jieyi_info">
+		<variable name="dest_id" type="string" comments="ÑûÇë·¢ÆðÈËµÄ½ÇÉ«id"/>	
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ£¬ÕâÀï×¢ÒâÒ»ÏÂ£¬ÒòÎª½áÒåÓÐ³õ´Î½áÒå£¬ÒÔ¼°ÍùÒÑ¾­ÓÐµÄ½áÒåÀïÃæ¼ÓÈË"/>
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="agreement" type="number" comments="1 Í¬Òâ 0 ²»Í¬Òâ"/>
+		<variable name="boss_id" type="string" comments="ÑûÇë·¢ÆðÕßid"/>
+		<variable name="brother_id" type="string" comments="ÑûÇëÁíÒ»¸öÐÖµÜid"/>
+
+	</command>
+			
+	<command name="JieYiOperateInvite_Re" type="665" receiver="client">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="role_id" type="string" comments="±»ÑûÇëÈËµÄid"/> 
+		<variable name="retcode" type="number" comments="³É¹¦ Ê§°Ü"/>			
+	</command>
+
+	<!--´ó¸çµã»÷ÕýÊ½´´½¨½áÒå-->
+	<command name="JieYiLastCreate" maxsize="1024" type="666" receiver="gamed" extra_roles_max="2" lock="jieyi_info">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ"/>
+		<variable name="boss_id" type="string" comments="ÑûÇëÁíÒ»¸öÐÖµÜid"/>
+		<variable name="brother_id" type="string" comments="ÑûÇëÁíÒ»¸öÐÖµÜid"/>
+	</command>
+			
+	<command name="JieYiLastCreate_Re" type="667" receiver="client">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="dest_id" type="string" comments="ÑûÇë·¢ÆðÈËµÄ½ÇÉ«id"/>
+	</command>
+
+	<!--Ð¡µÜÃÇ¾ö¶¨ÊÇ·ñÕæµÄÒªÍ¬Òâ´´½¨½áÒå-->
+	<command name="JieYiLastOperate" maxsize="1024" type="668" receiver="gamed" extra_roles_max="2" lock="jieyi_info">
+		<variable name="agreement" type="number" />
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="typ" type="number" comments="½áÒåµÄÀàÐÍ"/>
+		<variable name="boss_id" type="string" comments="ÑûÇë·¢ÆðÕßid"/>
+		<variable name="brother_id" type="string" comments="ÑûÇëÁíÒ»¸öÐÖµÜid"/>
+	</command>
+			
+	<command name="JieYiLastOperate_Re" type="669" receiver="client">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåÃû×Ö"/>
+		<variable name="role_id" type="string" comments="±»ÑûÇëÈËµÄid"/> 
+		<variable name="retcode" type="number" comments="³É¹¦ Ê§°Ü"/>	
+	</command>
+			
+	<!--Õâ´Î½áÒåÊÇ·ñ³É¹¦-->
+	<command name="JieYiResult" type="670" receiver="client">
+		<variable name="id" type="string" comments="½áÒåID"/>
+		<variable name="name" type="string" comments="½áÒåÃû×Ö"/>
+		<variable name="retcode" type="number" comments="³É¹¦ Ê§°Ü"/>	
+	</command>
+
+	<!--µÃµ½Î´½áÒå±»ÑûÇëµÄÐÅÏ¢-->
+	<command name="JieYiGetInviteInfo" type="671" receiver="gamed" lock="jieyi_info">
+	</command>
+
+	<command name="JieYiGetInviteInfo_Re" type="672" receiver="client">
+		<variable name="invite_member" type="string" vector="true" comments="±»ÑûÇëµÄ½áÒåidÁÐ±í" />
+	</command>
+	
+	<!--È¡Ïû±¾´ÎÑûÇë-->
+	<command name="JieYiCancelInviteRole" type="673" receiver="gamed" extra_roles_max="1" lock="jieyi_info">
+		<variable name="id" type="string" comments="½áÒåID"/> 
+		<variable name="name" type="string" comments="½áÒåÃû×Ö"/>
+		<variable name="brother_id" type="string" comments="È¡ÏûÑûÇëµÄÐÖµÜid"/>
+	</command>
+	
+	<command name="JieYiCancelInviteRole_Re" type="674" receiver="client"> 
+		<variable name="id" type="string" comments="½áÒåID"/>
+		<variable name="name" type="string" comments="½áÒåÃû×Ö"/>
+		<variable name="brother_id" type="string" comments="È¡ÏûÑûÇëµÄÐÖµÜid"/> 
+		<variable name="retcode" type="number" comments="³É¹¦ Ê§°Ü"/>
+	</command>
+
+	<!--½áÒåÖÐÇýÖðÈË -->
+	<command name="JieYiExpelBrother" type="675" receiver="gamed" extra_roles_max="2" lock="jieyi_info">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="brother_id" type="string" comments="ÇýÖðµÄÐÖµÜ½ÇÉ«id"/>
+		<variable name="brother_otherid" type="string" comments="ÁíÒ»¸öÐÖµÜ½ÇÉ«id"/> 
+	</command>
+	
+	<command name="JieYiExpelBrother_Re" type="676" receiver="client">
+		<variable name="id" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="name" type="string" comments="ÑûÇë½øÈëµÄ½áÒåID"/>
+		<variable name="brother_id" type="string" comments="ÇýÖðµÄÐÖµÜ½ÇÉ«id"/>
+		<variable name="retcode" type="number" comments="³É¹¦ Ê§°Ü"/>
+	</command>
+	
+	<command name="JieYiDisolve_Re" type="677" receiver="client">
+		<variable name="retcode" type="number" comments="½áÒå½âÉ¢³É¹¦ Ê§°Ü"/>	
+	</command>
+
+	<!--ÍË³ö±¾´Î½áÒå-->
+	<command name="JieYiExitCurrentJieYi" type="678" receiver="gamed" extra_roles_max="2" lock="jieyi_info">
+		<variable name="id" type="string" comments="½áÒåID"/> 
+		<variable name="name" type="string" comments="½áÒåÃû×Ö"/>
+		<variable name="brother_id" type="string" comments="Ò»¸ö½áÒåÐÖµÜid"/>
+		<variable name="brother_otherid" type="string" comments="ÁíÒ»¸ö½áÒåÐÖµÜid"/>
+	</command>
+	
+	<command name="JieYiExitCurrentJieYi_Re" type="679" receiver="client"> 
+		<variable name="id" type="string" comments="½áÒåID"/>
+		<variable name="name" type="string" comments="½áÒåÃû×Ö"/>
+		<variable name="retcode" type="number" comments="³É¹¦ Ê§°Ü"/>
+		<variable name="brother_id" type="string" comments="ÍË³ö½áÒåµÄÐÖµÜid"/>
+	</command>
+
+	<!--¹ÛÖÚ¹Û¿´Íæ¼ÒµÄÏÖ³¡Ö±²¥ 700-729-->
+
+	<!--µÃµ½µ±Ç°ÕýÔÚÕ½¶·µÄÍæ¼ÒÁÐ±í-->
+	<command name="AudienceGetList" type="700" receiver="gamed">
+	</command>
+
+	<command name="AudienceGetList_Re" type="701" receiver="client">
+		<variable name="_fight_info" type="FightInfo" vector="true" comments="¶ÔÕ½Ë«·½µÄÁÐ±í" />
+	</command>
+
+	<!--²é¿´Ä³Ò»¸ö·¿¼äµÄÕ½¶·-->
+	<command name="AudienceGetOperation" type="702" receiver="gamed">
+		<variable name="room_id" type="number" />
+	</command>
+
+	<command name="AudienceGetOperation_Re" type="703" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="room_id" type="number" />
+		<variable name="robot_flag" type="number"/>
+		<variable name="robot_seed" type="number"/>
+		<variable name="robot_type" type="number" comments="»úÆ÷ÈËÖÖÀà: 1,Éµ¹Ï»úÆ÷ÈË(²¹³¥ÓÃ); 2,Õý³£»úÆ÷ÈË(ÔÚÏßÍæ¼ÒÈËÊý²»¹»ÓÃ); ..."/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="operation" type="PvpVideo"/>
+	</command>
+
+	<command name="AudienceSendOperation" type="704" receiver="client">
+		<variable name="room_id" type="number" />
+		<variable name="operation" type="PvpVideo"/>
+	</command>
+
+	<!--Àë¿ª¹ÛÕ½Ä³Ò»¸ö·¿¼Û¡£Õâ¸öÐ­ÒéÃ»ÓÐ±ØÒª¸ø¿Í»§¶Ë·µ»Ø£¬¿Í»§¶Ëµã»÷ÁËÀë¿ªÒÔºóÖ±½Ó¾ÍÀë¿ª¾Í¿ÉÒÔÁË-->
+	<command name="AudienceLeaveRoom" type="705" receiver="gamed">
+		<variable name="room_id" type="number" />
+	</command>
+
+	<command name="AudienceFinishRoom" type="706" receiver="client">
+		<variable name="room_id" type="number"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="reason" type="number"/>
+		<variable name="operation" type="PvpVideo"/>
+	</command>
+
+	<command name="AudienceUpdateNum" type="707" receiver="client">
+		<variable name="num" type="number"/>
+	</command>
+
+	<!--Íæ¼ÒµÄÍ·ÏñÐÅÏ¢£¬°üÀ¨Í·Ïñ¿ò£¬Í·Ïñ£¬»ÕÕÂ 730-750-->
+
+	<!--Íæ¼ÒÉèÖÃÍ·Ïñ-->
+	<command name="PhotoSetPhoto" type="730" receiver="gamed">
+		<variable name="photo_id" type="number" />
+	</command>
+
+	<command name="PhotoSetPhoto_Re" type="731" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="photo_id" type="number"/>
+	</command>
+
+	<!--Íæ¼ÒÉèÖÃÍ·Ïñ¿ò-->
+	<command name="PhotoSetPhotoFrame" type="732" receiver="gamed">
+		<variable name="photoframe_id" type="number" />
+	</command>
+
+	<command name="PhotoSetPhotoFrame_Re" type="733" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="photoframe_id" type="number"/>
+	</command>
+
+	<!--¸üÐÂÍæ¼ÒµÄÍ·ÏñÐÅÏ¢-->
+	<command name="PhotoUpdatePhotoInfo" type="736" receiver="client">
+		<variable name="photo_info" type="PhotoInfo" vector="true"/>
+		<variable name="photoframe_info" type="PhotoInfo" vector="true"/>
+	</command>
+
+	<!--¸üÐÂÍæ¼ÒµÄ»ÕÕÂÐÅÏ¢-->
+	<command name="PhotoUpdateBadgeInfo" type="737" receiver="client">
+		<variable name="add_flag" type="number" comments="0´ú±íÉ¾³ý£¬1´ú±íÌí¼Ó"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+	</command>
+	
+	<!--Íæ¼ÒµÄÔ¼Õ½¹¦ÄÜ£¬°üÀ¨ÁËµ¯Ä»µÈ 751-799-->
+
+	<!--Íæ¼Ò·¢ÆðÔ¼Õ½-->
+	<command name="YueZhanCreate" type="751" receiver="gamed" maxsize="1024" lock="yuezhan_info">
+		<variable name="channel" type="number" comments="ÆµµÀµÄÀàÐÍ"/>
+		<variable name="announce" type="string" comments="Ô¼Õ½ÐûÑÔ"/>
+	</command>
+
+	<command name="YueZhanCreate_Re" type="752" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="room_id" type="number" comments="´´½¨µÄ·¿¼äºÅ"/>
+	</command>
+
+	<!--Íæ¼Ò½øÈëÔ¼Õ½-->
+	<command name="YueZhanJoin" type="753" receiver="gamed" maxsize="1024" lock="yuezhan_info">
+		<variable name="room_id" type="number" comments="¼ÓÈëµÄ·¿¼äºÅ"/>
+	</command>
+
+	<command name="YueZhanJoin_Re" type="754" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="room_id" type="number" comments="¼ÓÈëµÄ·¿¼äºÅ"/>
+	</command>
+
+	<!--Íæ¼ÒÈ¡ÏûÔ¼Õ½-->
+	<command name="YueZhanCancel" type="755" receiver="gamed" maxsize="1024" lock="yuezhan_info">
+		<variable name="room_id" type="number" comments="È¡ÏûµÄ·¿¼äºÅ"/>
+	</command>
+
+	<command name="YueZhanCancel_Re" type="756" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="room_id" type="number" comments="È¡ÏûµÄ·¿¼äºÅ"/>
+	</command>
+
+	<!--Íæ¼Ò·¢ËÍµ¯Ä»-->
+	<command name="YueZhanDanMu" type="757" receiver="gamed" maxsize="1024">
+		<variable name="pvp_id" type="number" comments="ÔÚcenter·þÎñÆ÷µÄpvpid×¢ÒâÁË²»ÊÇÔÚgamedµÄroom_id"/>
+		<variable name="video_id" type="string" comments="Â¼ÏñµÄID£¬×¢ÒâÁË£¬Õâ¸öºÍÉÏÃæµÄpvp_idÖ»»áÓÐÒ»¸öµÄÖµ²»Îª0,×¢ÒâÁËÕâÀïÕâ¸öÊÇ×Ö·û´®"/>
+		<variable name="tick" type="number" comments="ÔÚÄÄÒ»¸ötick·¢³öÈ¥µÄµ¯Ä»"/>
+		<variable name="word_info" type="string"/>
+	</command>
+
+	<command name="DanMuInfo" type="758" receiver="client">
+		<variable name="typ" type="number"/>
+		<variable name="info" type="DanMuDataVector"/>
+	</command>
+
+	<command name="YueZhanInfo" type="759" receiver="client">
+		<variable name="id" type="number" comments="Î¨Ò»µÄID"/>
+		<variable name="channel" type="number" comments="ÆµµÀµÄÀàÐÍ"/>
+		<variable name="typ" type="number" comments="µ±Ç°µÄÀàÐÍ,0È¡Ïû£¬1create×´Ì¬£¬2ÊÇË«·½×¼±¸£¬3ÊÇ¿ªÊ¼£¬4µÈ´ýÂ¼Ïñ£¬5Â¼Ïñ, 6ÊÇ´òÍêÃ»ÓÐÂ¼Ïñ"/>
+		<variable name="creater" type="RoleBrief"/>
+		<variable name="joiner" type="RoleBrief"/>
+		<variable name="announce" type="string" comments="Ô¼Õ½ÐûÑÔ"/>
+		<variable name="info_id" type="string" comments="¸ù¾ÝtypÀàÐÍµÄ²»Í¬£¬Õâ¸öÖµµÃ±äÁ¿Ò²ÊÇÓÐËù²»Í¬"/>
+		<variable name="time" type="number"/>
+	</command>
+
+<!--
+	<command name="ListPrivateChat" maxsize="1024" type="10001" receiver="gamed"/>
+	<command name="ListPrivateChat_Re" type="10002" receiver="client">
+		<variable name="chats" type="Chat" vector="true"/>
+	</command>
+-->
+	<!-- 800-820 ËÍ»¨Ð­Òé -->	
+	<command name="GetFlowerInfo" maxsize="1024" type="800" receiver="gamed" extra_roles_max="1">
+		<variable name="id" type="string" comments="»ñÈ¡Ä³ÈËµÄ½ÇÉ«id"/>
+	</command>
+	
+	<command name="GetFlowerInfo_Re" maxsize="10240" type="801" receiver="client" >
+		<variable name="info" type="RoleBrief" comments="½ÇÉ«ÐÅÏ¢"/>	
+		<variable name="lingering" type="number" comments="ÓàÏã" />
+		<variable name="flower_count" type="number" comments="»¨µÄ×ÜÊý"/>
+		<variable name="flowergift_info" type="FlowerGiftInfo" vector="true" comments="±ðÈË¸øÄãµÄËÍ»¨¼ÇÂ¼"/>
+		<variable name="sendflowergift_info" type="FlowerGiftInfo" vector="true" comments="Äã¸ø±ðÈËµÄËÍ»¨¼ÇÂ¼"/>
+		<variable name="recive_flag" type="number" comments="ÏÂÏßÆÚ¼äÊÇ·ñÓÐÈË¸øÎÒËÍ»¨ 1:´ú±íÓÐ"/>
+		<variable name="title_id" type="number" comments="³É¾Íid"/>
+	</command>
+		
+	<command name="SendFlowerGift" maxsize="1024" type="806" receiver="gamed" extra_roles_max="1">
+		<variable name="typ" type="number" comments="ËÍ»¨·½Ê½"/>
+		<variable name="dest_id" type="string" comments="±»ËÍ»¨Õß½ÇÉ«id"/>
+	</command>
+
+	<command name="SendFlowerGift_Re" maxsize="1024" type="808" receiver="client">
+		<variable name="typ" type="number" comments="ËÍ»¨·½Ê½"/>
+		<variable name="dest_id" type="string" comments="±»ËÍ»¨Õß½ÇÉ«id"/>
+		<variable name="count" type="number" comments="ÊýÁ¿"/>
+		<variable name="time" type="number" comments="ËÍ»¨Ê±¼ä"/>
+		<variable name="src" type="RoleBrief" comments="ËÍ»¨Õß½ÇÉ«ÐÅÏ¢"/>
+		<variable name="dest" type="RoleBrief" comments="±»ËÍ»¨Õß½ÇÉ«ÐÅÏ¢"/>
+		<variable name="mask" type="number" comments="ÊÇ·ñ¸øÕâ¸öÈËËÍ¹ý»¨"/>
+	</command>
+	
+	<command name="UpdateFlowerGiftInfo" maxsize="1024" type="807" receiver="client">
+	</command>
+
+	<command name="FlowerGiftTipsClear" maxsize="1024" type="809" receiver="gamed" comments="²»ÔÚÏßÏÊ»¨»ñµÃÍ¼±êÉ¾³ý">
+	</command>
+
+	<command name="FlowerGiftTipsClear_Re" maxsize="1024" type="810" receiver="client">
+		<variable name="flag" type="number" comments="±êÖ¾"/>
+	</command>
+
+	<!-- 821-830 Íæ¼ÒÉíÉÏµÄÌØÐÔÊôÐÔ -->	
+	<command name="TeXingGetInfo" maxsize="1024" type="821" receiver="gamed">
+	</command>
+	
+	<command name="TeXingGetInfo_Re" maxsize="1024" type="822" receiver="client" >
+		<variable name="texing_info" type="number" vector="true" comments="ÌØÐÔ"/>
+	</command>
+		
+	<command name="TeXingUpdateInfo" maxsize="1024" type="823" receiver="client">
+		<variable name="texing_add" type="number" vector="true" comments="Ìí¼ÓµÄÌØÐÔ"/>
+		<variable name="texing_del" type="number" vector="true" comments="É¾³ýµÄÌØÐÔ"/>
+	</command>
+	
+
+	<!-- 831-840 Íæ¼Ò³äÖµµÄÐ­Òé -->
+	<!--³äÖµÐ­Òé£¬Õâ¸öÊÇÏÔÊ¾Ê¹ÓÃµÄ-->
+	<command name="ChongZhi" maxsize="1024" type="831" receiver="client">
+		<variable name="yuanbao" type="number" comments="Õý³£µÄÔª±¦"/>
+		<variable name="extra_yuanbao" type="number" comments="¶îÍâµÃµ½µÄÔª±¦"/>
+		<variable name="fudai_flag" type="number" comments="ÊÇ·ñÊÇÂòµÄ¸£´ü£¬1Ð¡¸£´ü£¬2´ó¸£´ü£¬0²»ÊÇ¸£´ü"/>
+		<variable name="fudai_time" type="number" comments="¸£´üµÄ½áÊøÊ±¼ä"/>
+	</command>
+
+	<command name="UpdateFuDaiTime" maxsize="1024" type="832" receiver="client">
+		<variable name="fudai_flag" type="number" comments="1Ð¡¸£´ü£¬2´ó¸£´ü"/>
+		<variable name="fudai_time" type="number" comments="¸£´üµÄ½áÊøÊ±¼ä,0´ú±í½áÊø"/>
+	</command>
+
+	<!-- Íæ¼ÒÁìÈ¡¸£´ü½±Àø -->
+	<command name="FuDaiGetReward" maxsize="1024" type="833" receiver="gamed">
+		<variable name="fudai_flag" type="number" comments="1Ð¡¸£´ü£¬2´ó¸£´ü"/>
+	</command>
+
+	<command name="FuDaiGetReward_Re" type="834" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="fudai_flag" type="number" comments="1Ð¡¸£´ü£¬2´ó¸£´ü"/>
+		<variable name="item" type="Item" vector="true" comments="ÎïÆ·½±Àø"/>
+	</command>
+	
+	<!-- 841-850 Íæ¼ÒµÄÇ©µ½Ð­Òé -->
+	<command name="DailySignUpdate" type="841" receiver="client">
+		<variable name="sign_date" type="number" comments="Ç©µ½µÄ×ÜÌìÊý"/>
+		<variable name="today_flag" type="number" comments="½ñÌìÊÇ·ñÇ©µ½£¬1´ú±íÇ©µ½£¬0´ú±íÃ»ÓÐÇ©µ½"/>
+	</command>
+
+	<!-- 851-899 Íæ¼ÒµÄÅÀËþÐ­Òé -->
+
+	<!-- µÃµ½Íæ¼Ò×Ô¼ºµÄÅÀËþÐÅÏ¢ -->
+	<command name="TowerGetInfo" maxsize="1024" type="851" receiver="gamed" lock="toplist_all_role">
+	</command>
+
+	<command name="TowerGetInfo_Re" type="852" receiver="client">
+		<variable name="difficulty" type="number" comments="Ñ¡ÔñµÄÄÑ¶È"/>
+		<variable name="cur_layer" type="number" comments="µ±Ç°²ãÊý"/>
+		<variable name="all_star" type="number" comments="×ÜµÄÐÇÊý"/>
+		<variable name="cur_star" type="number" comments="µ±Ç°ÐÇÊý"/>
+		<variable name="sweep_layer" type="number" comments="¿ÉÒÔÉ¨µ´µ½µÄ²ãÊý"/>
+		<variable name="buff" type="number" vector="true" comments="µ±Ç°Íæ¼ÒÉíÉÏµÄbuff"/>
+		<variable name="dead_hero" type="number" vector="true" comments="ËÀÍöµÄÎä½«"/>
+		<variable name="injured_hero" type="ShiLianHeroInfo" vector="true" comments="ÊÜÉËµÄÎä½«"/>
+		<variable name="yestaday_difficulty" type="number" comments="1ºÍ2´ú±íÄÑ¶È"/>
+		<variable name="yestaday_rank" type="number" comments="×òÌìµÄÅÅÃû"/>
+		<variable name="get_prize_flag" type="number" comments="Áì½±±êÖ¾ 1:ÒÑ¾­ÁìÈ¡ 0£ºÃ»ÓÐÁì"/>
+		<variable name="rank" type="number" comments="ÅÅÃû"/>
+		<variable name="history_best_layer" type="number" comments="ÀúÊ·×îºÃ³É¼¨²ãÊý"/>
+		<variable name="history_best_star" type="number" comments="ÀúÊ·×îºÃ³É¼¨ÐÇÊý"/>
+	</command>
+
+	<!-- Íæ¼ÒÑ¡ÔñÅÀËþÄÑ¶ÈÐÅÏ¢ -->
+	<command name="TowerSelectDifficulty" maxsize="1024" type="853" receiver="gamed">
+		<variable name="difficulty" type="number" comments="Ñ¡ÔñµÄÄÑ¶È, 1ÊÇÆÕÍ¨£¬2ÊÇÀ§ÄÑ"/>
+	</command>
+
+	<command name="TowerSelectDifficulty_Re" type="854" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="difficulty" type="number" comments="Ñ¡ÔñµÄÄÑ¶È"/>
+		<variable name="layer" type="number" comments="µ±Ç°²ãÊý£¬Ö»ÓÐretcodeÊÇ³É¹¦µÄÊ±ºò²ÅÓÐÒâÒå"/>
+	</command>
+
+	<!-- Íæ¼ÒµÃµ½µÚ¼¸²ãµÄÄÑ¶ÈÐÅÏ¢ -->
+	<command name="TowerGetLayerInfo" maxsize="1024" type="855" receiver="gamed">
+		<variable name="layer" type="number" comments="Ñ¡ÔñµÚ¼¸²ãµÄÄÑ¶ÈÐÅÏ¢,Õâ¸ö±äÁ¿ÏÈ²»ÒªÓÃ£¬»òÕß¸ú·þÎñÆ÷µÄµ±Ç°²ãÊý¶Ô±ÈÒ»ÏÂ"/>
+	</command>
+
+	<command name="TowerGetLayerInfo_Re" type="856" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="layer" type="number" comments="ËþµÄ²ãÊý"/>
+		<variable name="typ" type="number" comments="µ±Ç°²ãµÄÀàÐÍ£¬1´ò¹Ö£¬2±¦Ïä£¬3buff"/>
+		<variable name="buff_list" type="number" vector="true" comments="µ±typÎª3µÄÊ±ºòbuffÐÅÏ¢"/>
+		<variable name="buff_buy_flag" type="number" vector="true" comments="buff²ãÓÐÐ§£¬±íÊ¾buffÒÑ¾­±»¹ºÂòÁË"/>
+		<variable name="army_difficulty" type="number" comments="Ñ¡ÔñµÄµÐÈËµÄÐÅÏ¢"/>
+		<variable name="cur_army" type="TowerArmyInfoList" vector="true" comments="µ±typÎª1µÄÊ±ºòarmyÐÅÏ¢"/>
+		<variable name="cur_army_ids" type="number" vector="true" comments="µ±typÎª1µÄÊ±ºòarmy×éid"/>
+		<variable name="sweep_layer" type="number" comments="¿ÉÒÔÉ¨µ´µ½µÄ²ãÊý"/>	
+	</command>
+
+	<!-- Íæ¼ÒÑ¡Ôñ¹ÖÎïµÄÄÑ¶È -->
+	<command name="TowerSelectArmyInfo" maxsize="1024" type="857" receiver="gamed">
+		<variable name="difficulty" type="number" comments="Ñ¡ÔñµÄ¹ÖÎïµÄÄÑ¶È"/>
+	</command>
+
+	<command name="TowerSelectArmyInfo_Re" type="858" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="difficulty" type="number" comments="Ñ¡ÔñµÄ¹ÖÎïµÄÄÑ¶È"/>
+	</command>
+
+	<!-- ÉèÖÃ¹ÖÎïµÄÊôÐÔ -->
+	<command name="TowerSetArmyInfo" maxsize="1024" type="859" receiver="gamed">
+		<variable name="army_info" type="TowerArmyInfo" vector="true" comments="ÉèÖÃ¹ÖÎïµÄÊôÐÔ"/>
+	</command>
+
+	<!-- Íæ¼Ò´ò¿ª±¦Ïä -->
+	<command name="TowerOpenBox" maxsize="1024" type="860" receiver="gamed">
+		<variable name="layer" type="number"/>
+	</command>
+
+	<command name="TowerOpenBox_Re" type="861" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="layer" type="number"/>
+		<variable name="item" type="Item" vector="true" comments=""/>
+	</command>
+
+	<!-- Íæ¼Ò¹ºÂòbuff -->
+	<command name="TowerBuyBuff" maxsize="1024" type="862" receiver="gamed">
+		<variable name="layer" type="number"/>
+		<variable name="id" type="number" comments="×¢ÒâÁËÕâ¸öID²»ÊÇbuffid,¶øÊÇÉÏÒ»²ãµÄid"/>
+		<variable name="hero_id" type="number" comments="µ¥Ìå²Ù×÷Ê±ºò£¬Ö¸¶¨Ò»¸öÎä½«id£¬È«Ìå²»´«"/>
+	</command>
+
+	<command name="TowerBuyBuff_Re" type="863" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="layer" type="number"/>
+		<variable name="id" type="number" comments="×¢ÒâÁËÕâ¸öID²»ÊÇbuffid,¶øÊÇÉÏÒ»²ãµÄid"/>
+		<variable name="cur_star" type="number" comments="µ±Ç°ÐÇÊý"/>
+		<variable name="hero" type="ShiLianHeroInfo" vector="true" comments="Îä½«ÐÅÏ¢"/>
+	</command>
+
+	<!-- Íæ¼Ò½øÈëÕ½¶· -->
+	<command name="TowerJoinBattle" maxsize="1024" type="864" receiver="gamed">
+		<variable name="hero" type="number" vector="true"/>
+	</command>
+
+	<command name="TowerJoinBattle_Re" type="865" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="layer" type="number"/>
+	</command>
+
+	<!-- Íæ¼Ò½áÊøÕ½¶· -->
+	<command name="TowerEndBattle" maxsize="1024" type="866" receiver="gamed" lock="toplist_all_role">
+		<variable name="win_flag" type="number" comments="1´ú±í´òÓ®£¬2´ú±íÊ§°Ü£¬3´ú±íÌÓÅÜ"/>
+		<variable name="hero" type="ShiLianHeroInfo" vector="true"/>
+		<variable name="army" type="ShiLianHeroInfo" vector="true" comments="Õâ¸öÊÇµÐÈËµÄÑªÁ¿ÐÅÏ¢"/>
+		<variable name="star" type="Instance_Star_Condition" vector="true"/>	
+		<variable name="operations" type="PVEOperation" vector="true"/>
+	</command>
+
+	<command name="TowerEndBattle_Re" type="867" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="win_flag" type="number" comments="1´ú±í´òÓ®£¬2´ú±íÊ§°Ü£¬3´ú±íÌÓÅÜ"/>
+		<variable name="hero" type="ShiLianHeroInfo" vector="true"/>
+		<variable name="army" type="ShiLianHeroInfo" vector="true" comments="Õâ¸öÊÇµÐÈËµÄÑªÁ¿ÐÅÏ¢"/>
+		<variable name="all_star" type="number" comments="×ÜµÄÐÇÊý"/>
+		<variable name="cur_star" type="number" comments="µ±Ç°ÐÇÊý"/>
+		<variable name="history_best_layer" type="number" comments="ÀúÊ·×îºÃ³É¼¨"/>
+		<variable name="history_best_star" type="number" comments="ÀúÊ·×îºÃ³É¼¨ÐÇÊý"/>
+	</command>
+
+	<!-- Íæ¼ÒÁì½± -->
+	<command name="TowerGetRankPrize" maxsize="1024" type="868" receiver="gamed">	
+	</command>
+
+	<command name="TowerGetRankPrize_Re" type="869" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="item" type="TemporaryBackPackData"/>
+		<variable name="yestaday_rank" type="number" comments="×òÈÕÅÅÃû"/>
+		<variable name="yestaday_difficulty" type="number" comments="1ºÍ2´ú±íÄÑ¶È"/>
+		<variable name="get_prize_flag" type="number" comments="Áì½±±êÖ¾ 1:ÒÑ¾­ÁìÈ¡ 0£ºÃ»ÓÐÁì"/>
+	</command>
+
+	<!-- É¨Ëþ¸üÐÂÐÅÏ¢ -->
+	<command name="TowerUpdateRoleInfo" type="870" receiver="client" comments="ÊÕµ½Ö®ºóÖØÖÃ¿Í»§¶ËËùÓÐÏàÓ¦ÐÅÏ¢">
+		<variable name="difficulty" type="number" comments="Ñ¡ÔñµÄÄÑ¶È"/>
+	</command>
+
+	<!-- É¨µ´ -->
+	<command name="TowerSweep" maxsize="1024" type="871" receiver="gamed" lock="toplist_all_role">
+		<variable name="layer" type="number"/>
+		<variable name="difficulty" type="number"/>
+	</command>
+
+	<command name="TowerSweep_Re" type="872" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="layer" type="number"/>
+		<variable name="hero" type="ShiLianHeroInfo" vector="true"	comments="ÓÃÕâ¸öÊý¾ÝÈ¥¸üÐÂinjureÁÐ±í£¬Èç¹ûhp==0±íÊ¾ÂúÑª£¬¿Í»§¶Ë×Ô¼ºËãÏÂ£¬·þÎñÆ÷¹ýÀ´µÄinjured hp==0±íÊ¾ÂúÑª"/>
+		<variable name="all_star" type="number" comments="×ÜµÄÐÇÊý"/>
+		<variable name="cur_star" type="number" comments="µ±Ç°ÐÇÊý"/>
+		<variable name="cur_rank" type="number" comments="ÅÅÃû"/>
+		<variable name="difficulty" type="number"/>
+	</command>
+
+	<!-- 900-909 Íæ¼ÒµÄ´ðÌâÐ­Òé -->
+	<command name="DaTiGetInfo" maxsize="1024" type="900" receiver="gamed">
+	</command>
+
+	<command name="DaTiGetInfo_Re" maxsize="1024" type="901" receiver="client">
+		<variable name="cur_num" type="number" comments="½ñÌìµ±Ç°´ðÁË¼¸µÀÌâ"/>
+		<variable name="cur_right_num" type="number" comments="½ñÌìµ±Ç°´ð¶ÔÁË¼¸µÀÌâ"/>
+		<variable name="today_reward" type="number" comments="½ñÌìÊÇ·ñ¿ªÆôÁË´ðÌâ±¦Ïä"/>
+		<variable name="exp" type="number" comments="½ñÌì´ðÌâµÄ¾­Ñé»ñµÃ"/>
+		<variable name="yuanbao" type="number" comments="½ñÌì´ðÌâµÄÔª±¦»ñµÃ"/>
+	</command>
+
+	<command name="DaTiUpdateInfo" maxsize="1024" type="902" receiver="client">
+		<variable name="cur_num" type="number" comments="½ñÌìµ±Ç°´ðÁË¼¸µÀÌâ"/>
+		<variable name="cur_right_num" type="number" comments="½ñÌìµ±Ç°´ð¶ÔÁË¼¸µÀÌâ"/>
+		<variable name="today_reward" type="number" comments="½ñÌìÊÇ·ñ¿ªÆôÁË´ðÌâ±¦Ïä"/>
+		<variable name="exp" type="number" comments="½ñÌì´ðÌâµÄ¾­Ñé»ñµÃ"/>
+		<variable name="yuanbao" type="number" comments="½ñÌì´ðÌâµÄÔª±¦»ñµÃ"/>
+	</command>
+
+	<command name="DaTiAnswer" maxsize="1024" type="903" receiver="gamed">
+		<variable name="num" type="number" comments="µÚ¼¸µÀÌâ"/>
+		<variable name="right_flag" type="number" comments="1´ú±í´ð¶Ô£¬2´ú±í´ð´í"/>
+	</command>
+
+	<command name="DaTiAnswer_Re" maxsize="1024" type="904" receiver="client">
+		<variable name="retcode" type="number" comments="´ðÌâµÄ×´Ì¬"/>
+		<variable name="num" type="number" comments="µÚ¼¸µÀÌâ"/>
+		<variable name="right_flag" type="number" comments="1´ú±í´ð¶Ô£¬2´ú±í´ð´í"/>
+		<variable name="exp" type="number" comments="¾­Ñé½±Àø"/>
+		<variable name="item" type="Item" vector = "true" comments="ÎïÆ·½±Àø"/>
+	</command>
+
+	<command name="DaTiOpenBox" maxsize="1024" type="905" receiver="gamed">
+	</command>
+
+	<command name="DaTiOpenBox_Re" maxsize="1024" type="906" receiver="client">
+		<variable name="retcode" type="number" comments="¿ªÆô±¦ÏäÊÇ·ñ³É¹¦"/>
+		<variable name="exp" type="number" comments="¾­Ñé½±Àø"/>
+		<variable name="item" type="Item" vector="true" comments="ÎïÆ·½±Àø"/>
+	</command>
+
+	<!-- 910-930 Îä½«Ê±×°µÄÐ­Òé -->
+
+	<command name="SkinEquip" maxsize="1024" type="910" receiver="gamed">
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+	</command>
+
+	<command name="SkinEquip_Re" maxsize="1024" type="911" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+	</command>
+
+	<command name="SkinBuy" maxsize="1024" type="912" receiver="gamed">
+		<variable name="typ" type="number" comments="¹ºÂòÀàÐÍ£¬1´ú±íÔª±¦£¬2´ú±íµÄÊÇËéÆ¬¹ºÂò"/>
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+	</command>
+
+	<command name="SkinBuy_Re" maxsize="1024" type="913" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="number" comments="¹ºÂòÀàÐÍ£¬1´ú±íÔª±¦£¬2´ú±íµÄÊÇËéÆ¬¹ºÂò"/>
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+	</command>
+
+	<command name="SkinTimeOut" maxsize="1024" type="914" receiver="gamed">
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+	</command>
+
+	<command name="SkinTimeOut_Re" maxsize="1024" type="915" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+	</command>
+
+	<!--ÀÏ×°±¸´òÔì ²»ÒªÁË-->
+	<command name="WeaponForge" maxsize="1024" type="931" receiver="gamed">
+		<variable name="typ" type="number" comments="ÒÀÕÕË³Ðò£¬1 2 3"/>
+	</command>
+
+	<command name="WeaponForge_Re" maxsize="1024" type="932" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="number" comments="ÒÀÕÕË³Ðò£¬1 2 3"/>
+		<variable name="weapon_info" type="WeaponItem"/>
+	</command>
+
+	<command name="WeaponResetSkill" maxsize="1024" type="933" receiver="gamed">
+		<variable name="typ" type="number" comments="1:Íæ¼ÒÈ·¶¨ÎäÆ÷Ó¡ 0£ºÍæ¼ÒËæ»úÎäÆ÷Ó¡"/>
+	</command>
+
+	<command name="WeaponResetSkill_Re" maxsize="1024" type="934" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="reset_time" type="number" comments="ÖØÖÃ´ÎÊý"/>
+		<variable name="skill_pro" type="WeaponSkill" vector="true"/>
+	</command>
+
+	<command name="WeaponForgeGetInfo" maxsize="1024" type="935" receiver="gamed">
+	</command>
+
+	<command name="WeaponForgeGetInfo_Re" maxsize="1024" type="936" receiver="client">
+		<variable name="today" type="number" comments="½ñÌìÊÇ¿ª·þµÚ¶àÉÙÌì"/>
+		<variable name="typ" type="number"/>
+		<variable name="reset_time" type="number" comments="ÖØÖÃ´ÎÊý"/>
+		<variable name="weapon_info" type="WeaponItem" comments="´òÔìÖÐµÄÎäÆ÷ÐÅÏ¢£¬Ã»ÓÐresp.weapon_info.base_item.tid==0"/>	
+	</command>
+
+	<!--ÐÂ×°±¸´òÔì-->
+	<command name="WeaponMakeGetInfo" maxsize="1024" type="920" receiver="gamed">
+	</command>
+
+	<command name="WeaponMakeGetInfo_Re" maxsize="1024" type="921" receiver="client">
+		<variable name="num" type="number" comments="½ñÌìÒÑ¾­´òÔìµÄ´ÎÊý"/>
+		<variable name="time" type="number" comments="time¿ÉÒÔÁìÈ¡¿óÊ¯£¬0µÄ»°¿ÉÒÔÁ¢¿ÌÁìÈ¡"/>
+		<variable name="level" type="number" comments="Í¼¼øµ±Ç°µÈ¼¶"/>
+		<variable name="exp" type="number" comments="Í¼¼øµ±Ç°¾­Ñé"/>
+		<variable name="weapon_active" type="number" vector="true"  comments="ÒÑ¾­¼¤»îµÄÎäÆ÷Í¼¼ø"/>
+		<variable name="weapon_not_active" type="number" vector="true"  comments="ÉÐÎ´¼¤»îµÄÎäÆ÷Í¼¼ø"/>
+	</command>
+
+	<command name="WeaponMake" maxsize="1024" type="922" receiver="gamed">
+		<variable name="typ" type="number" comments="´òÔì¼¸´Î£¬Ö»ÄÜÊÇ1ºÍ5"/>
+		<variable name="cost_type" type="number" comments="0£ºµÀ¾ß 1£ºÔª±¦"/> 
+		<variable name="lottery_id" type="number" comments="µôÂäid"/>
+	</command>
+
+	<command name="WeaponMake_Re" maxsize="1024" type="923" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="typ" type="number" comments="´òÔì¼¸´Î£¬Ö»ÄÜÊÇ1ºÍ5"/>
+		<variable name="cost_type" type="number" comments="0£ºµÀ¾ß 1£ºÔª±¦"/> 
+		<variable name="lottery_id" type="number" comments="µôÂäid"/>
+		<variable name="num" type="number" comments="½ñÌìÒÑ¾­´òÔìµÄ´ÎÊý"/>
+		<variable name="item" type="Item" vector="true" comments="µôÂäÎïÆ·"/>
+	</command>
+
+	<command name="WeaponMakeGetStone" maxsize="1024" type="924" receiver="gamed">
+	</command>
+
+	<command name="WeaponMakeGetStone_Re" maxsize="1024" type="925" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="time" type="number" comments="time¿ÉÒÔÁìÈ¡¿óÊ¯£¬0µÄ»°¿ÉÒÔÁ¢¿ÌÁìÈ¡"/>
+	</command>
+
+	<command name="WeaponMakeActive" maxsize="1024" type="926" receiver="gamed">
+		<variable name="item_id" type="number" comments="×¢ÒâÕâÊÇÎïÆ·±íid£¬²»ÊÇÎäÆ÷id"/>
+	</command>
+
+	<command name="WeaponMakeActive_Re" maxsize="1024" type="927" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="item_id" type="number" comments=""/>
+		<variable name="level" type="number" comments="Í¼¼øµ±Ç°µÈ¼¶"/>
+		<variable name="exp" type="number" comments="Í¼¼øµ±Ç°¾­Ñé"/>
+	</command>
+
+	<command name="SkinUpdateInfo" maxsize="1024" type="916" receiver="client">
+		<variable name="addflag" type="number" comments="1´ú±íÌí¼ÓÆ¤·ô£¬2´ú±íÉ¾³ýÆ¤·ô£¬É¾³ýÆ¤·ôÖ»¿ÉÄÜÊÇµ½ÆÚ£¬ÆäÓàµÄ»¹Ã»ÓÐ"/>
+		<variable name="skinid" type="number" comments="Ê±×°µÄID"/>
+		<variable name="time" type="number" comments="¹ýÆÚÊ±¼ä"/>
+		<variable name="item" type="Item" comments="ÖØ¸´µÄÊ±×°½øÐÐ·Ö½âµÃµ½ÎïÆ·"/>
+	</command>
+
+	<command name="TestFloat" type="941" receiver="client">
+		<variable name="seed" type="number"/>
+		<variable name="count" type="number"/>
+	</command>
+	<command name="TestFloat_Re" maxsize="102400" type="942" receiver="gamed">
+		<variable name="seed" type="number"/>
+		<variable name="count" type="number"/>
+		<variable name="result" type="string"/>
+	</command>
+
+	<!--¾üÎä±¦¿â-->
+	<command name="MilitaryGetInfo" type="950" maxsize="1024" receiver="gamed">
+	</command>
+	
+	<command name="MilitaryGetInfo_Re" type="951" maxsize="1024" receiver="client">
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+		<variable name="stage_difficult" type="number" comments="µ±Ç°ÄÑ¶È"/>
+		<variable name="horse_id" type="number" comments="horse"/>
+		<variable name="stage_info" type="MilitaryStageInfo" vector="true" comments="¹Ø¿¨ÐÅÏ¢"/>
+	</command>
+
+	<command name="MilitarySweep" type="952" maxsize="1024" receiver="gamed">
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+	</command>
+
+	<command name="MilitarySweep_Re" type="953" maxsize="1024" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+		<variable name="cd" type="number" comments="µ±Ç°¹Ø¿¨cd"/>
+		<variable name="times" type="number" comments="µ±Ç°¹Ø¿¨½øÈë´ÎÊý"/>
+		<variable name="item" type="Item" vector="true"/>
+		<variable name="exp" type="number" comments="¾­Ñé"/>
+	</command>
+
+	<command name="MilitaryJoinBattle" maxsize="1024" type="954" receiver="gamed">
+		<variable name="hero_id" type="number" comments="³öÕ½Îä½«id"/>
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+		<variable name="difficult" type="number" comments="ÄÑ¶È"/>
+	</command>
+
+	<command name="MilitaryJoinBattle_Re" maxsize="1024" type="955" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="hero_id" type="number" comments="³öÕ½Îä½«id"/>
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+		<variable name="difficult" type="number" comments="ÄÑ¶È"/>
+	</command>
+
+	<command name="MilitaryEndBattle" maxsize="1024" type="956" receiver="gamed">
+		<variable name="reward_param" type="number" comments="ÓÃÀ´¼ÆËã½±ÀøµÄ°Ù·Ö±È²ÎÊý£¬±ÈÈç60%£¬¾Í¸³Öµ60"/>
+		<variable name="hurt" type="number" comments="±¾´ÎÉËº¦"/>
+		<variable name="operations" type="PVEOperation" vector="true"/>
+	</command>
+
+	<command name="MilitaryEndBattle_Re" maxsize="1024" type="957" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="reward_param" type="number" comments="ÓÃÀ´¼ÆËã½±ÀøµÄ°Ù·Ö±È²ÎÊý£¬±ÈÈç60%£¬¾Í¸³Öµ60"/>
+		<variable name="hurt" type="number" comments="±¾´ÎÉËº¦"/>
+		<variable name="record" type="number" comments="±¾´ÎÊÇ·ñÆÆ¼ÍÂ¼"/>
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+		<variable name="difficult" type="number" comments="ÄÑ¶È"/>
+		<variable name="item" type="Item" vector="true" comments="½±Àø"/>
+		<variable name="exp" type="number" comments="¾­Ñé"/>
+	</command>
+
+	<command name="MilitaryUpdateInfo" maxsize="1024" type="958" receiver="client">
+		<variable name="stage_id" type="number" comments="µ±Ç°»î¶¯ÀàÐÍid"/>
+		<variable name="stage_difficult" type="number" comments="µ±Ç°ÄÑ¶È"/>
+		<variable name="stage_info" type="MilitaryStageInfo" vector="true" comments="¹Ø¿¨ÐÅÏ¢"/>	
+	</command>
+
+	<command name="HotPvpVideoList" maxsize="1024" type="1001" receiver="gamed" lock="hot_pvp_video">
+		<variable name="seq_max" type="number" comments="¿Í»§¶ËÒÑ¾­ÊÕµ½videoµÄ×î´óseq£¬Ð¡ÓÚµÈÓÚ¸ÃseqµÄvideo¾Í²»ÓÃÔÙ·¢ËÍÁË"/>
+	</command>
+	<command name="HotPvpVideoList_Re" type="1002" receiver="client">
+		<variable name="list" type="HotPvpVideo" vector="true"/>
+	</command>
+
+	<command name="HotPvpVideoGet" maxsize="1024" type="1003" receiver="gamed" lock="hot_pvp_video">
+		<variable name="seq" type="number"/>
+	</command>
+
+	<command name="ZhanliGetInfo" type="1020" maxsize="1024" receiver="gamed" lock="toplist">
+	</command>
+
+	<command name="ZhanliGetInfo_Re" type="1021" maxsize="1024" receiver="client">
+		<variable name="zhanli" type="number" comments="Íæ¼ÒÕ½Á¦"/>
+		<variable name="members" type="TopListData" vector="true" comments=""/>
+	</command>
+
+	    <!--¼¤»îÂë¶Ò»»½±Àø-->
+	<command name="GetActiveCodeRward" type="1030" maxsize="1024" receiver="gamed">
+		<variable name="code" type="string"/>
+	</command>
+
+	<command name="GetActiveCodeRward_Re" type="1031" maxsize="1024" receiver="client">
+		<variable name="retcode" type="number" comments=""/>
+		<variable name="item" type="Item" vector="true" comments="½±Àø"/>
+	</command>
+
+	<!--¾º¼¼³¡¸üÐÂÊý¾Ý-->
+	<command name="PveArenaUpdateRefreshTime" type="1040" maxsize="1024" receiver="client">
+		<variable name="pve_refreshtime" type="number" comments="ÏÂ´Î¾º¼¼³¡½øÈë´ÎÊý×Ô¶¯»Ö¸´Ê±¼ä"/>
+	</command>
+
+<!--
+	Ê¹ÓÃGetVideo_ReÌæ´ú
+	<command name="HotPvpVideoGet_Re" type="1004" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="data" type="PvpVideo"/>
+	</command>
+-->
+
+	<command name="PrivateChat" maxsize="819200" type="10003" receiver="gamed,client" extra_roles_max="1">
+		<variable name="src" type="RoleBrief"/>
+		<variable name="dest" type="RoleBrief"/>
+		<variable name="dest_id" type="string"/>
+		<variable name="text_content" type="string"/>
+		<variable name="speech_content" type="string"/>
+		<variable name="time" type="number"/>
+		<variable name="typ" type="number"/>
+	</command>
+	
+	<command name="PublicChat" maxsize="819200" type="10004" receiver="gamed,client" lock="misc">
+		<variable name="src" type="RoleBrief"/>
+		<variable name="text_content" type="string"/>
+		<variable name="speech_content" type="string"/>
+		<variable name="time" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="channel" type="number" comments="2´ú±íµÄÊÇÊÀ½ç£¬3´ú±íµÄÊÇ°ï»á"/>
+	</command>
+
+	<command name="RoleForbidTalk" type="10005" receiver="client">
+		<variable name="begintime" type="number"/>
+		<variable name="time" type="number"/>
+		<variable name="nitifytouser" type="string"/>
+	</command>
+
+	<!--»ñÈ¡ºÃÓÑÁÐ±íµÄÐÅÏ¢-->
+	<command name="ListFriends" maxsize="1024" type="10006" receiver="gamed"/>
+	<command name="ListFriends_Re" type="10007" receiver="client">
+		<variable name="friends" type="Friend" vector="true"/>
+		<variable name="requests" type="Friend" vector="true"/>
+		<variable name="black_list" type="RoleBrief" vector="true"/>
+	</command>
+	
+	<!--ÉêÇëÌí¼ÓºÃÓÑ-->
+	<command name="FriendRequest" maxsize="1024" type="10008" receiver="gamed" extra_roles_max="1">
+		<variable name="dest_id" type="string"/>
+	</command>
+	<command name="FriendRequest_Re" maxsize="1024" type="10009" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="dest_id" type="string"/>
+	</command>
+	
+	<!--ÓÐÐÂµÄºÃÓÑÉêÇëÌí¼Ó-->
+	<command name="FriendAddRequest" maxsize="1024" type="10010" receiver="client">
+		<variable name="requests" type="Friend"/>
+	</command>
+
+	<!--¶ÔºÃÓÑÉêÇë½øÐÐ»Ø¸´-->
+	<command name="FriendReply" maxsize="1024" type="10011" receiver="gamed" extra_roles_max="1">
+		<variable name="src_id" type="string"/>
+		<variable name="accept" type="boolean"/>
+	</command>
+	<command name="FriendReply_Re" maxsize="1024" type="10012" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="src_id" type="string"/>
+		<variable name="accept" type="boolean"/>
+	</command>
+	
+	<!--Ìí¼ÓÁËÐÂµÄºÃÓÑ-->
+	<command name="NewFriend" type="10013" receiver="client">
+		<variable name="friend" type="Friend"/>
+	</command>
+
+	<!--É¾³ýºÃÓÑ-->
+	<command name="RemoveFriend" maxsize="1024" type="10014" receiver="gamed">
+		<variable name="dest_id" type="string"/>
+	</command>
+	<command name="RemoveFriend_Re" type="10015" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="dest_id" type="string"/>
+	</command>
+	
+	<!--É¾³ýºÃÓÑÉêÇë-->
+	<command name="FriendDelRequest" maxsize="1024" type="10016" receiver="client">
+		<variable name="role_id" type="string"/>
+	</command>
+	
+	<!--¸üÐÂÍæ¼ÒµÄºÃÓÑÐÅÏ¢-->
+	<command name="FriendUpdateInfo" maxsize="1024" type="10017" receiver="client">
+		<variable name="friend_info" type="Friend"/>
+	</command>
+
+
+	<!--°ï»áÐ­Òé-->
+
+	<!--»ñµÃ×Ô¼ºµÄ°ï»áÐÅÏ¢,Õâ¸öÊÇ×Ô¼ºÓÐ°ï»áµÄÊ±ºò,»òÕßÊÇµ±Íæ¼ÒÉêÇë³É¹¦¼ÓÈë°ï»áµÄÊ±ºò¶¼»á·¢Õâ¸öÐ­Òé-->
+	<command name="MafiaGet" type="10101" receiver="gamed" maxsize="1024" extra_mafias_max="1"/>
+	<command name="MafiaGet_Re" type="10102" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="mafia" type="Mafia"/>
+	</command>
+
+	<!--´´½¨°ï»á-->
+	<command name="MafiaCreate" type="10103" receiver="gamed" maxsize="1024">
+		<variable name="name" type="string"/>
+		<variable name="flag" type="number"/>
+	</command>
+	<command name="MafiaCreate_Re" type="10104" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="mafia" type="Mafia"/>
+	</command>
+	
+	<!--»ñµÃ°ï»áÁÐ±í-->
+	<command name="MafiaList" type="10105" receiver="gamed" maxsize="1024" lock="mafia_info"/>
+	<command name="MafiaList_Re" type="10106" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="mafia_info" type="MafiaBrief" vector="true"/>
+	</command>
+
+	<!--»ñµÃ×Ô¼ºµÄ°ï»áÐÅÏ¢,ÔÚÕâ¸öÐÅÏ¢ÀïÃæÊÇ²é¿´×Ô¼ºÊÇ·ñÓÐ°ï»á£¬ÒÔ¼°×Ô¼ºÉêÇëµÄ°ï»áÐÅÏ¢ °ï»áµÄ1ºÅÐ­Òé-->
+	<command name="MafiaGetSelfInfo" type="10107" receiver="gamed" maxsize="1024"/>
+	<command name="MafiaGetSelfInfo_Re" type="10108" receiver="client">
+		<variable name="mafia_info" type="MafiaSelfInfo"/>
+	</command>
+
+	<!--µ±×Ô¼ºµÄ°ï»áÃû×Ö£¬×Ô¼ºµÄ°ï»áÖ°Î»£¬ÒÔ¼°×Ô¼ºÉêÇëµÄ°ï»áÐÅÏ¢·¢Éú±ä»¯µÄÊ±ºò-->
+	<command name="MafiaUpdateSelfInfo" type="10109" receiver="client">
+		<variable name="mafia_info" type="MafiaSelfInfo"/>
+	</command>
+
+	<!--ÉêÇë¼ÓÈë°ï»á-->
+	<command name="MafiaApply" type="10110" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="id" type="string"/>
+	</command>
+	<command name="MafiaApply_Re" type="10111" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="id" type="string"/>
+	</command>
+
+	<!--×Ô¼ºÀë¿ª°ï»á-->
+	<command name="MafiaQuit" type="10112" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+	</command>
+	<command name="MafiaQuit_Re" type="10113" receiver="client">
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<!--µÃµ½×Ô¼º°ï»áµÄÉêÇëÁÐ±í-->
+	<command name="MafiaGetApplyList" type="10114" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+	</command>
+	<command name="MafiaGetApplyList_Re" type="10115" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="apply_info" type="MafiaApplyRoleInfo" vector="true"/>
+	</command>
+
+	<!--Í¬Òâ£¬¾Ü¾ø£¬Ò»¼üÇå¿Õ,Ò»¼üÇå¿ÕÏàµ±ÓÚ¶ÔËùÓÐµÄÉêÇë·¢ËÍ¾Ü¾øÉêÇëÁÐ±í-->
+	<command name="MafiaOperateApplyList" type="10116" receiver="gamed" maxsize="1024" extra_roles_max="1" extra_mafias_max="1">
+		<variable name="accept" type="number" comments="1´ú±íÍ¬Òâ£¬0´ú±í¾Ü¾ø"/>
+		<variable name="role_id" type="string"/>
+		<variable name="mafia_id" type="string"/>
+	</command>
+	<command name="MafiaOperateApplyList_Re" type="10117" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="accept" type="number" comments="1´ú±íÍ¬Òâ£¬0´ú±í¾Ü¾ø"/>
+		<variable name="role_id" type="string"/>
+		<variable name="mafia_id" type="string"/>
+	</command>
+
+	<!--°ï»áÉèÖÃ¼ÓÈëµÈ¼¶,ÒÔ¼°ÊÇ·ñÐèÒªÅú×¼-->
+	<command name="MafiaSetLevelLimit" type="10118" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="level" type="number"/>
+		<variable name="need_approval" type="number"/>
+	</command>
+	<command name="MafiaSetLevelLimit_Re" type="10119" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="need_approval" type="number"/>
+	</command>
+
+	<!--°ï»áÉèÖÃ¹«¸æ-->
+	<command name="MafiaSetAnnounce" type="10120" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="announce" type="string"/>
+	</command>
+	<command name="MafiaSetAnnounce_Re" type="10121" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="announce" type="string"/>
+	</command>
+
+	<!--°ï»áÌß³öÄ³Ò»¸öÈË-->
+	<command name="MafiaKickout" type="10122" receiver="gamed" maxsize="1024" extra_roles_max="1" extra_mafias_max="1">
+		<variable name="role_id" type="string"/>
+	</command>
+	<command name="MafiaKickout_Re" type="10123" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="role_id" type="string"/>
+	</command>
+
+	<!--°ï»á¸üÐÂÉêÇëÁÐ±í-->
+	<command name="MafiaUpdateApplyList" type="10124" receiver="client">
+		<variable name="del_flag" type="number" comments="0´ú±íÌí¼Ó£¬1´ú±íÉ¾³ý"/>
+		<variable name="apply_info" type="MafiaApplyRoleInfo"/>
+	</command>
+
+	<!--°ï»á¸üÐÂ½çÃæµÄÏÔÊ¾ÐÅÏ¢£¬°üÀ¨³ýÁËÉêÇëÁÐ±íºÍ³ÉÔ±ÁÐ±í£¬°ï»á¾­Ñé£¬¼Àìë¾­ÑéÒÔÍâµÄÆäÓàÐÅÏ¢-->
+	<command name="MafiaUpdateMafiaInfo" type="10125" receiver="client">
+		<variable name="info" type="MafiaInterfaceInfo"/>
+	</command>
+
+	<!--°ï»á¸üÐÂ°ï»á¾­ÑéºÍ°ï»á¼Àìë½ø¶ÈÐÅÏ¢,ÒÔ¼°°ï»áµÈ¼¶-->
+	<command name="MafiaUpdateExp" type="10126" receiver="client">
+		<variable name="exp" type="number" comments="°ï»á¾­Ñé"/>
+		<variable name="level" type="number" comments="°ï»áµÈ¼¶"/>
+		<variable name="jisi" type="number" comments="°ï»á¼Àìë½ø¶È"/>
+	</command>
+
+	<!--°ï»á¸üÐÂ³ÉÔ±ÐÅÏ¢-->
+	<command name="MafiaUpdateMemberInfo" type="10127" receiver="client">
+		<variable name="flag" type="number" comments="0´ú±í¸üÐÂÐÅÏ¢£¬1´ú±íÌí¼ÓÐÂµÄ³ÉÔ±£¬2´ú±íÉ¾³ý³ÉÔ±"/>
+		<variable name="member" type="MafiaMember" comments="³ÉÔ±ÐÅÏ¢"/>
+	</command>
+
+	<!--°ï»á¸üÐÂ°ï»áÊÂ¼þ-->
+	<command name="MafiaUpdateNoticeInfo" type="10128" receiver="client">
+		<variable name="notice_info" type="MafiaNoticeInfo" comments="ÊÂ¼þÐÅÏ¢"/>
+	</command>
+
+	<!--°ï»áÐÞ¸ÄÄ³Ò»¸öÈËµÄÖ°Î»-->
+	<command name="MafiaChangeMenberPosition" type="10129" receiver="gamed" maxsize="1024" extra_roles_max="1" extra_mafias_max="1">
+		<variable name="position" type="number" comments="µ÷ÕûºóµÄÖ°Î»"/>
+		<variable name="role_id" type="string"/>
+	</command>
+	<command name="MafiaChangeMenberPosition_Re" type="10130" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="position" type="number" comments="µ÷ÕûºóµÄÖ°Î»"/>
+		<variable name="role_id" type="string"/>
+	</command>
+
+	<!--°ïÖ÷ìøÈÃ-->
+	<command name="MafiaShanRang" type="10131" receiver="gamed" maxsize="1024" extra_roles_max="1" extra_mafias_max="1">
+		<variable name="role_id" type="string"/>
+	</command>
+	<command name="MafiaShanRang_Re" type="10132" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="role_id" type="string"/>
+	</command>
+
+	<!--°ï»á¼Àìë-->
+	<command name="MafiaJiSi" type="10133" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="jisi_typ" type="number"/>
+	</command>
+	<command name="MafiaJiSi_Re" type="10134" receiver="client">
+		<variable name="jisi_typ" type="number"/>
+		<variable name="retcode" type="number"/>
+	</command>
+
+	<!--°ï»áÐûÑÔ-->
+	<command name="MafiaDeclaration" type="10135" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="declaration" type="string"/>
+		<variable name="broadcast_flag" type="number"/>
+	</command>
+	<command name="MafiaDeclaration_Re" type="10136" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="declaration" type="string"/>
+		<variable name="broadcast_flag" type="number"/>
+	</command>
+
+	<!--°ï»áÐÞ¸ÄÃû×Ö-->
+	<command name="MafiaChangeName" type="10137" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="name" type="string"/>
+	</command>
+	<command name="MafiaChangeName_Re" type="10138" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="name" type="string"/>
+	</command>
+
+	<!--°ï»á²é¿´ÐÅÏ¢-->
+	<command name="MafiaSeeInfo" type="10139" receiver="gamed" maxsize="1024" lock="mafia_info">
+		<variable name="mafia_id" type="string"/>
+	</command>
+	<command name="MafiaSeeInfo_Re" type="10140" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="mafia_info" type="MafiaBrief"/>
+	</command>
+
+	<!--°ïÖúÈº·¢ÓÊ¼þ-->
+	<command name="MafiaBangZhuSendMail" type="10141" receiver="gamed" maxsize="1024" extra_mafias_max="1">
+		<variable name="subject" type="string"/>
+		<variable name="context" type="string"/>
+	</command>
+	<command name="MafiaBangZhuSendMail_Re" type="10142" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="subject" type="string"/>
+		<variable name="context" type="string"/>
+	</command>
+
+	<!--°ï»áÕÐÄ¼-->
+	<command name="MafiaDeclarationBroadCast" type="10143" receiver="client">
+		<variable name="mafia_id" type="string"/>
+		<variable name="mafia_name" type="string"/>
+		<variable name="info" type="string"/>
+		<variable name="time" type="number"/>
+	</command>
+
+	
+	<command name="Ping" type="10201" receiver="gamed" maxsize="1024">
+		<variable name="client_send_time" type="number"/>
+	</command>
+	<command name="Ping_Re" type="10202" receiver="client">
+		<variable name="client_send_time" type="number"/>
+	</command>
+
+	<command name="UDPPing" type="10203" receiver="gamed" maxsize="1024">
+		<variable name="client_send_time" type="number"/>
+	</command>
+	<command name="UDPPing_Re" type="10204" receiver="client">
+		<variable name="client_send_time" type="number"/>
+	</command>
+
+	<command name="UDPClientTimeRequest" type="10205" receiver="client">
+	</command>
+	<command name="UDPClientTimeRequest_Re" type="10206" receiver="gamed" maxsize="1024">
+		<variable name="local_time" type="number"/>
+		<variable name="server_time" type="number"/>
+	</command>
+
+	<command name="PVPInvite" type="10301" receiver="gamed,client" maxsize="1024" extra_roles_max="1">
+		<variable name="dest_id" type="string"/>
+		<variable name="src" type="RoleBrief"/>
+		<variable name="mode" type="number"/>
+	</command>
+	<command name="PVPReply" type="10302" receiver="gamed" maxsize="1024" extra_roles_max="1">
+		<variable name="src_id" type="string"/>
+		<variable name="accept" type="boolean"/>
+	</command>
+	<command name="PVPPrepare" type="10303" receiver="client">
+		<variable name="id" type="number"/>
+		<variable name="player1" type="RoleBrief"/>
+		<variable name="player2" type="RoleBrief"/>
+		<variable name="N" type="number"/>
+		<variable name="mode" type="number"/>
+		<variable name="p2p_magic" type="number"/>
+		<variable name="p2p_peer_ip" type="string"/>
+		<variable name="p2p_peer_port" type="number"/>
+	</command>
+	<!-- ban/select/... -->
+	<command name="PVPReady" maxsize="1024" type="10304" receiver="gamed" extra_pvps_max="1"/>
+	<command name="PVPBegin" type="10305" receiver="client">
+		<variable name="fight_start_time" type="number"/>
+		<variable name="ip" type="string"/>
+		<variable name="port" type="number"/>
+		<variable name="seed" type="number"/>
+	</command>
+
+	<command name="PVPOperation" maxsize="1024" type="10306" receiver="gamed,client" extra_roles_max="1" extra_pvps_max="1">
+		<variable name="client_tick" type="number"/>
+		<variable name="op" type="string"/>
+		<variable name="crc_tick" type="number"/>
+		<variable name="crc" type="string"/>
+	</command>
+	<command name="PVPOperationSet" type="10307" receiver="client">
+		<variable name="client_tick" type="number"/>
+		<variable name="player1_op" type="string"/>
+		<variable name="player2_op" type="string"/>
+	</command>
+
+	<command name="PVPEnd" maxsize="1024" type="10308" receiver="gamed,client" extra_pvps_max="1">
+		<variable name="result" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="pvp_typ" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="win_count" type="number"/>
+		<variable name="score" type="number" comments="¾«²Ê³Ì¶ÈÆÀ·Ö"/>
+		<variable name="duration" type="number" comments="³ÖÐøÊ±³£"/>
+	</command>
+	
+	<command name="PVPError" type="10309" receiver="client">
+		<variable name="result" type="number"/>
+	</command>
+
+	<command name="PVPPeerLatency" maxsize="1024" type="10310" receiver="gamed,client" extra_roles_max="1" extra_pvps_max="1">
+		<variable name="latency" type="number"/>
+	</command>
+
+	<command name="PVPPause" type="10311" receiver="client">
+		<variable name="pause_tick" type="number"/>
+		<variable name="role_id" type="string" comments="¶ÏÏßÕß"/>
+	</command>
+
+	<command name="PVPPause_Re" type="10312" receiver="gamed">
+		<variable name="index" type="number"/>
+	</command>
+
+	<command name="PVPContinue" type="10313" receiver="client">
+		<variable name="fight_continue_time" type="number"/>
+	</command>
+
+	<command name="PVPSendAutoVoice" maxsize="1024" type="10314" receiver="gamed,client" extra_roles_max="1" extra_pvps_max="1">
+		<variable name="hero_id" type="number"/>
+		<variable name="voice_id" type="number"/>
+	</command>
+
+	<!--pvpÁ÷Á¿ÓÅ»¯Ïà¹Ø-->
+	<command name="PVPOperationRival" type="10315" receiver="client" comments="·þÎñÆ÷×ª·¢µÄ¶ÔÊÖ²Ù×÷">
+		<variable name="tick" type="number" comments="rival op¶ÔÓ¦µÄtick"/>
+		<variable name="op" type="string" comments="rival op"/>
+		<variable name="confirm_tick" type="number" comments="¸Ãtick(°üº¬)Ö®Ç°µÄmy op·þÎñÆ÷¶¼ÒÑ¾­ÊÕµ½²¢È·ÈÏÓÐÐ§ÁË, 0±íÊ¾ÎÞÒâÒå"/>
+	</command>
+	<command name="PVPOperationReset" type="10316" receiver="client" comments="¼º·½²Ù×÷²»±»·þÎñÆ÷ÈÏ¿É£¬·þÎñÆ÷Ç¿ÖÆÖØÖÃ">
+		<variable name="tick" type="number"/>
+		<variable name="op" type="string"/>
+	</command>
+	<command name="PVPOperationCommit" maxsize="1024" type="10317" receiver="gamed" comments="ÇëÇó·þÎñÆ÷¾¡¿ìÈ·ÈÏ¼º·½²Ù×÷">
+	</command>
+
+	<command name="PVPDumpOP" type="10319" receiver="client">
+	</command>
+	
+	<!--Íê³ÉµÄÕ½ÒÛid-->
+	<command name="UpdateHaveFinishBattle" maxsize="1024" type="10318" receiver="client">
+		<variable name="battle_id" type="number" vector="true"/>
+	</command>
+
+	<command name="TopListGet" type="20000" receiver="gamed" maxsize="1024" lock="toplist">
+		<variable name="top_type" type="number"/>
+		<variable name="top_flag" type="number"/>
+	</command>
+	<command name="TopListGet_Re" type="20001" receiver="client">
+		<variable name="top_type" type="number"/>
+		<variable name="top_flag" type="number"/>
+		<variable name="retcode" type="number"/>
+		<variable name="members" type="TopListData" vector="true"/>
+		<variable name="reward_info" type="number" vector="true" comments="ÅÅÐÐ½±ÀøÏà¹Ø"/>
+	</command>
+
+	<command name="RoleNameQuery" maxsize="1024" type="10321" receiver="gamed" lock="rolenamecache">
+		<variable name="pattern" type="string" comments="¹Ø¼ü´Ê"/>
+		<variable name="reason" type="number" comments="¹¦ÄÜ£¬1ÎªÌí¼ÓºÃÓÑ"/>
+	</command>
+	<command name="RoleNameQuery_Re" type="10322" receiver="client">
+		<variable name="pattern" type="string"/>
+		<variable name="results" type="RoleBrief" vector="true"/>
+		<variable name="reason" type="number"/>
+	</command>
+	
+	<command name="BuyRefreshShopTimes" maxsize="1024" type="10323" receiver="gamed">
+		<variable name="shop_id" type="number"/>
+	</command>
+	<command name="BuyRefreshShopTimes_Re" type="10324" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="shop_id" type="number"/>
+	</command>
+
+	<command name="GetShopRecoveryTime" maxsize="1024" type="10325" receiver="gamed">
+		<variable name="shop_id" type="number"/>
+	</command>
+
+	<command name="GetShopRecoveryTime_Re" type="10326" receiver="client">
+		<variable name="shop_id" type="number"/>
+		<variable name="refresh_times" type="number" comments="Ê£ÓàË¢ÐÂ´ÎÊý"/>
+		<variable name="recovery_time" type="number" comments="»Ö¸´¿ªÊ¼Ê±¼ä"/>
+	</command>
+
+	<command name="GetActivityReward" maxsize="1024" type="10327" receiver="gamed">
+		<variable name="activity_id" type="number" comments="»î¶¯id"/>
+	</command>
+
+	<command name="GetActivityReward_Re" type="10328" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="activity_id" type="number" comments="»î¶¯id"/>
+		<variable name="rewards" type="Item" vector="true"/>
+	</command>
+
+	<command name="GetJiaNianHuaInfo" maxsize="1024" type="10329" receiver="gamed">
+	</command>
+
+	<command name="GetJiaNianHuaInfo_Re" type="10330" receiver="client">
+		<variable name="join_flag" type="boolean" comments="ÊÇ·ñ¿ªÆô¼ÎÄê»ª»î¶¯"/>
+	</command>
+
+	<command name="GetClientLocalTime" type="10331" receiver="client">
+		<variable name="server_ms" type="number"/>
+	</command>
+	<command name="GetClientLocalTime_Re" maxsize="1024" type="10332" receiver="gamed">
+		<variable name="server_ms" type="number"/>
+		<variable name="client_ms" type="number"/>
+	</command>
+
+	<command name="GMcmd_Bull" maxsize="1024" type="99996" receiver="client">
+		<variable name="text" type="string" comments="GM¹«¸æÄÚÈÝ"/>
+	</command>
+
+	<command name="GMCommand" maxsize="1024" type="99997" receiver="gamed">
+		<variable name="gm_id" type="string"/>
+		<variable name="typ" type="string"/>
+		<variable name="arg1" type="string"/>
+		<variable name="arg2" type="string"/>
+		<variable name="arg3" type="string"/>
+		<variable name="arg4" type="string"/>
+	</command>
+	<command name="GMCommand_Re" type="99998" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="typ" type="string"/>
+		<variable name="arg1" type="string"/>
+		<variable name="arg2" type="string"/>
+		<variable name="arg3" type="string"/>
+		<variable name="arg4" type="string"/>
+	</command>
+
+	<command name="DebugCommand" maxsize="1024" type="99999" receiver="gamed">
+		<variable name="typ" type="string"/>
+		<variable name="count1" type="number"/>
+		<variable name="count2" type="number"/>
+		<variable name="count3" type="number"/>
+		<variable name="count4" type="number"/>
+	</command>
+
+	<!-- type>1000000Ê±£¬¼´Ê¹playerÃ»ÓÐ½ÇÉ«cmdÒ²¿ÉÒÔÖ´ÐÐ£¬²»ÒªÀÄÓÃ!!! -->
+	<command name="GetRoleInfo" maxsize="1024" type="1000001" receiver="gamed" lock="noloadplayer,misc"/>
+	<command name="GetRoleInfo_Re" type="1000002" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="info" type="RoleInfo"/>
+		<variable name="openservertime" type="number" comments="·þÎñÆ÷¿ª·þÊ±¼ä"/>
+	</command>
+
+	<command name="CreateRole" maxsize="1024" type="1000003" receiver="gamed" lock="noloadplayer">
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="sex" type="number"/>
+	</command>
+	<command name="CreateRole_Re" type="1000004" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="info" type="RoleInfo"/>
+	</command>
+
+	<command name="ChangeRoleName" type="19998" receiver="gamed" maxsize="1024">
+		<variable name="name" type="string"/>
+	</command>
+	<command name="ChangeRoleName_Re" type="19999" receiver="client">
+		<variable name="retcode" type="number"/>
+		<variable name="name" type="string"/>
+	</command>
+
+	<command name="ReportClientVersion" type="1000005" receiver="gamed" maxsize="1024" lock="misc">
+		<variable name="client_id" type="string" comments="ÇþµÀºÅ"/>
+		<variable name="exe_ver" type="string"/>
+		<variable name="data_ver" type="string"/>
+	</command>
+
+</commands>
+

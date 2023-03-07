@@ -1,0 +1,96 @@
+
+#ifndef __GNET_DBSAVEDATA_HPP
+#define __GNET_DBSAVEDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbsavedataarg"
+#include "dbsavedatares"
+#include "gamedbclient.hpp"
+
+using namespace GNET;
+
+extern std::map<Octets, Octets> g_save_data_map_ing;
+
+namespace GNET
+{
+
+class DBSaveData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbsavedata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		// DBSaveDataRes *res = (DBSaveDataRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		DBSaveDataRes *res = (DBSaveDataRes *)result;
+				
+		GLog::log(LOG_INFO, "DBSaveData::Client retcode=%d, find_key=%d", res->retcode, (int)arg->find_key.size());
+
+		if(res->retcode == 0)
+		{
+			DBSaveDataArg new_arg;
+			if(arg->find_key.size() == 0)
+			{
+				//已经全部发给数据库了，这次存储操作结束
+				g_save_data_map_ing.clear();
+				GLog::log(LOG_INFO, "DBSaveData::Client end2 ... ...");
+			}
+			else
+			{
+				std::map<Octets, Octets>::iterator it = g_save_data_map_ing.find(arg->find_key);
+				if(it != g_save_data_map_ing.end())
+				{
+					int num = 0;
+					for(; it != g_save_data_map_ing.end(); it++)
+					{
+						if(num >= 33554432)
+						{
+							new_arg.find_key = it->first;;
+							break;
+						}
+						else
+						{
+							new_arg.result_key.push_back(it->first);
+							new_arg.result_value.push_back(it->second);
+							num += it->first.size();
+							num += it->second.size();
+						}
+					}
+					DBSaveData *rpc = (DBSaveData *)Rpc::Call(RPC_DBSAVEDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+			}
+		}
+		else
+		{
+			GLog::log(LOG_ERR, "DBSaveData::Client retcode=%d, find_key=%d", res->retcode, (int)arg->find_key.size());
+			abort();
+
+			//DBSaveData *rpc = (DBSaveData *)Rpc::Call(RPC_DBSAVEDATA,*arg);
+			//GameDBClient::GetInstance()->SendProtocol(rpc);
+		}
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		GLog::log(LOG_ERR, "DBSaveData::Client OnTimeout ... ...");
+		
+		DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		DBSaveData *rpc = (DBSaveData *)Rpc::Call(RPC_DBSAVEDATA,*arg);
+		GameDBClient::GetInstance()->SendProtocol(rpc);
+	}
+
+};
+
+};
+#endif

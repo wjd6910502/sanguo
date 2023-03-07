@@ -1,0 +1,74 @@
+	public:
+		int64_t first;
+		int64_t second;
+		int first_zoneid;
+		int second_zoneid;
+		Octets first_pvpinfo;
+		Octets second_pvpinfo;
+		std::vector<PvpVideo> operation;
+		int win_flag;
+		int robot_flag;
+		int robot_seed;
+		Octets exe_ver;
+		Octets data_ver;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPOPERATION };
+	public:
+		PvpOperation() { type = PROTOCOL_PVPOPERATION; }
+		PvpOperation(void*) : Protocol(PROTOCOL_PVPOPERATION) { }
+		PvpOperation (const int64_t& l_first,const int64_t& l_second,const int& l_first_zoneid,
+			const int& l_second_zoneid,const Octets& l_first_pvpinfo,const Octets& l_second_pvpinfo,
+			std::vector<PvpVideo> l_operation,const int& l_win_flag,const int& l_robot_flag,
+			const int& l_robot_seed,const Octets& l_exe_ver,const Octets& l_data_ver)
+			 : first(l_first),second(l_second),first_zoneid(l_first_zoneid)
+			,second_zoneid(l_second_zoneid),first_pvpinfo(l_first_pvpinfo),second_pvpinfo(l_second_pvpinfo)
+			,operation(l_operation),win_flag(l_win_flag),robot_flag(l_robot_flag)
+			,robot_seed(l_robot_seed),exe_ver(l_exe_ver),data_ver(l_data_ver)
+		{
+			type = PROTOCOL_PVPOPERATION;
+		}
+
+		PvpOperation(const PvpOperation &rhs)
+			: Protocol(rhs),first(rhs.first),second(rhs.second),first_zoneid(rhs.first_zoneid)
+			,second_zoneid(rhs.second_zoneid),first_pvpinfo(rhs.first_pvpinfo),second_pvpinfo(rhs.second_pvpinfo)
+			,operation(rhs.operation),win_flag(rhs.win_flag),robot_flag(rhs.robot_flag)
+			,robot_seed(rhs.robot_seed),exe_ver(rhs.exe_ver),data_ver(rhs.data_ver) { }
+
+		GNET::Protocol *Clone() const { return new PvpOperation(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << first;
+			os << second;
+			os << first_zoneid;
+			os << second_zoneid;
+			os << first_pvpinfo;
+			os << second_pvpinfo;
+			os << operation;
+			os << win_flag;
+			os << robot_flag;
+			os << robot_seed;
+			os << exe_ver;
+			os << data_ver;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> first;
+			os >> second;
+			os >> first_zoneid;
+			os >> second_zoneid;
+			os >> first_pvpinfo;
+			os >> second_pvpinfo;
+			os >> operation;
+			os >> win_flag;
+			os >> robot_flag;
+			os >> robot_seed;
+			os >> exe_ver;
+			os >> data_ver;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 16777216; }

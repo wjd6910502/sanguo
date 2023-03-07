@@ -1,0 +1,3085 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="table.xsl"?>
+
+<application debug="false" >
+
+<driver name="com.sybase.jdbc3.jdbc.SybDriver" />
+
+<connection name="auth0" poolsize="3" url="jdbc:sybase:Tds:172.16.2.114:4100/passport" username="passport" password="passport1"/>
+<!--connection name="auth0" poolsize="3" url="jdbc:sybase:Tds:172.16.2.114:4100/ymtest" username="yangming" password="yangming"/--> 
+<!--connection name="auth0" poolsize="8" url="jdbc:sybase:Tds:172.16.3.140:5000/passport" username="sa" password=""/-->
+<!--connection name="auth0" poolsize="8" url="jdbc:sybase:Tds:172.16.253.1:4100/passport" username="passport" password="passport1"/-->
+<!--connection name="auth1" poolsize="8" url="jdbc:sybase:Tds:172.16.253.2:4100/passport" username="passport" password="passport1"/-->
+
+<table name="auth" connection="auth0" operate="replaceA">
+	<column name="userid"       sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="zoneid"      	sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="rid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<primarykey name="pk_id" column="userid, zoneid, rid" />
+</table>
+
+<table name="awardnew" connection="auth0" operate="replaceA">
+	<column name="rid"          sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="number"       sql-type="char(8)"     java-type="java.lang.String"   not-null="true" />
+
+	<primarykey name="pk_awardnew" column="number" />
+	<index name="ind_awardnew_rid" column="rid" />
+</table>
+
+<table name="awardrecord" connection="auth0" operate="replaceA">
+	<column name="id"           sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="code"         sql-type="varchar(8)"  java-type="java.lang.String"   not-null="true" />
+	<column name="number"       sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="endtime"      sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="creator"      sql-type="varchar(64)" java-type="java.lang.String"   not-null="true" />
+	<column name="creatime"     sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="auditor"      sql-type="varchar(64)" java-type="java.lang.String"   not-null="true" />
+	<column name="auditime"     sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="status"       sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	0: create 1: available 2: overdue
+	<column name="func"         sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="used"         sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<primarykey name="pk_awardrecord" column="id" />
+</table>
+
+<table name="awardused" connection="auth0" operate="replaceA">
+	<column name="rid"          sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="number"       sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="namefrom"     sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="nameto"       sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="usedate"      sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="ip"           sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+
+	<primarykey name="pk_awardused" column="number" />
+	<index name="ind_nameto" column="nameto" />
+	<index name="ind_usedate" column="usedate" />
+</table>
+
+<table name="cardnew" connection="auth0" operate="replaceA">
+	<column name="rid"          sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="number"       sql-type="char(25)"    java-type="java.lang.String"   not-null="true" />
+	<column name="status"       sql-type="tinyint"     java-type="java.lang.Integer"  not-null="true" />
+	0: create 1: available 2: overdue
+	<primarykey name="pk_cardnew" column="number" />
+	<index name="ind_cardnew_rid" column="rid" />
+</table>
+
+<table name="cardrecord" connection="auth0" operate="replaceA">
+	<column name="id"           sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="code"         sql-type="varchar(12)" java-type="java.lang.String"   not-null="true" />
+	<column name="number"       sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="price"        sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="rate"         sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="pointcard"    sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="exchangepoint" sql-type="integer"    java-type="java.lang.Integer"  not-null="true" />
+	<column name="endtime"      sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="creator"      sql-type="varchar(64)" java-type="java.lang.String"   not-null="true" />
+	<column name="creatime"     sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="auditor"      sql-type="varchar(64)" java-type="java.lang.String"   not-null="true" />
+	<column name="auditime"     sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="status"       sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	0: create 1: available 2: overdue
+	<column name="func"         sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="funcparm"     sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="used"         sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="score"        sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+
+	<primarykey name="pk_cardrecord" column="id" />
+</table>
+
+<table name="cardused" connection="auth0" operate="replaceA">
+	<column name="rid"          sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="number"       sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="namefrom"     sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="nameto"       sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="usedate"      sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="ip"           sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="aid"          sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="zoneid"       sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />
+
+	<primarykey name="pk_cardused" column="number" />
+	<index name="ind_nameto" column="nameto" />
+	<index name="ind_usedate" column="usedate" />
+</table>
+
+<table name="cardstatuslog" connection="auth0" operate="replaceA">
+	<column name="date"         sql-type="datetime"    java-type="java.util.Date"    not-null="true" />
+	<column name="fromnumber"   sql-type="char(25)"    java-type="java.lang.String"   not-null="true" />
+	<column name="tonumber"     sql-type="char(25)"    java-type="java.lang.String"   not-null="true" />
+	<column name="fromstatus"   sql-type="tinyint"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="tostatus"     sql-type="tinyint"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="op"           sql-type="varchar(32)" java-type="java.lang.String"   not-null="true" />
+	<column name="retcount"     sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<primarykey name="pk_cardstatuslog" column="date" />
+</table>
+
+<table name="forbid" connection="auth0" operate="replaceA">
+	<column name="userid"       sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="type"	        sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="ctime"        sql-type="datetime"     java-type="java.util.Date" 	 not-null="true" />
+	<column name="forbid_time"  sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="reason"     sql-type="varbinary(255)" java-type="java.lang.reflect.Array" not-null="true" />
+	<column name="gmroleid"     sql-type="integer"      java-type="java.lang.Integer" not-null="false"/>
+
+	<primarykey name="pk_id" column="userid,type" />
+</table>
+
+<table name="point" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="time"         sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="zoneid"       sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="zonelocalid"  sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="accountstart" sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+	<column name="lastlogin"    sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+	<column name="enddate"      sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+
+	<primarykey name="pk_id" column="uid, aid" />
+	<index name="ind_aid" column="aid,zoneid" />
+</table>
+
+<table name="function" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="adduptime"    sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="score"        sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="func"         sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="funcparm"     sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="addupmoney"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="adduppoint"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="addupscore"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="coin"         sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="addupcoin"    sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="soldpoint"    sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+
+	<primarykey name="pk_id" column="uid" />
+</table>
+
+<table name="users" connection="auth0" operate="replaceA"> 
+	<column name="id"           sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="name"         sql-type="varchar(32)" java-type="java.lang.String"  not-null="true" />
+	<column name="passwd"       sql-type="binary(16)"  java-type="java.lang.reflect.Array"  not-null="true" />
+	<column name="prompt"       sql-type="varchar(32)" java-type="java.lang.String"  not-null="true" />
+	<column name="answer"       sql-type="varchar(32)" java-type="java.lang.String"  not-null="true" />
+	<column name="truename"     sql-type="varchar(32)" java-type="java.lang.String"  not-null="true" />
+	<column name="idnumber"     sql-type="varchar(32)" java-type="java.lang.String"  not-null="true" />
+	<column name="email"        sql-type="varchar(64)" java-type="java.lang.String"  not-null="true" />
+	<column name="mobilenumber" sql-type="varchar(32)" java-type="java.lang.String"  not-null="false" />
+	<column name="province"     sql-type="varchar(32)" java-type="java.lang.String"  not-null="false" />
+	<column name="city"         sql-type="varchar(32)" java-type="java.lang.String"  not-null="false" />
+	<column name="phonenumber"  sql-type="varchar(32)" java-type="java.lang.String"  not-null="false" />
+	<column name="address"      sql-type="varchar(64)" java-type="java.lang.String"  not-null="false" />
+	<column name="postalcode"   sql-type="varchar(8)"  java-type="java.lang.String"  not-null="false" />
+	<column name="gender"       sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="birthday"     sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+	<column name="creatime"     sql-type="datetime"    java-type="java.util.Date"    not-null="true" />
+
+	<column name="cardendate"   sql-type="datetime"    java-type="java.util.Date"    not-null="true" />
+	<column name="cardpointime" sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="zoneid"       sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="zonelocalid"  sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="accountstart" sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+	<column name="accountpoint" sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+
+	<column name="qq"           sql-type="varchar(32)" java-type="java.lang.String"  not-null="false" />
+	<column name="passwd2"      sql-type="binary(16)"  java-type="java.lang.reflect.Array"  not-null="false" />
+
+	<primarykey name="pk_id" column="id" />
+	<index name="ind_name" unique="true" column="name" />
+	<index name="ind_creatime" column="creatime" />
+</table>
+
+<table name="usb_key" connection="auth0" operate="replaceA">
+	<column name="sn"           sql-type="binary(8)"   java-type="java.lang.reflect.Array"  not-null="true" />
+	<column name="passwd"       sql-type="binary(16)"  java-type="java.lang.reflect.Array"  not-null="true" />
+	<column name="refcnt"       sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+
+	<primarykey name="pk_id" column="sn" />
+</table>
+
+<table name="agentbill" connection="auth0" operate="replaceA">
+	<column name="billid"       sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="agent"        sql-type="char(1)"      java-type="java.lang.String"  not-null="true" />
+	<column name="uid"          sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"          sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="cardtype"     sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="money"        sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="addpoint"     sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="addscore"     sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="usedate"      sql-type="datetime"     java-type="java.util.Date"    not-null="true" />
+	<column name="cookie1"      sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="cookie2"      sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="addcoin"      sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="awarduid"     sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="awardpoint"   sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="awardscore"   sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+
+	<primarykey name="pk_agentbill" column="billid, agent" />
+	<index name="ind_agentbill_abid" unique="true" column="agent,billid" />
+	<index name="ind_agentbill_uidaid" column="uid,aid" />
+	<index name="ind_agentbill_usedate" column="usedate" />
+</table>
+
+<table name="monthbill" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"          sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="usepoint"     sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="monthcount"   sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="enddate"      sql-type="datetime"     java-type="java.util.Date"    not-null="true" />
+	<column name="usedate"      sql-type="datetime"     java-type="java.util.Date"    not-null="true" />
+
+	<index name="ind_monthbill_uidaid" column="uid,aid" />
+	<index name="ind_monthbill_usedate" column="usedate" />
+</table>
+
+<table name="innerbill" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"          sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="addpoint"     sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="operator"     sql-type="varchar(19)"  java-type="java.lang.String"  not-null="true" />
+	<column name="enddate"      sql-type="datetime"     java-type="java.util.Date"    not-null="false" />
+	<column name="usedate"      sql-type="datetime"     java-type="java.util.Date"    not-null="true" />
+	<column name="monthcount"   sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="addscore"     sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="zoneid"       sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+
+	<index name="ind_innerbill_uidaid" column="uid,aid" />
+	<index name="ind_innerbill_usedate" column="usedate" />
+</table>
+
+<table name="translog" connection="auth0" operate="replaceA">
+	<column name="zoneid" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="serial" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="seller" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="sellid" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="buyer"  sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="price"  sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="point"  sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="aid"    sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<!--status 0.abort; 1.commit;-->
+	<column name="status" sql-type="integer"  java-type="java.lang.Integer" not-null="true"/>
+	<column name="date"   sql-type="datetime" java-type="java.util.Date"    not-null="true"/>
+	
+	<primarykey name="pk_translog" column="zoneid, serial" />
+	<index name="ind_translog_seller" column="seller" />
+	<index name="ind_translog_buyer" column="buyer" />
+	<index name="ind_translog_date" column="date" />
+</table>
+
+<table name="usecashnow" connection="auth0" operate="replaceA">
+	<column name="userid" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="zoneid" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="sn"     sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="aid"    sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="point"  sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="cash"   sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<!--status 0.queue; 1.create; 2.get sn; 3.send addcash; 4.finish; -->
+	<column name="status" sql-type="integer"  java-type="java.lang.Integer" not-null="true"/>
+	<column name="creatime" sql-type="datetime" java-type="java.util.Date"  not-null="true"/>
+
+	<index name="ind_usecashnow_uzs" column="userid, zoneid, sn" />
+	<index name="ind_usecashnow_status" column="status" />
+	<index name="ind_usecashnow_creatime" column="creatime" />
+</table>
+
+<table name="usecashlog" connection="auth0" operate="replaceA">
+	<column name="userid" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="zoneid" sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="sn"     sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="aid"    sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="point"  sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="cash"   sql-type="integer" java-type="java.lang.Integer" not-null="true"/>
+	<column name="status" sql-type="integer"  java-type="java.lang.Integer" not-null="true"/>
+	<column name="creatime" sql-type="datetime" java-type="java.util.Date"  not-null="true"/>
+	<column name="fintime" sql-type="datetime" java-type="java.util.Date"  not-null="true"/>
+
+	<index name="ind_usecashlog_uzs" column="userid, zoneid, sn" />
+	<index name="ind_usecashlog_creatime" column="creatime" />
+</table>
+
+<table name="iplimit" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="ipaddr1"      sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="ipmask1"      sql-type="varchar(2)"  java-type="java.lang.String" not-null="false" />
+	<column name="ipaddr2"      sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="ipmask2"      sql-type="varchar(2)"  java-type="java.lang.String" not-null="false" />
+	<column name="ipaddr3"      sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="ipmask3"      sql-type="varchar(2)"  java-type="java.lang.String" not-null="false" />
+	<column name="enable"       sql-type="char(1)"     java-type="java.lang.String" not-null="false" />
+	<column name="lockstatus"   sql-type="char(1)"     java-type="java.lang.String" not-null="false" />
+	<column name="autolock"     sql-type="char(1)"     java-type="java.lang.String" not-null="false" />
+	<!-- 0: no bind 1.matrix 2.mobile -->
+	<column name="bindstatus"   sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />	
+	<column name="recordid"     sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />	
+	<column name="matrixid"     sql-type="varchar(12)"  java-type="java.lang.String" not-null="false" /> 	
+	<column name="matrix"       sql-type="varbinary(80)" java-type="java.lang.reflect.Array" not-null="false" />
+	<column name="mobilealgorithm"   sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />	
+	<column name="mobilekey"    sql-type="integer" 		 java-type="java.lang.Integer" not-null="false" />
+	<primarykey name="pk_iplimit" column="uid" />
+</table>
+
+<table name="mobilekey" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="mobilealgorithm"   sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />	
+	<column name="mobilekey"    sql-type="integer" 		 java-type="java.lang.Integer" not-null="true" />
+	<primarykey name="pk_mobilekey" column="uid" />
+</table>
+
+<table name="awardpoint" connection="auth0" operate="replaceA">
+	<column name="fromuid"      sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="touid"        sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="point"        sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="score"        sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="awarddate"    sql-type="datetime"    java-type="java.util.Date"    not-null="true"/>
+	<column name="usedate"      sql-type="datetime"    java-type="java.util.Date"    not-null="false"/>
+
+	<primarykey name="pk_awardpoint" column="fromuid" />
+	<index name="ind_awardpoint_touid" column="touid" />
+</table>
+
+<table name="billinfo" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="addupmoney"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="adduppoint"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+
+	<primarykey name="pk_uid" column="uid, aid" />
+</table>
+
+<table name="transbillinfo" connection="auth0" operate="replaceA">
+	<column name="uid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"          sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="addupmoney"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="adduppoint"   sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="flags"        sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+
+	<primarykey name="pk_uid" column="uid, aid" />
+</table>
+
+<table name="consumeadjust" connection="auth0" operate="replaceA">
+	<column name="uid"           sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="aid"           sql-type="integer"     java-type="java.lang.Integer" not-null="true" />
+	<column name="time"          sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="recorddate"    sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+	<column name="adjustenddate" sql-type="datetime"    java-type="java.util.Date"    not-null="false" />
+
+	<primarykey name="pk_uid" column="uid, aid" />
+</table> 
+
+<table name="usedinfo" connection="auth0" operate="replaceA">
+	<column name="statdate"        sql-type="datetime"     java-type="java.util.Date"    not-null="true" />
+	<column name="addall"          sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="consumedall"     sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="exchgtomonthall" sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="remainall"       sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="presentall"      sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="addtoday"        sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="addtodaymoney"   sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="exchgtomonthtoday" sql-type="integer"    java-type="java.lang.Integer" not-null="false" />
+	<column name="difftoday"       sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="consumedtoday"   sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="consumedbymonthtoday" sql-type="integer" java-type="java.lang.Integer" not-null="false" />
+	<column name="player_transinmonth" sql-type="integer"  java-type="java.lang.Integer" not-null="false" />
+	<column name="player_transnoadd" sql-type="integer"    java-type="java.lang.Integer" not-null="false" />
+	<column name="player_trans"    sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="payremainall"    sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="paynetremainall" sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="paypresentall"   sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="netconsumedtoday" sql-type="integer"     java-type="java.lang.Integer" not-null="false" />
+	<column name="netconsumedbymonthtoday" sql-type="integer" java-type="java.lang.Integer" not-null="false" />
+	<column name="monthremainall"  sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="monthnetremainall" sql-type="integer"    java-type="java.lang.Integer" not-null="false" />
+	<column name="discount"        sql-type="float"        java-type="java.lang.Float"   not-null="false" />
+
+	<index name="ind_usedinfo_statdate" column="statdate" />
+</table>
+
+<table name="matrixrecord" connection="auth0" operate="replaceA">
+	<column name="id"           sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="code"         sql-type="varchar(12)" java-type="java.lang.String"   not-null="true" />
+	<column name="number"       sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="price"        sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="rate"         sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	<column name="expiredtime"  sql-type="datetime"    java-type="java.sql.Timestamp" not-null="true" />
+	<column name="creator"      sql-type="varchar(64)" java-type="java.lang.String"   not-null="true" />
+	<column name="creatime"     sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="auditor"      sql-type="varchar(64)" java-type="java.lang.String"   not-null="true" />
+	<column name="auditime"     sql-type="datetime"    java-type="java.lang.String"   not-null="true" />
+	<column name="status"       sql-type="integer"     java-type="java.lang.Integer"  not-null="true" />
+	0: create 1: available 2: overdue
+	<column name="reserve1"     sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />
+	<column name="reserve2"     sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />
+	<column name="reserve3"     sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />
+	<column name="reserve4"     sql-type="integer"     java-type="java.lang.Integer"  not-null="false" />
+
+	<primarykey name="pk_matrixrecord" column="id" />
+</table>
+
+<table name="matrixnew" connection="auth0" operate="replaceA">
+	<column name="recordid"        sql-type="integer"      java-type="java.lang.Integer"  not-null="true" />
+	<column name="id"              sql-type="varchar(12)"  java-type="java.lang.String" not-null="true" />
+	<column name="matrix"          sql-type="varbinary(80)" java-type="java.lang.reflect.Array" not-null="false" />
+	<primarykey name="pk_id" column="id" />
+		<index name="ind_matrixnew_rid" column="recordid" />
+</table>
+
+<table name="matrixused" connection="auth0" operate="replaceA">
+	<column name="id"              sql-type="char(12)"  java-type="java.lang.String" not-null="true" />
+	<column name="matrix"          sql-type="binary(80)" java-type="java.lang.reflect.Array" not-null="false" />
+	<column name="userid"          sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<column name="begindate"       sql-type="datetime"     java-type="java.util.Date" not-null="false" />
+	<column name="canceldate"      sql-type="datetime"     java-type="java.util.Date" not-null="false" />
+	<column name="ip"              sql-type="integer"      java-type="java.lang.Integer" not-null="false" />
+	<primarykey name="pk_id" column="id" />
+</table>
+
+<table name="phone" connection="auth0" operator="replaceA">
+	<column name="uid"	sql-type="integer"	java-type="java.lang.Integer" not-null="true" />
+	<column name="phone"	sql-type="char(16)"	java-type="java.lang.String"  not-null="true" />
+	<primarykey name="pk_uid" column="uid,phone" />
+	<index name="ind_phone" column="phone" />
+</table>
+
+<table name="onlineinfo" connection="auth0" operate="replaceA">
+	<column name="account_pay"       sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="account_pay_now"   sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="account_month"     sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="account_month_now" sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="online_total"      sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="online_pay"        sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="online_month"      sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="online_freesvr"    sql-type="integer"      java-type="java.lang.Integer" not-null="true" />
+	<column name="online_freesvr_payed" sql-type="integer"   java-type="java.lang.Integer" not-null="true" />
+	<column name="statdate"          sql-type="datetime"     java-type="java.util.Date"    not-null="true" />
+
+	<index name="ind_onlineinfo_statdate" column="statdate" />
+</table>
+
+<table name="indulge" connection="auth0" operator="replaceA">
+	<column name="id"                sql-type="integer"         java-type="java.lang.Integer"       not-null="true" />
+	<column name="name"              sql-type="varbinary(32)"   java-type="java.lang.reflect.Array" not-null="true" />
+	<column name="idcard"            sql-type="char(18)"        java-type="java.lang.String"        not-null="true" />
+	<column name="verfied"           sql-type="integer"         java-type="java.lang.Integer"       not-null="true" />
+	<primarykey name="pk_indulge" column="id" />
+</table>
+
+<query name="getIndulgeUserInfo">
+	<table name="indulge" alias="i" />
+	<column name="id" column="i.id" />
+	<column name="name" column="i.name" />
+	<column name="idcard" column="i.idcard" />
+	<column name="verfied" column="i.verfied" />
+	<select name="byName" condition="WHERE i.id = (SELECT id FROM account WHERE name=?)"/>
+	<select name="byIdcard" condition="WHERE i.idcard = ?"/>
+</query>
+
+<procedure name="recordIndulgeUser" connection="auth0" operate="replaceB">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"   in="true" out="false" />
+	<parameter name="truename" sql-type="varbinary(32)" java-type="java.lang.reflect.Array"   in="true" out="false" />
+	<parameter name="idcard"   sql-type="char(18)"     java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="verfied"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	BEGIN TRAN
+	DECLARE @uid integer
+	DECLARE @usertype integer
+	DECLARE @truename_old varbinary(32)
+	DECLARE @idcard_old char(18)
+	DECLARE @verfied_old integer
+	SELECT @uid = id, @usertype = usertype FROM account WHERE name = @name
+	IF @@rowcount = 1
+	BEGIN
+		SELECT @truename_old = truename, @idcard_old = idcard, @verfied_old = verfied FROM indulge WHERE id = @uid
+		IF @@rowcount = 1
+		BEGIN
+			UPDATE indulge SET truename = @truename, idcard = @idcard WHERE id = @uid
+			return 0
+		END
+		ELSE
+		BEGIN
+			INSERT INTO indulge (id, name, idcard, verfied) VALUES (@id, @name, @idcard, @verfied)
+			IF @verfied = 0 OR @verfied = 1 OR @verfied = 17
+				UPDATE account SET usertype = usertype | 1572864 WHERE id = @uid	--0x180000
+			ELSE
+				UPDATE account SET usertype = usertype | 524288 WHERE id = @uid		--0x80000
+			return 0
+		END
+	END
+	ELSE
+		return 1
+	COMMIT TRAN
+</procedure>
+
+<table name="activecode" connection="auth0" operator="replaceA">
+	<column name="code"	sql-type="varchar(16)"	java-type="java.lang.String" not-null="true" />
+	<primarykey name="pk_activecode" column="code" />
+</table>
+
+<procedure name="addactivecode" connection="auth0" operate="replaceA">
+	<parameter name="code0"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code1"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code2"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code3"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code4"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code5"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code6"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code7"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code8"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="code9"   sql-type="varchar(16)" java-type="java.lang.String"  in="true" out="false" />
+	BEGIN TRAN
+		IF EXISTS (SELECT * FROM activecode HOLDLOCK WHERE code IN(@code0,@code1,@code2,@code3,@code4,@code5,@code6,@code7,@code8,@code9))
+		BEGIN
+			rollback tran
+			return -1
+		END
+		INSERT INTO activecode (code) VALUES (@code0)
+		INSERT INTO activecode (code) VALUES (@code1)
+		INSERT INTO activecode (code) VALUES (@code2)
+		INSERT INTO activecode (code) VALUES (@code3)
+		INSERT INTO activecode (code) VALUES (@code4)
+		INSERT INTO activecode (code) VALUES (@code5)
+		INSERT INTO activecode (code) VALUES (@code6)
+		INSERT INTO activecode (code) VALUES (@code7)
+		INSERT INTO activecode (code) VALUES (@code8)
+		INSERT INTO activecode (code) VALUES (@code9)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="activeUser" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"   in="true" out="false" />
+	<parameter name="code"     sql-type="varchar(16)"  java-type="java.lang.String"   in="true" out="false" />
+	<parameter name="type"     sql-type="integer"      java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer"  in="false" out="true" />
+	BEGIN TRAN
+	DECLARE @cardpointime integer
+	SELECT @error = -1
+	SELECT @cardpointime = cardpointime FROM users WHERE name = @name
+	IF @@rowcount = 1
+	BEGIN
+		IF NOT @cardpointime = @type
+		BEGIN
+			DELETE FROM activecode WHERE code = @code
+			IF @@rowcount = 1
+			BEGIN
+				UPDATE users SET cardpointime = @type WHERE name = @name
+				IF @@rowcount = 1
+					SELECT @error = 0
+				ELSE
+					INSERT INTO activecode ( code ) VALUES ( @code )
+			END
+			ELSE
+				SELECT @error = 3
+		END
+		ELSE
+			SELECT @error = 2
+	END
+	ELSE
+		SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<query name="getUserid">
+	<table name="users" alias="u" />
+	<column name="id" column="u.id" />
+	<select name="byName" condition="WHERE u.name = ?" />
+</query>
+
+<query name="getUserInfo">
+	<table name="users" alias="u" />
+	<column name="id" column="u.id" />
+	<column name="prompt" column="u.prompt" />
+	<column name="answer" column="u.answer" />
+	<column name="truename" column="u.truename" />
+	<column name="idnumber" column="u.idnumber" />
+	<column name="email" column="u.email" />
+	<column name="mobilenumber" column="u.mobilenumber" />
+	<column name="province" column="u.province" />
+	<column name="city" column="u.city" />
+	<column name="phonenumber" column="u.phonenumber" />
+	<column name="address" column="u.address" />
+	<column name="postalcode" column="u.postalcode" />
+	<column name="gender" column="u.gender" />
+	<column name="birthday" column="u.birthday" />
+	<column name="creatime" column="u.creatime" />
+	<column name="qq" column="u.qq" />
+	<column name="cardpointime" column="u.cardpointime" />
+	<select name="byName" condition="WHERE u.name = ?" />
+</query>
+
+<query name="getUsername">
+	<table name="users" alias="u" />
+	<column name="name" column="u.name" />
+	<select name="byId" condition="WHERE u.id = ?"/>
+</query>
+
+<query name="getUserOnlineInfo">
+	<table name="point" alias="p"/>
+	<column name="zoneid" column="p.zoneid"/>
+	<column name="localsid" column="p.zonelocalid"/>
+	<column name="aid" column="p.aid"/>
+	<select name="byUid" condition="WHERE p.uid = ?"/>
+</query>
+
+<query name="getIPLimit">
+	<table name="iplimit" alias="i" />
+	<column name="uid" column="i.uid" />
+	<column name="ipaddr1" column="i.ipaddr1" />
+	<column name="ipmask1" column="i.ipmask1" />
+	<column name="ipaddr2" column="i.ipaddr2" />
+	<column name="ipmask2" column="i.ipmask2" />
+	<column name="ipaddr3" column="i.ipaddr3" />
+	<column name="ipmask3" column="i.ipmask3" />
+	<column name="enablue" column="i.enable" />
+	<column name="lockstatus" column="i.lockstatus" />
+	<column name="autolock" column="i.autolock" />
+	<column name="bindstatus" column="i.bindstatus"/>
+	<column name="recordid"   column="i.recordid" />
+	<column name="matrixid" column="i.matrixid"/>
+	<column name="matrix" column="i.matrix"/>
+	<column name="mobilealgorithm"   column="i.mobilealgorithm" />
+	<column name="mobilekey"   column="i.mobilekey" />
+	<select name="byUid" condition="WHERE i.uid = ?"/>
+</query>
+
+<query name="acquireIdPasswd">
+	<table name="users" alias="u" />
+	<column name="id" column="u.id" />
+	<column name="passwd" column="u.passwd" />
+	<column name="creatime" column="u.creatime" />
+	<column name="cardpointime" column="u.cardpointime" />
+	<select name="byName" condition="WHERE u.name = ?"/>
+</query>
+
+<query name="acquireIdPasswd2">
+	<table name="users" alias="u" />
+	<column name="id" column="u.id" />
+	<column name="passwd2" column="u.passwd2" />
+	<select name="byName" condition="WHERE u.name = ?"/>
+</query>
+
+<query name="acquireForbid">
+	<table name="forbid" alias="fb"/>
+	<column name="userid" column="fb.userid"/>
+	<column name="type" column="fb.type"/>
+	<column name="ctime" column="fb.ctime"/>
+	<column name="forbid_time" column="fb.forbid_time"/>
+	<column name="reason" column="fb.reason"/>
+	<column name="gmroleid" column="fb.gmroleid"/>
+	<select name="byUid" condition="WHERE fb.userid = ? and datediff(ss,fb.ctime,getdate())&lt;=fb.forbid_time"/>
+</query>
+
+<query name="acquireUserPrivilege">
+	<table name="auth" alias="au" />
+	<column name="rid" column="au.rid" />
+	<select name="byUidZid" condition="WHERE au.userid = ? AND au.zoneid = ?"/>
+</query>
+
+<query name="acquireUserCreatime">
+	<table name="users" alias="u" />
+	<column name="creatime" column="u.creatime" />
+	<select name="byUid" condition="WHERE u.id = ?"/>
+</query>
+
+<query name="acquireUserType">
+	<table name="users" alias="u" />
+	<column name="cardpointime" column="u.cardpointime" />
+	<select name="byName" condition="WHERE u.name = ?"/>
+</query>
+
+<query name="acquirePrivilege">
+	<table name="auth" alias="au" />
+	<table name="users" alias="users" />
+	<column name="userid" column="au.userid" />
+	<column name="zoneid" column="au.zoneid" />
+	<column name="rid" column="au.rid" />
+	<column name="name" column="users.name" />
+	<column name="creatime" column="users.creatime" />
+	<select name="byZid" condition="WHERE au.userid = users.id AND au.zoneid = ?"/>
+	<select name="byUid" condition="WHERE au.userid = users.id AND au.userid = ?"/>
+	<select name="byUidZid" condition="WHERE au.userid = users.id AND au.userid = ? AND au.zoneid = ?"/>
+	<select name="byRidZid" condition="WHERE au.userid = users.id AND au.rid = ? AND au.zoneid = ?"/>
+	<select name="byAll" condition="WHERE au.userid = users.id"/>
+</query>
+
+<query name="getfunction">
+	<table name="function" alias="f"/>
+	<column name="adduptime" column="f.adduptime"/>
+	<column name="score" column="f.score"/>
+	<column name="func" column="f.func"/>
+	<column name="funcparm" column="f.funcparm"/>
+	<column name="addupmoney" column="f.addupmoney"/>
+	<column name="adduppoint" column="f.adduppoint"/>
+	<column name="addupscore" column="f.addupscore"/>
+	<column name="coin" column="f.coin"/>
+	<column name="addupcoin" column="f.addupcoin"/>
+	<column name="soldpoint" column="f.soldpoint"/>
+
+	<select name="byuid" condition="WHERE f.uid = ?"/>
+</query>
+
+<query name="getusecashnow">
+	<table name="usecashnow" alias="u"/>
+	<column name="userid" column="u.userid"/>
+	<column name="zoneid" column="u.zoneid"/>
+	<column name="sn" column="u.sn"/>
+	<column name="aid" column="u.aid"/>
+	<column name="point" column="u.point"/>
+	<column name="cash" column="u.cash"/>
+	<column name="status" column="u.status"/>
+	<column name="creatime" column="u.creatime"/>
+
+	<select name="bystatus" condition="WHERE status = ? AND creatime &lt; dateadd(second,-200,getdate())"/>
+	<select name="byuserzone" condition="WHERE u.userid = ? AND u.zoneid = ?"/>
+	<select name="byuserzonesn" condition="WHERE u.userid = ? AND u.zoneid = ? AND u.sn = ?"/>
+	<select name="byuser" condition="WHERE u.userid = ?"/>
+</query>
+
+<query name="getusecashlog">
+	<table name="usecashlog" alias="u"/>
+	<column name="userid" column="u.userid"/>
+	<column name="zoneid" column="u.zoneid"/>
+	<column name="sn" column="u.sn"/>
+	<column name="aid" column="u.aid"/>
+	<column name="point" column="u.point"/>
+	<column name="cash" column="u.cash"/>
+	<column name="status" column="u.status"/>
+	<column name="creatime" column="u.creatime"/>
+	<column name="fintime" column="u.fintime"/>
+
+	<select name="byuserzone" condition="WHERE u.userid = ? AND u.zoneid = ?"/>
+	<select name="byuserzonesn" condition="WHERE u.userid = ? AND u.zoneid = ? AND u.sn = ?"/>
+	<select name="byuser" condition="WHERE u.userid = ?"/>
+</query>
+
+<procedure name="queryusersession" connection="auth0" operate="replaceA">
+	<parameter name="name"       sql-type="varchar(64)" java-type="java.lang.String"    in="true"  out="false" />
+	<parameter name="error"      sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="userid"     sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="passwd"     sql-type="binary(16)"  java-type="java.lang.reflect.Array" in="false" out="true"/>
+	<parameter name="usertype"   sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="creatime"   sql-type="varchar(32)" java-type="java.lang.String"    in="false" out="true"  />
+
+	<parameter name="func"       sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="funcparm"   sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="adduppoint" sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="soldpoint"  sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+
+	<parameter name="ipaddr1"    sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="ipmask1"    sql-type="varchar(2)"  java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="ipaddr2"    sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="ipmask2"    sql-type="varchar(2)"  java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="ipaddr3"    sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="ipmask3"    sql-type="varchar(2)"  java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="enable"     sql-type="char(1)"     java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="lockstatus" sql-type="char(1)"     java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="autolock"   sql-type="char(1)"     java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="bindstatus" sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="recordid"   sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="matrixid"   sql-type="varchar(12)" java-type="java.lang.String"    in="false" out="true"  />
+	<parameter name="matrix"     sql-type="varbinary(80)" java-type="java.lang.reflect.Array" in="false" out="true"  />
+	<parameter name="mobilealgorithm"   sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	<parameter name="mobilekey"  sql-type="integer"     java-type="java.lang.Integer"   in="false" out="true"  />
+	DECLARE @ctime datetime
+	SELECT @error = -1
+	SELECT @userid=id, @passwd=passwd, @usertype=cardpointime, @ctime=creatime FROM users WHERE @name=name
+	IF @@rowcount = 1
+	BEGIN
+		SELECT @creatime = convert(varchar(12), @ctime, 102) + ' ' + convert(varchar(12), @ctime, 108)
+		SELECT @func=func, @funcparm=funcparm, @adduppoint=adduppoint, @soldpoint=soldpoint FROM function WHERE @userid=uid
+		SELECT @ipaddr1=ipaddr1, @ipmask1=ipmask1, @ipaddr2=ipaddr2, @ipmask2=ipmask2, @ipaddr3=ipaddr3, @ipmask3=ipmask3, @enable=enable, @lockstatus=lockstatus, @autolock=autolock, @bindstatus=bindstatus, @recordid=recordid, @matrixid=matrixid, @matrix=matrix, @mobilealgorithm=mobilealgorithm, @mobilekey=mobilekey FROM iplimit WHERE @userid=uid
+	END
+	ELSE
+		SELECT @error = 1
+</procedure>
+
+<procedure name="delUserPriv" connection="auth0" operate="replaceA">
+	<parameter name="userid"   sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	<parameter name="zoneid"   sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	<parameter name="rid"      sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	<parameter name="deltype"  sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	BEGIN TRAN
+	IF @deltype = 0 DELETE FROM auth WHERE userid = @userid AND zoneid = @zoneid AND rid = @rid 
+	ELSE IF @deltype = 1 DELETE FROM auth WHERE userid = @userid AND zoneid = @zoneid
+	ELSE IF @deltype = 2 DELETE FROM auth WHERE userid = @userid 
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addUserPriv" connection="auth0" operate="replaceA">
+	<parameter name="userid"   sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	<parameter name="zoneid"   sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	<parameter name="rid"      sql-type="integer"  java-type="java.lang.Integer"   in="true" out="false" />
+	BEGIN TRAN
+	INSERT INTO auth VALUES( @userid, @zoneid, @rid )
+	COMMIT TRAN
+</procedure>
+
+<procedure name="changePasswd" connection="auth0" operate="replaceA">
+	<parameter name="name"   sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="passwd" sql-type="binary(16)" java-type="java.lang.reflect.Array" in="true" out="false" />
+	BEGIN TRAN
+	UPDATE users SET passwd=@passwd WHERE name=@name
+	COMMIT TRAN
+</procedure>
+
+<procedure name="changePasswd2" connection="auth0" operate="replaceA">
+	<parameter name="name" sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="passwd2" sql-type="binary(16)" java-type="java.lang.reflect.Array" in="true" out="false" />
+	BEGIN TRAN
+	UPDATE users SET passwd2=@passwd2 WHERE name=@name
+	COMMIT TRAN
+</procedure>
+
+<procedure name="queryusbkey" connection="auth0" operate="replaceA">
+	<parameter name="sn"     sql-type="binary(8)"   java-type="java.lang.reflect.Array" in="true" out="false" />
+	<parameter name="passwd" sql-type="binary(16)"  java-type="java.lang.reflect.Array" in="false" out="true"/>
+	SELECT @passwd = NULL
+	SELECT @passwd = passwd FROM usb_key WHERE sn = @sn
+</procedure>
+
+<procedure name="bindKey" connection="auth0" operate="replaceB">
+	<parameter name="name"   sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="sn"     sql-type="binary(8)"   java-type="java.lang.reflect.Array" in="true" out="false" />
+	<parameter name="error"  sql-type="integer"     java-type="java.lang.Integer" in="false" out="true"/>
+	BEGIN TRAN
+	DECLARE @passwd binary(16)
+	DECLARE @usertype_old integer
+	SELECT @error = -1
+
+	SELECT @passwd = passwd FROM usb_key WHERE sn = @sn
+	IF @@rowcount = 0
+		SELECT @error = 2
+	ELSE
+	BEGIN
+		SELECT @usertype_old = cardpointime FROM users where name = @name
+		IF @@rowcount = 0
+			SELECT @error = 1
+		ELSE IF (@usertype_old &amp; 240) > 0	--0xF0
+			SELECT @error = 3
+		ELSE
+		BEGIN
+			UPDATE users SET passwd = @passwd, cardpointime = (cardpointime&amp;-241)|48 WHERE name = @name	--0xFFFFFF0F,0x30
+			IF @@rowcount = 1	SELECT @error = 0
+			UPDATE usb_key SET refcnt = refcnt + 1 WHERE sn = @sn
+		END
+	END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="unbindKey" connection="auth0" operate="replaceB">
+	<parameter name="name"   sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="passwd" sql-type="binary(16)"  java-type="java.lang.reflect.Array" in="true" out="false" />
+	<parameter name="sn"     sql-type="binary(8)"   java-type="java.lang.reflect.Array" in="true" out="false" />
+	<parameter name="error"  sql-type="integer"     java-type="java.lang.Integer" in="false" out="true"/>
+	BEGIN TRAN
+	DECLARE @usertype_old integer
+	SELECT @error = -1
+
+	SELECT @usertype_old = cardpointime FROM users where name = @name
+	IF @@rowcount = 0
+		SELECT @error = 1
+	ELSE IF NOT (@usertype_old &amp; 240) = 48	--0xF0,0x30
+		SELECT @error = 2
+	ELSE
+	BEGIN
+		UPDATE users SET passwd = @passwd, cardpointime = (cardpointime&amp;-241) WHERE name = @name	--0xFFFFFF0F
+		IF @@rowcount = 1	SELECT @error = 0
+		UPDATE usb_key SET refcnt = refcnt - 1 WHERE sn = @sn
+	END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="updateUserInfo" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="prompt"   sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="answer"   sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="truename" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="idnumber" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="email"    sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="mobilenumber" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="province" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="city"     sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="phonenumber"  sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="address"  sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="postalcode"   sql-type="varchar(8)"  java-type="java.lang.String" in="true" out="false" />
+	<parameter name="gender"   sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="birthday" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="qq"       sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	BEGIN TRAN
+	update users set prompt=@prompt,answer=@answer,truename=@truename,idnumber=@idnumber,email=@email,mobilenumber=@mobilenumber,province=@province,city=@city,phonenumber=@phonenumber,address=@address,postalcode=@postalcode,gender=@gender,birthday=@birthday,qq=@qq where name=@name
+	COMMIT TRAN
+</procedure>
+
+<procedure name="deleteTimeoutForbid" connection="auth0" operate="replaceA">
+	<parameter name="userid"	sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	BEGIN TRAN
+	DELETE 	FROM forbid WHERE userid=@userid AND datediff(ss,ctime,getdate())>forbid_time
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addForbid" connection="auth0" operate="replaceA">
+	<parameter name="userid"   sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="type"     sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<!--parameter name="ctime" sql-type="datetime"    java-type="java.util.Date" 	in="true" out="false"/-->
+	<parameter name="forbid_time" sql-type="integer"  java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="reason"   sql-type="varbinary(255)" java-type="java.lang.reflect.Array"  in="true" out="false"/>
+	<parameter name="gmroleid" sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	BEGIN TRAN
+	UPDATE forbid SET ctime=getdate(),forbid_time=@forbid_time,reason=@reason,gmroleid=@gmroleid WHERE userid=@userid AND type=@type
+	IF @@rowcount = 0	INSERT INTO forbid VALUES(@userid,@type,getdate(),@forbid_time,@reason,@gmroleid)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="setiplimit" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="ipaddr1"  sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="ipmask1"  sql-type="varchar(2)"  java-type="java.lang.String" in="true" out="false"/>
+	<parameter name="ipaddr2"  sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="ipmask2"  sql-type="varchar(2)"  java-type="java.lang.String" in="true" out="false"/>
+	<parameter name="ipaddr3"  sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="ipmask3"  sql-type="varchar(2)"  java-type="java.lang.String" in="true" out="false"/>
+	BEGIN TRAN
+	UPDATE iplimit SET ipaddr1=@ipaddr1,ipmask1=@ipmask1,ipaddr2=@ipaddr2,ipmask2=@ipmask2,ipaddr3=@ipaddr3,ipmask3=@ipmask3 WHERE uid=@uid
+	IF @@rowcount = 0	INSERT INTO iplimit (uid,ipaddr1,ipmask1,ipaddr2,ipmask2,ipaddr3,ipmask3,enable) VALUES (@uid,@ipaddr1,@ipmask1,@ipaddr2,@ipmask2,@ipaddr3,@ipmask3,'t')
+	COMMIT TRAN
+</procedure>
+
+<procedure name="enableiplimit" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="enable"   sql-type="char(1)"     java-type="java.lang.String" in="true" out="false"/>
+	BEGIN TRAN
+	UPDATE iplimit SET enable=@enable WHERE uid=@uid
+	IF @@rowcount = 0	INSERT INTO iplimit (uid,enable) VALUES (@uid,@enable)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="enableautolock" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="autolock"   sql-type="char(1)"     java-type="java.lang.String" in="true" out="false"/>
+	BEGIN TRAN
+	UPDATE iplimit SET autolock=@autolock WHERE uid=@uid
+	IF @@rowcount = 0	INSERT INTO iplimit (uid,autolock) VALUES (@uid,@autolock)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="lockuser" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="lockstatus"   sql-type="char(1)"     java-type="java.lang.String" in="true" out="false"/>
+	BEGIN TRAN
+	UPDATE iplimit SET lockstatus=@lockstatus WHERE uid=@uid
+	IF @@rowcount = 0	INSERT INTO iplimit (uid,lockstatus,enable) VALUES (@uid,@lockstatus,'t')
+	COMMIT TRAN
+</procedure>
+
+<procedure name="testandlockuser" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false"/>
+	UPDATE iplimit SET lockstatus='t' WHERE uid=@uid and autolock='t'
+</procedure>
+
+<procedure name="sellpoint" connection="auth0" operate="replaceA">
+	<parameter name="status" sql-type="integer" java-type="java.lang.Integer" in="true" out="true"/>
+	<parameter name="zoneid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="serial" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="seller" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="sellid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="buyer"  sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="price"  sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="point"  sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="aid"    sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	BEGIN TRAN
+	DECLARE @trans_status integer
+	DECLARE @seller_point integer
+	DECLARE @buyer_point integer
+	
+	SELECT @trans_status=status FROM translog WHERE zoneid=@zoneid AND serial=@serial
+	IF @@rowcount=0
+	BEGIN
+		UPDATE point SET time=time-@point WHERE uid=@seller AND aid=@aid AND time>@point+135000-18000
+		IF @@rowcount=1
+		BEGIN
+			UPDATE point SET time=time+@point WHERE uid=@buyer AND aid=@aid
+			IF @@rowcount=0
+				INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@buyer,@aid,@point+36000,0,0,'','','')
+			SELECT @status=1
+			INSERT INTO translog (zoneid,serial,seller,sellid,buyer,price,point,aid,status,date) VALUES(@zoneid,@serial,@seller,@sellid,@buyer,@price,@point,@aid,@status,getdate())
+
+			UPDATE function SET soldpoint=ISNULL(soldpoint,0)+@point WHERE @seller = uid
+			IF @@rowcount = 0	INSERT INTO function (uid,soldpoint) VALUES (@seller,@point)
+		END
+		ELSE
+		BEGIN
+			SELECT @status=0
+			INSERT INTO translog (zoneid,serial,seller,sellid,buyer,price,point,aid,status,date) VALUES(@zoneid,@serial,@seller,@sellid,@buyer,@price,@point,@aid,@status,getdate())
+		END	
+	END
+	ELSE
+		SELECT @status=@trans_status
+	COMMIT TRAN
+</procedure>
+
+<!--
+	status:
+		1.create ok;
+		2.get sn ok;
+		3.send addcash ok;
+		4.finish ok;
+	error:
+		0.³É¹¦;
+		-1:Î´Öª´íÎó;
+		-2.¸ÃÕÊºÅ²»´æÔÚ;
+		-3:Á¬½ÓÕÊºÅ·þÎñÆ÷Ê§°Ü;
+		-4:ÍùÕÊºÅ·þÎñÆ÷·¢ËÍÊý¾ÝÊ§°Ü;
+		-5:ÕÊºÅ·þÎñÆ÷Î´·µ»Ø;
+		-6:ÓÎÏ··þÎñÆ÷²»´æÔÚ»òÕßÎ´Æô¶¯;
+		-7:¸ÃÓÃ»§ÒÑÓÐ½ðÔª±¦ÕýÔÚ»®²¦£¬ÒÑ·ÅÈë¶ÓÁÐ;
+		-8.¼Æ·ÑÇøÓà¶î²»×ã»ò»®²¦½ð¶î´íÎó£¬ÒÑ·ÅÈë¶ÓÁÐ;
+		-9:µ÷ÓÃ´ÎÐò´íÎó£¬µ±Ç°×´Ì¬²»Îª1;
+		-10:µ÷ÓÃ´ÎÐò´íÎó£¬µ±Ç°×´Ì¬²»Îª2;
+		-11:µ÷ÓÃ´ÎÐò´íÎó£¬µ±Ç°×´Ì¬²»Îª3;
+		-12:µ÷ÓÃ´ÎÐò´íÎó£¬ÎÞ´Ë¼ÇÂ¼;
+		-13:ÏòÓÎÏ··þÎñÆ÷·¢ËÍ»ñÈ¡ÐòÁÐºÅÇëÇóÊ§°Ü;
+		-14:ÏòÓÎÏ··þÎñÆ÷·¢ËÍ»®²¦ÇëÇóÊ§°Ü;
+		-15:ÏòÓÎÏ··þÎñÆ÷»ñÈ¡ÐòÁÐºÅ³¬Ê±;
+		-16:ÓÎÏ··þÎñÆ÷»ñÈ¡ÐòÁÐºÅÊ§°Ü;
+		-17:ÓÎÏ··þÎñÆ÷»®²¦Ê§°Ü;
+		-18:ÓÎÏ··þÎñÆ÷½ðÔª±¦Óà¶î²»×ã;
+-->
+<procedure name="usecash" connection="auth0" operate="replaceA">
+	<parameter name="userid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="zoneid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="sn"     sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="aid"    sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="point"  sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="cash"   sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="status" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="error"  sql-type="integer" java-type="java.lang.Integer" in="false" out="true"/>
+	BEGIN TRAN
+	DECLARE @sn_old integer
+	DECLARE @aid_old integer
+	DECLARE @point_old integer
+	DECLARE @cash_old integer
+	DECLARE @status_old integer
+	DECLARE @creatime_old datetime
+	DECLARE @need_restore integer
+	DECLARE @exists integer
+
+	SELECT @error = 0
+	SELECT @need_restore = 0
+	SELECT @sn_old=sn,@aid_old=aid,@point_old=point,@cash_old=cash,@status_old=status,@creatime_old=creatime FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND sn>=0
+
+	IF @@rowcount = 1	SELECT @exists = 1
+	ELSE				SELECT @exists = 0
+
+	IF @status = 0
+	BEGIN
+		IF @exists = 0
+		BEGIN
+			SELECT @sn_old=sn,@aid_old=aid,@point_old=point,@cash_old=cash,@status_old=status,@creatime_old=creatime FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn=sn
+			IF @@rowcount = 1
+			BEGIN
+				SELECT @point_old = ISNULL(@point_old,0)
+				UPDATE point SET time=time-@point_old WHERE @userid=uid AND @aid_old=aid AND time>=@point_old
+				IF @@rowcount = 1
+				BEGIN
+					DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn=sn
+					INSERT INTO usecashnow (userid, zoneid, sn, aid, point, cash, status, creatime) VALUES(@userid, @zoneid, 0, @aid_old, @point_old, @cash_old, 1, @creatime_old )
+				END
+				ELSE
+					SELECT @error = -8
+			END
+			ELSE
+				SELECT @error = -12
+		END
+		ELSE
+			SELECT @error = -7
+	END
+	ELSE IF @status = 1
+	BEGIN
+		IF @exists = 0
+		BEGIN
+			UPDATE point SET time=time-@point WHERE @userid=uid AND @aid=aid AND time>=@point
+			IF @@rowcount = 1
+				INSERT INTO usecashnow (userid, zoneid, sn, aid, point, cash, status, creatime) VALUES(@userid, @zoneid, @sn, @aid, @point, @cash, @status, getdate() )
+			ELSE
+			BEGIN
+				INSERT INTO usecashnow SELECT @userid, @zoneid, ISNULL(min(sn),0)-1, @aid, @point, @cash, 0, getdate() FROM usecashnow WHERE userid=@userid and zoneid=@zoneid and 0>=sn
+				SELECT @error = -8
+			END
+		END
+		ELSE
+		BEGIN
+			INSERT INTO usecashnow SELECT @userid, @zoneid, ISNULL(min(sn),0)-1, @aid, @point, @cash, 0, getdate() FROM usecashnow WHERE userid=@userid and zoneid=@zoneid and 0>=sn
+			SELECT @error = -7
+		END
+	END
+	ELSE IF @status = 2
+	BEGIN
+		IF @exists = 1 AND @status_old = 1 AND @sn_old = 0
+		BEGIN
+			DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+			INSERT INTO usecashnow (userid, zoneid, sn, aid, point, cash, status, creatime) VALUES(@userid, @zoneid, @sn, @aid_old, @point_old, @cash_old, @status, @creatime_old )
+		END
+		ELSE
+		BEGIN
+			SELECT @error = -9
+		END
+	END
+	ELSE IF @status = 3
+	BEGIN
+		IF @exists = 1 AND @status_old = 2
+		BEGIN
+			DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+			INSERT INTO usecashnow (userid, zoneid, sn, aid, point, cash, status, creatime) VALUES(@userid, @zoneid, @sn_old, @aid_old, @point_old, @cash_old, @status, @creatime_old )
+		END
+		ELSE
+		BEGIN
+			SELECT @error = -10
+		END
+	END
+	ELSE IF @status = 4
+	BEGIN
+		IF @exists = 1
+		BEGIN
+			DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+			INSERT INTO usecashlog (userid, zoneid, sn, aid, point, cash, status, creatime, fintime) VALUES(@userid, @zoneid, @sn_old, @aid_old, @point_old, @cash_old, @status, @creatime_old, getdate() )
+		END
+		IF NOT (@exists = 1 AND @status_old = 3)	SELECT @error = -11
+	END
+	ELSE
+	BEGIN
+		SELECT @error = -12
+	END
+
+	IF @need_restore = 1
+	BEGIN
+		UPDATE point SET time=time+@point_old WHERE @userid=uid AND @aid_old=aid
+		DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+		INSERT INTO usecashlog (userid, zoneid, sn, aid, point, cash, status, creatime, fintime) VALUES(@userid, @zoneid, @sn_old, @aid_old, @point_old, @cash_old, @status, @creatime_old, getdate() )
+	END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addusecashnow" connection="auth0" operate="replaceA">
+	<parameter name="userid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="zoneid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="aid"    sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="cash"   sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	BEGIN TRAN
+	DECLARE @sn_old integer
+	DECLARE @aid_old integer
+	DECLARE @point_old integer
+	DECLARE @cash_old integer
+	DECLARE @status_old integer
+	DECLARE @creatime_old datetime
+	DECLARE @need_restore integer
+	DECLARE @exists integer
+
+	DECLARE @status integer
+	DECLARE @point integer
+	DECLARE @sn integer
+	DECLARE @error integer
+
+	SELECT @sn = 0
+	SELECT @status = 1
+	SELECT @point = @cash * 90
+	UPDATE point SET time = time + @point WHERE @userid = uid AND @aid = aid
+
+	SELECT @error = 0
+	SELECT @need_restore = 0
+	SELECT @sn_old=sn,@aid_old=aid,@point_old=point,@cash_old=cash,@status_old=status,@creatime_old=creatime FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND sn>=0
+
+	IF @@rowcount = 1		SELECT @exists = 1
+	ELSE					SELECT @exists = 0
+
+	IF @status = 1
+	BEGIN
+		IF @exists = 0
+		BEGIN
+			UPDATE point SET time=time-@point WHERE @userid=uid AND @aid=aid AND time>=@point
+			IF @@rowcount = 1
+				INSERT INTO usecashnow (userid, zoneid, sn, aid, point, cash, status, creatime) VALUES(@userid, @zoneid, @sn, @aid, @point, @cash, @status, getdate() )
+			ELSE
+			BEGIN
+				INSERT INTO usecashnow SELECT @userid, @zoneid, ISNULL(min(sn),0)-1, @aid, @point, @cash, 0, getdate() FROM usecashnow WHERE userid=@userid and zoneid=@zoneid and 0>=sn
+				SELECT @error = -8
+			END
+		END
+		ELSE
+		BEGIN
+			INSERT INTO usecashnow SELECT @userid, @zoneid, ISNULL(min(sn),0)-1, @aid, @point, @cash, 0, getdate() FROM usecashnow WHERE userid=@userid and zoneid=@zoneid and 0>=sn
+			SELECT @error = -7
+		END
+	END
+
+	IF @need_restore = 1
+	BEGIN
+		UPDATE point SET time=time+@point_old WHERE @userid=uid AND @aid_old=aid
+		DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+		INSERT INTO usecashlog (userid, zoneid, sn, aid, point, cash, status, creatime, fintime) VALUES(@userid, @zoneid, @sn_old, @aid_old, @point_old, @cash_old, @status, @creatime_old, getdate() )
+	END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="usecashbak" connection="auth0" operate="replaceA">
+	<parameter name="userid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="zoneid" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="sn"     sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="aid"    sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="point"  sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="cash"   sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="status" sql-type="integer" java-type="java.lang.Integer" in="true" out="false"/>
+	<parameter name="error"  sql-type="integer" java-type="java.lang.Integer" in="false" out="true"/>
+	BEGIN TRAN
+	DECLARE @sn_old integer
+	DECLARE @aid_old integer
+	DECLARE @point_old integer
+	DECLARE @cash_old integer
+	DECLARE @status_old integer
+	DECLARE @creatime_old datetime
+	DECLARE @need_restore integer
+	DECLARE @exists integer
+
+	SELECT @error = 0
+	SELECT @need_restore = 0
+	SELECT @sn_old=sn,@aid_old=aid,@point_old=point,@cash_old=cash,@status_old=status,@creatime_old=creatime FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND sn>=0
+
+	IF @@rowcount = 1	SELECT @exists = 1
+	ELSE				SELECT @exists = 0
+
+	IF @status = 0
+	BEGIN
+		IF @exists = 0
+		BEGIN
+			SELECT @aid=aid,@point=point FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn=sn
+			SELECT @point = ISNULL(@point,0)
+			UPDATE point SET time=time-@point WHERE @userid=uid AND @aid=aid AND time>=@point
+			IF @@rowcount = 1
+				UPDATE usecashnow SET sn=0, status=1 WHERE userid=@userid AND zoneid=@zoneid AND sn=@sn
+			ELSE
+				SELECT @error = -8
+		END
+		ELSE
+			SELECT @error = -7
+	END
+	ELSE IF @status = 1
+	BEGIN
+		IF @exists = 0
+		BEGIN
+			UPDATE point SET time=time-@point WHERE @userid=uid AND @aid=aid AND time>=@point
+			IF @@rowcount = 1
+				INSERT INTO usecashnow (userid, zoneid, sn, aid, point, cash, status, creatime) VALUES(@userid, @zoneid, @sn, @aid, @point, @cash, @status, getdate() )
+			ELSE
+			BEGIN
+				INSERT INTO usecashnow SELECT @userid, @zoneid, ISNULL(min(sn),0)-1, @aid, @point, @cash, 0, getdate() FROM usecashnow WHERE userid=@userid and zoneid=@zoneid and 0>=sn
+				SELECT @error = -8
+			END
+		END
+		ELSE
+		BEGIN
+			INSERT INTO usecashnow SELECT @userid, @zoneid, ISNULL(min(sn),0)-1, @aid, @point, @cash, 0, getdate() FROM usecashnow WHERE userid=@userid and zoneid=@zoneid and 0>=sn
+			SELECT @error = -7
+		END
+	END
+	ELSE IF @status = 2
+	BEGIN
+		IF @exists = 1 AND @status_old = 1 AND @sn_old = 0
+		BEGIN
+			UPDATE usecashnow set sn=@sn,status=@status WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+		END
+		ELSE
+		BEGIN
+			SELECT @error = -9
+		END
+	END
+	ELSE IF @status = 3
+	BEGIN
+		IF @exists = 1 AND @status_old = 2
+			UPDATE usecashnow set status=@status WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+		ELSE
+		BEGIN
+			SELECT @error = -10
+		END
+	END
+	ELSE IF @status = 4
+	BEGIN
+		IF @exists = 1
+		BEGIN
+			DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+			INSERT INTO usecashlog (userid, zoneid, sn, aid, point, cash, status, creatime, fintime) VALUES(@userid, @zoneid, @sn_old, @aid_old, @point_old, @cash_old, @status, @creatime_old, getdate() )
+		END
+		IF NOT (@exists = 1 AND @status_old = 3)	SELECT @error = -11
+	END
+	ELSE
+	BEGIN
+		SELECT @error = -12
+	END
+
+	IF @need_restore = 1
+	BEGIN
+		UPDATE point SET time=time+@point_old WHERE @userid=uid AND @aid_old=aid
+		DELETE FROM usecashnow WHERE @userid=userid AND @zoneid=zoneid AND @sn_old=sn
+		INSERT INTO usecashlog (userid, zoneid, sn, aid, point, cash, status, creatime, fintime) VALUES(@userid, @zoneid, @sn_old, @aid_old, @point_old, @cash_old, @status, @creatime_old, getdate() )
+	END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="adduser" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String" in="true" out="false" />
+	<parameter name="passwd"   sql-type="binary(16)"   java-type="java.lang.reflect.Array" in="true" out="false" />
+	<parameter name="prompt"   sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="answer"   sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="truename" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="idnumber" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="email"    sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="mobilenumber" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="province" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="city"     sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="phonenumber"  sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="address"  sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="postalcode"   sql-type="varchar(8)"  java-type="java.lang.String" in="true" out="false" />
+	<parameter name="gender"   sql-type="integer"  java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="birthday" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="qq"       sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="passwd2"  sql-type="binary(16)" java-type="java.lang.reflect.Array" in="true" out="false" />
+	BEGIN TRAN
+	INSERT INTO users SELECT ISNULL(max(id),16)+16, @name, @passwd, @prompt, @answer, @truename, @idnumber, @email, @mobilenumber, @province, @city, @phonenumber, @address, @postalcode, @gender, @birthday, getdate(), getdate(), 0, NULL, NULL, NULL, NULL, @qq, @passwd2 FROM users
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addbonususer" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"         in="true" out="false" />
+	<parameter name="passwd"   sql-type="binary(16)"   java-type="java.lang.reflect.Array"  in="true" out="false" />
+	<parameter name="prompt"   sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="answer"   sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="truename" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="idnumber" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="email"    sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="mobilenumber" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="province" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="city"     sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="phonenumber"  sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="address"  sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="postalcode"   sql-type="varchar(8)"  java-type="java.lang.String" in="true" out="false" />
+	<parameter name="gender"   sql-type="integer"  java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="birthday" sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="qq"       sql-type="varchar(32)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="passwd2"  sql-type="binary(16)"  java-type="java.lang.reflect.Array" in="true" out="false" />
+	<parameter name="areaid"   sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="freepoint" sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="score"    sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="func"     sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="funcparm" sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	BEGIN TRAN
+	DECLARE @id integer
+	SELECT @id = ISNULL(max(id), 16) + 16 FROM users HOLDLOCK
+	INSERT INTO users VALUES( @id, @name, @passwd, @prompt, @answer, @truename, @idnumber, @email, @mobilenumber, @province, @city, @phonenumber, @address, @postalcode, @gender, @birthday, getdate(), getdate(), 0, NULL, NULL, NULL, NULL, @qq, @passwd2 )
+	INSERT INTO function (uid, score, func, funcparm, addupscore) VALUES(@id, @score, @func, @funcparm, @score)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="remaintime" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="false" />
+	<parameter name="aid"      sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="false" />
+	<parameter name="remain"   sql-type="integer"  java-type="java.lang.Integer"    in="false" out="true" />
+	<parameter name="freetimeleft" sql-type="integer" java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+	DECLARE @enddate datetime
+	DECLARE @now     datetime
+	SELECT @now = getdate()
+	SELECT @remain=time, @enddate=ISNULL(enddate,@now) FROM point WHERE @uid = uid AND @aid = aid
+	IF @@rowcount = 0
+	BEGIN
+		SELECT @remain = 36000
+		INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,@remain, 0, 0, '', '', '')
+	END
+	SELECT @freetimeleft = 0
+	IF @enddate > @now	SELECT @freetimeleft = datediff(second, @now, @enddate )
+	COMMIT TRAN
+</procedure>
+
+<procedure name="adduserpoint" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="false" />
+	<parameter name="aid"      sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="false" />
+	<parameter name="time"     sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="false" />
+	BEGIN TRAN
+	UPDATE point SET time=ISNULL(time,0)+@time WHERE @uid=uid AND @aid=aid
+	IF @@rowcount = 0	INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,@time, 0, 0, '', '', '')
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addscore" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"    in="true" out="false" />
+	<parameter name="addscore" sql-type="integer"  java-type="java.lang.Integer"    in="true" out="false" />
+	BEGIN TRAN
+		if( @addscore > 0 )
+		BEGIN
+			UPDATE function SET score=ISNULL(score,0)+@addscore,addupscore=ISNULL(addupscore,0)+@addscore WHERE @uid = uid
+			IF @@rowcount = 0	INSERT INTO function (uid,score,addupscore) VALUES (@uid,@addscore,@addscore)
+		END
+		ELSE
+		BEGIN
+			UPDATE function SET score=ISNULL(score,0)+@addscore WHERE @uid = uid
+			IF @@rowcount = 0	INSERT INTO function (uid,score) VALUES (@uid,@addscore)
+		END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="setfunction" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"     in="true" out="false" />
+	<parameter name="func"     sql-type="integer"  java-type="java.lang.Integer"     in="true" out="false" />
+	<parameter name="funcparm" sql-type="integer"  java-type="java.lang.Integer"     in="true" out="false" />
+	BEGIN TRAN
+		UPDATE function SET func = @func, funcparm = @funcparm WHERE @uid = uid
+		IF @@rowcount = 0	INSERT INTO function (uid,func,funcparm) VALUES (@uid,@func,@funcparm)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="setfunctionbyname" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="func"     sql-type="integer"  java-type="java.lang.Integer"     in="true" out="false" />
+	<parameter name="funcparm" sql-type="integer"  java-type="java.lang.Integer"     in="true" out="false" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		SELECT @uid = id FROM users WHERE @name = name
+		UPDATE function SET func = @func, funcparm = @funcparm WHERE @uid = uid
+		IF @@rowcount = 0	INSERT INTO function (uid,func,funcparm) VALUES (@uid,@func,@funcparm)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="clearonlinerecords" connection="auth0" operate="replaceA">
+	<parameter name="zoneid"   sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="aid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	BEGIN TRAN
+	LOCK TABLE point IN EXCLUSIVE MODE
+	UPDATE point SET zoneid = 0, zonelocalid = 0 WHERE aid = @aid AND zoneid = @zoneid
+	COMMIT TRAN
+</procedure>
+
+<procedure name="recordonline" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="aid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="zoneid"   sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="true" />
+	<parameter name="zonelocalid" sql-type="integer"  java-type="java.lang.Integer"  in="true"  out="true" />
+	<parameter name="overwrite" sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="true"  />
+	BEGIN TRAN
+	DECLARE @tmp_zoneid      integer
+	DECLARE @tmp_zonelocalid integer
+	SELECT @tmp_zoneid = zoneid, @tmp_zonelocalid = zonelocalid FROM point WHERE uid = @uid AND aid = @aid
+	IF @@rowcount = 0
+		INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,36000,@zoneid,@zonelocalid,getdate(),getdate(),'')
+	ELSE IF @tmp_zoneid = NULL OR @tmp_zoneid = 0 OR @overwrite = 1
+		UPDATE point SET zoneid=@zoneid, zonelocalid=@zonelocalid, accountstart=getdate(), lastlogin=getdate() WHERE uid = @uid AND aid = @aid
+	IF @tmp_zoneid = NULL OR @tmp_zoneid = 0
+		SELECT @overwrite = 1
+	ELSE
+		SELECT @zoneid = @tmp_zoneid, @zonelocalid = @tmp_zonelocalid
+	COMMIT TRAN
+</procedure>
+
+<procedure name="recordoffline" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="aid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="zoneid"   sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="true" />
+	<parameter name="zonelocalid" sql-type="integer"  java-type="java.lang.Integer"  in="true"  out="true" />
+	<parameter name="overwrite" sql-type="integer"  java-type="java.lang.Integer"    in="true"  out="true" />
+	BEGIN TRAN
+	UPDATE point SET zoneid = 0, zonelocalid = 0 WHERE uid = @uid AND aid = @aid AND zoneid = @zoneid
+	SELECT @overwrite = @@rowcount
+	IF @overwrite = 0 SELECT @zoneid = zoneid, @zonelocalid = zonelocalid FROM point WHERE uid = @uid AND aid = @aid
+	COMMIT TRAN
+</procedure>
+
+<!--
+	LOCK TABLE point IN EXCLUSIVE MODE
+	set lock nowait
+-->
+<procedure name="accounting" connection="auth0" operate="replaceA">
+	<parameter name="uid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="aid"      sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	<parameter name="type"     sql-type="integer"  java-type="java.lang.Integer"     in="true"  out="false" />
+	BEGIN TRAN
+	DECLARE @remain       integer
+	DECLARE @enddate      datetime
+	DECLARE @accountstart datetime
+	DECLARE @now          datetime
+	DECLARE @timeused     integer
+	DECLARE @timefree     integer
+	DECLARE @timeminus    integer
+	SELECT @now = getdate()
+	SELECT @timeused = 0
+	SELECT @timefree = 0
+	SELECT @timeminus = 0
+	SELECT @remain = time, @enddate = enddate, @accountstart = ISNULL(accountstart,@now) FROM point WHERE @uid = uid AND @aid = aid
+	IF @@rowcount = 1
+	BEGIN
+		IF '2005-01-01' > @accountstart	SELECT @accountstart = @now
+	END
+	ELSE
+	BEGIN
+		SELECT @remain = 36000
+		SELECT @enddate = NULL
+		SELECT @accountstart = @now
+		IF @type = 1
+			INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,@remain, 0, 0, '', '', '')
+		ELSE
+			INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,@remain, 0, 0, @now, '', '')
+	END
+
+	IF @type = 0
+	BEGIN
+		UPDATE point SET accountstart = @now WHERE @uid = uid AND @aid = aid
+	END
+	ELSE IF @type = 1
+	BEGIN
+		SELECT @timeused = datediff(second, @accountstart, @now)
+		IF @timeused > 10
+		BEGIN
+			IF @enddate = NULL OR '2005-01-01' > @enddate
+				SELECT @timeminus = @timeused
+			ELSE IF @now > @enddate AND datediff(second,@enddate,@now) > @timeused
+				SELECT @timeminus = @timeused
+			ELSE IF @now > @enddate AND @timeused > datediff(second,@enddate,@now)
+				SELECT @timeminus = datediff(second,@enddate,@now)
+			IF @timeminus > @remain	SELECT @timeminus = @remain
+			IF @timeminus > 3600 SELECT @timeminus = 0
+			UPDATE point SET time=time-@timeminus, accountstart='' WHERE @uid=uid AND @aid=aid
+		END
+	END
+	ELSE IF @type = 2
+	BEGIN
+		SELECT @timeused = datediff(second, @accountstart, @now)
+		IF @timeused > 10
+		BEGIN
+			IF @enddate = NULL OR '2005-01-01' > @enddate
+				SELECT @timeminus = @timeused
+			ELSE IF @now > @enddate AND datediff(second,@enddate,@now) > @timeused
+				SELECT @timeminus = @timeused
+			ELSE IF @now > @enddate AND @timeused > datediff(second,@enddate,@now)
+				SELECT @timeminus = datediff(second,@enddate,@now)
+			IF @timeminus > @remain	SELECT @timeminus = @remain
+			IF @timeminus > 3600 SELECT @timeminus = 300
+			UPDATE point SET time=time-@timeminus, accountstart=@now WHERE @uid=uid AND @aid=aid
+		END
+	END
+
+	IF @timeused > 10
+	BEGIN
+		UPDATE function SET adduptime = ISNULL(adduptime,0) + @timeused WHERE @uid = uid
+		IF @@rowcount = 0	INSERT INTO function (uid,adduptime) VALUES (@uid, @timeused)
+	END
+	COMMIT TRAN
+</procedure>
+
+<query name="downloadaward">
+	<table name="awardnew" alias="cn"/>
+	<table name="awardrecord" alias="cr"/>
+	<column name="number" column="cn.number"/>
+	<select name="all" condition="WHERE cn.rid = ? AND cn.rid = cr.id AND cr.status = 0"/>
+</query>
+
+<query name="awardrecordids">
+	<table name="awardrecord" alias="c"/>
+	<column name="id" column="c.id"/>
+	<select name="all" condition="ORDER BY c.id DESC"/>
+	<select name="new" condition="WHERE c.status = 0 ORDER BY c.id DESC"/>
+	<select name="audited" condition="WHERE c.status = 1 ORDER BY c.id DESC"/>
+</query>
+
+<query name="awardrecordinfo">
+	<table name="awardrecord" alias="c"/>
+	<column name="code" column="c.code"/>
+	<column name="number" column="c.number"/>
+	<column name="endtime" column="c.endtime"/>
+	<column name="creator" column="c.creator"/>
+	<column name="creatime" column="c.creatime"/>
+	<column name="auditor" column="c.auditor"/>
+	<column name="auditime" column="c.auditime"/>
+	<column name="status" column="c.status"/>
+	<column name="func" column="c.func"/>
+	<column name="used" column="c.used"/>
+
+	<select name="item" condition="WHERE c.id = ?"/>
+	<select name="bycode" condition="WHERE c.code = ? and c.status = 1"/>
+</query>
+
+<query name="downloadcard">
+	<table name="cardnew" alias="cn"/>
+	<table name="cardrecord" alias="cr"/>
+	<column name="number" column="cn.number"/>
+	<select name="all" condition="WHERE cn.rid = ? AND cn.rid = cr.id AND cr.status = 0 ORDER BY cn.number"/>
+</query>
+
+<query name="cardrecordids">
+	<table name="cardrecord" alias="c"/>
+	<column name="id" column="c.id"/>
+	<select name="all" condition="ORDER BY c.id DESC"/>
+	<select name="new" condition="WHERE c.status = 0 ORDER BY c.id DESC"/>
+	<select name="audited" condition="WHERE c.status = 1 ORDER BY c.id DESC"/>
+</query>
+
+<query name="cardrecordinfo">
+	<table name="cardrecord" alias="c"/>
+	<column name="code" column="c.code"/>
+	<column name="number" column="c.number"/>
+	<column name="price" column="c.price"/>
+	<column name="rate" column="c.rate"/>
+	<column name="pointcard" column="c.pointcard"/>
+	<column name="exchangepoint" column="c.exchangepoint"/>
+	<column name="endtime" column="c.endtime"/>
+	<column name="creator" column="c.creator"/>
+	<column name="creatime" column="c.creatime"/>
+	<column name="auditor" column="c.auditor"/>
+	<column name="auditime" column="c.auditime"/>
+	<column name="status" column="c.status"/>
+	<column name="func" column="c.func"/>
+	<column name="funcparm" column="c.funcparm"/>
+	<column name="used" column="c.used"/>
+	<column name="score" column="c.score"/>
+
+	<select name="item" condition="WHERE c.id = ?"/>
+	<select name="bycode" condition="WHERE c.code = ? and c.status = 1"/>
+</query>
+
+<query name="getcardused">
+	<table name="cardused" alias="cu"/>
+	<table name="cardrecord" alias="cr"/>
+	<column name="namefrom" column="cu.namefrom"/>
+	<column name="nameto" column="cu.nameto"/>
+	<column name="number" column="cu.number"/>
+	<column name="usedate" column="cu.usedate"/>
+	<column name="pointcard" column="cr.pointcard"/>
+	<column name="exchangepoint" column="cr.exchangepoint"/>
+	<column name="ip" column="cu.ip"/>
+	<column name="aid" column="cu.aid"/>
+	<column name="zoneid" column="cu.zoneid"/>
+
+	<select name="byname" condition="WHERE cu.rid = cr.id AND cu.nameto = ?"/>
+	<select name="bycard" condition="WHERE cu.rid = cr.id AND cu.number like ?"/>
+</query>
+
+<query name="getUserPoints">
+	<table name="point" alias="p" />
+	<column name="aid" column="p.aid" />
+	<column name="time" column="p.time" />
+	<column name="enddate" column="p.enddate" />
+	<select name="byuid" condition="where p.uid=? and NOT p.aid=0" />
+</query>
+
+<query name="getUserAwardPoints">
+	<table name="users" alias="u" />
+	<table name="awardpoint" alias="p" />
+	<column name="name" column="u.name" />
+	<column name="point" column="p.point" />
+	<column name="score" column="p.score" />
+	<column name="awarddate" column="p.awarddate" />
+	<column name="usedate" column="p.usedate" />
+	<select name="byuid" condition="where p.touid = ? and u.id = p.fromuid ORDER BY p.awarddate DESC" />
+</query>
+
+<query name="getUserSellPoints">
+	<table name="users" alias="u" />
+	<table name="translog" alias="p" />
+	<column name="zoneid" column="p.zoneid" />
+	<column name="serial" column="p.serial" />
+	<column name="sellid" column="p.sellid" />
+	<column name="buyer" column="u.name" />
+	<column name="price" column="p.price" />
+	<column name="point" column="p.point" />
+	<column name="aid" column="p.aid" />
+	<column name="status" column="p.status" />
+	<column name="date" column="p.date" />
+	<select name="byuid" condition="where p.seller = ? and u.id = p.buyer ORDER BY p.date" />
+</query>
+
+<query name="monthexchanged">
+	<table name="users" alias="u"/>
+	<table name="monthbill" alias="m"/>
+	<column name="uid" column="m.uid"/>
+	<column name="aid" column="m.aid"/>
+	<column name="usepoint" column="m.usepoint"/>
+	<column name="monthcount" column="m.monthcount"/>
+	<column name="enddate" column="m.enddate"/>
+	<column name="usedate" column="m.usedate"/>
+
+	<select name="byname" condition="WHERE u.id = m.uid AND u.name = ? AND m.usedate &gt;= ? and m.usedate &lt;= ? "/>
+</query>
+
+<procedure name="addawardrecord" connection="auth0" operate="replaceA">
+	<parameter name="code"      sql-type="varchar(8)"   java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="endtime"   sql-type="varchar(32)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="creator"   sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="func"      sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="id"        sql-type="integer"      java-type="java.lang.Integer" in="true" out="true" />
+	BEGIN TRAN
+		SELECT @id = ISNULL(max(id), 0)+1 FROM awardrecord HOLDLOCK
+		INSERT INTO awardrecord VALUES(@id,@code,0,@endtime,@creator,getdate(),@creator,getdate(),0,@func, 0)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addaward" connection="auth0" operate="replaceA">
+	<parameter name="id"        sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="number0"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number1"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number2"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number3"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number4"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number5"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number6"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number7"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number8"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number9"   sql-type="char(8)"    java-type="java.lang.String"  in="true" out="false" />
+	BEGIN TRAN
+		IF EXISTS (SELECT * FROM awardused HOLDLOCK WHERE number IN(@number0,@number1,@number2,@number3,@number4,@number5,@number6,@number7,@number8,@number9))
+		BEGIN
+			rollback tran
+			return -1
+		END
+		INSERT INTO awardnew VALUES(@id, @number0)
+		INSERT INTO awardnew VALUES(@id, @number1)
+		INSERT INTO awardnew VALUES(@id, @number2)
+		INSERT INTO awardnew VALUES(@id, @number3)
+		INSERT INTO awardnew VALUES(@id, @number4)
+		INSERT INTO awardnew VALUES(@id, @number5)
+		INSERT INTO awardnew VALUES(@id, @number6)
+		INSERT INTO awardnew VALUES(@id, @number7)
+		INSERT INTO awardnew VALUES(@id, @number8)
+		INSERT INTO awardnew VALUES(@id, @number9)
+		UPDATE awardrecord SET number = number + 10 WHERE id = @id
+	COMMIT TRAN
+</procedure>
+
+<procedure name="deleteaward" connection="auth0" operate="replaceA">
+	<parameter name="id"         sql-type="integer"       java-type="java.lang.Integer"   in="true" out="false" />
+	BEGIN TRAN
+		DELETE FROM awardrecord WHERE id = @id AND status = 0
+		if @@rowcount = 1 DELETE FROM awardnew WHERE rid = @id
+	COMMIT TRAN
+</procedure>
+
+<procedure name="auditaward" connection="auth0" operate="replaceA">
+	<parameter name="id"     sql-type="integer" java-type="java.lang.Integer"     in="true" out="false" />
+	<parameter name="auditor" sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="status" sql-type="integer" java-type="java.lang.Integer"     in="true" out="false" />
+	BEGIN TRAN
+		UPDATE awardrecord SET auditor = @auditor, auditime = getdate(), status = @status WHERE id = @id AND status = 0
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addcardrecord" connection="auth0" operate="replaceA">
+	<parameter name="code"      sql-type="varchar(12)" java-type="java.lang.String"   in="true" out="false" />
+	<parameter name="price"     sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="rate"      sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="pointcard" sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="exchangepoint" sql-type="integer" java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="endtime"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="creator"   sql-type="varchar(64)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="func"      sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="funcparm"  sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="score"     sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="id"        sql-type="integer"    java-type="java.lang.Integer"  in="true" out="true" />
+	BEGIN TRAN
+		SELECT @id = ISNULL(max(id), 0)+1 FROM cardrecord HOLDLOCK
+		IF NOT EXISTS (SELECT * FROM cardrecord WHERE code = @code)
+			INSERT INTO cardrecord (id,code,number,price,rate,pointcard,exchangepoint,endtime,creator,creatime,auditor,auditime,status,func,funcparm,used,score) VALUES(@id,@code,0,@price,@rate,@pointcard,@exchangepoint,@endtime,@creator,getdate(),@creator,getdate(),0,@func,@funcparm, 0, @score)
+		ELSE
+			SELECT @id = -1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addcard" connection="auth0" operate="replaceA">
+	<parameter name="id"        sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+	<parameter name="status"    sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+	<parameter name="number0"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number1"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number2"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number3"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number4"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number5"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number6"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number7"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number8"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number9"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	DECLARE @cardstatus integer 
+ 
+	-- cardstatus only value 0 or 1 
+	SELECT @cardstatus = 0 
+	IF (@status = 1) 
+	BEGIN 
+		SELECT @cardstatus = 1 
+	END 
+
+	BEGIN TRAN
+		IF EXISTS (SELECT * FROM cardnew HOLDLOCK WHERE number IN(@number0,@number1,@number2,@number3,@number4,@number5,@number6,@number7,@number8,@number9))
+		BEGIN
+			rollback tran
+			return -1
+		END
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number0, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number1, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number2, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number3, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number4, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number5, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number6, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number7, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number8, @cardstatus)
+		INSERT INTO cardnew (rid, number, status) VALUES(@id, @number9, @cardstatus)
+		UPDATE cardrecord SET number = number + 10 WHERE id = @id
+	COMMIT TRAN
+</procedure>
+
+
+<procedure name="getcardstatus" connection="auth0" operate="replaceA">
+	<parameter name="fromnumber" sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="tonumber"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="status"     sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="op"         sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="retcount"   sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		SELECT @retcount = count(number) FROM cardnew WHERE number >= @fromnumber and @tonumber >= number and status = @status
+		INSERT INTO cardstatuslog (date,fromnumber,tonumber,fromstatus,tostatus,op,retcount) VALUES (getdate(),@fromnumber,@tonumber,@status,@status,@op,0-@retcount)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="checkcardstatus" connection="auth0" operate="replaceA">
+	<parameter name="fromnumber" sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="tonumber"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="status"     sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="op"         sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="retcount"   sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		SELECT @retcount = count(number) FROM cardnew WHERE number >= @fromnumber and @tonumber >= number and not status = @status
+		INSERT INTO cardstatuslog (date,fromnumber,tonumber,fromstatus,tostatus,op,retcount) VALUES (getdate(),@fromnumber,@tonumber,@status,@status,@op,@retcount)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="changecardstatus" connection="auth0" operate="replaceA">
+	<parameter name="fromnumber" sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="tonumber"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="fromstatus" sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="tostatus"   sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="op"         sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="retcount"   sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		SELECT @retcount = 0
+		UPDATE cardnew set status = @tostatus WHERE number >= @fromnumber AND @tonumber >= number AND @fromstatus = status
+		SELECT @retcount = @@rowcount
+		INSERT INTO cardstatuslog (date,fromnumber,tonumber,fromstatus,tostatus,op,retcount) VALUES (getdate(),@fromnumber,@tonumber,@fromstatus,@tostatus,@op,@retcount)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="deletecard" connection="auth0" operate="replaceA">
+	<parameter name="id"   sql-type="integer"  java-type="java.lang.Integer" in="true" out="false" />
+	BEGIN TRAN
+		DELETE FROM cardrecord WHERE id = @id AND status = 0
+		if @@rowcount = 1 DELETE FROM cardnew WHERE rid = @id
+	COMMIT TRAN
+</procedure>
+
+<procedure name="auditcard" connection="auth0" operate="replaceA">
+	<parameter name="id"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="auditor" sql-type="varchar(64)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="status"  sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	BEGIN TRAN
+		UPDATE cardrecord SET auditor = @auditor, auditime = getdate(), status = @status WHERE id = @id AND status = 0
+	COMMIT TRAN
+</procedure>
+
+<procedure name="querycardnew" connection="auth0" operate="replaceA">
+	<parameter name="number"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="numberall" sql-type="varchar(32)" java-type="java.lang.String"  in="false" out="true" />
+	<parameter name="cnstatus" sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="code"     sql-type="varchar(32)" java-type="java.lang.String"  in="false" out="true" />
+	<parameter name="price"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="rate"     sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="pointcard" sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="exchangepoint" sql-type="integer" java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="strendtime" sql-type="varchar(32)" java-type="java.lang.String" in="false" out="true" />
+	<parameter name="crstatus" sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="func"     sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="funcparm" sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="score"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="error"    sql-type="integer"  java-type="java.lang.Integer" in="true" out="true" />
+	BEGIN TRAN
+		DECLARE @number_leng integer
+		SELECT @error = -1
+		SELECT @number_leng = char_length(@number)
+		IF @number_leng >= 10
+		BEGIN
+			set rowcount 1
+			SELECT @numberall = cn.number, @cnstatus = cn.status, @code = cr.code, @price = cr.price, @rate = cr.rate, @pointcard = cr.pointcard, @exchangepoint = cr.exchangepoint, @strendtime = convert(varchar(12),cr.endtime,102)+' '+convert(varchar(12),cr.endtime,108), @crstatus = cr.status, @func = cr.func, @funcparm = cr.funcparm, @score = cr.score FROM cardrecord cr, cardnew cn WHERE cn.number like @number AND cn.rid = cr.id
+			IF @@rowcount = 1		SELECT @error = 0
+			ELSE IF @@rowcount = 0	SELECT @error = 1
+		END
+		ELSE
+			SELECT @error = 2
+	COMMIT TRAN
+</procedure>
+
+<!--
+	error
+		-2: ¿¨ºÅ²»´æÔÚ
+		-3: ÓÃ»§²»´æÔÚ
+		-4: ÃÜÂë´íÎó
+		-5: ¸Ã¿¨ÒÑ¹ýÆÚ
+		-6: ¸Ã¿¨Î´¿ªÍ¨
+-->
+<procedure name="usepointcard" connection="auth0" operate="replaceA">
+	<parameter name="number"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="fromname" sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="toname"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="zoneid"   sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="ip"       sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+	DECLARE @rid integer
+	DECLARE @uid integer
+	DECLARE @addpoint integer
+	DECLARE @addscore integer
+	DECLARE @crstatus integer
+	DECLARE @cnstatus integer
+	DECLARE @func integer
+	DECLARE @funcparm integer
+	DECLARE @money integer
+	DECLARE @nextbillid integer
+	DECLARE @now datetime
+	DECLARE @crendtime datetime
+	SELECT @now = getdate()
+
+	SELECT @rid = cr.id, @money = cr.price, @addpoint = cr.pointcard * cr.exchangepoint, @crendtime = cr.endtime, @crstatus = cr.status, @func = cr.func, @funcparm = cr.funcparm, @addscore = cr.score, @cnstatus = cn.status FROM cardrecord cr, cardnew cn WHERE cn.number = @number AND cn.rid = cr.id
+	IF @@rowcount = 1
+	BEGIN
+		IF @now > @crendtime
+			SELECT @error = -5
+		ELSE IF NOT @crstatus = 1 OR NOT @cnstatus = 1
+			SELECT @error = -6
+		ELSE
+		BEGIN
+			SELECT @uid = id FROM users WHERE @toname = name
+			IF @@rowcount = 1
+			BEGIN
+				IF @aid >= 9
+				BEGIN
+					SELECT @addscore = 0
+				END
+
+				UPDATE point SET time = time + @addpoint WHERE @uid = uid AND @aid = aid
+				IF @@rowcount = 0	INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,@addpoint+36000, 0, 0, '', '', '' )
+
+				UPDATE function SET score=ISNULL(score,0)+@addscore,func=case when @func > 0 then @func else func end,funcparm=case when @func > 0 then @funcparm else funcparm end,addupmoney=ISNULL(addupmoney,0)+@money,adduppoint=ISNULL(adduppoint,0)+@addpoint,addupscore=ISNULL(addupscore,0)+@addscore WHERE @uid = uid
+				IF @@rowcount = 0	INSERT INTO function (uid,score,func,funcparm,addupmoney,adduppoint,addupscore) VALUES (@uid,@addscore,@func,@funcparm,@money,@addpoint,@addscore)
+
+				INSERT INTO cardused (rid,number,namefrom,nameto,usedate,ip,aid,zoneid) VALUES (@rid,@number,@fromname,@toname,@now,@ip,@aid,@zoneid)
+				DELETE FROM cardnew WHERE number = @number
+				UPDATE cardrecord SET used = used + 1 WHERE id = @rid
+
+				INSERT INTO agentbill SELECT ISNULL(max(billid),0)+1, 'a', @uid, @aid, @rid, @money, @addpoint, @addscore, getdate(), @zoneid, 0, 0, 0, 0, 0 FROM agentbill (index ind_agentbill_abid) WHERE agent='a'
+
+				SELECT @error = @addpoint
+			END
+			ELSE SELECT @error = -3
+		END
+	END
+	ELSE
+	BEGIN
+		IF EXISTS ( SELECT * from cardnew WHERE number like substring(@number,1,10)+'%' )
+			SELECT @error = -4
+		ELSE
+			SELECT @error = -2
+	END
+	COMMIT TRAN
+</procedure>
+
+<!--
+	error
+		-1: Î´Öª´íÎó
+		-2: ÓÃ»§²»´æÔÚ
+		-3: Á½ÕÅ¿¨ÃÜ¶¼´íÎó
+		-4: µÚÒ»ÕÅ¿¨ÃÜ´íÎó
+		-5: µÚ¶þÕÅ¿¨ÃÜ´íÎó
+		-6: Á½ÕÅ¿¨¶¼²»ÊÇ30Ôª¿¨
+		-7: µÚÒ»ÕÅ¿¨²»ÊÇ30Ôª¿¨
+		-8: µÚ¶þÕÅ¿¨²»ÊÇ30Ôª¿¨
+-->
+<procedure name="batchusepointcard" connection="auth0" operate="replaceA">
+	<parameter name="number1"  sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="number2"  sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="fromname" sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="toname"   sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="zoneid"   sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="ip"       sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+	DECLARE @error1 integer
+	DECLARE @error2 integer
+	SELECT @error = -1
+
+	exec usepointcard @number1, @fromname, @toname, @aid, @zoneid, @ip, @error1 out
+	exec usepointcard @number2, @fromname, @toname, @aid, @zoneid, @ip, @error2 out
+
+	IF @error1 > 0 AND @error2 > 0 AND 270000 = @error1 AND 270000 = @error2
+	BEGIN
+		COMMIT TRAN
+		SELECT @error = @error1 + @error2
+	END
+	ELSE
+	BEGIN
+		ROLLBACK TRAN
+		IF -3 = @error1 OR -3 = @error2
+			SELECT @error = -2
+		ELSE IF 0 >= @error1 AND 0 >= @error2
+			SELECT @error = -3
+		ELSE IF 0 >= @error1
+			SELECT @error = -4
+		ELSE IF 0 >= @error2
+			SELECT @error = -5
+		ELSE IF NOT 270000 = @error1 AND NOT 270000 = @error2
+			SELECT @error = -6
+		ELSE IF NOT 270000 = @error1
+			SELECT @error = -7
+		ELSE IF NOT 270000 = @error2
+			SELECT @error = -8
+		ELSE
+			SELECT @error = -1
+		SELECT @error1, @error2, @error
+	END
+</procedure>
+
+<query name="queryAgentBill">
+	<table name="agentbill" alias="b"/>
+	<column name="billid" column="b.billid"/>
+	<column name="agent" column="b.agent"/>
+	<column name="uid" column="b.uid"/>
+	<column name="aid" column="b.aid"/>
+	<column name="cardtype" column="b.cardtype"/>
+	<column name="money" column="b.money"/>
+	<column name="addpoint" column="b.addpoint"/>
+	<column name="addscore" column="b.addscore"/>
+	<column name="usedate" column="b.usedate"/>
+	<column name="cookie1" column="b.cookie1"/>
+	<column name="cookie2" column="b.cookie2"/>
+	<column name="addcoin" column="b.addcoin"/>
+	<column name="awarduid" column="b.awarduid"/>
+	<column name="awardpoint" column="b.awardpoint"/>
+	<column name="awardscore" column="b.awardscore"/>
+	<select name="byBillidAgent" condition="WHERE b.billid = ? and b.agent = ?"/>
+	<select name="byBillid" condition="WHERE b.billid = ?"/>
+	<select name="byCookie" condition="WHERE b.cookie1 = ? and b.cookie2 = ?"/>
+	<select name="byUidDateRange" condition="WHERE b.uid = ? and b.usedate &gt;= ? and b.usedate &lt;= ?"/>
+</query>
+
+<procedure name="useagentcard" connection="auth0" operate="replaceA">
+	<parameter name="billid"   sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="agent"    sql-type="char(1)"      java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="cardtype" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="money"    sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addpoint" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addscore" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="cookie1"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="cookie2"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="true" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @pointexists integer
+		DECLARE @oldtime integer
+		SELECT @pointexists = 0
+		IF NOT EXISTS ( SELECT * FROM agentbill WHERE @billid = billid AND @agent = agent )
+		BEGIN
+			IF @error = 0
+			BEGIN
+				SELECT @uid = id FROM users WHERE @name = name
+				IF NOT @@rowcount = 1 SELECT @error = 2
+			END
+			IF @error = 0
+			BEGIN
+				SELECT @oldtime=time FROM point WHERE @uid = uid AND @aid = aid
+				IF @@rowcount = 1 SELECT @pointexists = 1
+				IF @pointexists = 1 AND @oldtime+@addpoint > 2100000000 SELECT @error = -1
+			END
+			IF @error = 0
+			BEGIN
+				INSERT INTO agentbill (billid, agent, uid, aid, cardtype, money, addpoint, addscore, usedate, cookie1, cookie2) VALUES ( @billid, @agent, @uid, @aid, @cardtype, @money, @addpoint, @addscore, getdate(), @cookie1, @cookie2 )
+				IF @pointexists = 1
+					UPDATE point SET time = ISNULL(time,0) + @addpoint WHERE @uid = uid AND @aid = aid
+				ELSE
+					INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES ( @uid, @aid, @addpoint+36000, 0, 0, '', '', '' )
+
+				UPDATE function SET score=ISNULL(score,0)+@addscore,addupmoney=ISNULL(addupmoney,0)+@money,adduppoint=ISNULL(adduppoint,0)+@addpoint,addupscore=ISNULL(addupscore,0)+@addscore WHERE @uid = uid
+				IF @@rowcount = 0	INSERT INTO function (uid,score,addupmoney,adduppoint,addupscore) VALUES (@uid,@addscore,@money,@addpoint,@addscore)
+			END
+			ELSE
+			BEGIN
+				SELECT @uid = @error
+				INSERT INTO agentbill (billid, agent, uid, aid, cardtype, money, addpoint, addscore, usedate, cookie1, cookie2) VALUES ( @billid, @agent, @uid, @aid, @cardtype, @money, @addpoint, @addscore, getdate(), @cookie1, @cookie2 )
+				IF NOT @error = 2 AND NOT @error = -1 SELECT @error = 0
+			END
+		END
+		ELSE SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="useagentcardnew" connection="auth0" operate="replaceA">
+	<parameter name="billid"   sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="agent"    sql-type="char(1)"      java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="cardtype" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="money"    sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addpoint" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addscore" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="cookie1"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="cookie2"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addcoin"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="awarduid" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="awardpoint" sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="awardscore" sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="true" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @pointexists integer
+		DECLARE @oldtime integer
+		DECLARE @oldaddupmoney integer
+		SELECT @pointexists = 0
+		IF NOT EXISTS ( SELECT * FROM agentbill WHERE @billid = billid AND @agent = agent )
+		BEGIN
+			IF @error = 0
+			BEGIN
+				SELECT @uid = id FROM users WHERE @name = name
+				IF NOT @@rowcount = 1 SELECT @error = 2
+			END
+			IF @error = 0 AND @awarduid > 0
+			BEGIN
+				IF NOT EXISTS ( SELECT * FROM users WHERE @awarduid = id )
+					SELECT @error = 7
+				ELSE
+				BEGIN
+					SELECT @oldaddupmoney = addupmoney FROM function WHERE @uid = uid
+					IF @@rowcount = 1 AND @oldaddupmoney > 0	SELECT @error = 8
+					IF EXISTS ( SELECT * FROM awardpoint where @uid = fromuid )
+						SELECT @error = 8
+					SELECT @oldaddupmoney = addupmoney FROM function WHERE @awarduid = uid
+					IF @@rowcount = 0 OR @oldaddupmoney = 0	SELECT @error = 10
+				END
+			END
+			IF @error = 0
+			BEGIN
+				SELECT @oldtime=time FROM point WHERE @uid = uid AND @aid = aid
+				IF @@rowcount = 1 SELECT @pointexists = 1
+				IF @pointexists = 1 AND @oldtime+@addpoint > 2100000000 SELECT @error = -1
+			END
+			IF @error = 0
+			BEGIN
+				INSERT INTO agentbill (billid, agent, uid, aid, cardtype, money, addpoint, addscore, usedate, cookie1, cookie2, addcoin, awarduid, awardpoint, awardscore) VALUES ( @billid, @agent, @uid, @aid, @cardtype, @money, @addpoint, @addscore, getdate(), @cookie1, @cookie2, @addcoin, @awarduid, @awardpoint, @awardscore )
+				IF @pointexists = 1
+					UPDATE point SET time = ISNULL(time,0) + @addpoint WHERE @uid = uid AND @aid = aid
+				ELSE
+					INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES ( @uid, @aid, @addpoint+36000, 0, 0, '', '', '' )
+
+				UPDATE function SET score=ISNULL(score,0)+@addscore,addupmoney=ISNULL(addupmoney,0)+@money,adduppoint=ISNULL(adduppoint,0)+@addpoint,addupscore=ISNULL(addupscore,0)+@addscore,coin=ISNULL(coin,0)+@addcoin,addupcoin=ISNULL(addupcoin,0)+@addcoin WHERE @uid = uid
+				IF @@rowcount = 0	INSERT INTO function (uid,score,addupmoney,adduppoint,addupscore,coin,addupcoin) VALUES (@uid,@addscore,@money,@addpoint,@addscore,@addcoin,@addcoin)
+
+				IF @awarduid > 0
+					INSERT INTO awardpoint (fromuid, touid, point, score, awarddate, usedate) VALUES (@uid, @awarduid, @awardpoint, @awardscore, getdate(), null)
+			END
+			ELSE
+			BEGIN
+				SELECT @uid = @error
+				INSERT INTO agentbill (billid, agent, uid, aid, cardtype, money, addpoint, addscore, usedate, cookie1, cookie2, addcoin, awarduid, awardpoint, awardscore) VALUES ( @billid, @agent, @uid, @aid, @cardtype, @money, @addpoint, @addscore, getdate(), @cookie1, @cookie2, @addcoin, @awarduid, @awardpoint, @awardscore )
+				IF NOT @error=2 AND NOT @error=7 AND NOT @error=8 AND NOT @error=10 AND NOT @error=-1
+					SELECT @error = 0
+			END
+		END
+		ELSE SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addinnerpoint" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="zoneid"   sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addpoint" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="enddate"  sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="monthcount" sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="addscore" sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="operator" sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @realenddate datetime
+		DECLARE @now datetime
+		DECLARE @enddate_leng integer
+		DECLARE @oldpoint integer
+		DECLARE @haspoint integer
+		SELECT @error = 0
+		SELECT @now = getdate()
+
+		SELECT @uid = id FROM users WHERE @name = name
+		IF @@rowcount = 1
+		BEGIN
+			SELECT @realenddate = NULL
+			SELECT @enddate_leng = char_length(@enddate)
+			IF @enddate > getdate()
+				SELECT @realenddate = @enddate
+			ELSE IF 2 > @enddate_leng 
+				SELECT @realenddate = enddate FROM point WHERE @uid = uid AND @aid = aid
+
+			IF @monthcount > 0 
+				SELECT @realenddate = dateadd(day,30*@monthcount,ISNULL(@realenddate,@now))
+
+			IF @realenddate = NULL	SELECT @realenddate = ''
+
+			SELECT @oldpoint = time FROM point WHERE @uid = uid AND @aid = aid
+			IF @@rowcount = 0	SELECT @haspoint = 0
+			ELSE				SELECT @haspoint = 1
+			IF @haspoint = 0	SELECT @oldpoint = 0
+			IF 0 > @addpoint AND 0 > @oldpoint+@addpoint
+				SELECT @error = -1
+			ELSE
+			BEGIN
+				IF @haspoint = 0
+					INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@aid,@addpoint+36000, 0, 0, '', '', @realenddate)
+				ELSE
+					UPDATE point SET time=time+@addpoint, enddate=@realenddate WHERE @uid = uid AND @aid = aid
+
+				UPDATE function SET score=ISNULL(score,0)+@addscore,adduppoint=ISNULL(adduppoint,0)+@addpoint,addupscore=ISNULL(addupscore,0)+@addscore WHERE @uid = uid
+				IF @@rowcount = 0	INSERT INTO function (uid,score,addupscore) VALUES (@uid,@addscore,@addscore)
+
+				INSERT INTO innerbill (uid, aid, addpoint, enddate, operator, usedate, monthcount, addscore, zoneid) VALUES (@uid, @aid, @addpoint, @realenddate, @operator, @now, @monthcount, @addscore, @zoneid )
+			END
+		END
+		ELSE SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="useawardpoint" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="fromname" sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @fromuid integer
+		DECLARE @addpoint integer
+		DECLARE @addscore integer
+
+		SELECT @error = 0
+
+		IF @error = 0
+		BEGIN
+			SELECT @uid = id FROM users WHERE @name = name
+			IF NOT @@rowcount = 1 SELECT @error = 1
+		END
+		IF @error = 0
+		BEGIN
+			SELECT @fromuid = id FROM users WHERE @fromname = name
+			IF NOT @@rowcount = 1 SELECT @error = 2
+		END
+		IF @error = 0
+		BEGIN
+			SELECT @addpoint=point, @addscore=score FROM awardpoint WHERE @fromuid = fromuid AND @uid = touid
+			IF NOT @@rowcount = 1 SELECT @error = 3
+		END
+		IF @error = 0
+		BEGIN
+			IF NOT EXISTS (SELECT * FROM awardpoint WHERE @fromuid=fromuid AND @uid=touid AND usedate = null)
+				SELECT @error = 4
+		END
+		IF @error = 0
+		BEGIN
+			UPDATE awardpoint SET usedate = getdate() WHERE @fromuid = fromuid AND @uid = touid
+
+			UPDATE point SET time = ISNULL(time,0) + @addpoint WHERE @uid = uid AND @aid = aid
+			IF @@rowcount = 0	INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES ( @uid, @aid, @addpoint+36000, 0, 0, '', '', '' )
+
+			UPDATE function SET score=ISNULL(score,0)+@addscore,adduppoint=ISNULL(adduppoint,0)+@addpoint,addupscore=ISNULL(addupscore,0)+@addscore WHERE @uid = uid
+			IF @@rowcount = 0	INSERT INTO function (uid,score,adduppoint,addupscore) VALUES (@uid,@addscore,@addpoint,@addscore)
+		END
+	COMMIT TRAN
+</procedure>
+
+<procedure name="exchangemonth" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="aid"      sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="monthcount" sql-type="integer"    java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="remain"   sql-type="integer"      java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="strenddate" sql-type="varchar(32)" java-type="java.lang.String" in="false" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @oldtime integer
+		DECLARE @oldenddate datetime
+		DECLARE @usepoint integer
+		DECLARE @now datetime
+		DECLARE @enddate datetime
+		DECLARE @summoney integer
+		SELECT @error = 0
+		SELECT @remain = 0
+		SELECT @uid = id FROM users WHERE @name = name
+		IF @@rowcount = 1
+		BEGIN
+			SELECT @oldtime=time,@oldenddate=enddate FROM point WHERE @uid = uid AND @aid = aid
+			SELECT @usepoint = @monthcount*522000
+			IF @@rowcount = 1 AND @oldtime >= @usepoint
+			BEGIN
+				SELECT @now = getdate()
+				IF @now > @oldenddate	SELECT @oldenddate = @now
+				SELECT @enddate = dateadd(day,30*@monthcount,ISNULL(@oldenddate,@now))
+				UPDATE point SET time = @oldtime-@usepoint, enddate = @enddate WHERE @uid = uid AND @aid = aid
+				INSERT INTO monthbill (uid, aid, usepoint, monthcount, enddate, usedate) VALUES (@uid, @aid, @usepoint, @monthcount, @enddate, @now )
+				SELECT @remain = @oldtime-@usepoint
+				SELECT @strenddate = convert(varchar(12), @enddate, 102) + ' ' + convert(varchar(12), @enddate, 108)
+			END
+			ELSE
+			BEGIN
+				SELECT @error = 2
+				SELECT @remain = @oldtime
+				SELECT @enddate = @oldenddate
+				SELECT @strenddate = convert(varchar(12), @enddate, 102) + ' ' + convert(varchar(12), @enddate, 108)
+			END
+		END
+		ELSE SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="exchangearea" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="srcaid"   sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="destaid"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="time"     sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @srctime integer
+		SELECT @error = 0
+		SELECT @uid = id FROM users WHERE @name = name
+		IF @@rowcount = 1
+		BEGIN
+			SELECT @srctime=time FROM point WHERE @uid = uid AND @srcaid = aid
+			IF @@rowcount = 1 AND @srctime >= @time
+			BEGIN
+				UPDATE point SET time = time+@time WHERE @uid = uid AND @destaid = aid
+				IF @@rowcount = 0	INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@destaid,@time+36000, 0, 0, '', '', '' )
+				UPDATE point SET time = time-@time WHERE @uid = uid AND @srcaid = aid
+			END
+			ELSE SELECT @error = 2
+		END
+		ELSE SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="exchangeareanew" connection="auth0" operate="replaceA">
+	<parameter name="name"     sql-type="varchar(64)"  java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="srcaid"   sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="destaid"  sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="time"     sql-type="integer"      java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="error"    sql-type="integer"      java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+		DECLARE @uid integer
+		DECLARE @srctime integer
+		DECLARE @srcok integer
+		SELECT @srcok = 0
+		SELECT @error = 0
+		SELECT @uid = id FROM users WHERE @name = name
+		IF @@rowcount = 1
+		BEGIN
+			IF @srcaid = 0
+			BEGIN
+				SELECT @srctime=coin*9000 FROM function WHERE @uid = uid
+				IF @@rowcount = 0 OR @time > @srctime	SELECT @error = 2
+				IF @error = 0
+					UPDATE function SET coin = coin-@time/9000 WHERE @uid = uid
+			END
+			ELSE
+			BEGIN
+				SELECT @srctime=time FROM point WHERE @uid = uid AND @srcaid = aid
+				IF @@rowcount = 0 OR @time > @srctime	SELECT @error = 2
+				IF @error = 0
+					UPDATE point SET time = time-@time WHERE @uid = uid AND @srcaid = aid
+			END
+
+			IF @error = 0
+			BEGIN
+				IF @destaid = 0
+				BEGIN
+					UPDATE function SET coin = coin+@time/9000 WHERE @uid = uid
+					IF @@rowcount = 0	INSERT INTO function (uid,coin) VALUES (@uid,@time/9000)
+				END
+				ELSE
+				BEGIN
+					UPDATE point SET time = time+@time WHERE @uid = uid AND @destaid = aid
+					IF @@rowcount = 0	INSERT INTO point (uid,aid,time,zoneid,zonelocalid,accountstart,lastlogin,enddate) VALUES (@uid,@destaid,@time+36000, 0, 0, '', '', '')
+				END
+			END
+		END
+		ELSE SELECT @error = 1
+	COMMIT TRAN
+</procedure>
+
+<procedure name="statusedinfo" connection="auth0" operate="replaceA">
+	<parameter name="type"  sql-type="integer"   java-type="java.lang.Integer" in="true" out="false" />
+	BEGIN TRAN
+	DECLARE @addall integer
+	DECLARE @consumedall integer
+	DECLARE @exchgtomonthall integer
+	DECLARE @remainall integer
+	DECLARE @presentall integer
+	DECLARE @addtoday integer
+	DECLARE @addtodaymoney integer
+	DECLARE @exchgtomonthtoday integer
+	DECLARE @difftoday integer
+	DECLARE @consumedtoday integer
+	DECLARE @consumedbymonthtoday integer
+
+	DECLARE @player_transinmonth integer
+	DECLARE @player_transnoadd integer
+	DECLARE @player_trans integer
+
+	DECLARE @payremainall integer
+	DECLARE @paynetremainall integer
+	DECLARE @paypresentall integer
+	DECLARE @netconsumedtoday integer
+	DECLARE @netconsumedbymonthtoday integer
+	DECLARE @monthremainall integer
+	DECLARE @monthnetremainall integer
+
+	DECLARE @remainall_last integer
+	DECLARE @presentall_last integer
+	DECLARE @payremainall_last integer
+	DECLARE @paynetremainall_last integer
+	DECLARE @paypresentall_last integer
+
+	DECLARE @now datetime
+	DECLARE @last datetime
+	SELECT @now = getdate()
+	SELECT @last = dateadd(day,-1,@now)
+
+	SELECT @addall=convert(int,sum(adduppoint*1.0)/3600) from function at isolation read uncommitted
+
+	SELECT @exchgtomonthall=convert(int,sum(usepoint*1.0)/3600) from monthbill
+
+	SELECT @remainall=convert(int,sum(time*1.0)/3600),@presentall=10*count(time) from point where NOT aid=0 at isolation read uncommitted
+
+	SELECT @consumedall = @addall + @presentall - @remainall - @exchgtomonthall
+
+	SELECT @addtoday=convert(int,sum(addpoint*1.0)/3600),@addtodaymoney=sum(money) from agentbill where uid>32 and usedate>@last and @now>usedate at isolation read uncommitted
+	SELECT @exchgtomonthtoday=convert(int,sum(usepoint*1.0)/3600) from monthbill where usedate>@last
+	SELECT @difftoday = @addtoday - @exchgtomonthtoday
+
+	SELECT @consumedbymonthtoday=sum(datediff(hour,@last,enddate)) from point where enddate>@last and @now>enddate at isolation read uncommitted
+	SELECT @consumedbymonthtoday=@consumedbymonthtoday+sum(24) from point where enddate>@now at isolation read uncommitted
+
+	SELECT @player_transinmonth=count(distinct buyer) from translog where date>dateadd(day,-30,@now) at isolation read uncommitted
+	SELECT @player_transnoadd=count(distinct buyer) from translog,agentbill where translog.buyer=agentbill.uid and agentbill.usedate>dateadd(day,-30,@now)
+	SELECT @player_trans = @player_transinmonth - @player_transnoadd
+
+	SELECT @remainall_last=remainall,@presentall_last=presentall,@payremainall_last=payremainall,@paynetremainall_last=paynetremainall,@paypresentall_last=paypresentall from usedinfo where statdate>dateadd(hour,-25,@now) and dateadd(hour,-23,@now) > statdate
+	SELECT @consumedtoday = @remainall_last - @remainall + @presentall - @presentall_last + @difftoday
+
+
+
+	DELETE FROM billinfo
+	INSERT into billinfo SELECT a.uid,a.aid,sum(a.money),sum(a.addpoint) from agentbill a where a.uid>32 group by a.uid,a.aid
+	DELETE FROM transbillinfo
+	INSERT into transbillinfo SELECT t.buyer,t.aid,sum(t.point)/90,sum(t.point),0 from translog t where t.status=1 group by t.buyer,t.aid
+	UPDATE transbillinfo set t.flags=1 from billinfo b,transbillinfo t where b.uid=t.uid and b.aid=t.aid
+	INSERT into billinfo select t.uid,t.aid,t.addupmoney,t.adduppoint from transbillinfo t where NOT t.flags=1
+	UPDATE billinfo set b.adduppoint=b.adduppoint+t.adduppoint,b.addupmoney=b.addupmoney+t.addupmoney from billinfo b,transbillinfo t where b.uid=t.uid and b.aid=t.aid and t.flags=1
+	DELETE FROM transbillinfo
+	INSERT into transbillinfo select t.seller,t.aid,-sum(t.point)/90,-sum(t.point),0 from translog t where t.status=1 group by t.seller,t.aid
+	UPDATE transbillinfo set t.flags=1 from billinfo b,transbillinfo t where b.uid=t.uid and b.aid=t.aid
+	INSERT into billinfo select t.uid,t.aid,t.addupmoney,t.adduppoint from transbillinfo t where NOT t.flags=1
+	UPDATE billinfo set b.adduppoint=b.adduppoint+t.adduppoint,b.addupmoney=b.addupmoney+t.addupmoney from billinfo b,transbillinfo t where b.uid=t.uid and b.aid=t.aid and t.flags=1
+
+	SELECT @payremainall=convert(int,sum(p.time*1.0)/3600) from point p,billinfo b where p.uid=b.uid and p.aid=b.aid and NOT p.aid=0 and b.adduppoint>0
+	SELECT @paynetremainall=convert(int,sum(p.time*1.0)/3600) from point p,billinfo b where p.uid=b.uid and p.aid=b.aid and NOT p.aid=0 and b.adduppoint>0 and b.addupmoney*90>p.time
+	SELECT @paynetremainall=@paynetremainall+convert(int,sum(b.addupmoney*90.0)/3600) from point p,billinfo b where p.uid=b.uid and p.aid=b.aid and NOT p.aid=0 and b.adduppoint>0 and p.time>b.addupmoney*90
+	SELECT @paypresentall=10*count(*) from billinfo
+	SELECT @netconsumedtoday = @paynetremainall_last - @paynetremainall + @difftoday
+	SELECT @consumedtoday = @payremainall_last - @payremainall + @paypresentall - @paypresentall_last + @difftoday
+
+	UPDATE consumeadjust set adjustenddate=dateadd(second,2592*((a.time-b.addupmoney*90)/522),recorddate) from consumeadjust a,billinfo b where a.uid=b.uid and a.aid=b.aid and a.adjustenddate=NULL and a.time>b.addupmoney*90
+	SELECT @netconsumedbymonthtoday=sum(datediff(hour,@last,adjustenddate)) from consumeadjust where adjustenddate>@last and @now>adjustenddate at isolation read uncommitted
+	SELECT @netconsumedbymonthtoday=@netconsumedbymonthtoday+sum(24) from consumeadjust where adjustenddate>@now at isolation read uncommitted
+	SELECT @netconsumedbymonthtoday = @consumedbymonthtoday-@netconsumedbymonthtoday
+	SELECT @monthremainall=sum(datediff(hour,@now,enddate)) from point where enddate>@now at isolation read uncommitted
+	SELECT @monthnetremainall=sum(datediff(hour,@now,adjustenddate)) from consumeadjust where adjustenddate>@now at isolation read uncommitted
+	SELECT @monthnetremainall = @monthremainall-@monthnetremainall
+	DELETE from consumeadjust where @last>adjustenddate
+
+	INSERT INTO usedinfo (statdate,addall,consumedall,exchgtomonthall,remainall,presentall,addtoday,addtodaymoney,exchgtomonthtoday,difftoday,consumedtoday,consumedbymonthtoday,player_transinmonth,player_transnoadd,player_trans,payremainall,paynetremainall,paypresentall,netconsumedtoday,netconsumedbymonthtoday,monthremainall,monthnetremainall) VALUES (@now,@addall,@consumedall,@exchgtomonthall,@remainall,@presentall,@addtoday,@addtodaymoney,@exchgtomonthtoday,@difftoday,@consumedtoday,@consumedbymonthtoday,@player_transinmonth,@player_transnoadd,@player_trans,@payremainall,@paynetremainall,@paypresentall,@netconsumedtoday,@netconsumedbymonthtoday,@monthremainall,@monthnetremainall)
+
+	SELECT * from usedinfo where statdate = @now
+	COMMIT TRAN
+</procedure>
+
+<procedure name="statonlineinfo" connection="auth0" operate="replaceA">
+	<parameter name="type"  sql-type="integer"   java-type="java.lang.Integer" in="true" out="false" />
+	BEGIN TRAN
+		DECLARE @account_pay integer
+		DECLARE @account_pay_now integer
+		DECLARE @account_month integer
+		DECLARE @account_month_now integer
+		DECLARE @online_total integer
+		DECLARE @online_pay integer
+		DECLARE @online_month integer
+		DECLARE @online_freesvr integer
+		DECLARE @online_freesvr_payed integer
+
+		DECLARE @now datetime
+		SELECt @now = getdate()
+
+		SELECT @account_pay=count(uid) FROM function where addupmoney>0 at isolation read uncommitted
+		SELECT @account_pay_now=count(distinct point.uid) FROM point,agentbill where point.uid=agentbill.uid and point.aid=agentbill.aid and agentbill.money>0 and (point.time>0 or point.enddate>getdate()) at isolation read uncommitted
+		SELECT @account_month=count(distinct uid) FROM monthbill
+		SELECT @account_month_now=count(*) FROM point where enddate > @now at isolation read uncommitted
+		SELECT @online_total=count(*) FROM point where NOT zoneid = NULL at isolation read uncommitted
+		SELECT @online_pay=count(*) FROM point,function where point.uid = function.uid and NOT point.accountstart = NULL and NOT point.accountstart = '' and NOT point.zoneid = NULL and NOT point.zoneid = 0 and function.addupmoney > 0 and NOT point.aid = 0 at isolation read uncommitted
+		SELECT @online_month=count(*) FROM point where NOT accountstart = NULL and NOT accountstart = '' and NOT zoneid = NULL and NOT zoneid = 0 and enddate > @now at isolation read uncommitted
+		SELECT @online_freesvr=count(*) FROM point where point.aid >= 9 and 10 >= point.aid and NOT point.zoneid = NULL at isolation read uncommitted
+		SELECT @online_freesvr_payed=count(*) FROM point,function where point.uid = function.uid and point.aid >= 9 and 10 >= point.aid and NOT point.zoneid = NULL and function.addupmoney > 0 at isolation read uncommitted
+
+		INSERT INTO onlineinfo (account_pay,account_pay_now,account_month,account_month_now,online_total,online_pay,online_month,online_freesvr,online_freesvr_payed,statdate) VALUES (@account_pay,@account_pay_now,@account_month,@account_month_now,@online_total,@online_pay,@online_month,@online_freesvr,@online_freesvr_payed,@now)
+	COMMIT TRAN
+</procedure>
+
+ 
+<procedure name="addmatrixrecord" connection="auth0" operate="replaceA">
+
+	<parameter name="code"      sql-type="varchar(12)" java-type="java.lang.String"   in="true" out="false" />
+	<parameter name="number"    sql-type="integer"    java-type="java.lang.Integer"  not-null="true" />
+	<parameter name="price"     sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+	<parameter name="rate"      sql-type="integer"    java-type="java.lang.Integer"  in="true" out="false" />
+ 	<parameter name="expiredtime"  sql-type="varchar(32)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="creator"   sql-type="varchar(64)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="id"        sql-type="integer"    java-type="java.lang.Integer"  in="true" out="true" />
+	BEGIN TRAN
+	    SELECT @id = -1
+        SELECT id FROM matrixrecord WHERE code = @code
+        if (@@rowcount > 0)
+        	return -1
+		SELECT @id = ISNULL(max(id), 0)+1 FROM matrixrecord HOLDLOCK
+		INSERT INTO matrixrecord (id,code,number,price,rate,expiredtime,creator,creatime,auditor,auditime,status) VALUES(@id,@code,@number,@price,@rate,@expiredtime,@creator,getdate(),@creator,getdate(),0)
+	COMMIT TRAN
+</procedure>
+
+<procedure name="addnewmatrix" connection="auth0" operate="replaceA">
+	<parameter name="recordid"      sql-type="integer"        java-type="java.lang.Integer" in="true"  out="false" />	
+	<parameter name="matrixid"      sql-type="varchar(12)"    java-type="java.lang.String" in="true"  out="false" />	
+	<parameter name="matrix"      sql-type="varbinary(80)"    java-type="java.lang.reflect.Array" in="true"  out="false" />
+	INSERT INTO matrixnew (recordid,id,matrix) VALUES (@recordid,@matrixid,@matrix)
+		    
+	IF (@@rowcount = 0)
+		return -1
+	else
+	    return 0
+</procedure>
+
+<procedure name="bindmatrix" connection="auth0" operate="replaceA">
+	<!-- -1.unknown error;  -2.userid invalid; -3. coordinates invalid; -4. verifyCode error;
+	 -5.matrix id invalid;	 -6.already bind; -7.too many illegal try; -8. bind related method is in process;
+	  -9.bind mobile; -10.matrix not be audited. -11.matrix expired  -->
+	<parameter name="userid"        sql-type="integer"        java-type="java.lang.Integer" in="true"  out="false" />
+	<parameter name="matrixid"      sql-type="varchar(12)"    java-type="java.lang.String"  in="true"  out="false" />
+	<parameter name="ip"            sql-type="integer"        java-type="java.lang.Integer" in="true"  out="false" />
+	BEGIN TRAN
+	    DECLARE @newmatrixFromTable       varbinary(80)
+	    DECLARE @recordidFromTable        integer
+	    DECLARE @statusFromTable          integer
+	    DECLARE @expiredDateFromTable     datetime
+   	    DECLARE @bindstatusFromTable      integer
+	    
+	    SELECT id FROM users where id = @userid
+		IF (@@rowcount = 0)
+		BEGIN
+			rollback tran
+			return -2 <!--userid invalid-->
+		END
+	    
+	    SELECT @recordidFromTable=recordid ,@newmatrixFromTable=matrix FROM matrixnew where id = @matrixid at isolation read uncommitted
+		IF (@@rowcount = 0)
+		BEGIN
+			rollback tran
+			return -5 <!--not exist -->
+		END
+		
+		SELECT @statusFromTable=status, @expiredDateFromTable = expiredtime FROM matrixrecord where id = @recordidFromTable
+		IF (@@rowcount = 1)
+		BEGIN
+			IF (@statusFromTable != 1)
+		    BEGIN
+				rollback tran
+				return -10 <!-- not be audited -->
+			END	
+			IF (getdate() > @expiredDateFromTable)
+		    BEGIN
+				rollback tran
+				return -11  <!-- expired -->
+			END	
+		END ELSE
+		BEGIN
+			rollback tran
+			return -5 <!-- invalid -->
+		END
+		
+		SELECT @bindstatusFromTable = bindstatus from iplimit WHERE uid = @userid 
+		IF (@@rowcount = 1)
+		BEGIN
+			IF (@bindstatusFromTable > 1)
+		    BEGIN
+				rollback tran
+				return -9 <!-- bind mobile -->
+			END	
+			IF (@bindstatusFromTable = 1)
+		    BEGIN
+				rollback tran
+				return -6 <!-- already bind matrix-->
+			END	
+			UPDATE iplimit SET bindstatus = 1, recordid =@recordidFromTable, matrixid = @matrixid, matrix=@newmatrixFromTable WHERE uid = @userid    		
+		END
+		ELSE BEGIN
+			INSERT INTO iplimit (uid,enable,lockstatus,autolock, bindstatus, recordid,matrixid,matrix) VALUES (@userid,'f','f','f',1,@recordidFromTable,@matrixid,@newmatrixFromTable)		
+		END		
+	
+		INSERT INTO matrixused (id,matrix,userid, begindate,ip) VALUES (@matrixid,@newmatrixFromTable,@userid,getdate(), @ip)		
+		DELETE FROM matrixnew where id = @matrixid
+
+	COMMIT TRAN
+</procedure>
+
+<procedure name="unbindmatrix" connection="auth0" operate="replaceA">
+	<!-- -1.unknown error;  -2.userid invalid; -3. coordinates invalid; -4. verifyCode error; -5.matrix id wrong; -6.no bind; -7.too many illegal try; -8. bind related method is in process -->
+	<parameter name="userid"        sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+	<parameter name="matrixid"      sql-type="varchar(12)"    java-type="java.lang.String"  in="true"  out="false" />
+	<parameter name="ip"            sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+
+    DECLARE @matrixidFromTable     varchar(12)
+    DECLARE @statusFromTable       integer
+	    
+    SELECT @statusFromTable=bindstatus, @matrixidFromTable = matrixid FROM iplimit WHERE uid = @userid
+    IF (@@rowcount = 1)
+    BEGIN
+    	IF (@statusFromTable != 1)
+    	BEGIN
+    		return 0
+    	END
+    	<!--
+    	IF ( @matrixidFromTable != @matrixid )
+    	BEGIN
+    		return -5
+    	END
+    	-->
+    	BEGIN TRAN    
+			UPDATE iplimit SET bindstatus = 0, matrixid = NULL WHERE uid = @userid    		
+		    UPDATE matrixused SET canceldate = getdate(),ip=@ip WHERE id = @matrixidFromTable    		
+		COMMIT TRAN
+    END 
+</procedure>
+
+
+<procedure name="rebindmatrix" connection="auth0" operate="replaceA">
+<!-- -1.unknown error;
+	 *   -2.userid invalid; -3. coordinates invalid; -4. verifyCodeOld error; 
+	 *   -5.old matrix id wrong; -6.no bind; -7.too many illegal try;
+	 *   -8. bind related method is in process -9. verifyCodeNew error;
+	 *   -10.matrix not be audited; -11.matrix expired; -12.new matrix id wrong  -->
+	<parameter name="userid"        sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+	<parameter name="matrixidold"   sql-type="varchar(12)"    java-type="java.lang.String"  in="true"  out="false" />
+	<parameter name="matrixid"   sql-type="varchar(12)"    java-type="java.lang.String"  in="true"  out="false" />
+	<parameter name="ip"            sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+
+	BEGIN TRAN
+	    DECLARE @newmatrixFromTable       varbinary(80)
+	    DECLARE @recordidFromTable        integer
+	    DECLARE @statusFromTable          integer
+	    DECLARE @expiredDateFromTable     datetime
+   	    DECLARE @bindstatusFromTable      integer
+
+	    DECLARE @matrixidFromTable     varbinary(12)
+   		
+
+	    SELECT @bindstatusFromTable=bindstatus, @matrixidFromTable = matrixid FROM iplimit WHERE uid = @userid
+    	IF (@@rowcount = 1)
+	    BEGIN
+	    	<!--
+	    	IF ( @matrixidFromTable != @matrixidold )
+	    	BEGIN
+		    	rollback tran
+	    		return -5
+	    	END
+	    	-->
+	    	IF (@bindstatusFromTable = 1)
+	    	BEGIN
+				UPDATE iplimit SET bindstatus = 0, matrixid = NULL WHERE uid = @userid    		
+			    UPDATE matrixused SET canceldate = getdate(),ip=@ip WHERE id = @matrixidFromTable    		
+			END
+   		END 
+
+	    
+	    SELECT id FROM users where id = @userid
+		IF (@@rowcount = 0)
+		BEGIN
+			rollback tran
+			return -2 <!--userid invalid-->
+		END
+	    
+	    SELECT @recordidFromTable=recordid ,@newmatrixFromTable=matrix FROM matrixnew where id = @matrixid at isolation read uncommitted
+		IF (@@rowcount = 0)
+		BEGIN
+			rollback tran
+			return -12 <!--not exist -->
+		END
+		
+		SELECT @statusFromTable=status, @expiredDateFromTable = expiredtime FROM matrixrecord where id = @recordidFromTable
+		IF (@@rowcount = 1)
+		BEGIN
+			IF (@statusFromTable != 1)
+		    BEGIN
+				rollback tran
+				return -10 <!--not be audited-->
+			END	
+			IF (getdate() > @expiredDateFromTable)
+		    BEGIN
+				rollback tran
+				return -11 <!--expired-->
+			END	
+		END ELSE
+		BEGIN
+			rollback tran
+			return -12 <!--invalid-->
+		END
+		
+		SELECT @bindstatusFromTable = bindstatus from iplimit WHERE uid = @userid 
+		IF (@@rowcount = 1)
+		BEGIN
+			IF (@bindstatusFromTable > 1)
+		    BEGIN
+				rollback tran
+				return -9 <!--bind mobile-->
+			END	
+			IF (@bindstatusFromTable = 1)
+		    BEGIN
+				rollback tran
+				return -6 <!-- already bind matrix  -->
+			END	
+			UPDATE iplimit SET bindstatus = 1, recordid =@recordidFromTable, matrixid = @matrixid, matrix=@newmatrixFromTable WHERE uid = @userid    		
+		END
+		ELSE BEGIN
+			INSERT INTO iplimit (uid,enable,lockstatus,autolock, bindstatus, recordid,matrixid,matrix) VALUES (@userid,'f','f','f',1,@recordidFromTable,@matrixid,@newmatrixFromTable)		
+		END		
+	
+		INSERT INTO matrixused (id,matrix,userid, begindate,ip) VALUES (@matrixid,@newmatrixFromTable,@userid,getdate(), @ip)		
+		DELETE FROM matrixnew where id = @matrixid
+	COMMIT TRAN
+
+</procedure>
+<procedure name="auditmatrix" connection="auth0" operate="replaceA">
+	<parameter name="id"      sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="auditor" sql-type="varchar(64)" java-type="java.lang.String"  in="true" out="false" />
+	<parameter name="status"  sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	DECLARE @retcount integer
+	SELECT @retcount = 0
+	BEGIN TRAN
+		UPDATE matrixrecord SET auditor = @auditor, auditime = getdate(), status = @status WHERE id = @id AND status = 0
+		if @@rowcount =1
+			SELECT @retcount = count(recordid) FROM matrixnew WHERE recordid = @id
+	COMMIT TRAN
+	return @retcount
+</procedure>
+
+<procedure name="deletematrix" connection="auth0" operate="replaceA">
+	<parameter name="id"   sql-type="integer"  java-type="java.lang.Integer" in="true" out="false" />
+	DECLARE @affectedcount integer
+	SELECT @affectedcount = 0
+	BEGIN TRAN
+		DELETE FROM matrixrecord WHERE id = @id AND status = 0
+		if @@rowcount = 1 
+		BEGIN
+			DELETE FROM matrixnew WHERE recordid = @id
+			SELECT @affectedcount =  @@rowcount
+		END
+	COMMIT TRAN
+	return @affectedcount
+</procedure>
+
+<query name="matrixrecordids">
+	<table name="matrixrecord" alias="c"/>
+	<column name="id" column="c.id"/>
+	<select name="all" condition="ORDER BY c.id DESC"/>
+	<select name="new" condition="WHERE c.status = 0 ORDER BY c.id DESC"/>
+	<select name="audited" condition="WHERE c.status = 1 ORDER BY c.id DESC"/>
+</query>
+
+<query name="matrixrecordinfo">
+	<table name="matrixrecord" alias="m"/>
+	<column name="code" column="m.code"/>
+	<column name="number" column="m.number"/>
+	<column name="price" column="m.price"/>
+	<column name="rate" column="m.rate"/>
+	<column name="expiredtime" column="m.expiredtime"/>
+	<column name="creator" column="m.creator"/>
+	<column name="creatime" column="m.creatime"/>
+	<column name="auditor" column="m.auditor"/>
+	<column name="auditime" column="m.auditime"/>
+	<column name="status" column="m.status"/>
+	<select name="item" condition="WHERE m.id = ?"/>
+	<select name="bycode" condition="WHERE m.code = ? and m.status = 1"/>
+</query>
+
+<procedure name="changematrixstatus" connection="auth0" operate="replaceA">
+	<parameter name="id"         sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="tostatus"   sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="retcount"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+	    SELECT @retcount = -1
+	    if ((@tostatus = 0) or (@tostatus = 1) or (@tostatus = 2))
+	    BEGIN
+			UPDATE matrixrecord set status = @tostatus WHERE id = @id
+			SELECT @retcount = count(recordid) FROM matrixnew WHERE recordid = @id
+		END	
+	COMMIT TRAN
+</procedure>
+
+<procedure name="clearmatrix" connection="auth0" operate="replaceA">
+	<parameter name="id"         sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="retcount"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	BEGIN TRAN
+    	DECLARE @ostatus integer
+
+	    SELECT @retcount = -1
+
+    	SELECT @ostatus = status FROM matrixrecord WHERE id = @id
+	    
+	    if (@ostatus = 2)
+	    BEGIN
+		    DELETE FROM matrixrecord WHERE id = @id
+			DELETE FROM matrixnew WHERE recordid = @id
+		    SELECT @retcount = @@rowcount
+		END	
+	COMMIT TRAN
+</procedure>
+
+<procedure name="querymatrixnewbyid" connection="auth0" operate="replaceA">
+	<parameter name="recordid"   sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="id"         sql-type="varchar(12)"     java-type="java.lang.String" in="true" out="true" />
+	<parameter name="matrix"     sql-type="varbinary(80)"     java-type="java.lang.reflect.Array" in="false" out="true" />
+	<parameter name="ret"        sql-type="integer"     java-type="java.lang.reflect.Array" in="false" out="true" />	
+	SELECT @ret = -1
+   	SELECT @recordid=recordid, @id=id, @matrix=matrix FROM matrixnew WHERE id = @id
+   	IF (@@rowcount = 1) 
+   	BEGIN	
+   		SELECT @ret =0
+	END
+</procedure>
+
+<procedure name="querymatrixusedcount" connection="auth0" operate="replaceA">
+	<parameter name="id"         sql-type="integer"     java-type="java.lang.Integer" in="true" out="false" />
+	<parameter name="retcount"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	DECLARE @number integer
+	DECLARE @newcount integer
+	SELECT @retcount = -1
+	SELECT @number=number FROM matrixrecord WHERE id = @id
+	IF (@@rowcount = 1) 
+	BEGIN	
+		select @newcount=count(*) FROM matrixnew WHERE recordid = @id    	
+		SELECT @retcount = @number - @newcount
+	END
+</procedure>
+
+<query name="downloadmatrix">
+	<table name="matrixnew" alias="mn"/>
+	<column name="recordid"        column="mn.recordid"/>
+	<column name="id"              column="mn.id"/>
+	<column name="matrix"          column="mn.matrix"/>
+	<select name="all" condition="WHERE mn.recordid = ? order by mn.id"/>
+</query>
+
+<query name="querynewmatrix">
+	<table name="matrixnew" alias="mn"/>
+	<column name="recordid"        column="mn.recordid"/>
+	<column name="id"              column="mn.id"/>
+	<column name="matrix"          column="mn.matrix"/>
+	<select name="id" condition="WHERE mn.id = ? "/>
+</query>
+
+<query name="querymatrixrecordid">
+	<table name="matrixrecord" alias="m"/>
+	<column name="id" column="m.id"/>
+	<select name="id" condition="WHERE m.code = ?"/>
+</query>
+	
+<query name="querymatrixused">
+	<table name="matrixused" alias="m"/>
+	<column name="id" column="m.id"/>
+	<column name="matrix" column="m.matrix"/>
+	<column name="userid" column="m.userid"/>
+	<column name="begindate" column="m.begindate"/>
+	<column name="canceldate" column="m.canceldate"/>
+	<column name="ip" column="m.ip"/>
+	<select name="id" condition="WHERE m.id = ?"/>
+	<select name="userid" condition="WHERE m.userid = ?"/>
+</query>
+
+<procedure name="bindmobilekey" connection="auth0" operate="replaceB">
+	<!-- -1.unknown error; -2.random overrange; -3.keyId overrange; -4.keyId expired; -5.already bind matrix; -6.already
+		 bind mobile; -7.verifycode wrong; -8.userid invalid -->
+	<parameter name="userid"   sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+	<parameter name="key"      sql-type="integer"    java-type="java.lang.Integer"  in="true"  out="false" />
+	<parameter name="algorithm"     sql-type="integer"    java-type="java.lang.Integer"  in="true"  out="false" />
+	BEGIN TRAN
+    DECLARE @statusFromTable       integer
+    DECLARE @cardpointimeFromTable       integer
+    
+    -- will be removed in next version
+    SELECT @statusFromTable=bindstatus  FROM iplimit WHERE uid = @userid
+    IF (@@rowcount = 1)
+    BEGIN
+    	IF (@statusFromTable = 1)
+    	BEGIN
+    		return -5 --already bind 
+    	END
+    END
+
+    SELECT @cardpointimeFromTable=cardpointime FROM users WHERE id = @userid
+    IF (@@rowcount = 1)
+    BEGIN
+    	IF ( (@cardpointimeFromTable &amp; 240) > 0)	--0xF0
+    	BEGIN
+    		return -5 --already bind 
+    	END
+    END
+
+    
+    UPDATE users SET cardpointime = (cardpointime &amp; -241)|32 WHERE id = @userid		--0xFFFFFF0F,0x20
+	INSERT INTO mobilekey (uid, mobilekey, mobilealgorithm) VALUES (@userid,@key,@algorithm)		    
+    COMMIT TRAN
+</procedure>
+
+<procedure name="unbindmobilekey" connection="auth0" operate="replaceB">
+	<!-- -1.unknown error;  -2.userid invalid; -3. coordinates invalid; -4. verifyCode error; -5.matrix id wrong; -6.no bind; -7.too many illegal try; -8. bind related method is in process -->
+	<parameter name="userid"        sql-type="integer"     java-type="java.lang.Integer" in="true"  out="false" />
+	DECLARE @cardpointimeFromTable   integer
+
+	SELECT @cardpointimeFromTable=cardpointime FROM users WHERE id = @userid
+	IF (@@rowcount = 1)
+	BEGIN
+		IF ( (@cardpointimeFromTable &amp; 240) != 32)	--0xF0,0x20
+		BEGIN
+    			return 0 --not bind mobilekey 
+		END
+		BEGIN TRAN
+		UPDATE users SET cardpointime = (cardpointime &amp; -241) WHERE id = @userid	--0xFFFFFF0F
+		DELETE FROM mobilekey WHERE uid = @userid
+		COMMIT TRAN
+	END
+</procedure>
+
+<query name="querymobilekey">
+	<table name="mobilekey" alias="m"/>
+	<column name="userid" column="m.uid"/>
+	<column name="mobilealgorithm" column="m.mobilealgorithm"/>
+	<column name="mobilekey" column="m.mobilekey"/>
+	<select name="userid" condition="WHERE m.uid = ?"/>
+</query>
+
+<procedure name="querymobilekeybyid" connection="auth0" operate="replaceA">
+	<parameter name="uid"         sql-type="integer"     java-type="java.lang.Integer" in="true" out="true" />
+	<parameter name="mobilealgorithm"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	<parameter name="mobilekey"    sql-type="integer"     java-type="java.lang.Integer" in="false" out="true" />
+	SELECT @uid=uid,@mobilealgorithm=mobilealgorithm, @mobilekey=mobilekey FROM mobilekey WHERE uid = @uid
+	IF (@@rowcount != 1)
+	BEGIN
+		return -1
+	END
+</procedure>
+
+<query name="getUserPhone">
+	<table name="phone" alias="p" />
+	<column name="phone" column="p.phone" />
+	<select name="byUid" condition="WHERE p.uid = ?" />
+	<select name="byName" condition="WHERE p.uid = (SELECT id FROM users WHERE name=?)" />
+</query>
+
+<query name="getPhoneUser">
+	<table name="phone" alias="p" />
+	<column name="uid" column="p.uid" />
+	<select name="byPhone" condition="WHERE p.phone = ?" />
+</query>
+
+<procedure name="bindPhone" connection="auth0" operate="replaceB">
+	<parameter name="name"   sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="phone"  sql-type="char(16)"   java-type="java.lang.String" in="true" out="false" />
+	<parameter name="error"  sql-type="integer"	java-type="java.lang.Integer" in="false" out="true" />
+	SELECT @error = 0
+	DECLARE	@uid	integer
+	DECLARE	@usertype_old	integer
+	SELECT @uid = id, @usertype_old = cardpointime FROM users WHERE name = @name
+	IF @@rowcount = 0
+		SELECT @error = 4
+	ELSE IF (@usertype_old &amp; 240) > 0 AND NOT (@usertype_old &amp; 240) = 64	--0xF0,0x40
+		SELECT @error = 5
+	ELSE
+	BEGIN
+		IF 5 > (SELECT count(*) FROM phone WHERE uid = @uid)
+		BEGIN
+			IF 15 > (SELECT count(*) FROM phone WHERE phone = @phone)
+			BEGIN
+				IF EXISTS (SELECT * FROM phone WHERE uid = @uid and phone = @phone)
+					SELECT @error = 3
+				ELSE
+				BEGIN
+					INSERT INTO phone VALUES( @uid, @phone )
+					UPDATE users SET cardpointime = (cardpointime&amp;-241)|64 WHERE id = @uid	--0xFFFFFF0F,0x40
+				END
+			END
+			ELSE
+				SELECt @error = 2
+		END
+		ELSE
+			SELECT @error = 1
+	END
+</procedure>
+
+<procedure name="unbindPhone" connection="auth0" operate="replaceB">
+	<parameter name="name"   sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="phone"  sql-type="char(16)"   java-type="java.lang.String" in="true" out="false" />
+	<parameter name="error"  sql-type="integer"	java-type="java.lang.Integer" in="false" out="true" />
+	DECLARE @uid	integer
+	DECLARE @usertype_old integer
+	SELECT @uid = id, @usertype_old = cardpointime FROM users where name = @name
+	IF @@rowcount = 0
+		SELECT @error = 2
+	ELSE IF NOT (@usertype_old &amp; 240) = 64	--0xF0,0x40
+		SELECT @error = 3
+	ELSE
+	BEGIN
+		DELETE phone FROM phone WHERE uid = @uid AND phone = @phone
+		IF @@rowcount = 1
+			SELECT @error = 0
+		ELSE
+			SELECT @error = 1
+		IF NOT EXISTS (SELECT * FROM phone WHERE uid = @uid)
+			UPDATE users SET cardpointime = (cardpointime&amp;-241) WHERE name = @name	--0xFFFFFF0F
+	END
+</procedure>
+
+<procedure name="clearUserPhone" connection="auth0" operator="replaceB">
+	<parameter name="name"   sql-type="varchar(64)" java-type="java.lang.String" in="true" out="false" />
+	<parameter name="ret"    sql-type="integer"	java-type="java.lang.Integer" in="false" out="true" />
+	DECLARE @uid    integer
+	DECLARE @usertype_old integer
+	SELECT @uid = id, @usertype_old = cardpointime FROM users WHERE name = @name
+	IF @@rowcount = 0
+		SELECT @ret = -2
+	ELSE IF NOT (@usertype_old &amp; 240) = 64	--0xF0,0x40
+		SELECT @ret = -3
+	ELSE
+	BEGIN
+		UPDATE users SET cardpointime = (cardpointime&amp;-241) WHERE id = @uid		--0xFFFFFF0F
+		DELETE FROM phone WHERE uid = @uid
+		SELECT @ret = @@rowcount
+	END
+</procedure>
+
+</application>
+
+

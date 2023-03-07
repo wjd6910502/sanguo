@@ -1,0 +1,55 @@
+#ifndef _NOLOADPLAYER_H_
+#define _NOLOADPLAYER_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_NoLoadPlayer: public Singleton, TransactionBase
+{
+	bool _in_transaction;
+	int _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	NoLoadPlayerData _data;
+
+private:
+	SGT_NoLoadPlayer();
+
+public:
+	static SGT_NoLoadPlayer& GetInstance()
+	{
+		static SGT_NoLoadPlayer _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "NoLoadPlayer"; }
+	virtual int GetID() const { return 4; }
+	virtual const char* GetLockName() const { return "noloadplayer"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int transaction_id);
+	void restore(int transaction_id);
+	void cleanup();
+
+	void InsertData(std::string account, Int64 roleid);
+
+	void GetRoleInfo(const std::string account);
+	std::string HaveLoadPlayer(Int64 roleid);
+};
+
+}
+
+inline CACHE::SGT_NoLoadPlayer* API_GetLuaNoLoadPlayer(void *r) { return (CACHE::SGT_NoLoadPlayer*)r; }
+inline CACHE::SGT_NoLoadPlayer* API_GetLuaNoLoadPlayer() { return (InBigLock() ? &CACHE::SGT_NoLoadPlayer::GetInstance() : 0); }
+
+#endif //_NOLOADPLAYER_H_
+

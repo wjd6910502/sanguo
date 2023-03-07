@@ -1,0 +1,134 @@
+function OnCommand_FriendReply(player, role, arg, others)
+	player:Log("OnCommand_FriendReply, "..DumpTable(arg).." others="..DumpTable(others))
+
+	local resp = NewCommand("FriendReply_Re")
+	resp.src_id = arg.src_id
+	resp.accept = arg.accept
+	local s_role = others.roles[arg.src_id]
+	if s_role==nil then
+		--如果玩家不存在的话，那么就判断一下是否在申请列表里面，在的话就删除掉。免得一个一直不上线的玩家占了一个名额
+		local reqs = role._roledata._friend._requests
+		--查找申请
+		local rit = reqs:SeekToBegin()
+		local r = rit:GetValue()
+		while r~=nil do
+			if r._brief._id:ToStr() == arg.src_id then
+				local del_resp = NewCommand("FriendDelRequest")
+				del_resp.role_id = arg.src_id
+				player:SendToClient(SerializeCommand(del_resp))
+				
+				rit:Pop()
+				break
+			end
+
+			rit:Next()
+			r = rit:GetValue()
+		end
+		resp.retcode = G_ERRCODE["FRIEND_REPLY_ROLE_NOT_EXIST"]
+		player:SendToClient(SerializeCommand(del_resp))
+		return
+	end
+
+	local reqs = role._roledata._friend._requests
+	--查找申请
+	local rit = reqs:SeekToBegin()
+	local r = rit:GetValue()
+	while r~=nil do
+		if r._brief._id:ToStr()==s_role._roledata._base._id:ToStr() then
+			if arg.accept == true then
+				local friends = role._roledata._friend._friends
+				local src_friends = s_role._roledata._friend._friends
+
+				local black = role._roledata._friend._blacklist
+				local src_black = s_role._roledata._friend._blacklist
+
+				local ed = DataPool_Find("elementdata")
+				local quanju = ed.gamedefine[1]
+				if friends:Size() >= quanju.friends_max then
+					resp.retcode = G_ERRCODE["FRIEND_REQUEST_SELF_MAX"]
+					player:SendToClient(SerializeCommand(resp))
+					return
+				end
+				
+				if src_friends:Size() >= quanju.friends_max then
+					resp.retcode = G_ERRCODE["FRIEND_REQUEST_OTHER_MAX"]
+					player:SendToClient(SerializeCommand(resp))
+					return 
+				end
+				
+				--查看是否在黑名单里面
+				if role._roledata._friend._blacklist:Find(s_role._roledata._base._id) ~= nil then
+					resp.retcode = G_ERRCODE["FRIEND_REQUEST_SELF_BLACK_LIST"]
+					player:SendToClient(SerializeCommand(resp))
+					return 
+				end
+				
+				if s_role._roledata._friend._blacklist:Find(role._roledata._base._id) ~= nil then
+					resp.retcode = G_ERRCODE["FRIEND_REQUEST_OTHER_BLACK_LIST"]
+					player:SendToClient(SerializeCommand(resp))
+					return 
+				end
+
+				--互加好友
+				local nf = CACHE.Friend()
+				nf._brief._id = role._roledata._base._id
+				nf._brief._name = role._roledata._base._name
+				nf._brief._photo = role._roledata._base._photo
+				nf._brief._level = role._roledata._status._level
+				nf._zhanli = role._roledata._status._zhanli
+				nf._online = role._roledata._status._online
+				nf._mashu_score = role._roledata._mashu_info._today_max_score
+				s_role._roledata._friend._friends:Insert(nf._brief._id, nf)
+
+				nf._brief._id = s_role._roledata._base._id
+				nf._brief._name = s_role._roledata._base._name
+				nf._brief._photo = s_role._roledata._base._photo
+				nf._brief._level = s_role._roledata._status._level
+				nf._zhanli = s_role._roledata._status._zhanli
+				nf._online = s_role._roledata._status._online
+				nf._mashu_score = s_role._roledata._mashu_info._today_max_score
+				role._roledata._friend._friends:Insert(nf._brief._id, nf)
+
+				--通知双方
+				local cmd = NewCommand("NewFriend")
+				cmd.friend = {}
+				cmd.friend.id = role._roledata._base._id:ToStr()
+				cmd.friend.name = role._roledata._base._name
+				cmd.friend.photo = role._roledata._base._photo
+				cmd.friend.level = role._roledata._status._level
+				cmd.friend.zhanli = role._roledata._status._zhanli
+				cmd.friend.faction = 0
+				cmd.friend.online = role._roledata._status._online
+				cmd.friend.mashu_score = role._roledata._mashu_info._today_max_score
+				s_role:SendToClient(SerializeCommand(cmd))
+
+				cmd.friend.id = s_role._roledata._base._id:ToStr()
+				cmd.friend.name = s_role._roledata._base._name
+				cmd.friend.photo = s_role._roledata._base._photo
+				cmd.friend.level = s_role._roledata._status._level
+				cmd.friend.zhanli = s_role._roledata._status._zhanli
+				cmd.friend.faction = 0
+				cmd.friend.online = s_role._roledata._status._online
+				cmd.friend.mashu_score = s_role._roledata._mashu_info._today_max_score
+				role:SendToClient(SerializeCommand(cmd))
+				
+				rit:Pop()
+				
+			else
+				rit:Pop()
+			end
+			
+			local del_resp = NewCommand("FriendDelRequest")
+			del_resp.role_id = arg.src_id
+			player:SendToClient(SerializeCommand(del_resp))
+
+			resp.retcode = G_ERRCODE["SUCCESS"]
+			player:SendToClient(SerializeCommand(resp))
+			return 
+
+		end
+
+		rit:Next()
+		r = rit:GetValue()
+	end
+end

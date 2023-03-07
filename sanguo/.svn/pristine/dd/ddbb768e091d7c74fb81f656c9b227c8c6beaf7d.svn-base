@@ -1,0 +1,22 @@
+function OnCommand_SkinTimeOut(player, role, arg, others)
+	player:Log("OnCommand_SkinTimeOut, "..DumpTable(arg).." "..DumpTable(others))
+	
+	--判断玩家是否有这个皮肤
+	local skin_info = role._roledata._backpack._skin_items:Find(arg.skinid)
+	if skin_info == nil then
+	--	resp.retcode = G_ERRCODE["SKIN_NOT_EXIST"]
+	--	player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local time = API_GetTime()
+	if time >= skin_info._time then
+		role._roledata._backpack._skin_items:Delete(arg.skinid)
+		local cmd = NewCommand("SkinUpdateInfo")
+		cmd.addflag = 2
+		cmd.skinid = arg.skinid
+		player:SendToClient(SerializeCommand(cmd))
+	else
+		return
+	end
+end

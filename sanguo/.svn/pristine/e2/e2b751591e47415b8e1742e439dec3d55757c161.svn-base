@@ -1,0 +1,82 @@
+function TOP_InsertData(top,toptype,roleid,data,name,photoid)
+	toplist = top:Find(toptype)
+	if toplist~=nil then
+		toplist_id = toplist._new_top_list_by_id
+		toplist_data = toplist._new_top_list_by_data
+		--首先检查这个玩家是否在当前的排行榜
+		local r = toplist_id:Find(roleid)
+		if r~=nil then
+			--说明这个玩家在排行榜中
+			--注意排行榜的规则，自己是不会把自己从排行榜中弄出去的。自己的数值变化只是会影响自己在排行榜中的顺序
+			--自己如果在榜中的话，只能是别人把自己挤出去了。否则自己是不会出去的
+			local old_data = r.data
+			--r.data = data
+			--现在开始处理根据数据来排序的map
+			local rit_data = toplist_data:Seek(old_data)
+			local r_data = rit_data:GetValue()
+			if r_data==nil then
+				--输出错误日志
+				return
+			end
+			
+			while r_data~=nil and old_data:Equle(r_data.data) do
+				if r_data._id:Equle(roleid) then
+					local r2 = CACHE.TopListData:new()
+					toplist_data:DeleteIter(rit_data)
+					r.data:Set(data)
+					r2._id = r._id
+					r2._name = r._name
+					r2._photo = r._photo
+					r2.data:Set(r.data)
+				
+					local tmp_data = CACHE.Int64:new()
+					tmp_data:Set(data)
+					toplist_data:Insert(tmp_data,r2)
+					toplist_id:Insert(r._id,r)
+					--日志，返回
+					return
+				else
+					rit_data = rit_data:Next()
+					r_data = rit_data:GetValue()
+				end
+			end
+			--打出错误的日志
+		else
+			--说明这个玩家不在排行榜中
+			--首先判断当前这个排行榜中的人数
+			local num = toplist_data:Size()
+			if num < 50 then
+				--当前排行榜人数小于50直接把这个玩家放进去
+				local r2 = CACHE.TopListData:new()
+				r2._id = roleid
+				r2._name = name
+				r2._photo = photoid
+				r2.data:Set(data)
+				toplist_id:Insert(roleid,r2)
+				
+				local tmp_data = CACHE.Int64:new()
+				tmp_data:Set(data)
+				toplist_data:Insert(tmp_data,r2)
+			else
+				local last = toplist_data:SeekToLast();
+				if last.data:Great(data) then
+					--直接返回，什么都不做
+					return
+				else
+					toplist_id:Delete(last._id)
+					toplist_data:DeleteIter(last)
+					local r2 = CACHE.TopListData:new()
+					r2._id = roleid
+					r2._name = name
+					r2._photo = photoid
+					r2.data:Set(data)
+					toplist_id:Insert(roleid,r2)
+
+					local tmp_data = CACHE.Int64:new()
+					tmp_data:Set(data)
+					toplist_data:Insert(tmp_data,r2)
+				end
+			end
+		end
+	end
+end

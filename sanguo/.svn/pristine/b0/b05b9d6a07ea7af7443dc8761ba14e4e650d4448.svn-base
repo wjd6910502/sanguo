@@ -1,0 +1,20 @@
+function OnCommand_CompleteInstance(player, role, arg, others)
+	player:Log("OnCommand_CompleteInstance, "..DumpTable(arg))
+
+	local resp = NewCommand("CompleteInstance_Re")
+	resp.retcode = 0
+	resp.inst_tid = arg.inst_tid
+	resp.score = arg.score
+	resp.rewards = {}
+	local item = {}
+	item.tid = 1
+	item.count = 1
+	resp.rewards[#resp.rewards+1] = item
+	item.tid = 2
+	item.count = 1
+	resp.rewards[#resp.rewards+1] = item
+	item.tid = 3
+	item.count = 100
+	resp.rewards[#resp.rewards+1] = item
+	player:SendToClient(SerializeCommand(resp))
+end

@@ -1,0 +1,88 @@
+function OnCommand_BackPackUseItem(player, role, arg, others)
+	player:Log("OnCommand_BackPackUseItem, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("BackPackUseItem_Re")
+	resp.item_id = arg.item_id
+	resp.item_num = arg.item_num
+	if arg.item_num <= 0 then
+		resp.retcode = G_ERRCODE["USE_ITEM_NUM_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	--首先判断这个物品是否是可以使用的物品，类型24代表的是可以使用的物品
+	local ed = DataPool_Find("elementdata")
+	local item = ed:FindBy("item_id", arg.item_id)
+
+	if item == nil then
+		resp.retcode = G_ERRCODE["USE_ITEM_NOT_EXIST"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if item.item_type ~= 24 then
+		resp.retcode = G_ERRCODE["USE_ITEM_CAN_NOT_USE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--查看物品的数量是否对，以及需要的钥匙是否足够
+	if BACKPACK_HaveItem(role, arg.item_id, arg.item_num) == false then
+		resp.retcode = G_ERRCODE["USE_ITEM_NUM_LESS"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if item.use_cost_item ~= 0 then
+		if BACKPACK_HaveItem(role, item.use_cost_item, arg.item_num) == false then
+			resp.retcode = G_ERRCODE["USE_ITEM_KEY_NUM_LESS"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+
+	--在这里需要扣除相应的箱子和钥匙。然后给东西
+	BACKPACK_DelItem(role, arg.item_id, arg.item_num)
+	if item.use_cost_item ~= 0 then
+		BACKPACK_DelItem(role, item.use_cost_item, arg.item_num)
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	local level_reward = ed:FindBy("level_reward", role._roledata._status._level)
+	local reward_id = 0
+	local drop_item_id = 0
+	for huodong_reward in DataPool_Array(level_reward.huodong_reward) do
+		if huodong_reward.huodong_type == item.type_data1 then
+			reward_id = huodong_reward.huodong_rewardid
+			drop_item_id = huodong_reward.huodong_dropid
+			break
+		end
+	end
+	
+	local drop_item = DROPITEM_DropItem(role, drop_item_id)
+	local reward = DROPITEM_Reward(role, reward_id)
+
+	resp.items = {}
+	for index = 1,table.getn(drop_item) do
+		local flag, all_items = BACKPACK_AddItem(role, drop_item[index].id, drop_item[index].count)
+	
+		for i = 1, table.getn(all_items) do
+			local tmp_item = {}
+			tmp_item.tid = all_items[i].tid
+			tmp_item.count = all_items[i].count
+			resp.items[#resp.items+1] = tmp_item
+		end
+	end
+
+	for index = 1,table.getn(reward.item) do
+		local flag, all_items = BACKPACK_AddItem(role, reward.item[index].id, reward.item[index].count)
+		
+		for i = 1, table.getn(all_items) do
+			local tmp_item = {}
+			tmp_item.tid = all_items[i].tid
+			tmp_item.count = all_items[i].count
+			resp.items[#resp.items+1] = tmp_item
+		end
+	end
+	
+	player:SendToClient(SerializeCommand(resp))
+end

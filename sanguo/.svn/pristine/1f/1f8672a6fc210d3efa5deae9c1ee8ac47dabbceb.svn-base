@@ -1,0 +1,30 @@
+function OnCommand_TopListGet(player, role, arg, others)
+	player:Log("OnCommand_TopListGet, "..DumpTable(arg).." "..DumpTable(others))
+
+	local top = others.topmanager
+	local resp = NewCommand("TopListGet_Re")
+	if top~=nil then 
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		toplist = top:Find(arg.top_type)
+		if toplist~=nil then
+			toplist_data = toplist._new_top_list_by_data
+			local rit = toplist_data:SeekToBegin()
+			local r = rit:GetValue()
+			while r~=nil do
+				local r2 = {}
+				r2.id = r._id:ToStr()
+				r2.name = r._name
+				r2.photo = r._photo
+				r2.data = r.data:ToStr()
+				resp.members[#resp.members+1] = r2
+				rit:Next()
+				r = rit:GetValue()
+			end
+		else
+			resp.retcode = G_ERRCODE["SYSTEM_INVALID"]
+		end
+
+	else
+		resp.retcode = G_ERRCODE["SYSTEM_INVALID"]
+	end
+end

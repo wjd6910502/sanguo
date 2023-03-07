@@ -1,0 +1,26 @@
+function OnCommand_BuyInstanceCount(player, role, arg, others)
+	player:Log("OnCommand_BuyInstanceCount, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("BuyInstanceCount_Re")
+	local ed = DataPool_Find("elementdata")
+	local stage = ed:FindBy("stage_id", arg.inst_tid)
+	if stage == nil then
+		resp.retcode = G_ERRCODE["NO_STAGE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	if stage.limittimes ~= 0 then
+		if LIMIT_TestResetUseLimit(role, stage.limittimes) == false then
+			resp.retcode = G_ERRCODE["NO_STAGE"]
+			player:SendToClient(SerializeCommand(resp))
+		else
+			LIMIT_ResetUseLimit(role, stage.limittimes)
+			resp.retcode = 0
+			player:SendToClient(SerializeCommand(resp))
+		end
+	else
+		resp.retcode = G_ERRCODE["NO_STAGE"]
+		player:SendToClient(SerializeCommand(resp))
+	end
+end

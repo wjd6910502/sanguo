@@ -1,0 +1,31 @@
+function OnMessage_RoleUpdateDefencePlayerPveArenaInfo(player, role, arg, others)
+--	API_Log("OnMessage_RoleUpdateDefencePlayerPveArenaInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local pve_arena = others.misc._miscdata._pve_arena_map
+
+	local score_change = 0
+	if arg.win_flag == 1 then
+		score_change = -10
+	else
+		score_change = 10
+	end
+
+	local cur_score = role._roledata._pve_arena_info._score
+	role._roledata._pve_arena_info._score = role._roledata._pve_arena_info._score + score_change
+	PVEARENA_ChangeRoleScore(pve_arena, role, cur_score, cur_score + score_change)
+
+	role._roledata._pve_arena_info._cur_num = role._roledata._pve_arena_info._cur_num + 1
+
+	local tmp_info = CACHE.PveArenaRoleInfo()
+	tmp_info._match_id = role._roledata._pve_arena_info._cur_num
+	tmp_info._id = arg.id
+	tmp_info._name = arg.name
+	tmp_info._win_flag = arg.win_flag
+	tmp_info._attack_flag = 0
+	tmp_info._self_hero_info = arg.oppo_hero_info
+	tmp_info._oppo_hero_info = arg.self_hero_info
+	tmp_info._operation = arg.operation
+	tmp_info._time = API_GetTime()
+
+	role._roledata._pve_arena_info._pve_arena_history:Insert(role._roledata._pve_arena_info._cur_num, tmp_info)
+end

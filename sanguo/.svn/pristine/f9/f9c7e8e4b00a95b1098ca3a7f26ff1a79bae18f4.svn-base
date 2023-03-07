@@ -1,0 +1,3 @@
+function OnMessage_Heartbeat(player, role, arg, others)
+	--player:Log("OnMessage_Heartbeat, "..DumpTable(arg))
+end

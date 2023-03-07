@@ -1,0 +1,37 @@
+CXX=g++ -m64
+CXXFLAGS=-g -Wall -ansi -std=c++0x -O3
+#CXXFLAGS=-g -Wall -ansi -std=c++0x
+INCLUDES=-Ilua/include
+LD=g++ -m64
+LDFLAGS=-O3
+#LDFLAGS=
+DASM=objdump
+DASMFLAGS=-dS
+OBJS=
+LIBS=-Llua/lib -llua64 -ldl
+#LIBS=-Llua/lib -lluajit -ldl
+
+all: test read write
+
+test: main.o ${OBJS}
+	${LD} ${LDFLAGS} -o $@ $< ${OBJS} ${LIBS}
+	#${DASM} ${DASMFLAGS} $@ >test.s
+
+read: read.o ${OBJS}
+	${LD} ${LDFLAGS} -o $@ $< ${OBJS} ${LIBS}
+
+write: write.o ${OBJS}
+	${LD} ${LDFLAGS} -o $@ $< ${OBJS} ${LIBS}
+
+main.o: main.cpp
+	${CXX} ${CXXFLAGS} ${INCLUDES} -c $<
+
+read.o: read.cpp
+	${CXX} ${CXXFLAGS} ${INCLUDES} -c $<
+
+write.o: write.cpp
+	${CXX} ${CXXFLAGS} ${INCLUDES} -c $<
+
+clean:
+	rm -f *.o test test.s read write
+

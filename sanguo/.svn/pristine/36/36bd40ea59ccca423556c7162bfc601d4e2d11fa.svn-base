@@ -1,0 +1,86 @@
+function OnCommand_PvpJoin(player, role, arg, others)
+	player:Log("OnCommand_PvpJoin, "..DumpTable(arg).." "..DumpTable(others))
+
+	--检查当前玩家的状态是否可以进行PVP
+	if role._roledata._pvp._id ~= 0 or role._roledata._pvp._state ~= 0 then
+		player:Log("OnCommand_PvpJoin, "..role._roledata._pvp._id.."  ".."  "..role._roledata._pvp._state)
+		return
+	end
+
+	--在这里不进行任何的验证。直接就把消息发给中心服务器去
+	if table.getn(arg.heroinfo) < 1 or table.getn(arg.heroinfo) > 3 then
+		local resp = NewCommand("ErrorInfo")
+		resp.error_id = G_ERRCODE["PVP_HERO_COUNT_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	--检查武将的合法性,检查玩家是否有这些武将
+	local heros = role._roledata._hero_hall._heros
+
+	for i = 1, table.getn(arg.heroinfo) do
+		local h = heros:Find(arg.heroinfo[i])
+		if h == nil then
+			local resp = NewCommand("ErrorInfo")
+			resp.error_id = G_ERRCODE["NO_HERO"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+	
+	local rolebrief = ROLE_MakeRoleBrief(role)
+	local pvpinfo ={}
+	pvpinfo.brief = {}
+	pvpinfo.brief = rolebrief
+	pvpinfo.hero_hall = {}
+
+	for i = 1, table.getn(arg.heroinfo) do
+		local hero = {}
+		local h = heros:Find(arg.heroinfo[i])
+		hero.tid = arg.heroinfo[i]
+		hero.level = h._level
+		hero.order = h._order
+	--	hero.level = 1
+	--	hero.order = 1
+		pvpinfo.hero_hall[i] = hero
+	end
+
+	pvpinfo.p2p_magic = math.random(1000000)
+	pvpinfo.p2p_net_typ = role._roledata._device_info._net_type
+	pvpinfo.p2p_public_ip = role._roledata._device_info._public_ip
+	pvpinfo.p2p_public_port = role._roledata._device_info._public_port
+	pvpinfo.p2p_local_ip = role._roledata._device_info._local_ip
+	pvpinfo.p2p_local_port = role._roledata._device_info._local_port
+
+	--typ等于1的时候代表的是跨服战斗
+	role._roledata._pvp._pvpcenterinfo = SerializeStruct("RolePVPInfo", pvpinfo)
+	role._roledata._pvp._typ = arg.typ
+		
+	role._roledata._pvp_info._last_hero:Clear()
+	for i = 1, table.getn(arg.heroinfo) do
+		local value = CACHE.Int:new()
+		value._value = arg.heroinfo[i]
+		role._roledata._pvp_info._last_hero:PushBack(value)
+	end
+	--在这里把玩家的当前星级传送进去
+	local data = 0
+	if role._roledata._pvp_info._pvp_grade == 0 then
+		local ed = DataPool_Find("elementdata")
+		for i = 25, role._roledata._pvp_info._pvp_grade + 1, -1 do
+			local ranking = ed:FindBy("ranking_id", i)
+			data = data + ranking.ascending_order_star
+		end
+		data = data + 1
+	else
+		local ed = DataPool_Find("elementdata")
+		for i = 25, role._roledata._pvp_info._pvp_grade + 1, -1 do
+			local ranking = ed:FindBy("ranking_id", i)
+			data = data + ranking.ascending_order_star
+		end
+		data = data + role._roledata._pvp_info._cur_star
+	end
+	role:SendPVPJoin(data)
+	--设置当前进入了PVP状态
+	role._roledata._pvp._state = 1
+	role._roledata._status._instance_id = 0
+end

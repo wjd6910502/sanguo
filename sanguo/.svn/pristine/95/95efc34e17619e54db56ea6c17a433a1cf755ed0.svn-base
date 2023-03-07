@@ -1,0 +1,20 @@
+
+#ifndef __GNET_UNIQUENAMED_CALLID
+#define __GNET_UNIQUENAMED_CALLID
+
+namespace GNET
+{
+
+enum CallID
+{
+	RPC_CREATEROLENAME	=	1017,
+	RPC_CREATEMAFIANAME	=	1026,
+	RPC_CHANGEMAFIANAME	=	1027,
+};
+
+enum ProtocolType
+{
+};
+
+};
+#endif

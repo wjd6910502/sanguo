@@ -1,0 +1,32 @@
+	public:
+		int zoneid;
+		enum { PROTOCOL_TYPE = PROTOCOL_KUAFUZONEREGISTER };
+	public:
+		KuafuZoneRegister() { type = PROTOCOL_KUAFUZONEREGISTER; }
+		KuafuZoneRegister(void*) : Protocol(PROTOCOL_KUAFUZONEREGISTER) { }
+		KuafuZoneRegister (int l_zoneid)
+			 : zoneid(l_zoneid)
+		{
+			type = PROTOCOL_KUAFUZONEREGISTER;
+		}
+
+		KuafuZoneRegister(const KuafuZoneRegister &rhs)
+			: Protocol(rhs),zoneid(rhs.zoneid) { }
+
+		GNET::Protocol *Clone() const { return new KuafuZoneRegister(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << zoneid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> zoneid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

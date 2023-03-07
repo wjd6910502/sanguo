@@ -1,0 +1,21 @@
+
+#ifndef __GNET_STUND_CALLID
+#define __GNET_STUND_CALLID
+
+namespace GNET
+{
+
+enum CallID
+{
+	RPC_STUNGETSERVERINFO	=	101,
+};
+
+enum ProtocolType
+{
+	PROTOCOL_UDPSTUNRESPONSE	=	103,
+	PROTOCOL_UDPSTUNREQUEST	=	102,
+	PROTOCOL_FORWARDUDPSTUNREQUEST	=	104,
+};
+
+};
+#endif

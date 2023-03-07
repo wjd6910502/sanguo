@@ -1,0 +1,50 @@
+[LogUDPClient]
+type                    =       udp
+port                    =       21101
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       32768
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[LogTCPClient]
+type                    =       tcp
+port                    =       21101
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       32768
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[GameDBServer]
+zoneid                  =       1
+type                    =       tcp
+port                    =       9244
+address                 =       0.0.0.0
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       10485760
+obuffermax              =       10485760
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[storagewdb]
+homedir                 =       ./dbhomewdb
+datadir                 =       dbdata
+logdir                  =       dblogs
+backupdir               =       ./backupwdb
+checkpoint_interval     =       120
+times_incbackup         =       1
+tables                  =       db_data
+cache_high_default      =       1000000
+cache_low_default       =       750000
+backup_lockfile         =       /tmp/.lockgamedbd
+quit_lockfile           =       /tmp/.quitgamedbd
+
+[ThreadPool]
+threads                 =       (1,15)(0,1)(100,1)(101,1)
+max_queuesize           =       1048576
+prior_strict            =       1

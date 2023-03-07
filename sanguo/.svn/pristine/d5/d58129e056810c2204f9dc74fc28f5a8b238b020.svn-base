@@ -1,0 +1,22 @@
+function OnMessage_PVPEnterRe(player, role, arg, others)
+	player:Log("OnMessage_PVPEnterRe, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("PvpEnter_Re")
+	resp.roleid = role._roledata._base._id:ToStr()
+	resp.fightid = arg.fightid
+	
+	resp.heroinfo = {}
+	resp.heroinfo[1] = arg.hero1
+	resp.heroinfo[2] = arg.hero2
+	resp.heroinfo[3] = arg.hero3
+	
+	resp.fightheroinfo = {}
+	resp.fightheroinfo[1] = arg.fight_hero1
+	resp.fightheroinfo[2] = arg.fight_hero2
+	resp.fightheroinfo[3] = arg.fight_hero3
+	resp.retcode = 0
+
+	player:Log("OnMessage_PVPEnterRe, "..resp.heroinfo[1].."         "..resp.fightheroinfo[1])
+
+	player:SendToClient(SerializeCommand(resp))
+end

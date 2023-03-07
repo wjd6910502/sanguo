@@ -1,0 +1,10 @@
+function OnCommand_GetFighterInfo(player, role, arg, others)
+	player:Log("OnCommand_GetFighterInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("GetFighterInfo_Re")
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.fight_id = {}
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

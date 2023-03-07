@@ -1,0 +1,83 @@
+function OnCommand_DaTiAnswer(player, role, arg, others)
+	player:Log("OnCommand_DaTiAnswer, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("DaTiAnswer_Re")
+
+	local DaTi_Data = role._roledata._dati_data
+
+	local ed = DataPool_Find("elementdata")
+	local DaTi_num = ed:FindBy("game_define", 2232)
+
+	--答题数目错误
+	if arg.num <= 0 or arg.num > DaTi_num.wenda_refresh_question_num then
+		resp.retcode = G_ERRCODE["DATI_NUM_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_DaTiAnswer, error=DATI_NUM")
+		return
+	end
+	if (DaTi_Data._cur_num + 1) ~= arg.num then
+		resp.retcode = G_ERRCODE["DATI_NUM_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_DaTiAnswer, error=DATI_NUM")
+		return
+	end
+	
+
+	local right_flag = arg.right_flag
+	local reward = {}
+	if right_flag == 1 then
+		local wendareward = ed:FindBy("wenda_reward", arg.num)
+		reward = DROPITEM_Reward(role, wendareward.reward_id)
+		ROLE_AddReward(role, reward)
+		ROLE_UpdateDaTiData(role, right_flag, reward)
+	elseif right_flag == 2 then
+		ROLE_UpdateDaTiData(role, right_flag)
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.num = arg.num
+        	resp.right_flag = arg.right_flag
+		player:SendToClient(SerializeCommand(resp))
+		return
+	else
+		--答对答错标识错误
+		resp.retcode = G_ERRCODE["DATI_RIGHT_FLAG_ERR"]
+                player:SendToClient(SerializeCommand(resp))
+                player:Log("OnCommand_DaTiAnswer, error=DATI_RIGHT_FLAG")
+		return
+	end
+
+	--奖励应该只有元宝一种
+	if #reward.item ~= 1 then
+		resp.retcode = G_ERRCODE["DATI_REWARD_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+                player:Log("OnCommand_DaTiAnswer, error=DATI_REWARD")
+                return
+	end
+
+	reward_info = {}
+	reward_info.tid = reward.item[1].itemid
+	reward_info.count = reward.item[1].itemnum
+	
+	resp.item = {}
+	resp.item[1] = reward_info
+	--[[
+	if #reward.item >= 1 then
+                for i = 1, #reward.item do
+                        if reward.item[i] ~= nil then
+                                local reward_info = {}
+                                reward_info.tid = reward.item[i].itemid
+                                reward_info.count = reward.item[i].itemnum
+                                resp.item[#resp.item+1] = reward_info
+                        end
+                end
+        end
+	--]]
+
+	player:Log("DaTi Item Reward: tid: "..resp.item[1].tid..", count: "..resp.item[1].count)
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.num = arg.num
+	resp.right_flag = arg.right_flag
+	resp.exp = reward.exp
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

@@ -1,0 +1,27 @@
+function OnCommand_GetPveArenaOperation(player, role, arg, others)
+	player:Log("OnCommand_GetPveArenaOperation, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("GetPveArenaOperation_Re")
+
+	local history_info = role._roledata._pve_arena_info._pve_arena_history:Find(arg.id)
+
+	if history_info == nil then
+		resp.retcode = G_ERRCODE["JJC_VIDEO_NOT_EXIST"]
+		role:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local is_idx,ds_hero_info = DeserializeStruct(history_info._self_hero_info, 1, "RolePveArenaInfo")
+	resp.self_hero_info = {}
+	resp.self_hero_info.heroinfo = ds_hero_info.heroinfo
+	
+	local is_idx,ds_hero_info = DeserializeStruct(history_info._oppo_hero_info, 1, "RolePveArenaInfo")
+	resp.oppo_hero_info = {}
+	resp.oppo_hero_info.heroinfo = ds_hero_info.heroinfo
+
+	local is_idx,ds_hero_info = DeserializeStruct(history_info._operation, 1, "PveArenaOperation")
+	resp.operation = {}
+	resp.operation = ds_hero_info
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

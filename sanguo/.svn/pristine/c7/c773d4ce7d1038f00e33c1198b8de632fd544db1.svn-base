@@ -1,0 +1,38 @@
+	public:
+		int magic;
+		Octets client_ip;
+		unsigned short client_port;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPSTUNRESPONSE };
+	public:
+		UDPSTUNResponse() { type = PROTOCOL_UDPSTUNRESPONSE; }
+		UDPSTUNResponse(void*) : Protocol(PROTOCOL_UDPSTUNRESPONSE) { }
+		UDPSTUNResponse (int l_magic,const Octets& l_client_ip,unsigned short l_client_port)
+			 : magic(l_magic),client_ip(l_client_ip),client_port(l_client_port)
+		{
+			type = PROTOCOL_UDPSTUNRESPONSE;
+		}
+
+		UDPSTUNResponse(const UDPSTUNResponse &rhs)
+			: Protocol(rhs),magic(rhs.magic),client_ip(rhs.client_ip),client_port(rhs.client_port) { }
+
+		GNET::Protocol *Clone() const { return new UDPSTUNResponse(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << magic;
+			os << client_ip;
+			os << client_port;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> magic;
+			os >> client_ip;
+			os >> client_port;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

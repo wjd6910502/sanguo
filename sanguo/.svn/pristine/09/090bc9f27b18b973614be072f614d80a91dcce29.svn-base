@@ -1,0 +1,45 @@
+#!/bin/sh
+
+stop_run()
+{
+        killall client
+        exit 0
+}
+
+trap "stop_run" SIGINT
+
+
+
+
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+#./client gamesys.conf 1 TestGetServerTime &
+#./client gamesys.conf 1 TestPing &
+#./client gamesys.conf 1 TestGetBackPack &
+#./client gamesys.conf 1 TestSweepInstance &
+#./client gamesys.conf 1 MafiaCreate &
+./client gamesys.wjd.conf 6 TestSendFlowerGift &
+
+#./client gamesys.conf 2 TestPVP &
+#./client gamesys.wjd.conf 3 TestPublicChat &
+
+#for i in `seq 10000`
+#do
+#	if [ $i -gt 100 -a $i -le 200 ]
+#	then
+#		./client gamesys.conf $i TestPublicChat &
+#	fi
+#done
+
+
+
+
+
+while true
+do
+        sleep 1
+done
+
+
+

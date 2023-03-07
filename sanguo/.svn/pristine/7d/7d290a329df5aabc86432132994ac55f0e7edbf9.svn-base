@@ -1,0 +1,195 @@
+--DONT CHANGE ME!
+
+function DeserializeAndProcessCommand(ud, is, ...)
+	if not API_IsNULL(ud) then player=API_GetLuaPlayer(ud) end
+	if not API_IsNULL(ud) then role=API_GetLuaRole(ud) end
+
+	local others = {}
+	others.roles = {}
+	others.mafias = {}
+	others.pvps = {}
+	local extra_roles_size = 0
+	local extra_mafias_size = 0
+	local extra_pvps_size = 0
+	for k,v in ipairs(arg) do
+		if k==1 then
+			--extra roles size
+			extra_roles_size = v
+		elseif k<=1+extra_roles_size then
+			--extra roles
+			v = API_GetLuaRole(v)
+			others.roles[v._base._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1 then
+			--extra mafias size
+			extra_mafias_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size then
+			--extra mafias
+			v = API_GetLuaMafia(v)
+			others.mafias[v._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1+extra_mafias_size+1 then
+			--extra pvps size
+			extra_pvps_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size then
+			--extra pvps
+			v = API_GetLuaPVP(v)
+			others.pvps[v._id] = v
+		else
+			--TODO: toplist etc.
+		end
+	end
+
+	local cmd = {}
+	local is_idx = 1
+	is_idx, cmd.__type__ = Deserialize(is, is_idx, "number")
+
+	if false then
+		--never to here
+	elseif cmd.__type__ == 10112 then
+		--MafiaQuit
+
+		OnCommand_MafiaQuit(player, role, cmd, others)
+	elseif cmd.__type__ == 1 then
+		--GetVersion
+
+		OnCommand_GetVersion(player, role, cmd, others)
+	elseif cmd.__type__ == 3 then
+		--GetRoleInfo
+
+		OnCommand_GetRoleInfo(player, role, cmd, others)
+	elseif cmd.__type__ == 5 then
+		--CreateRole
+		is_idx, cmd.name = Deserialize(is, is_idx, "string")
+		is_idx, cmd.photo = Deserialize(is, is_idx, "number")
+
+		OnCommand_CreateRole(player, role, cmd, others)
+	elseif cmd.__type__ == 7 then
+		--EnterInstance
+		is_idx, cmd.inst_tid = Deserialize(is, is_idx, "number")
+
+		OnCommand_EnterInstance(player, role, cmd, others)
+	elseif cmd.__type__ == 9 then
+		--CompleteInstance
+		is_idx, cmd.inst_tid = Deserialize(is, is_idx, "number")
+		is_idx, cmd.score = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.heros = {}
+		for i = 1, count do
+			is_idx, cmd.heros[i] = Deserialize(is, is_idx, "number")
+		end
+		is_idx, cmd.operations = Deserialize(is, is_idx, "string")
+
+		OnCommand_CompleteInstance(player, role, cmd, others)
+	elseif cmd.__type__ == 10114 then
+		--MafiaDestory
+
+		OnCommand_MafiaDestory(player, role, cmd, others)
+	elseif cmd.__type__ == 10004 then
+		--PublicChat
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "RoleBrief")
+		is_idx, cmd.content = Deserialize(is, is_idx, "string")
+
+		OnCommand_PublicChat(player, role, cmd, others)
+	elseif cmd.__type__ == 10006 then
+		--ListFriends
+
+		OnCommand_ListFriends(player, role, cmd, others)
+	elseif cmd.__type__ == 10008 then
+		--FriendRequest
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "Friend")
+
+		OnCommand_FriendRequest(player, role, cmd, others)
+	elseif cmd.__type__ == 10009 then
+		--FriendReply
+		is_idx, cmd.src_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.accept = Deserialize(is, is_idx, "boolean")
+
+		OnCommand_FriendReply(player, role, cmd, others)
+	elseif cmd.__type__ == 20000 then
+		--TopListGet
+		is_idx, cmd.top_type = Deserialize(is, is_idx, "number")
+
+		OnCommand_TopListGet(player, role, cmd, others)
+	elseif cmd.__type__ == 20010 then
+		--TaskFinish
+		is_idx, cmd.task_id = Deserialize(is, is_idx, "number")
+
+		OnCommand_TaskFinish(player, role, cmd, others)
+	elseif cmd.__type__ == 10116 then
+		--MafiaAnnounce
+		is_idx, cmd.announce = Deserialize(is, is_idx, "string")
+
+		OnCommand_MafiaAnnounce(player, role, cmd, others)
+	elseif cmd.__type__ == 99999 then
+		--DebugCommand
+		is_idx, cmd.typ = Deserialize(is, is_idx, "string")
+
+		OnCommand_DebugCommand(player, role, cmd, others)
+	elseif cmd.__type__ == 10301 then
+		--PVPInvite
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "RoleBrief")
+
+		OnCommand_PVPInvite(player, role, cmd, others)
+	elseif cmd.__type__ == 10302 then
+		--PVPReply
+		is_idx, cmd.src_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.accept = Deserialize(is, is_idx, "boolean")
+
+		OnCommand_PVPReply(player, role, cmd, others)
+	elseif cmd.__type__ == 10304 then
+		--PVPReady
+
+		OnCommand_PVPReady(player, role, cmd, others)
+	elseif cmd.__type__ == 10306 then
+		--PVPOperation
+		is_idx, cmd.client_tick = Deserialize(is, is_idx, "number")
+		is_idx, cmd.op = Deserialize(is, is_idx, "number")
+
+		OnCommand_PVPOperation(player, role, cmd, others)
+	elseif cmd.__type__ == 10308 then
+		--PVPEnd
+		is_idx, cmd.result = Deserialize(is, is_idx, "number")
+
+		OnCommand_PVPEnd(player, role, cmd, others)
+	elseif cmd.__type__ == 10201 then
+		--Ping
+		is_idx, cmd.client_send_time = Deserialize(is, is_idx, "number")
+
+		OnCommand_Ping(player, role, cmd, others)
+	elseif cmd.__type__ == 10203 then
+		--UDPPing
+		is_idx, cmd.client_send_time = Deserialize(is, is_idx, "number")
+
+		OnCommand_UDPPing(player, role, cmd, others)
+	elseif cmd.__type__ == 10101 then
+		--MafiaGet
+
+		OnCommand_MafiaGet(player, role, cmd, others)
+	elseif cmd.__type__ == 10103 then
+		--MafiaCreate
+		is_idx, cmd.name = Deserialize(is, is_idx, "string")
+		is_idx, cmd.flag = Deserialize(is, is_idx, "number")
+
+		OnCommand_MafiaCreate(player, role, cmd, others)
+	elseif cmd.__type__ == 10105 then
+		--MafiaInvite
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "RoleBrief")
+
+		OnCommand_MafiaInvite(player, role, cmd, others)
+	elseif cmd.__type__ == 10106 then
+		--MafiaReply
+		is_idx, cmd.src_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.accept = Deserialize(is, is_idx, "boolean")
+
+		OnCommand_MafiaReply(player, role, cmd, others)
+	elseif cmd.__type__ == 10109 then
+		--MafiaKickout
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+
+		OnCommand_MafiaKickout(player, role, cmd, others)
+
+	end
+end
+

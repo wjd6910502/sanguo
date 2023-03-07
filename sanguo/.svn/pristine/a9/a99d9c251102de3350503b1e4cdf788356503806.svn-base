@@ -1,0 +1,3 @@
+function OnCommand_MaShuUpdateScore(player, role, arg, others)
+	--player:Log("OnCommand_MaShuUpdateScore, "..DumpTable(arg).." "..DumpTable(others))
+end

@@ -1,0 +1,38 @@
+	public:
+		int retcode;
+		int server_received_count;
+		char do_reset;
+		enum { PROTOCOL_TYPE = PROTOCOL_TRANSAUTHRESULT };
+	public:
+		TransAuthResult() { type = PROTOCOL_TRANSAUTHRESULT; }
+		TransAuthResult(void*) : Protocol(PROTOCOL_TRANSAUTHRESULT) { }
+		TransAuthResult (int l_retcode,int l_server_received_count,char l_do_reset)
+			 : retcode(l_retcode),server_received_count(l_server_received_count),do_reset(l_do_reset)
+		{
+			type = PROTOCOL_TRANSAUTHRESULT;
+		}
+
+		TransAuthResult(const TransAuthResult &rhs)
+			: Protocol(rhs),retcode(rhs.retcode),server_received_count(rhs.server_received_count),do_reset(rhs.do_reset) { }
+
+		GNET::Protocol *Clone() const { return new TransAuthResult(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << retcode;
+			os << server_received_count;
+			os << do_reset;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> retcode;
+			os >> server_received_count;
+			os >> do_reset;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

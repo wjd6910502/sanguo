@@ -1,0 +1,9 @@
+		GNET::Protocol *Clone() const {  return new DBLoadData(*this); }
+	public:
+		enum { PROTOCOL_TYPE = RPC_DBLOADDATA };
+		DBLoadData(Type type, Rpc::Data *argument, Rpc::Data *result)
+			: RPC_BASECLASS(type, argument, result ) { }
+		DBLoadData(const DBLoadData &rhs) : RPC_BASECLASS(rhs) { }
+		int  PriorPolicy( ) const { return 1; }
+		bool SizePolicy(size_t size) const { return size <= 67108864; }
+		bool TimePolicy(int timeout) const { return timeout <= 30; }

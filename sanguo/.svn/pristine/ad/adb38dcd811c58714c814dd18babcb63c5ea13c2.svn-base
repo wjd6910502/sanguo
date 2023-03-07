@@ -1,0 +1,83 @@
+
+#ifndef __GNET_DBSAVEDATA_HPP
+#define __GNET_DBSAVEDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "glog.h"
+
+#include "dbsavedataarg"
+#include "dbsavedatares"
+
+using namespace GNET;
+
+extern leveldb::DB* g_db;
+extern std::map<Octets, Octets> g_save_data;
+
+namespace GNET
+{
+
+class DBSaveData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbsavedata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		DBSaveDataRes *res = (DBSaveDataRes *)result;
+
+		res->retcode = -1;
+		//等于0，说明没有数据了，可以进行存库操作了
+		if(arg->find_key.size() == 0)
+		{
+			//这里其实应该判断一下key和value的数量是否一致，如果不一致的话就会存在其余的问题
+			for(unsigned int i = 0; i < arg->result_key.size(); i++)
+			{
+				g_save_data[arg->result_key[i]] = arg->result_value[i];
+			}
+			leveldb::WriteBatch batch;
+			std::map<Octets, Octets>::iterator it = g_save_data.begin();
+			for(; it != g_save_data.end() ; it++)
+			{
+				std::string key = std::string((char*)it->first.begin(), it->first.size());
+				std::string value = std::string((char*)it->second.begin(), it->second.size());
+				batch.Put(key, value);
+			}
+			leveldb::Status s = g_db->Write(leveldb::WriteOptions(), &batch);
+
+			if(!s.ok())
+			{
+				//记录错误日志
+			}
+
+			g_save_data.clear();
+			res->retcode = 0;
+			GLog::log(LOG_INFO, "DBSaveData ... ...");
+		}
+		else
+		{
+			for(unsigned int i = 0; i < arg->result_key.size(); i++)
+			{
+				g_save_data[arg->result_key[i]] = arg->result_value[i];
+			}
+			res->retcode = 0;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		// DBSaveDataRes *res = (DBSaveDataRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

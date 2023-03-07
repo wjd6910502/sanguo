@@ -1,0 +1,186 @@
+function OnMessage_TongQueTaiHeartBeat(arg, others)
+	--API_Log("OnMessage_TongQueTaiHeartBeat, "..DumpTable(arg))
+	
+	local tongquetai = others.tongquetai._data
+	
+	local easy_difficulty = tongquetai._easy_difficulty
+	local hard_difficulty = tongquetai._hard_difficulty
+	
+	local easy_count = 0
+	local hard_count = 0
+
+	local easy_difficulty_role_it = easy_difficulty:SeekToBegin()
+	local easy_difficulty_role = easy_difficulty_role_it:GetValue()
+	while easy_difficulty_role ~= nil do
+		easy_count = easy_count + easy_difficulty_role:Size()
+
+		easy_difficulty_role_it:Next()
+		easy_difficulty_role = easy_difficulty_role_it:GetValue()
+	end
+
+	local hard_difficulty_role_it = hard_difficulty:SeekToBegin()
+	local hard_difficulty_role = hard_difficulty_role_it:GetValue()
+	while hard_difficulty_role ~= nil do
+		hard_count = hard_count + hard_difficulty_role:Size()
+
+		hard_difficulty_role_it:Next()
+		hard_difficulty_role = hard_difficulty_role_it:GetValue()
+	end
+
+	if easy_count >= 3 then
+		MatchPlayer(easy_difficulty)
+	end
+
+	if hard_count >= 3 then
+		MatchPlayer(hard_difficulty)
+	end
+
+	--对匹配成功的数据进行查看
+	--_cur_state 0代表等待所有的玩家进行Load，如果超过30秒还有玩家没有Load完，那么就会直接开始
+	--_cur_state 1代表给玩家发送出去让他进行打，如果超过5秒还没有给服务器进行回复，那么直接认为他掉线
+	--_cur_state 2代表玩家正在战斗状态，如果超过3分钟，还不给服务器发送结束的消息，那么服务器直接认为他掉线
+	local match_data_it = tongquetai._match_data:SeekToBegin()
+	local match_data = match_data_it:GetValue()
+	while match_data ~= nil do
+		MatchDataState(match_data)
+		
+		match_data_it:Next()
+		match_data = match_data_it:GetValue()
+	end
+
+	--把打完的进行删除，删除的时候需要把匹配中的玩家也进行删除掉,并且把相应的信息进行修改
+end
+
+function MatchDataState(match_data)
+	if match_data._cur_state == 0 then
+		--查看是否超时，或者是否是所有的玩家已经准备好了。如果超时，或者是玩家已经准备好了，那么就让玩家开始进行打，进入下一个状态
+		local cur_time = API_GetTime()
+		local change_state =  false
+		if (cur_time - match_data._time) > 30 then
+			change_state = true
+		end
+
+		local load_finish = 0
+		local role_info_it = match_data._role_info:SeekToBegin()
+		local role_info = role_info_it:GetValue()
+		while role_info ~= nil do
+			if role_info._load_finish == 1 then
+				load_finish = load_finish + 1
+			end
+			role_info_it:Next()
+			role_info = role_info_it:GetValue()
+		end
+
+		if change_state == true or load_finish == 3 then
+			local role_info_it = match_data._role_info:SeekToBegin()
+			local role_info = role_info_it:GetValue()
+			local index = 1
+			while role_info ~= nil do
+				if index == match_data._cur_fight_role then
+					local msg = NewMessage("TongQueTaiNoticeRoleJoin")
+					API_SendMessage(role_info._role_base._id, SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+					break
+				end
+				index = index + 1
+				role_info_it:Next()
+				role_info = role_info_it:GetValue()
+			end
+
+			--在这里需要进行修改，把所有的玩家的Load 状态全部修改成没有Load的状态
+			local role_info_it = match_data._role_info:SeekToBegin()
+			local role_info = role_info_it:GetValue()
+			while role_info ~= nil do
+				role_info._load_finish = 0
+				role_info_it:Next()
+				role_info = role_info_it:GetValue()
+			end
+			
+			match_data._cur_state = 1
+			match_data._time = cur_time
+		end
+	elseif match_data._cur_state == 1 then
+		local cur_time = API_GetTime()
+		--超过5秒还没有给服务器回进入战斗的信息，直接按照玩家掉线处理，让下一个玩家进行操作，如果是最后一个玩家的话，直接按照失败来进行处理
+		if (cur_time - match_data._time) > 5 then
+			if match_data._cur_fight_role == match_data._role_info:Size() then
+				--在这里需要通知玩家结束了。而且是失败了
+				local role_info_it = match_data._role_info:SeekToBegin()
+				local role_info = role_info_it:GetValue()
+				while role_info ~= nil do
+					local msg = NewMessage("TongQueTaiReload")
+					msg.retcode = G_ERRCODE["TONGQUETAI_PLAYER_DROP"]
+					msg.role_index = match_data._cur_fight_role
+					msg.monster_index = match_data._cur_monster_index
+					API_SendMessage(role_info._role_base._id, SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+					
+					role_info_it:Next()
+					role_info = role_info_it:GetValue()
+				end
+			else
+				--让玩家重新进行一次Load，然后就重新走上面的逻辑，
+				--这里再给每一个玩家发送一个消息，告诉玩家，有人掉线，所以让下一个玩家开始打
+				match_data._cur_fight_role = match_data._cur_fight_role + 1
+				local role_info_it = match_data._role_info:SeekToBegin()
+				local role_info = role_info_it:GetValue()
+				while role_info ~= nil do
+					local msg = NewMessage("TongQueTaiReload")
+					msg.retcode = G_ERRCODE["TONGQUETAI_PLAYER_DROP"]
+					msg.role_index = match_data._cur_fight_role
+					msg.monster_index = match_data._cur_monster_index
+					API_SendMessage(role_info._role_base._id, SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+					
+					role_info_it:Next()
+					role_info = role_info_it:GetValue()
+				end
+			end
+		end
+	elseif match_data._cur_state == 2 then
+	end
+end
+
+function MatchPlayer(difficulty_map)
+	local target_player = CACHE.Int64()
+	local lock_player = CACHE.Int64List()
+	local tmp_player = CACHE.Int64()
+
+	local difficulty_list_it = difficulty_map:SeekToBegin()
+	local difficulty_list = difficulty_list_it:GetValue()
+	while difficulty_list ~= nil do
+		local difficulty_info_it = difficulty_list:SeekToBegin()
+		local difficulty_info = difficulty_info_it:GetValue()
+		while difficulty_info ~= nil do
+			if difficulty_info._match_success == 0 then
+				if target_player:Equal(0) then
+					target_player = difficulty_info._role_base._id
+				else
+					lock_player:PushBack(difficulty_info._role_base._id)
+				end
+	
+				difficulty_info._match_success = 1
+
+				if lock_player:Size() == 2 then
+					--在这里扔一个消息
+					local msg = NewMessage("TongQueTaiMatchSuccess")
+					local tmp_roleid_it = lock_player:SeekToBegin()
+					local tmp_roleid = tmp_roleid_it:GetValue()
+					msg.player_roleid1 = tmp_roleid:ToStr()
+					
+					tmp_roleid_it:Next()
+					tmp_roleid = tmp_roleid_it:GetValue()
+					msg.player_roleid2 = tmp_roleid:ToStr()
+					API_Log("1111111111111111111111111111111111111111111111   target_player="..target_player:ToStr())
+					API_SendMessage(target_player, SerializeMessage(msg), lock_player, CACHE.Int64List(), CACHE.IntList())
+					
+					target_player = tmp_player
+					lock_player:Clear()
+				end
+			end
+			
+			difficulty_info_it:Next()
+			difficulty_info = difficulty_info_it:GetValue()
+		end
+
+		difficulty_list_it:Next()
+		difficulty_list = difficulty_list_it:GetValue()
+	end
+end

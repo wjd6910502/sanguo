@@ -1,0 +1,582 @@
+#!/usr/bin/env python
+#coding=GBK
+
+import sys, os
+from xml.dom import minidom
+
+SIMPLE_TYPES = ( "number", "boolean", "string" )
+
+g_cmds = {}
+g_type2cmd = {}
+g_receiver_cmds = {}
+g_extra_roles_maxs = {}
+g_extra_mafias_maxs = {}
+g_extra_pvps_maxs = {}
+g_locks = {} # lock_name=>[cmd1, cmd2, ...]
+
+g_structs = {}
+
+class ParseError():
+	pass
+
+def abort(desc):
+	print u"FATAL ERROR: "+desc
+	raise ParseError
+
+def warning(desc):
+	print u"WARNING: "+desc
+
+def parseCmdNode(cmd_node):
+	name = ""
+	maxsize = 1024
+	type = 0
+	receivers = []
+	variables = []
+	extra_roles_max = 0
+	extra_mafias_max = 0
+	extra_pvps_max = 0
+	locks = []
+
+	for (k,v) in cmd_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "maxsize":
+			maxsize = int(v)
+		elif k == "type":
+			type = int(v)
+		elif k == "receiver":
+			receivers = v.replace(" ","").replace("\t","").split(",")
+		elif k == "extra_roles_max":
+			extra_roles_max = int(v)
+		elif k == "extra_mafias_max":
+			extra_mafias_max = int(v)
+		elif k == "extra_pvps_max":
+			extra_pvps_max = int(v)
+		elif k == "lock":
+			locks = v.replace(" ","").replace("\t","").split(",")
+	if len(name) == 0:
+		abort(u"command缺少name")
+	elif g_cmds.has_key(name):
+		abort(u"command name重复")
+	elif maxsize < 16:
+		abort(u"command maxsize<16")
+	elif type == 0:
+		abort(u"command type==0")
+	elif g_type2cmd.has_key(type):
+		abort(u"command type重复: %d"%type)
+	elif len(receivers) == 0:
+		abort(u"command缺少receiver")
+	elif extra_roles_max > 6:
+		abort(u"command(%s) extra_roles_max太大了: %d"%(name,extra_roles_max))
+	elif extra_mafias_max > 3:
+		abort(u"command(%s) extra_mafias_max太大了: %d"%(name,extra_mafias_max))
+	elif extra_pvps_max > 1:
+		abort(u"command(%s) extra_pvps_max太大了: %d"%(name,extra_pvps_max))
+
+	if extra_roles_max > 0:
+		g_extra_roles_maxs[type] = extra_roles_max
+	if extra_mafias_max > 0:
+		g_extra_mafias_maxs[type] = extra_mafias_max
+	if extra_pvps_max > 0:
+		g_extra_pvps_maxs[type] = extra_pvps_max
+
+	for l in locks:
+		if not g_locks.has_key(l):
+			g_locks[l] = []
+		g_locks[l].append(type)
+
+	for nd in cmd_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "variable":
+			var_name = ""
+			var_type = ""
+			var_is_vector = False
+			for (k,v) in nd.attributes.items():
+				if k == "name":
+					var_name = v
+				elif k == "type":
+					var_type = v
+				elif k == "vector":
+					if v == "true":
+						var_is_vector = True
+			if len(var_name) == 0:
+				abort(u"command(%s)变量缺少name"%name)
+			if len(var_type) == 0:
+				abort(u"command(%s)变量(%s)缺少type"%(name,var_name))
+			variables.append((var_name, var_type, var_is_vector))
+	#if len(variables) == 0:
+	#	abort(u"command(%s)缺少变量"%name)
+	return (name, maxsize, type, receivers, variables)
+
+def parseStructNode(struct_node):
+	name = ""
+	variables = []
+
+	for (k,v) in struct_node.attributes.items():
+		if k == "name":
+			name = v
+	if len(name) == 0:
+		abort(u"structure缺少name")
+
+	for nd in struct_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "variable":
+			var_name = ""
+			var_type = ""
+			var_is_vector = False
+			for (k,v) in nd.attributes.items():
+				if k == "name":
+					var_name = v
+				elif k == "type":
+					for t in SIMPLE_TYPES:
+						if t == v:
+							var_type = v
+					if g_structs.has_key(v):
+						var_type = v
+					if var_type == "":
+						abort(u"structure(%s)包含错误的type(%s)"%(name,v))
+				elif k == "vector":
+					if v == "true":
+						var_is_vector = True
+			if len(var_name) == 0:
+				abort(u"structure(%s)变量缺少name"%name)
+			if len(var_type) == 0:
+				abort(u"structure(%s)变量(%s)缺少type"%(name,var_name))
+			variables.append((var_name, var_type, var_is_vector))
+	if len(variables) == 0:
+		abort(u"structure(%s)缺少变量"%name)
+	return (name, variables)
+
+def makeEntry(app, cmds):
+	list = ""
+	for c in cmds:
+		list += """dofile "scripts/cmds/%s.lua"
+""" % c
+
+	list2 = ""
+	for c in cmds:
+		list2 += """require "NetWork.cmds.%s"
+""" % c
+
+	epm = ""
+	for k,v in g_extra_roles_maxs.items():
+		epm += """	API_SetCmdExtraRolesMax(%d,%d)
+""" % (k,v)
+	epm += "\n"
+	for k,v in g_extra_mafias_maxs.items():
+		epm += """	API_SetCmdExtraMafiasMax(%d,%d)
+""" % (k,v)
+	epm += "\n"
+	for k,v in g_extra_pvps_maxs.items():
+		epm += """	API_SetCmdExtraPVPsMax(%d,%d)
+""" % (k,v)
+	epm += "\n"
+	for lname,cmds in g_locks.items():
+		for cmd in cmds:
+			epm += """	API_SetCmdLock(%d,"%s")
+""" % (cmd,lname)
+
+	contents = """--DONT CHANGE ME!
+
+dofile "scripts/localconfig.lua"
+dofile "scripts/base64.lua"
+dofile "scripts/serialize.lua"
+dofile "scripts/serialize_struct.lua"
+dofile "scripts/deserialize_struct.lua"
+dofile "scripts/checksum.lua"
+dofile "scripts/common.lua"
+dofile "scripts/util.lua"
+
+%s
+dofile "scripts/serialize_command.lua"
+dofile "scripts/prepare_others.lua"
+dofile "scripts/deserialize_command.lua"
+
+function InitCommandInMainThread()
+	API_ResetCmdExtraRolesMax()
+	API_ResetCmdExtraMafiasMax()
+	API_ResetCmdExtraPVPsMax()
+	API_ReSetCmdLock()
+
+%s
+end
+
+""" % (list,epm)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/init_command.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+	contents = """--DONT CHANGE ME!
+
+require "NetWork.base64"
+require "NetWork.serialize"
+require "NetWork.serialize_struct"
+require "NetWork.deserialize_struct"
+require "NetWork.common"
+
+%s
+require "NetWork.serialize_command"
+require "NetWork.deserialize_command"
+
+""" % (list2)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp2 = open("%s/scripts/init_command.lua.4client"%app, "w")
+	fp2.write(contents)
+	fp2.close()
+
+def makeCommands(app, cmds):
+	try:
+		os.makedirs("%s/scripts/cmds"%app, 0777)
+	except:
+		pass
+
+	for c in cmds:
+		path = "%s/scripts/cmds/%s.lua"%(app,c)
+		if os.access(path, os.F_OK):
+			continue
+
+		contents = """function OnCommand_%s(player, role, arg, others)
+	--player:Log("OnCommand_%s, "..DumpTable(arg).." "..DumpTable(others))
+end
+""" % (c,c)
+		fp = open(path, "w")
+		fp.write(contents)
+		fp.close()
+
+def makeSerializeCommand(app):
+	#command
+	p3 = ""
+	for (type, name) in g_type2cmd.items():
+		p4 = ""
+		(_, _, _, variables) = g_cmds[name]
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype not in SIMPLE_TYPES:
+				#structure
+				if v_is_vector:
+					p4 += """	if cmd.%s==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #cmd.%s)
+		for i = 1, #cmd.%s do
+			__SerializeStruct(os, "%s", cmd.%s[i])
+		end
+	end
+""" % (vname, vname, vname, vtype, vname)
+				else:
+					p4 += """	__SerializeStruct(os, "%s", cmd.%s)
+""" % (vtype, vname)
+			else:
+				#simple type
+				if v_is_vector:
+					p4 += """	if cmd.%s==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #cmd.%s)
+		for i = 1, #cmd.%s do
+			Serialize(os, cmd.%s[i])
+		end
+	end
+""" % (vname, vname, vname, vname)
+				else:
+					p4 += """	Serialize(os, cmd.%s)
+""" % vname
+
+
+
+
+		p3 += """
+cmd_list[%s] = 
+function(os, cmd)
+	Serialize(os, %d)
+%s
+end
+""" % ("\""+name+"\"", type, p4)
+
+	contents = """--DONT CHANGE ME!
+
+local cmd_list = {}
+
+function SerializeCommand(cmd)
+	local os = {}
+
+	if cmd_list[cmd.__type__] ~= nil then
+		cmd_list[cmd.__type__](os, cmd)
+	else
+		error("wrong command type: "..cmd.__type__)
+	end
+
+	return table.concat(os)
+end
+
+%s
+
+""" % (p3)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/serialize_command.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+def makeDeserializeCommand(app, cmds):
+	#command
+	p3 = ""
+	for (type, name) in g_type2cmd.items():
+		if not name in cmds:
+			continue
+		p4 = ""
+		(_, _, _, variables) = g_cmds[name]
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype not in SIMPLE_TYPES:
+				#structure
+				if v_is_vector:
+					p4 += """	local count = 0
+	is_idx, count = Deserialize(is, is_idx, "number");
+	cmd.%s = {}
+	for i = 1, count do
+		is_idx, cmd.%s[i] = DeserializeStruct(is, is_idx, "%s")
+	end
+""" % (vname, vname, vtype)
+				else:
+					p4 += """	is_idx, cmd.%s = DeserializeStruct(is, is_idx, "%s")
+""" % (vname, vtype)
+			else:
+				#simple type
+				if v_is_vector:
+					p4 += """	local count = 0
+	is_idx, count = Deserialize(is, is_idx, "number");
+	cmd.%s = {}
+	for i = 1, count do
+		is_idx, cmd.%s[i] = Deserialize(is, is_idx, "%s")
+	end
+""" % (vname, vname, vtype)
+				else:
+					p4 += """	is_idx, cmd.%s = Deserialize(is, is_idx, "%s")
+""" % (vname, vtype)
+
+		p3 += """
+--%s
+cmd_list[%d] = 
+function(is, is_idx, player, role, cmd, others)
+%s
+	OnCommand_%s(player, role, cmd, others)
+end
+""" % (name, type, p4, name)
+
+	contents = """--DONT CHANGE ME!
+
+local cmd_list = {}
+
+function DeserializeAndProcessCommand(ud, api, is, ...)
+	local player = nil
+	local role = nil
+	if not API_IsNULL(ud) then player=API_GetLuaPlayer(ud) end
+	if not API_IsNULL(ud) then role=API_GetLuaRole(ud) end
+	if API_GetLuaAPISet~=nil then API = API_GetLuaAPISet(api) end
+
+	local others = {}
+	others.roles = {}
+	others.mafias = {}
+	others.pvps = {}
+	local extra_roles_size = 0
+	local extra_mafias_size = 0
+	local extra_pvps_size = 0
+	local arg = {...}
+	for k,v in ipairs(arg) do
+		if k==1 then
+			--extra roles size
+			extra_roles_size = v
+		elseif k<=1+extra_roles_size then
+			--extra roles
+			v = API_GetLuaRole(v)
+			others.roles[v._roledata._base._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1 then
+			--extra mafias size
+			extra_mafias_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size then
+			--extra mafias
+			v = API_GetLuaMafia(v)
+			others.mafias[v._data._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1+extra_mafias_size+1 then
+			--extra pvps size
+			extra_pvps_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size then
+			--extra pvps
+			v = API_GetLuaPVP(v)
+			others.pvps[v._data._id] = v
+		else
+			PrepareOthers4Command(others,k-(1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size),v)
+		end
+	end
+
+	local cmd = {}
+	local is_idx = 1
+	is_idx, cmd.__type__ = Deserialize(is, is_idx, "number")
+
+	if cmd_list[cmd.__type__] ~= nil then
+		cmd_list[cmd.__type__](is, is_idx, player, role, cmd, others)
+	else
+		error("wrong command type: "..cmd.__type__)
+	end
+end
+
+%s
+
+""" % (p3)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/deserialize_command.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+	contents_4_client = """--DONT CHANGE ME!
+
+local cmd_list = {}
+
+function DeserializeAndProcessCommand(ud, is, ...)
+	local player = nil
+	local role = nil
+	local others = {}
+	local cmd = {}
+	local is_idx = 1
+	is_idx, cmd.__type__ = Deserialize(is, is_idx, "number")
+
+	if cmd_list[cmd.__type__] ~= nil then
+		cmd_list[cmd.__type__](is, is_idx, player, role, cmd, others)
+	else
+		error("wrong command type: "..cmd.__type__)
+	end
+end
+
+%s
+""" % (p3)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/deserialize_command.lua.4client"%app, "w")
+	fp.write(contents_4_client)
+	fp.close()
+
+def CheckStrStruct(name):
+	if g_structs.has_key(name):
+		variables = g_structs[name]
+		p1 = ""
+		for(vname, vtype, v_is_vector) in variables:
+			if vtype not in SIMPLE_TYPES:
+				#structure
+				if v_is_vector:
+					p1 += str(vname)+"("+str(vtype)+")[]:"+str(CheckStrStruct(vtype))
+				else:
+					p1 += str(vname)+"("+str(vtype)+"):"+str(CheckStrStruct(vtype))
+			else:
+				#simple type
+				if v_is_vector:
+					p1 += str(vname)+"("+str(vtype)+")[]:"
+				else:
+					p1 += str(vname)+"("+str(vtype)+"):"
+		return str(p1)
+	else:
+		print "ERROR STRUCTURE "+name+"!!!!!!!!!!!"
+
+def DJBHash(str):
+	hash = 3851
+	for char in str:
+		hash = (hash << 5) + hash + ord(char)
+
+	hash = hash&0x7fffffff
+	return hash
+
+def makeCheckStrCommand():
+	#command
+	fp = open("gamed/scripts/checksum.lua", "a")
+	p = ""
+	p = """
+--Hashcode for Command
+G_CHECKSUM_C = {}
+"""
+	fp.write(p)
+	for (type, name) in g_type2cmd.items():
+		(_, _, _, variables) = g_cmds[name]
+		p1 = str(name)+":"
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype not in SIMPLE_TYPES:
+				#structure
+				if v_is_vector:
+					p1 += str(vname)+"("+str(vtype)+")[]:"+str(CheckStrStruct(vtype))
+				else:
+					p1 += str(vname)+"("+str(vtype)+"):"+str(CheckStrStruct(vtype))
+			else:
+				#simple type
+				if v_is_vector:
+					p1 += str(vname)+"("+str(vtype)+")[]:"
+				else:
+					p1 += str(vname)+"("+str(vtype)+"):"
+		hash = DJBHash(p1)
+		fp.write("G_CHECKSUM_C[\""+str(name)+"\"] = "+str(hash)+"\n")
+		fp.write("G_CHECKSUM_C["+str(type)+"] = "+str(hash)+"\n")
+
+	fp.close()
+
+def main():
+	xmldoc = minidom.parse("./cmds.xml")
+	if xmldoc.firstChild.tagName != "commands":
+		abort(u"cmds.xml文件格式有错误")
+
+	root_node = xmldoc.firstChild
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "command":
+			cmd = parseCmdNode(nd)
+			(name, maxsize, type, receivers, variables) = cmd
+			g_cmds[name] = (maxsize, type, receivers, variables)
+			g_type2cmd[type] = name
+			for r in receivers:
+				if g_receiver_cmds.has_key(r):
+					g_receiver_cmds[r].append(name)
+				else:
+					g_receiver_cmds[r] = [name, ]
+	#print g_cmds
+	#print g_type2cmd
+	#print g_receiver_cmds
+
+	xmldoc = minidom.parse("./strus.xml")
+	if xmldoc.firstChild.tagName != "structures":
+		abort(u"strus.xml文件格式有错误")
+
+	root_node = xmldoc.firstChild
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "structure":
+			(name, variables) = parseStructNode(nd)
+			g_structs[name] = variables
+
+	for (k,v) in g_receiver_cmds.items():
+		makeEntry(k, v)
+	for (k,v) in g_receiver_cmds.items():
+		makeCommands(k, v)
+	for (k,v) in g_receiver_cmds.items():
+		makeSerializeCommand(k)
+	for (k,v) in g_receiver_cmds.items():
+		makeDeserializeCommand(k, v)
+	makeCheckStrCommand()
+
+if __name__ == "__main__":
+	main()
+

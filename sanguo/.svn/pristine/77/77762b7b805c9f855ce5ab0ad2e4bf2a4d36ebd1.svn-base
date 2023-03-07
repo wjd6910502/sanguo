@@ -1,0 +1,25 @@
+
+#ifndef __GNET_UDPC2SGAMEPROTOCOLS_HPP
+#define __GNET_UDPC2SGAMEPROTOCOLS_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "c2sgameprotocol"
+
+namespace GNET
+{
+
+class UDPC2SGameProtocols : public GNET::Protocol
+{
+	#include "udpc2sgameprotocols"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+	}
+};
+
+};
+
+#endif

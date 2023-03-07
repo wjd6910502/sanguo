@@ -1,0 +1,106 @@
+
+#ifndef __GNET_TRANSRESPONSE_HPP
+#define __GNET_TRANSRESPONSE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "transauthresult.hpp"
+#include "commonmacro.h"
+#include "transserver.hpp"
+#include "playermanager.h"
+#include "glog.h"
+
+namespace GNET
+{
+
+class TransResponse : public GNET::Protocol
+{
+	#include "transresponse"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "TransResponse::Process, sid=%u, device_id=%s, trans_token=%s, salt=%s, server_rand2_encoded=%s, client_rand2_encoded=%s, client_received_count=%d\n", sid, B16EncodeOctets(device_id).c_str(), B16EncodeOctets(trans_token).c_str(), B16EncodeOctets(salt).c_str(), B16EncodeOctets(server_rand2_encoded).c_str(), B16EncodeOctets(client_rand2_encoded).c_str(), client_received_count);
+
+		if(trans_token.size() != CONN_CONST_TRANS_TOKEN_SIZE) return;
+		if(salt.size() != CONN_CONST_TRANS_SALT_SIZE) return;
+		if(server_rand2_encoded.size() != CONN_CONST_RAND2_SIZE) return;
+		if(client_rand2_encoded.size() != CONN_CONST_RAND2_SIZE) return;
+
+		Octets _server_rand2;
+		if(!TransServer::GetInstance()->FindSession(sid, _server_rand2)) return;
+
+		auto player = CACHE::PlayerManager::GetInstance().FindByTransToken(trans_token, true);
+		if(!player)
+		{
+			//TODO: remove
+			TransAuthResult prot;
+			prot.retcode = ERR_CODE_WRONG_TRANS_TOKEN;
+			manager->Send(sid, prot);
+			return;
+		}
+
+		Thread::Mutex::Scoped keeper(player->_lock); //注意：这里能先拿到player然后才加锁的原因是player new出来后就不回收，player总是有效Player指针
+
+		player->UpdateActiveTime();
+
+		//dec_key
+		Octets dec_key(player->GetKey1().begin(), CONN_CONST_RAND1_SIZE/2);
+		dec_key.insert(dec_key.end(), salt.begin(), salt.size());
+		//_dec_sec1
+		Security *_dec_sec1 = Security::Create(ARCFOURSECURITY);
+		_dec_sec1->SetParameter(dec_key);
+		//Decode
+		Octets server_rand2 = server_rand2_encoded;
+		_dec_sec1->Update(server_rand2);
+		Octets client_rand2 = client_rand2_encoded;
+		_dec_sec1->Update(client_rand2);
+		_dec_sec1->Destroy();
+		//Check
+		if(server_rand2 != _server_rand2)
+		{
+			//fprintf(stderr, "TransResponse::Process, wrong server_rand2_encoded\n");
+
+			TransAuthResult prot;
+			prot.retcode = ERR_CODE_WRONG_KEY1;
+			manager->Send(sid, prot);
+			return;
+		}
+		//key2
+		Octets key2;
+		key2.resize(CONN_CONST_RAND2_SIZE);
+		for(auto i=0; i<CONN_CONST_RAND2_SIZE; ++i)
+		{
+			//key2[i] = server_rand2[i]^client_rand2[i];
+			((unsigned char*)key2.begin())[i] = ((unsigned char*)server_rand2.begin())[i]^((unsigned char*)client_rand2.begin())[i];
+		}
+		//_enc_key2, _dec_key
+		Octets _dec_key2(key2.begin(), CONN_CONST_RAND2_SIZE/2);
+		Octets _enc_key2((unsigned char*)key2.begin()+CONN_CONST_RAND2_SIZE/2, CONN_CONST_RAND2_SIZE/2);
+		//enable input/output security
+		//fprintf(stderr, "TransResponse::Process, server_rand2=%s, client_rand2=%s, key2=%s, _enc_key2=%s, _dec_key2=%s\n",
+		//        B16EncodeOctets(server_rand2).c_str(), B16EncodeOctets(client_rand2).c_str(), B16EncodeOctets(key2).c_str(),
+		//        B16EncodeOctets(_enc_key2).c_str(), B16EncodeOctets(_dec_key2).c_str());
+#ifdef ENABLE_SECURITY
+		manager->SetISecurity(sid, ARCFOURSECURITY, _dec_key2);
+		manager->SetOSecurity(sid, COMPRESSARCFOURSECURITY, _enc_key2);
+#endif
+		//Auth OK
+		TransAuthResult prot;
+		prot.retcode = 0;
+		prot.server_received_count = player->GetServerReceivedGameProtocolCount();
+		prot.do_reset = player->NeedDoReset(device_id, client_received_count);
+		manager->Send(sid, prot);
+
+		keeper.Unlock(); //FIXME: OnTransConnect中会lock player map, 为了避免死锁，必须先unlock player, 但可能会因为player发生变化而导致问题?
+		CACHE::PlayerManager::GetInstance().OnTransConnect(player, device_id, client_received_count, sid);
+
+		GLog::log(LOG_INFO, "TransResponse::Process, sid=%u, thread=%u, account=%.*s\n",
+		          sid, (unsigned int)pthread_self(), (int)player->GetAccount().size(), (char*)player->GetAccount().begin());
+	}
+};
+
+};
+
+#endif

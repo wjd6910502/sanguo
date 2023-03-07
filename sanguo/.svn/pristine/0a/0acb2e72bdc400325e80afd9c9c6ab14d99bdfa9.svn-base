@@ -1,0 +1,34 @@
+function OnMessage_MafiaHeartBeat(mafia, arg, others)
+--	API_Log("OnMessage_MafiaHeartBeat, "..DumpTable(arg).." "..DumpTable(others))
+
+	--目前只需要处理一个事情，那就是查看是否需要清空祭祀进度。
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	local mafia_info = mafia._data
+	local clear_time = API_MakeTodayTime(quanju.league_build_reset_time, 0, 0)
+	if mafia_info._last_heartbeat <= clear_time and arg.now > clear_time then
+		if mafia_info._jisi ~= 0 then
+			mafia_info._jisi = 0
+			mafia_info._all_mashu_score = 0
+			MAFIA_MafiaUpdateExp(mafia_info)
+		end
+
+		--对每一个玩家的每日贡献进行重置
+		local member_info_it = mafia_info._member_map:SeekToBegin()
+		local member_info = member_info_it:GetValue()
+		while member_info ~= nil do
+			if member_info._week_contribution:Size() >= 7 then
+				member_info._week_contribution:PopBack()
+			end
+			local insert_contrabution = CACHE.Int()
+			insert_contrabution._value = 0
+			find_member._week_contribution:PushFront(insert_contrabution)
+			MAFIA_MafiaUpdateMember(mafia_info, member_info)
+
+			member_info_it:Next()
+			member_info = member_info_it:GetValue()
+		end
+	end
+
+	mafia_info._last_heartbeat = arg.now
+end

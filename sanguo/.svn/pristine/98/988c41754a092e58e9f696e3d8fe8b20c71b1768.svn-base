@@ -1,0 +1,32 @@
+	public:
+		std::vector<Octets> logs;
+		enum { PROTOCOL_TYPE = PROTOCOL_SERVERLOG };
+	public:
+		ServerLog() { type = PROTOCOL_SERVERLOG; }
+		ServerLog(void*) : Protocol(PROTOCOL_SERVERLOG) { }
+		ServerLog (const std::vector<Octets>& l_logs)
+			 : logs(l_logs)
+		{
+			type = PROTOCOL_SERVERLOG;
+		}
+
+		ServerLog(const ServerLog &rhs)
+			: Protocol(rhs),logs(rhs.logs) { }
+
+		GNET::Protocol *Clone() const { return new ServerLog(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << logs;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> logs;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024000; }

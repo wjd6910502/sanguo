@@ -1,0 +1,31 @@
+
+#ifndef _ACTIVE_CODE_MANAGER_H_
+#define _ACTIVE_CODE_MANAGER_H_
+
+namespace GNET
+{
+
+class ActiveCodeManager
+{
+public:
+	static ActiveCodeManager& GetInstance()
+	{
+		static ActiveCodeManager _instance;
+		return _instance;
+	}
+		
+	bool MakeActiveCode(short type, int count);
+	bool InsertActiveCode(const char * path, short type);
+	char ConvertChar(char c);
+
+	char hex_value_char(int i);
+	bool EncodeType(int type, char* encode, int len);
+	int hex_char_value(char c);
+	int ParseType(char* activecode, int len);
+
+};
+
+};
+
+#endif /*_ACTIVE_CODE_MANAGER_H_*/
+

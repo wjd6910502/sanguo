@@ -1,0 +1,21 @@
+function OnCommand_CreateRole(player, role, arg, others)
+	player:Log("OnCommand_CreateRole, "..DumpTable(arg))
+
+	if player:HaveRole() then
+		--已经有角色了还要创建, 外挂? 踢掉吧
+		player:Err("OnCommand_CreateRole, HaveRole")
+		player:KickoutSelf(1)
+	elseif player:IsCreatingRole() then
+		--已经在创建角色中, 耐心等一会
+		local resp = NewCommand("CreateRole_Re")
+		resp.retcode = G_ERRCODE["CREATING_ROLE"]
+		player:SendToClient(SerializeCommand(resp))
+	elseif not CACHE.Player:IsValidRoleName(arg.name) then
+		--名字中包含非法字符
+		local resp = NewCommand("CreateRole_Re")
+		resp.retcode = G_ERRCODE["INVALID_NAME"]
+		player:SendToClient(SerializeCommand(resp))
+	else
+		player:CreateRole(arg.name, arg.photo)
+	end
+end

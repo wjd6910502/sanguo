@@ -1,0 +1,15 @@
+function OnCommand_PvpJoin(player, role, arg, others)
+	player:Log("OnCommand_PvpJoin, "..DumpTable(arg).." "..DumpTable(others))
+
+	
+	--在这里不进行任何的验证。直接就把消息发给中心服务器去
+	
+	local hero = {}
+	hero[1] = 0
+	hero[2] = 0
+	hero[3] = 0
+	for i = 1, table.getn(arg.heroinfo) do
+		hero[i] = arg.heroinfo[i]
+	end
+	API_PVP_Join(role._roledata._base._id:ToStr(), hero[1], hero[2], hero[3])
+end

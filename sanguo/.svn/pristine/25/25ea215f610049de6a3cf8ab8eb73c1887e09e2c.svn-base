@@ -1,0 +1,112 @@
+#ifndef _PVP_MANAGER_H_
+#define _PVP_MANAGER_H_
+
+#include <string>
+#include <map>
+#include <set>
+#include "gnet_timer.h"
+#include "pvpvideo"
+
+namespace GNET
+{
+
+enum PVP_CONST
+{
+	PVP_CONST_CLIENT_TICK_MS	=	33, //30fps
+	PVP_CONST_NET_TICK_MS		=	100,
+};
+
+//以下算是gamed中pvp实现的c++版本
+struct PVPFighter
+{
+	int64_t _id;
+	//int _status;
+	std::map<int,std::string> _ops;
+	int _accumulate_latency; //该玩家在本次战斗中累积延迟时间(ms)
+	int _delay_count; //该玩家在本次战斗中累积延迟次数
+	int _wait_seconds; //本次战斗被卡住了, 正在等待此玩家的op, 已经等待了_wait_seconds秒, 用来判断玩家是否掉线
+	//int _result;
+
+public:
+	//PVPFighter(int64_t id): _id(id), _status(0), _accumulate_latency(0), _delay_count(0), _wait_seconds(0), _result(0) {}
+	PVPFighter(int64_t id): _id(id), _accumulate_latency(0), _delay_count(0), _wait_seconds(0) {}
+};
+
+class PVP
+{
+	friend class PVPManager;
+
+	int _id;
+	int _mode;
+	//int _status;
+	//int _status_change_time;
+	PVPFighter _fighter1;
+	PVPFighter _fighter2;
+	int _fight_start_time;
+	int _next_client_tick;
+	int _latency; //比赛的当前整体延迟(ms)
+	int _typ;
+	std::vector<PvpVideo> _pvp_video;
+	Octets _fighter1_pvpinfo;
+	Octets _fighter2_pvpinfo;
+	int _fighter1_zoneid;
+	int _fighter2_zoneid;
+	int _robot_flag;
+	//int _end_counter;
+	//int _end_reason;
+
+public:
+	PVP(int id, int mode, int64_t fighter1, int64_t fighter2, int fight_start_time, int typ, Octets fighter1_pvpinfo, Octets fighter2_pvpinfo, int fighter1_zoneid, int fighter2_zoneid, int robot_flag)
+	   //: _id(id), _mode(mode), _status(0), _fighter1(fighter1), _fighter2(fighter2), _fight_start_time(fight_start_time),
+	   //  _next_client_tick(0), _latency(0), _end_counter(0), _end_reason(0)
+	   : _id(id), _mode(mode), _fighter1(fighter1), _fighter2(fighter2), _fight_start_time(fight_start_time),
+	     _next_client_tick(1), _latency(0), _typ(typ), _fighter1_pvpinfo(fighter1_pvpinfo), _fighter2_pvpinfo(fighter2_pvpinfo), 
+	     _fighter1_zoneid(fighter1_zoneid), _fighter2_zoneid(fighter2_zoneid), _robot_flag(robot_flag)
+	{
+		time_t now = time(0);
+		//_status_change_time = now;
+		if(_fight_start_time < now) _fight_start_time = now;
+	}
+	~PVP();
+
+	void OnTimer(int tick, int now);
+	void OnTimer1s(time_t now);
+
+	void OnPVPOpeartion(int64_t fighter, int client_tick, const char *op_encoded, const char *crc_encoded);
+	void OnPVPPeerLatency(int64_t src_role_id, int latency);
+	
+	void SendOperation(int win_flag);
+
+private:
+	int CheckFighter(time_t now, PVPFighter& fighter);
+	int64_t GetShouldArriveTime(int client_tick) const;
+};
+
+class PVPManager: public IntervalTimer::Observer
+{
+	std::map<int, PVP*> _map;
+	std::set<int> _will_delete_list;
+
+	PVPManager() {}
+
+public:
+	static PVPManager& GetInstance()
+	{
+		static PVPManager _instance;
+		return _instance;
+	}
+
+	void Initialize();
+	bool Update();
+
+	PVP* Find(int id);
+
+	int Create(int id, int mode, int64_t fighter1, int64_t fighter2, int fight_start_time, int typ, Octets fighter1_pvpinfo, Octets fighter2_pvpinfo, int fighter1_zoneid, int fighter2_zoneid, int robot_flag);
+	void Delete(int id);
+	void SendOperation(int id, int win_flag);
+	int GetCurRoomNum();
+};
+
+}
+
+#endif //_PVP_MANAGER_H_

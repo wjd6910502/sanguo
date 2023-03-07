@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<structures dbversion="4">
+	<structure name="Int">
+		<variable name="_value" type="int"/>
+	</structure>
+	<structure name="Str">
+		<variable name="_value" type="std::string"/>
+	</structure>
+
+	<list name="IntList" value_type="Int"/>
+	<list name="Int64List" value_type="Int64"/>
+
+	<map name="intIntMap" key_type="int" value_type="Int"/>
+	<map name="intStrMap" key_type="int" value_type="Str"/>
+	<!-- <map name="StringIntMap" key_type="std::string" value_type="Int"/> -->
+
+	<structure name="RoleBase">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_xxx" type="int" dbversion="2"/>
+		<variable name="_yyy" type="int" dbversion="3"/>
+		<variable name="_zzz" type="int" dbversion="4"/>
+	</structure>
+
+	<structure name="RoleInstance">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_score" type="int" dbversion="1"/>
+		<variable name="_star" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="RoleInstanceMap" key_type="int" value_type="RoleInstance"/>
+
+	<structure name="CommonUseLimit">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_type" type="int" dbversion="1"/>
+		<variable name="_count" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="CommonUseLimitMap" key_type="int" value_type="CommonUseLimit"/>
+	
+	<structure name="PrizeTemplate">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_tid2" type="int" dbversion="1"/>
+		<variable name="_position" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="PrizeTemplateMap" key_type="int" value_type="PrizeTemplate"/>
+
+	<structure name="RoleStatus">
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_exp" type="Int64" dbversion="1"/>
+		<variable name="_vp" type="int" dbversion="1"/>
+		<variable name="_vp_refreshtime" type="int" dbversion="1"/>
+		<variable name="_instances" type="RoleInstanceMap" dbversion="1"/>
+		<variable name="_instance_id" type="int" dbversion="1"/>
+		<variable name="_money" type="int" dbversion="1"/>
+		<variable name="_yuanbao" type="int" dbversion="1"/>
+		<variable name="_common_use_limit" type="CommonUseLimitMap" dbversion="1"/>
+		<variable name="_prize_template" type="PrizeTemplateMap" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleHero">
+		<variable name="_tid" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="RoleHeroList" value_type="RoleHero"/>
+
+	<structure name="RoleHeroHall">
+		<variable name="_heros" type="RoleHeroList" dbversion="1"/>
+	</structure>
+
+	<structure name="Item">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_count" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="ItemList" value_type="Item"/>
+
+	<structure name="RoleBackPack">
+		<variable name="_capacity" type="int" dbversion="1"/>
+		<variable name="_items" type="ItemList" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleBrief">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_mafia_id" type="Int64" dbversion="1"/>
+		<variable name="_mafia_name" type="std::string" dbversion="1"/>
+	</structure>
+
+	<structure name="Friend">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<map name="FriendMap" key_type="Int64" value_type="Friend"/>
+
+	<structure name="FriendRequest">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<list name="FriendRequestList" value_type="FriendRequest"/>
+
+	<structure name="RoleFriend">
+		<variable name="_friends" type="FriendMap" dbversion="1"/>
+		<variable name="_requests" type="FriendRequestList" dbversion="1"/>
+	</structure>
+
+	<structure name="PrivateChat">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+		<variable name="_time" type="int" dbversion="1"/>
+		<variable name="_content" type="std::string" dbversion="1"/>
+	</structure>
+
+	<list name="PrivateChatList" value_type="PrivateChat"/>
+
+	<structure name="RoleChat">
+		<variable name="_received_private_chats" type="PrivateChatList" dbversion="1"/>
+	</structure>
+
+	<structure name="MafiaInvite">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<list name="MafiaInviteList" value_type="MafiaInvite"/>
+
+	<structure name="RoleMafia">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_invites" type="MafiaInviteList" dbversion="1"/>
+	</structure>
+
+	<structure name="PVPInvite">
+		<variable name="_src" type="RoleBrief"/>
+		<variable name="_mode" type="int"/>
+		<variable name="_time" type="int"/>
+	</structure>
+
+	<list name="PVPInviteList" value_type="PVPInvite"/>
+
+	<structure name="RolePVP">
+		<variable name="_id" type="int"/>
+		<variable name="_invites" type="PVPInviteList"/>
+	</structure>
+
+	<structure name="MafiaMember">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_activity" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="MafiaMemberMap" key_type="Int64" value_type="MafiaMember"/>
+
+	<structure name="TopListSaveData">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="data" type="Int64" dbversion="1"/>
+		<variable name="type" type="char" dbversion="1"/>
+		<variable name="top_type" type="char" dbversion="1"/>
+	</structure>
+	
+	<structure name="TopListData">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="data" type="Int64" dbversion="1"/>
+	</structure>
+	
+	<map name="TopListMap" key_type="Int64" value_type="TopListData"/>
+	<multimap name="TopListMultiMap" key_type="Int64" value_type="TopListData"/>
+	
+	<structure name="TopList">
+		<variable name="_top_list_type" type="int" dbversion="1"/>
+		<variable name="_new_top_list_by_id" type="TopListMap" dbversion="1"/>
+		<variable name="_new_top_list_by_data" type="TopListMultiMap" dbversion="1"/>
+		<variable name="_old_top_list" type="TopListMultiMap" dbversion="1"/>
+	</structure>
+	<map name="TopManagerMap" key_type="int" value_type="TopList"/>
+
+	<structure name="TaskData">
+		<variable name="_event_id" type="int" dbversion="1"/> <!-- -->
+		<variable name="_instance_id" type="int" dbversion="1"/>
+		<variable name="_num" type="int" dbversion="1"/>
+		<variable name="_maxnum" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="TaskDataList" value_type="TaskData"/>
+	
+	<structure name="Task">
+		<variable name="_task_id" type="int" dbversion="1" comments="ÈÎÎñµÄÎ¨Ò»ID"/>
+		<variable name="_daily_task" type="int" dbversion="1" comments="ÊÇ·ñÊÇÈÕ³£ÈÎÎñ"/>
+		<variable name="_before_task" type="int" dbversion="1" comments="Ç°ÖÃÈÎÎñ"/>
+		<variable name="_next_task" type="int" dbversion="1" comments="ºóÖÃÈÎÎñ"/>
+		<variable name="_begin" type="int" dbversion="1" comments="¿ªÊ¼Ê±¼ä"/>
+		<variable name="_end" type="int" dbversion="1" comments="½áÊøÊ±¼ä"/>
+		<variable name="_level" type="int" dbversion="1" comments="µÈ¼¶ÏÞÖÆ"/>
+		<variable name="_prize_id" type="int" dbversion="1" comments="½±ÀøID"/>
+		<variable name="_task_condition" type="TaskDataList" dbversion="1" comments="ÈÎÎñÍê³ÉÌõ¼þ"/>
+	</structure>
+
+	<list name="FinishedTask" value_type="int"/>
+	<list name="CurrentTask" value_type="Task"/>
+
+	<structure name="RoleTask">
+		<variable name="_finish_task" type="FinishedTask" dbversion="1"/>
+		<variable name="_current_task" type="CurrentTask" dbversion="1"/>
+	</structure>
+
+	<structure name="Compensate">
+		<variable name="_seq" type="int" dbversion="1"/>
+		<variable name="_begin" type="Int64" dbversion="1"/>
+		<variable name="_end" type="Int64" dbversion="1"/>
+		<variable name="_msgid" type="int" dbversion="1"/>
+		<variable name="_itemid" type="int" dbversion="1"/>
+		<variable name="_subject" type="std::string" dbversion="1"/>
+		<variable name="_context" type="std::string" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_type" type="int" dbversion="1"/>
+		<variable name="_date" type="int" dbversion="1"/>
+		<variable name="_week" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="CompensateMap" key_type="int" value_type="Compensate"/>
+
+	<structure name="Shop_item">
+		<variable name="_item_id" type="int" dbversion="1" comments="ÎïÆ·µÄID"/>
+		<variable name="_count" type="int" dbversion="1" comments="ÒÑ¾­¹ºÂòµÄ´ÎÊý"/>
+		<variable name="_max_count" type="int" dbversion="1" comments="¿ÉÒÔ¹ºÂòµÄ×î´ó´ÎÊý"/>
+		<variable name="_price" type="int" dbversion="1" comments="¹ºÂò¼Û¸ñ"/>
+	</structure>
+	
+	<list name="ShopItemList" value_type="Shop_item"/>
+
+	<structure name="Shop">
+		<variable name="_shop_id" type="int" dbversion="1" comments="ÉÌµêµÄID"/>
+		<variable name="_type" type="int" dbversion="1" comments="ÉÌµêµÄ¹ºÂòÀàÐÍ£¬Ôª±¦£¬Ç®£¬ÉùÍû"/>
+		<variable name="_level" type="int" dbversion="1" comments="ÉÌµê¿ªÆôµÄµÈ¼¶"/>
+		<variable name="_itemlist" type="ShopItemList" dbversion="1" comments="ÉÌµêÀïµÄÎïÆ·"/>
+	</structure>
+	
+	<map name="ShopMap" key_type="int" value_type="Shop"/>
+	
+	<structure name="Package_Item">
+		<variable name="_seq" type="int" dbversion="1" comments="ÁìÈ¡¹ýµÄ½±ÀøID"/>
+		<variable name="_date" type="int" dbversion="1" comments="ÁìÈ¡Ê±¼ä£¬Õâ¸öÊÇÎªÁËÖÜ½±Àø£¬ÔÂ½±ÀøÀ´Éè¼ÆµÄ"/>
+	</structure>
+	
+	<list name="PackageList" value_type="Package_Item"/>
+	
+	<structure name="Mail_Item">
+		<variable name="_item_id" type="Int64" dbversion="1" comments="ÎïÆ·µÄID"/>
+		<variable name="_item_count" type="int" dbversion="1" comments="ÎïÆ·µÄÊýÁ¿"/>
+		<variable name="_item_type" type="Int64" dbversion="1" comments="ÎïÆ·µÄÀàÐÍ£¬°ó¶¨·Ç°ó¶¨"/>
+	</structure>
+	
+	<list name="MailItemList" value_type="Mail_Item"/>
+	
+	<structure name="Mail">
+		<variable name="_mail_id" type="int" dbversion="1" comments="ÓÊ¼þµÄÎ¨Ò»ID"/>
+		<variable name="_msg_id" type="int" dbversion="1" comments="ÓÊ¼þµÄ±êÌâÄÚÈÝID"/>
+		<variable name="_subject" type="std::string" dbversion="1" comments="ÓÊ¼þµÄ±êÌâ"/>
+		<variable name="_context" type="std::string" dbversion="1" comments="ÓÊ¼þµÄÄÚÈÝ"/>
+		<variable name="_date" type="Int64" dbversion="1" comments="ÓÊ¼þµÄÊ±¼ä"/>
+		<variable name="_from_id" type="Int64" dbversion="1" comments="ÓÊ¼þµÄ·¢ËÍÈËID£¬0´ú±íÏµÍ³"/>
+		<variable name="_from_name" type="std::string" dbversion="1" comments="ÓÊ¼þµÄ·¢ËÍÈËÃû×Ö"/>
+		<variable name="_item" type="MailItemList" dbversion="1" comments="ÓÊ¼þµÄ¸½¼ÓÎïÆ·"/>
+	</structure>
+
+	<list name="MailList" value_type="Mail"/>
+	
+	<structure name="Notice">
+		<variable name="_notice_id" type="int" comments="¹«¸æµÄÎ¨Ò»ID"/>
+		<variable name="_notice" type="std::string" comments="¹«¸æµÄÄÚÈÝ"/>
+		<variable name="_weekday" type="int" comments="ÖÜ¼¸£¬0´ú±íÈÎÒâÒ»Ìì"/>
+		<variable name="_type" type="int" comments="±íÊ¾ÖÜÆÚ£¬1´ú±íµÄÊÇÌì£¬ÆäÓàµÄ¸ù¾ÝÒÔºóµÄÐèÇóÔÙ¶¨"/>
+		<variable name="_hour" type="int" comments="Ê±¼ä"/>
+		<variable name="_minute" type="int" comments="Ê±¼ä"/>
+		<variable name="_interval" type="int" comments="Á½Ìõ¹«¸æÖ®¼äµÄÊ±¼ä¼ä¸ô"/>
+		<variable name="_count" type="int" comments="µ±Ç°ÒÑ¾­¹ã²¥µÄ´ÎÊý"/>
+		<variable name="_max_count" type="int" comments="¹«¸æµÄ´ÎÊý,Õâ¸öÅäÖÃµÄ²»ÐèÒª£¬ÊÇ¿Í·þÄÇ±ßµÄ»áÓÃµ½"/>
+	</structure>
+
+	<map name="NoticeMap" key_type="int" value_type="Notice"/>
+
+	<structure name="PVPFighter">
+		<variable name="_id" type="Int64"/>
+		<variable name="_status" type="int" comments="0:initial; 1:ready(ÒÑ×¼±¸¾ÍÐ÷); 2:end(ÒÑÌá½»Õ½¶·½á¹û»òÑ¡Ôñ·ÅÆú); 3:µôÏß"/>
+		<variable name="_ops" type="intStrMap"/>
+		<variable name="_accumulate_latency" type="int"/>
+		<variable name="_delay_count" type="int"/>
+		<variable name="_wait_seconds" type="int"/>
+		<variable name="_result" type="int"/>
+	</structure>
+
+	<structure name="PVPData">
+		<variable name="_id" type="int"/>
+		<variable name="_mode" type="int"/>
+		<variable name="_status" type="int"/>
+		<variable name="_status_change_time" type="int"/>
+		<variable name="_fighter1" type="PVPFighter"/>
+		<variable name="_fighter2" type="PVPFighter"/>
+		<variable name="_fight_start_time" type="int"/>
+		<variable name="_next_client_tick" type="int"/>
+		<variable name="_latency" type="int"/>
+		<variable name="_end_counter" type="int"/>
+		<variable name="_end_reason" type="int"/>
+	</structure>
+
+</structures>
+

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+ulimit -c unlimited
+
+./gamed gamesys.conf
+#gdb -args ./gamed gamesys.conf
+
+#valgrind -v --leak-check=full --gen-suppressions=all ./gamed gamesys.conf
+#valgrind -v --leak-check=full --suppressions=./valgrind.supp ./gamed gamesys.conf
+#valgrind -v --leak-check=full --show-leak-kinds=all --suppressions=./valgrind.supp ./gamed gamesys.conf
+
+#rm -f massif.out.*
+#valgrind -v --tool=massif ./gamed gamesys.conf
+#valgrind -v --tool=massif --threshold=0.1 --time-unit=ms ./gamed gamesys.conf
+
+#env CPUPROFILE=gp.out CPUPROFILESIGNAL=12 ./gamed gamesys.conf
+#env HEAPCHECK=normal ./gamed gamesys.conf
+#env HEAPCHECK=strict ./gamed gamesys.conf
+#env HEAPPROFILE=gp.out ./gamed gamesys.conf
+

@@ -1,0 +1,70 @@
+function OnMessage_RoleUpdatePveArenaHeroInfo(player, role, arg, others)
+	player:Log("OnMessage_RoleUpdatePveArenaHeroInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local pve_arena = others.misc._miscdata._pve_arena_map._pve_arena_data_map_data
+	local role_score = role._roledata._pve_arena_info._score
+
+	local pve_arena_it = pve_arena:SeekToBegin()
+	local pve_arena_info = pve_arena_it:GetValue()
+	while pve_arena_info ~= nil do
+		if role_score >= pve_arena_info._begin_score and role_score <= pve_arena_info._end_score then
+			local find_info = pve_arena_info._pve_arena_data_map:Find(role_score)
+			local pve_arena_data_it = pve_arena_info._pve_arena_data_map:SeekToBegin()
+			local pve_arena_data = pve_arena_data_it:GetValue()
+			while pve_arena_data ~= nil do
+				if pve_arena_data._score == role_score then
+					local list_data_it = pve_arena_data._list_data:SeekToBegin()
+					local list_data = list_data_it:GetValue()
+					while list_data ~= nil do
+						if list_data._role_id:ToStr() == role._roledata._base._id:ToStr() then
+							list_data._hero_info:Clear()
+							local is_idx,ds_hero_info = DeserializeStruct(arg.hero_info, 1, "RolePveArenaInfo")
+							for i = 1, table.getn(ds_hero_info.heroinfo) do
+								local insert_hero = CACHE.PveArenaHeroInfo()
+								insert_hero._heroid = ds_hero_info.heroinfo[i].id
+								insert_hero._level = ds_hero_info.heroinfo[i].level
+								insert_hero._star = ds_hero_info.heroinfo[i].star
+								insert_hero._grade = ds_hero_info.heroinfo[i].grade
+
+								for j = 1, table.getn(ds_hero_info.heroinfo[i].skill) do
+									local h3_skill = CACHE.HeroSkill()
+									h3_skill._skill_id = ds_hero_info.heroinfo[i].skill[j].skill_id
+									h3_skill._skill_level = ds_hero_info.heroinfo[i].skill[j].skill_level
+
+									insert_hero._skill:PushBack(h3_skill)
+								end
+
+								for j = 1, table.getn(ds_hero_info.heroinfo[i].common_skill) do
+									local h3_skill = CACHE.HeroSkill()
+									h3_skill._skill_id = ds_hero_info.heroinfo[i].common_skill[j].skill_id
+									h3_skill._skill_level = ds_hero_info.heroinfo[i].common_skill[j].skill_level
+
+									insert_hero._common_skill:PushBack(h3_skill)
+								end
+
+								for j = 1, table.getn(ds_hero_info.heroinfo[i].select_skill) do
+									local h3_skill = CACHE.Int()
+									h3_skill._value = ds_hero_info.heroinfo[i].select_skill[j]
+
+									insert_hero._select_skill:PushBack(h3_skill)
+								end
+								
+								list_data._hero_info:PushBack(insert_hero)
+							end
+							return
+						end
+						list_data_it:Next()
+						list_data = list_data_it:GetValue()
+					end
+				end
+
+				pve_arena_data_it:Next()
+				pve_arena_data = pve_arena_data_it:GetValue()
+			end
+		end
+		pve_arena_it:Next()
+		pve_arena_info = pve_arena_it:GetValue()
+	end
+	return
+
+end

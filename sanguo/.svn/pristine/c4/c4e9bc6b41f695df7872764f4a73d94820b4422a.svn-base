@@ -1,0 +1,55 @@
+
+#ifndef __GNET_CHANGEROLENAME_HPP
+#define __GNET_CHANGEROLENAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "changerolenamearg"
+#include "changerolenameres"
+
+namespace GNET
+{
+
+class ChangeRoleName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "changerolename"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// ChangeRoleNameArg *arg = (ChangeRoleNameArg *)argument;
+		// ChangeRoleNameRes *res = (ChangeRoleNameRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		ChangeRoleNameArg *arg = (ChangeRoleNameArg *)argument;
+		ChangeRoleNameRes *res = (ChangeRoleNameRes *)result;
+
+		GLog::log(LOG_INFO, "ChangeRoleName::Client, retcode=%d, name=%.*s, thread=%u", res->retcode, (int)arg->name.size(), 
+		(char*)arg->name.begin(), (unsigned int)pthread_self());
+		
+		//这里不直接考虑结果，直接给这个玩家仍一个消息过去就可以了
+		Octets out_name;
+                Base64Encoder::Convert(out_name, arg->name);
+
+                char msg[100];
+                snprintf(msg, sizeof(msg), "10036:%d:%.*s:", res->retcode, (int)out_name.size(), (char*)out_name.begin());
+                MessageManager::GetInstance().Put(arg->roleid, arg->roleid, msg, 0);
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		ChangeRoleNameArg *arg = (ChangeRoleNameArg *)argument;
+
+                GLog::log(LOG_ERR, "ChangeRoleName::OnTimeout, name=%.*s, thread=%u",(int)arg->name.size(), (char*)arg->name.begin(),
+				(unsigned int)pthread_self());
+	}
+
+};
+
+};
+#endif

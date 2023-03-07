@@ -1,0 +1,126 @@
+
+#include "http_get_request.h"
+
+namespace GNET {
+
+void _GetQuery(const QUERY_MAP& map, const char *name, int& value)
+{
+	QUERY_MAP::const_iterator it = map.find(name);
+	if (it != map.end()) value = atoi(it->second.c_str());
+}
+
+void _GetQuery(const QUERY_MAP& map, const char *name, int64_t& value)
+{
+	QUERY_MAP::const_iterator it = map.find(name);
+	if (it != map.end()) value = atoll(it->second.c_str());
+}
+
+void _GetQuery(const QUERY_MAP& map, const char *name, std::string& value)
+{
+	QUERY_MAP::const_iterator it = map.find(name);
+	if (it != map.end()) value = it->second;
+}
+
+void _AddResult(std::string& json_body, const char *name, const int& value)
+{
+	if (json_body != "{") json_body += ",";
+	json_body += "\"";
+	json_body += name;
+	json_body += "\":\"";
+	char buf[128];
+	snprintf(buf, sizeof(buf), "%d\"", value);
+	json_body += buf;
+}
+
+void _AddResult(std::string& json_body, const char *name, const int64_t& value)
+{
+	if (json_body != "{") json_body += ",";
+	json_body += "\"";
+	json_body += name;
+	json_body += "\":\"";
+	char buf[128];
+	snprintf(buf, sizeof(buf), "%ld\"", value);
+	json_body += buf;
+}
+
+void _AddResult(std::string& json_body, const char *name, const std::string& value)
+{
+	if (json_body != "{") json_body += ",";
+	json_body += "\"";
+	json_body += name;
+	json_body += "\":\"";
+	json_body += value;
+	json_body += "\"";
+}
+
+void _AddResultNOComma(std::string& json_body, const char *name, const int& value)
+{
+	json_body += "\"";
+	json_body += name;
+	json_body += "\":\"";
+	char buf[128];
+	snprintf(buf, sizeof(buf), "%d\"", value);
+	json_body += buf;
+}
+
+void _AddResultNOComma(std::string& json_body, const char *name, const int64_t& value)
+{
+	json_body += "\"";
+	json_body += name;
+	json_body += "\":\"";
+	char buf[128];
+	snprintf(buf, sizeof(buf), "%ld\"", value);
+	json_body += buf;
+}
+
+void _AddResultNOComma(std::string& json_body, const char *name, const std::string& value)
+{
+	json_body += "\"";
+	json_body += name;
+	json_body += "\":\"";
+	json_body += value;
+	json_body += "\"";
+}
+
+void ___HttpRequest::Process(PManager *manager, SESSION_ID sid)
+{
+	___ReceivedHttpGetRequest *imp = 0;
+
+	std::string urlpath = GetUrlPath();
+	if(urlpath == "/user/AddCash")
+	{
+		//imp = new HKSDKAddCash();
+		return;
+	}
+	else
+		return;
+
+	imp->InitQueryMap(url);
+	imp->ParseQuery();
+	HttpGetResponseInJson4Send *re = imp->OnGetRequest(sid);
+	if (re)
+	{
+		re->Prepare();
+		manager->Send(sid, re);
+		delete re;
+	}
+	delete imp;
+}
+
+std::string ___HttpRequest::GetUrlPath() const
+{
+	// url: <scheme>://<netloc>/<path>;<params>?<query>#<fragment>
+	const char *p = strstr(url.c_str(), "://");
+	if (p) // <scheme>://<netloc>/<path>;<params>?<query>#<fragment>
+		p += 3;
+	else // <netloc>/<path>;<params>?<query>#<fragment>
+		p = url.c_str();
+	p = strchr(url.c_str(), '/'); 
+	if (!p) return "/";
+	const char *q = strpbrk(p, ";?");
+	if (!q) return p;
+	return std::string(p, q-p);
+}
+
+};
+

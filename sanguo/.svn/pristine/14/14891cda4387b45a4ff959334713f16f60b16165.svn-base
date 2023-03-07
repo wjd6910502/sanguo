@@ -1,0 +1,36 @@
+function OnCommand_MafiaBangZhuSendMail(player, role, arg, others)
+	player:Log("OnCommand_MafiaBangZhuSendMail, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("MafiaBangZhuSendMail_Re")
+	resp.subject = arg.subject
+	resp.context = arg.context
+
+	local mafia_data = others.mafias[role._roledata._mafia._id:ToStr()]
+
+	if mafia_data == nil then
+		resp.retcode = G_ERRCODE["NO_MAFIA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MafiaBangZhuSendMail, error=NO_MAFIA")                    
+		return
+	end
+
+	local mafia_info = mafia_data._data
+	
+	if role._roledata._mafia._position ~= G_MAFIA_POSITION["BANGZHU"] then
+		resp.retcode = G_ERRCODE["MAFIA_MAIL_LEVEL_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MafiaBangZhuSendMail, error=MAFIA_MAIL_LEVEL_ERR")                    
+		return
+	end
+
+	local mail_info = {}
+	mail_info.id = role._roledata._base._id:ToStr()
+	mail_info.name = role._roledata._base._name
+	mail_info.subject = arg.subject
+	mail_info.context = arg.context
+
+	MAFIA_MafiaBangZhuSendMail(mafia_info, mail_info)
+		
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+end

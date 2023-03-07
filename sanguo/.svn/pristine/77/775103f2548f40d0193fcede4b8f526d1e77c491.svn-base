@@ -1,0 +1,206 @@
+#!/usr/bin/env python
+#coding=GBK
+
+import sys, os
+from xml.dom import minidom
+
+SIMPLE_TYPES = ( "number", "boolean", "string" )
+
+g_structs = {}
+
+class ParseError():
+	pass
+
+def abort(desc):
+	print u"FATAL ERROR: "+desc
+	raise ParseError
+
+def warning(desc):
+	print u"WARNING: "+desc
+
+def parseStructNode(struct_node):
+	name = ""
+	variables = []
+
+	for (k,v) in struct_node.attributes.items():
+		if k == "name":
+			name = v
+	if len(name) == 0:
+		abort(u"structure缺少name")
+
+	for nd in struct_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "variable":
+			var_name = ""
+			var_type = ""
+			var_is_vector = False
+			for (k,v) in nd.attributes.items():
+				if k == "name":
+					var_name = v
+				elif k == "type":
+					for t in SIMPLE_TYPES:
+						if t == v:
+							var_type = v
+					if g_structs.has_key(v):
+						var_type = v
+					if var_type == "":
+						abort(u"structure(%s)包含错误的type(%s)"%(name,v))
+				elif k == "vector":
+					if v == "true":
+						var_is_vector = True
+			if len(var_name) == 0:
+				abort(u"structure(%s)变量缺少name"%name)
+			if len(var_type) == 0:
+				abort(u"structure(%s)变量(%s)缺少type"%(name,var_name))
+			variables.append((var_name, var_type, var_is_vector))
+	if len(variables) == 0:
+		abort(u"structure(%s)缺少变量"%name)
+	return (name, variables)
+
+def makeSerializeStruct():
+	#structure
+	p1 = ""
+	for (name, variables) in g_structs.items():
+		p2 = ""
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype not in SIMPLE_TYPES:
+				#structure
+				if v_is_vector:
+					p2 += """	if obj.%s==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #obj.%s)
+		for i = 1, #obj.%s do
+			__SerializeStruct(os, "%s", obj.%s[i])
+		end
+	end
+""" % (vname, vname, vname, vtype, vname)
+				else:
+					p2 += """	__SerializeStruct(os, "%s", obj.%s)
+""" % (vtype, vname)
+			else:
+				#simple type
+				if v_is_vector:
+					p2 += """	if obj.%s==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #obj.%s)
+		for i = 1, #obj.%s do
+			Serialize(os, obj.%s[i])
+		end
+	end
+""" % (vname, vname, vname, vname)
+				else:
+					p2 += """	Serialize(os, obj.%s)
+""" % vname
+
+		p1 += """
+func_list[%s] = 
+function(os, obj)
+%s
+end
+""" % ("\"" + name + "\"", p2)
+
+	contents = """--DONT CHANGE ME!
+
+local func_list = {}
+
+function __SerializeStruct(os, __type__, obj)
+	if obj==nil then obj={} end
+
+	if func_list[__type__] ~= nil then
+		func_list[__type__](os, obj)
+	else
+		error("wrong structure type: "..__type__)
+	end
+end
+
+%s
+
+""" % p1
+
+	fp = open("common/serialize_struct.lua", "w")
+	fp.write(contents)
+	fp.close()
+
+def makeDeserializeStruct():
+	#structure
+	p1 = ""
+	for (name, variables) in g_structs.items():
+		p2 = ""
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype not in SIMPLE_TYPES:
+				#structure
+				if v_is_vector:
+					p2 += """	local count = 0
+	is_idx, count = Deserialize(is, is_idx, "number")
+	item.%s = {}
+	for i = 1, count do
+		is_idx, item.%s[i] = DeserializeStruct(is, is_idx, "%s")
+	end
+""" % (vname, vname, vtype)
+				else:
+					p2 += """	is_idx, item.%s = DeserializeStruct(is, is_idx, "%s")
+""" % (vname, vtype)
+			else:
+				#simple type
+				if v_is_vector:
+					p2 += """	local count = 0
+	is_idx, count = Deserialize(is, is_idx, "number")
+	item.%s = {}
+	for i = 1, count do
+		is_idx, item.%s[i] = Deserialize(is, is_idx, "%s")
+	end
+""" % (vname, vname, vtype)
+				else:
+					p2 += """	is_idx, item.%s = Deserialize(is, is_idx, "%s")
+""" % (vname, vtype)
+
+		p1 += """
+func_list[%s] =
+function(is, is_idx, item)
+%s
+	return is_idx, item
+end
+""" % ("\"" + name + "\"", p2)
+
+
+	contents = """--DONT CHANGE ME!
+
+local func_list = {}
+
+function DeserializeStruct(is, is_idx, __type__)
+	local item = {}
+
+	if func_list[__type__] ~= nil then
+		return	func_list[__type__](is, is_idx, item)
+	else
+		error("wrong structure type: "..__type__)		
+	end
+end
+
+%s
+
+""" % p1
+
+	fp = open("common/deserialize_struct.lua", "w")
+	fp.write(contents)
+	fp.close()
+
+def main():
+	xmldoc = minidom.parse("./strus.xml")
+	if xmldoc.firstChild.tagName != "structures":
+		abort(u"strus.xml文件格式有错误")
+
+	root_node = xmldoc.firstChild
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "structure":
+			(name, variables) = parseStructNode(nd)
+			g_structs[name] = variables
+	#print g_structs
+
+	makeSerializeStruct()
+	makeDeserializeStruct()
+
+if __name__ == "__main__":
+	main()
+

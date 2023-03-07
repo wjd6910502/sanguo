@@ -1,0 +1,16 @@
+function OnMessage_TestMessage1(player, role, arg, others)
+	--player:Log("OnMessage_TestMessage1, "..DumpTable(arg))
+
+	local ed = DataPool_Find("elementdata")
+	for r in DataPool_Array(ed.role) do
+		local xxx = r.purchasable
+	end
+
+	local msg = NewMessage("TestMessage1")
+	player:SendMessage(role._roledata._base._id, SerializeMessage(msg))
+
+	--local ed = DataPool_Find("elementdata")
+	--local quanju = ed.gamedefine[1]
+	--local buy_count = quanju.vp_buy_max_times
+	--print(buy_count)
+end

@@ -1,0 +1,19 @@
+function OnCommand_PhotoSetPhotoFrame(player, role, arg, others)
+	player:Log("OnCommand_PhotoSetPhotoFrame, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PhotoSetPhotoFrame_Re")
+	resp.photoframe_id = arg.photoframe_id
+	--查看自己是否有这个头像
+	local photoframe_info = role._roledata._base._photo_map:Find(arg.photoframe_id)
+
+	if photoframe_info == nil then
+		resp.retcode = G_ERRCODE["PHOTO_SET_NO_PHOTO_FRAME"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	role._roledata._base._photo_frame = arg.photoframe_id
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+end

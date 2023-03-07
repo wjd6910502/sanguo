@@ -1,0 +1,406 @@
+--DONT CHANGE ME!
+
+function DeserializeAndProcessCommand(ud, is, ...)
+	if not API_IsNULL(ud) then player=API_GetLuaPlayer(ud) end
+	if not API_IsNULL(ud) then role=API_GetLuaRole(ud) end
+
+	local others = {}
+	others.roles = {}
+	others.mafias = {}
+	others.pvps = {}
+	local extra_roles_size = 0
+	local extra_mafias_size = 0
+	local extra_pvps_size = 0
+	for k,v in ipairs(arg) do
+		if k==1 then
+			--extra roles size
+			extra_roles_size = v
+		elseif k<=1+extra_roles_size then
+			--extra roles
+			v = API_GetLuaRole(v)
+			others.roles[v._roledata._base._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1 then
+			--extra mafias size
+			extra_mafias_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size then
+			--extra mafias
+			v = API_GetLuaMafia(v)
+			others.mafias[v._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1+extra_mafias_size+1 then
+			--extra pvps size
+			extra_pvps_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size then
+			--extra pvps
+			v = API_GetLuaPVP(v)
+			others.pvps[v._data._id] = v
+		elseif k==1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size+1 then
+			--extra top
+			--v = API_GetLuaTopManager(v)
+			--others.top[1] = v
+		end
+	end
+
+	local cmd = {}
+	local is_idx = 1
+	is_idx, cmd.__type__ = Deserialize(is, is_idx, "number")
+
+	if false then
+		--never to here
+	elseif cmd.__type__ == 2 then
+		--GetVersion_Re
+		is_idx, cmd.version = Deserialize(is, is_idx, "number")
+		is_idx, cmd.cmd_version = Deserialize(is, is_idx, "number")
+		is_idx, cmd.data_version = Deserialize(is, is_idx, "number")
+
+		OnCommand_GetVersion_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 4 then
+		--GetRoleInfo_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.info = DeserializeStruct(is, is_idx, "RoleInfo")
+
+		OnCommand_GetRoleInfo_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 6 then
+		--CreateRole_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.info = DeserializeStruct(is, is_idx, "RoleInfo")
+
+		OnCommand_CreateRole_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 8 then
+		--EnterInstance_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.inst_tid = Deserialize(is, is_idx, "number")
+		is_idx, cmd.seed = Deserialize(is, is_idx, "number")
+
+		OnCommand_EnterInstance_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10 then
+		--CompleteInstance_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.inst_tid = Deserialize(is, is_idx, "number")
+		is_idx, cmd.score = Deserialize(is, is_idx, "number")
+		is_idx, cmd.star = Deserialize(is, is_idx, "number")
+		is_idx, cmd.rewards = DeserializeStruct(is, is_idx, "SweepInstanceData")
+		is_idx, cmd.first_flag = Deserialize(is, is_idx, "number")
+
+		OnCommand_CompleteInstance_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 11 then
+		--SyncRoleInfo
+
+		OnCommand_SyncRoleInfo(player, role, cmd, others)
+	elseif cmd.__type__ == 20001 then
+		--TopListGet_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.members = {}
+		for i = 1, count do
+			is_idx, cmd.members[i] = DeserializeStruct(is, is_idx, "TopListData")
+		end
+
+		OnCommand_TopListGet_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10301 then
+		--PVPInvite
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "RoleBrief")
+		is_idx, cmd.mode = Deserialize(is, is_idx, "number")
+
+		OnCommand_PVPInvite(player, role, cmd, others)
+	elseif cmd.__type__ == 10303 then
+		--PVPPrepare
+		is_idx, cmd.id = Deserialize(is, is_idx, "number")
+		is_idx, cmd.player1 = DeserializeStruct(is, is_idx, "RoleBrief")
+		is_idx, cmd.player2 = DeserializeStruct(is, is_idx, "RoleBrief")
+		is_idx, cmd.N = Deserialize(is, is_idx, "number")
+		is_idx, cmd.mode = Deserialize(is, is_idx, "number")
+
+		OnCommand_PVPPrepare(player, role, cmd, others)
+	elseif cmd.__type__ == 10305 then
+		--PVPBegin
+		is_idx, cmd.fight_start_time = Deserialize(is, is_idx, "number")
+		is_idx, cmd.ip = Deserialize(is, is_idx, "string")
+		is_idx, cmd.port = Deserialize(is, is_idx, "number")
+
+		OnCommand_PVPBegin(player, role, cmd, others)
+	elseif cmd.__type__ == 10306 then
+		--PVPOperation
+		is_idx, cmd.client_tick = Deserialize(is, is_idx, "number")
+		is_idx, cmd.op = Deserialize(is, is_idx, "string")
+		is_idx, cmd.crc = Deserialize(is, is_idx, "string")
+
+		OnCommand_PVPOperation(player, role, cmd, others)
+	elseif cmd.__type__ == 10307 then
+		--PVPOperationSet
+		is_idx, cmd.client_tick = Deserialize(is, is_idx, "number")
+		is_idx, cmd.player1_op = Deserialize(is, is_idx, "string")
+		is_idx, cmd.player2_op = Deserialize(is, is_idx, "string")
+
+		OnCommand_PVPOperationSet(player, role, cmd, others)
+	elseif cmd.__type__ == 10308 then
+		--PVPEnd
+		is_idx, cmd.result = Deserialize(is, is_idx, "number")
+
+		OnCommand_PVPEnd(player, role, cmd, others)
+	elseif cmd.__type__ == 101 then
+		--SweepInstance_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.info = {}
+		for i = 1, count do
+			is_idx, cmd.info[i] = DeserializeStruct(is, is_idx, "SweepInstanceData")
+		end
+		is_idx, cmd.info2 = DeserializeStruct(is, is_idx, "SweepInstanceData")
+
+		OnCommand_SweepInstance_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 103 then
+		--GetBackPack_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.info = {}
+		for i = 1, count do
+			is_idx, cmd.info[i] = DeserializeStruct(is, is_idx, "Item")
+		end
+
+		OnCommand_GetBackPack_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 105 then
+		--GetInstance_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.info = {}
+		for i = 1, count do
+			is_idx, cmd.info[i] = DeserializeStruct(is, is_idx, "InstanceInfo")
+		end
+
+		OnCommand_GetInstance_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 106 then
+		--Role_Mon_Exp
+		is_idx, cmd.level = Deserialize(is, is_idx, "number")
+		is_idx, cmd.exp = Deserialize(is, is_idx, "string")
+		is_idx, cmd.money = Deserialize(is, is_idx, "number")
+		is_idx, cmd.yuanbao = Deserialize(is, is_idx, "number")
+		is_idx, cmd.vp = Deserialize(is, is_idx, "number")
+
+		OnCommand_Role_Mon_Exp(player, role, cmd, others)
+	elseif cmd.__type__ == 108 then
+		--BuyVp_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.num = Deserialize(is, is_idx, "number")
+
+		OnCommand_BuyVp_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 110 then
+		--BuyInstanceCount_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_BuyInstanceCount_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 111 then
+		--RoleCommonLimit
+		is_idx, cmd.tid = Deserialize(is, is_idx, "number")
+		is_idx, cmd.count = Deserialize(is, is_idx, "number")
+
+		OnCommand_RoleCommonLimit(player, role, cmd, others)
+	elseif cmd.__type__ == 114 then
+		--ChongZhi_Re
+		is_idx, cmd.chongzhi = Deserialize(is, is_idx, "number")
+
+		OnCommand_ChongZhi_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 116 then
+		--TaskFinish_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.task_id = Deserialize(is, is_idx, "number")
+		is_idx, cmd.rewards = DeserializeStruct(is, is_idx, "SweepInstanceData")
+
+		OnCommand_TaskFinish_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 117 then
+		--Task_Condition
+		is_idx, cmd.tid = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.condition = {}
+		for i = 1, count do
+			is_idx, cmd.condition[i] = DeserializeStruct(is, is_idx, "Condition")
+		end
+
+		OnCommand_Task_Condition(player, role, cmd, others)
+	elseif cmd.__type__ == 120 then
+		--BuyHero_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_BuyHero_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 121 then
+		--HeroList_Re
+		is_idx, cmd.hero_hall = DeserializeStruct(is, is_idx, "RoleHero")
+
+		OnCommand_HeroList_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 123 then
+		--AddHero
+		is_idx, cmd.hero_hall = DeserializeStruct(is, is_idx, "RoleHero")
+
+		OnCommand_AddHero(player, role, cmd, others)
+	elseif cmd.__type__ == 124 then
+		--UpdateHeroInfo
+		is_idx, cmd.hero_hall = DeserializeStruct(is, is_idx, "RoleHero")
+
+		OnCommand_UpdateHeroInfo(player, role, cmd, others)
+	elseif cmd.__type__ == 125 then
+		--UseItem_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_UseItem_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 127 then
+		--One_Level_Up_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_One_Level_Up_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 129 then
+		--Hero_Up_Grade_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_Hero_Up_Grade_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 130 then
+		--ErrorInfo
+		is_idx, cmd.error = Deserialize(is, is_idx, "number")
+
+		OnCommand_ErrorInfo(player, role, cmd, others)
+	elseif cmd.__type__ == 132 then
+		--BuyHorse_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_BuyHorse_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 133 then
+		--AddHorse
+		is_idx, cmd.horse = DeserializeStruct(is, is_idx, "RoleHorse")
+
+		OnCommand_AddHorse(player, role, cmd, others)
+	elseif cmd.__type__ == 135 then
+		--GetLastHero_Re
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.info = {}
+		for i = 1, count do
+			is_idx, cmd.info[i] = Deserialize(is, is_idx, "number")
+		end
+
+		OnCommand_GetLastHero_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 137 then
+		--PvpJoin_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_PvpJoin_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 138 then
+		--PvpMatchSuccess
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.index = Deserialize(is, is_idx, "number")
+
+		OnCommand_PvpMatchSuccess(player, role, cmd, others)
+	elseif cmd.__type__ == 140 then
+		--PvpEnter_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.roleid = Deserialize(is, is_idx, "string")
+		is_idx, cmd.fightid = Deserialize(is, is_idx, "string")
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.heroinfo = {}
+		for i = 1, count do
+			is_idx, cmd.heroinfo[i] = Deserialize(is, is_idx, "number")
+		end
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.fightheroinfo = {}
+		for i = 1, count do
+			is_idx, cmd.fightheroinfo[i] = Deserialize(is, is_idx, "number")
+		end
+
+		OnCommand_PvpEnter_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10004 then
+		--PublicChat
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "RoleBrief")
+		is_idx, cmd.content = Deserialize(is, is_idx, "string")
+
+		OnCommand_PublicChat(player, role, cmd, others)
+	elseif cmd.__type__ == 10007 then
+		--ListFriends_Re
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.friends = {}
+		for i = 1, count do
+			is_idx, cmd.friends[i] = DeserializeStruct(is, is_idx, "Friend")
+		end
+		is_idx, count = Deserialize(is, is_idx, "number");
+		cmd.requests = {}
+		for i = 1, count do
+			is_idx, cmd.requests[i] = DeserializeStruct(is, is_idx, "Friend")
+		end
+
+		OnCommand_ListFriends_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10008 then
+		--FriendRequest
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "Friend")
+
+		OnCommand_FriendRequest(player, role, cmd, others)
+	elseif cmd.__type__ == 10010 then
+		--NewFriend
+		is_idx, cmd.friend = DeserializeStruct(is, is_idx, "Friend")
+
+		OnCommand_NewFriend(player, role, cmd, others)
+	elseif cmd.__type__ == 10102 then
+		--MafiaGet_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.mafia = DeserializeStruct(is, is_idx, "Mafia")
+
+		OnCommand_MafiaGet_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10104 then
+		--MafiaCreate_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.mafia = DeserializeStruct(is, is_idx, "Mafia")
+
+		OnCommand_MafiaCreate_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10105 then
+		--MafiaInvite
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+		is_idx, cmd.src = DeserializeStruct(is, is_idx, "RoleBrief")
+
+		OnCommand_MafiaInvite(player, role, cmd, others)
+	elseif cmd.__type__ == 10107 then
+		--MafiaAddMember
+		is_idx, cmd.member = DeserializeStruct(is, is_idx, "RoleBrief")
+
+		OnCommand_MafiaAddMember(player, role, cmd, others)
+	elseif cmd.__type__ == 10108 then
+		--MafiaUpdate
+		is_idx, cmd.mafia = DeserializeStruct(is, is_idx, "Mafia")
+
+		OnCommand_MafiaUpdate(player, role, cmd, others)
+	elseif cmd.__type__ == 10110 then
+		--MafiaKickout_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.dest_id = Deserialize(is, is_idx, "string")
+
+		OnCommand_MafiaKickout_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10111 then
+		--MafiaLoseMember
+		is_idx, cmd.member = DeserializeStruct(is, is_idx, "RoleBrief")
+
+		OnCommand_MafiaLoseMember(player, role, cmd, others)
+	elseif cmd.__type__ == 10113 then
+		--MafiaQuit_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_MafiaQuit_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10115 then
+		--MafiaDestory_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+
+		OnCommand_MafiaDestory_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10117 then
+		--MafiaAnnounce_Re
+		is_idx, cmd.retcode = Deserialize(is, is_idx, "number")
+		is_idx, cmd.announce = Deserialize(is, is_idx, "string")
+
+		OnCommand_MafiaAnnounce_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10202 then
+		--Ping_Re
+		is_idx, cmd.client_send_time = Deserialize(is, is_idx, "number")
+
+		OnCommand_Ping_Re(player, role, cmd, others)
+	elseif cmd.__type__ == 10204 then
+		--UDPPing_Re
+		is_idx, cmd.client_send_time = Deserialize(is, is_idx, "number")
+
+		OnCommand_UDPPing_Re(player, role, cmd, others)
+
+	end
+end
+

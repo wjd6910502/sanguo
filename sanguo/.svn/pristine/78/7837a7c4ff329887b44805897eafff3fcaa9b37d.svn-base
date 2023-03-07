@@ -1,0 +1,3 @@
+function OnCommand_WuZheShiLianGetOpponentInfo(player, role, arg, others)
+	--player:Log("OnCommand_WuZheShiLianGetOpponentInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

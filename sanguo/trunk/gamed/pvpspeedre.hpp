@@ -1,0 +1,29 @@
+
+#ifndef __GNET_PVPSPEEDRE_HPP
+#define __GNET_PVPSPEEDRE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class PvpSpeedRe : public GNET::Protocol
+{
+	#include "pvpspeedre"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "GAMED::PvpSpeedRe, roleid=%ld, speed=%d", roleid, speed);
+		
+		char msg[256];
+		snprintf(msg, sizeof(msg), "10017:%d:", speed); //PvpSpeed
+		MessageManager::GetInstance().Put(roleid, roleid, msg, 0);
+	}
+};
+
+};
+
+#endif

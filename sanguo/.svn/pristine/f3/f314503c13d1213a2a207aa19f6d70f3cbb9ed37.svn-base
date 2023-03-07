@@ -1,0 +1,51 @@
+function OnCommand_TongQueTaiCancleMatch(player, role, arg, others)
+	player:Log("OnCommand_TongQueTaiCancleMatch, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("TongQueTaiCancleMatch_Re")
+
+	local tongquetai = others.tongquetai._data
+
+	if role._roledata._tongquetai_data._cur_state ~= 1 then
+		resp.retcode = G_ERRCODE["TONGQUETAI_CANCLE_JOIN"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_TongQueTaiCancleMatch, error=TONGQUETAI_CANCLE_JOIN")
+		return
+	end
+
+	local all_fight = tongquetai._join_role:Find(role._roledata._base._id)
+	
+	local difficulty_info_list = 0
+	if all_fight._difficulty == 1 then
+		difficulty_info_list = tongquetai._hard_difficulty:Find(all_fight._fight)
+	else
+		difficulty_info_list = tongquetai._easy_difficulty:Find(all_fight._fight)
+	end
+
+	if difficulty_info_list ~= nil then
+		local difficulty_info_it = difficulty_info_list:SeekToBegin()
+		local difficulty_info = difficulty_info_it:GetValue()
+		while difficulty_info ~= nil do
+			if difficulty_info._role_base._id:ToStr() == role._roledata._base._id:ToStr() then
+				if difficulty_info._match_success == 0 then
+					difficulty_info_it:Pop()
+				else
+					resp.retcode = G_ERRCODE["TONGQUETAI_CANCLE_STATE_ERR"]
+					player:SendToClient(SerializeCommand(resp))
+					player:Log("OnCommand_TongQueTaiCancleMatch, error=TONGQUETAI_CANCLE_STATE_ERR")
+					return
+				end
+				break
+			end
+			
+			difficulty_info_it:Next()
+			difficulty_info = difficulty_info_it:GetValue()
+		end
+	end
+
+	tongquetai._join_role:Delete(role._roledata._base._id)
+	role._roledata._tongquetai_data._cur_state = 0
+	role._roledata._tongquetai_data._double_flag = 0
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+
+end

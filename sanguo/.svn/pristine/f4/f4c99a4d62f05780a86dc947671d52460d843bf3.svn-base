@@ -1,0 +1,3 @@
+function OnCommand_WuZheShiLianGetDifficultyInfo(player, role, arg, others)
+	--player:Log("OnCommand_WuZheShiLianGetDifficultyInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

@@ -1,0 +1,15 @@
+[STTServer]
+type                    =       tcp
+port                    =       39247
+address                 =       0.0.0.0
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+sdk_type          		=       2
+; 1 msp  2 web
+
+

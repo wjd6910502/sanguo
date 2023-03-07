@@ -1,0 +1,101 @@
+
+#ifndef __GNET_GETIATEXTINSPEECHRE_HPP
+#define __GNET_GETIATEXTINSPEECHRE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GetIATextInSpeechRe : public GNET::Protocol
+{
+	#include "getiatextinspeechre"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		
+		//找到当前用户
+		Player* player = CACHE::PlayerManager::GetInstance().FindByRoleId(src_id);
+		if(player ==NULL)
+		{
+			printf("找不到用户........");
+			return;
+		}
+	
+
+		//把这个传入到lua中
+		//PublicChatnew res;
+		//res.src_id = _player->_role._roledata._base._id;
+		//
+		//<variable name="src_id" type="int64_t" attr="ref"/>
+		//<variable name="dest_id" type="int64_t" attr="ref"/>
+		//<variable name="zoneid" type="int" attr="ref"/>
+		//<variable name="time" type="int" attr="ref"/>
+		//<variable name="text_content"  type="Octets" attr="ref"/>
+		//内部类型 chat_type: 0 代表公聊  1 代表私聊
+		if(chat_type == 0 )
+		{	
+			std::string msg = "10100:";
+			char roleinfo[1024];
+			std::string role_id = player->_role._roledata._base._id.ToStr();
+			std::string name = player->_role._roledata._base._name;
+			int photo = player->_role._roledata._base._photo;
+			int level = player->_role._roledata._status._level;
+			std::string mafia_id = player->_role._roledata._mafia._id.ToStr();
+			std::string mafia_name = player->_role._roledata._mafia._name;
+
+			std::string content = (char*)text_content.begin();
+			snprintf(roleinfo,sizeof(roleinfo),"%s:%s:%d:%d:%s:%s:%d",role_id.c_str(),name.c_str(),photo,level,mafia_id.c_str(),mafia_name.c_str(),time);
+			msg = msg + roleinfo + content;				
+			MessageManager::GetInstance().Put(src_id, src_id, msg.c_str(), 0);
+		}	
+
+
+
+
+		/*		
+		//ruguo destid == -1 代表公共聊天
+
+		local msg = NewMessage("PublicChat")
+		msg.src = ROLE_MakeRoleBrief(role)
+		msg.content = arg.content
+		msg.time = API_GetTime()
+		player:SendMessageToAllRole(SerializeMessage(msg))
+	
+
+		
+		//私聊
+		local resp = NewCommand("PrivateChat")
+		resp.src = ROLE_MakeRoleBrief(role)
+		resp.dest = ROLE_MakeRoleBrief(dest_role)
+		resp.dest_id = arg.dest_id
+		resp.content = arg.content
+		resp.time = c._time
+
+	role:SendToClient(SerializeCommand(resp))
+
+	--判断玩家是否在线
+	if dest_role:IsActiveRole() == false then
+		local cmd = NewCommand("ErrorInfo")
+		cmd.error_id = G_ERRCODE["CHAT_NOT_ONLINE"]
+		role:SendToClient(SerializeCommand(cmd))
+		return 
+	end
+
+	dest_role:SendToClient(SerializeCommand(resp))
+
+		
+
+*/
+		
+		
+		
+	}
+};
+
+};
+
+#endif

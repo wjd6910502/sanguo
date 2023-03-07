@@ -1,0 +1,150 @@
+{
+	["startDialogID"] = 0,
+	["sceneID"] = 9032,
+	["monsterLevel"] = 2,
+	["leftRoleTab"] =
+	{
+		["role1"] =
+		{
+			["level"] = 2,
+			["star"] = 4,
+			["chosenMusou"] = 1,
+			["grade"] = 1,
+			["chainSkill"] =
+			{
+			},
+			["index"] = 1,
+			["equip"] =
+			{
+			},
+			["features"] =
+			{
+				[1] =
+				{
+					[1] = 56,
+					[2] = 1,
+				},
+			},
+			["templateID"] = 6,
+			["roleType"] = 0,
+			["relationID"] =
+			{
+			},
+			["skillPcks"] =
+			{
+				[1] =
+				{
+					[1] = 5669,
+					[2] = 1,
+				},
+				[2] =
+				{
+					[1] = 5672,
+					[2] = 1,
+				},
+				[3] =
+				{
+					[1] = 5359,
+					[2] = 1,
+				},
+				[4] =
+				{
+					[1] = 5668,
+					[2] = 1,
+				},
+				[5] =
+				{
+					[1] = 5673,
+					[2] = 1,
+				},
+				[6] =
+				{
+					[1] = 5674,
+					[2] = 1,
+				},
+				[7] =
+				{
+					[1] = 5675,
+					[2] = 1,
+				},
+			},
+			["isShinMusouAvail"] = true,
+		},
+	},
+	["instanceID"] = 1002,
+	["stagehpadjust"] = 1050,
+	["rideScriptID"] = 0,
+	["endDialogID"] = 0,
+	["battleType"] = 1,
+	["legionInfoR"] =
+	{
+		["totalStar"] = 0,
+	},
+	["legionInfoL"] =
+	{
+		["totalStar"] = 4,
+	},
+	["controlTypeR"] = 3,
+	["remainTime"] = 180,
+	["BGMID"] = 2,
+	["rightRoleTab"] =
+	{
+		["role2"] =
+		{
+			["level"] = 2,
+			["star"] = 1,
+			["grade"] = 1,
+			["roleType"] = 1,
+			["index"] = 2,
+			["templateID"] = 20138,
+		},
+		["role1"] =
+		{
+			["level"] = 2,
+			["star"] = 1,
+			["grade"] = 1,
+			["roleType"] = 1,
+			["index"] = 1,
+			["templateID"] = 20139,
+		},
+	},
+	["endCGID"] = 0,
+	["controlTypeL"] = 1,
+	["legionStar"] = 4,
+	["stageatkadjust"] = 1030,
+	["starConditions"] =
+	{
+		["condition1"] =
+		{
+			["param1"] = 0,
+			["conType"] = 0,
+			["param2"] = 0,
+			["id"] = 1924,
+		},
+		["condition2"] =
+		{
+			["param1"] = 2,
+			["conType"] = 10,
+			["param2"] = 0,
+			["id"] = 1925,
+		},
+		["condition3"] =
+		{
+			["param1"] = 1,
+			["conType"] = 10,
+			["param2"] = 0,
+			["id"] = 1926,
+		},
+	},
+}
+UnityEngine.Debug:Log(Object)
+GameUI.UIInterface.UIUtil:Log(String) (at Assets/scripts/GameLogic/GameUI/UIInterface/UIUtil.cs:14)
+GameUI_UIInterface_UIUtilWrap:Log(IntPtr) (at Assets/scripts/GameLogic/Lua/Source/LuaWrap/GameUI_UIInterface_UIUtilWrap.cs:114)
+LuaInterface.LuaDLL:lua_pcall(IntPtr, Int32, Int32, Int32)
+LuaInterface.LuaFunction:PCall(Int32, Int32) (at Assets/scripts/GameLogic/Lua/uLua/Core/LuaFunction.cs:134)
+LuaInterface.LuaFunction:Call() (at Assets/scripts/GameLogic/Lua/uLua/Core/LuaFunction.cs:95)
+LuaScriptMgr:LateUpate() (at Assets/scripts/GameLogic/Lua/Source/Base/LuaScriptMgr.cs:490)
+GameLogic.CLuaManager:LateUpdate() (at Assets/scripts/GameLogic/GameUI/ECLuaManager.cs:56)
+CGame:GameLateTick(Single) (at Assets/scripts/SanGuoLogic/Main/CGame_State.cs:70)
+CGame:LateTick(Single) (at Assets/scripts/SanGuoLogic/Main/CGame.cs:154)
+SanGuoEntry:LateUpdate() (at Assets/scripts/SanGuoLogic/Main/SanGuoEntry.cs:212)

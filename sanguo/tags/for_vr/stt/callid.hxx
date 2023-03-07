@@ -1,0 +1,20 @@
+
+#ifndef __GNET_STT_CALLID
+#define __GNET_STT_CALLID
+
+namespace GNET
+{
+
+enum CallID
+{
+	RPC_GETTEXTINSPEECH	=	2001,
+};
+
+enum ProtocolType
+{
+	PROTOCOL_STTZONEREGISTER	=	2004,
+	PROTOCOL_GETIATEXTINSPEECHRE	=	2003,
+};
+
+};
+#endif

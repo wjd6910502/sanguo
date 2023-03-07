@@ -1,0 +1,3 @@
+function OnCommand_WuZheShiLianSelectDifficulty(player, role, arg, others)
+	--player:Log("OnCommand_WuZheShiLianSelectDifficulty, "..DumpTable(arg).." "..DumpTable(others))
+end

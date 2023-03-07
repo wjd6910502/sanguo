@@ -1,0 +1,46 @@
+
+#include "udptransserver.hpp"
+#include "state.hxx"
+
+#include "transchallenge.hpp"
+#include "commonmacro.h"
+//#include "thread.h"
+#include "glog.h"
+
+namespace GNET
+{
+
+UDPTransServer UDPTransServer::instance;
+
+const Protocol::Manager::Session::State* UDPTransServer::GetInitState() const
+{
+	return &state_UDPTransServer;
+}
+
+void UDPTransServer::OnAddSession(Session::ID sid)
+{
+}
+
+void UDPTransServer::OnDelSession(Session::ID sid)
+{
+}
+
+unsigned short UDPTransServer::GetPort()
+{
+	unsigned short iport = _config.port;
+	if(iport > 0)
+		return iport;
+	else
+		return -1;
+}
+
+std::string UDPTransServer::GetAddress()
+{
+	std::string straddress = _config.address;
+	if(!straddress.empty())
+		return straddress;
+	else
+		return "";			
+}
+
+};

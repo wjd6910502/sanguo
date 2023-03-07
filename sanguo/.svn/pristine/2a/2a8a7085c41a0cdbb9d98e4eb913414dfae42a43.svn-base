@@ -1,0 +1,214 @@
+function OnCommand_WuZheShiLianFinishBattle(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianFinishBattle, "..DumpTable(arg).." "..DumpTable(others))
+		
+	local resp = NewCommand("WuZheShiLianFinishBattle_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	local hero_trial = role._roledata._wuzhe_shilian 
+	
+	--验证是否当前的难度关卡
+	local curdifficulty = arg.difficulty
+	local curstage = arg.stage
+	if curdifficulty ~= hero_trial._cur_difficulty then
+		--当前难度不正确
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_DIFFICULTY_WRONG"] 
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	if hero_trial._cur_stage ~= curstage then
+		--关卡没有开启
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_STAGE_WRONG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end	
+	
+	--检查武将信息
+	for i = 1, table.getn(arg.hero) do
+		local hero = arg.hero[i]
+		--判断是否在英雄列表中
+		local f = role._roledata._hero_hall._heros:Find(hero.id)
+		if f == nil then	
+			--武将不存在
+			resp.restcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_HERO_NOT_EXIST"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end		
+		local s = hero_trial._dead_hero_info:Find(hero.id)
+		if s ~= nil then
+			--死亡英雄不可以上阵
+			resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_HERO_DEAD"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end	
+	end
+
+	--检查关卡信息
+	local trialdifficultyinfo  = hero_trial._attack_info:Find(curdifficulty)			
+	if trialdifficultyinfo ~= nil then
+		local trialstageinfo = trialdifficultyinfo._difficulty_attackinfo:Find(hero_trial._cur_stage)
+		if trialstageinfo ~= nil then
+			if trialstageinfo._stage ~= hero_trial._cur_stage then
+				resp.retcode = G_ERRCODE["TRIAL_ACTIVE_STAGE_NOT_MATCH"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+		else
+			resp.retcode =  G_ERRCODE["TRIAL_ACTIVE_STAGE_NOT_FOUND"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	else
+		 resp.retcode = G_ERRCODE["TRIAL_ACTIVE_DIFFICULTY_NOT_FOUND"]
+		 player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--检查武将信息
+	for i = 1, table.getn(arg.hero) do
+		local hero = arg.hero[i]
+		--关卡结束英雄数据修改
+		local f = hero_trial._injured_hero_info:Find(hero.id)
+		if f ~= nil then
+			f._hp = hero.hp
+			f._anger = hero.anger
+			if f._hp == 0 then
+				--插入死亡数据 删除受伤数据
+				hero_trial._injured_hero_info:Delete(hero.id)
+		 		
+				local deadhero = CACHE.Int:new()
+				deadhero._value = hero.id
+				hero_trial._dead_hero_info:Insert(hero.id,deadhero)
+			end
+		else
+			if hero.hp == 0 then
+				local deadhero = CACHE.Int:new()
+				deadhero._value = hero.id
+				hero_trial._dead_hero_info:Insert(hero.id,deadhero)
+			else
+				local trialhero = CACHE.ShiLianHeroInfo:new()
+				trialhero._id  = hero.id
+				trialhero._hp  = hero.hp
+				trialhero._anger  = hero.anger
+				hero_trial._injured_hero_info:Insert(hero.id,trialhero)
+			end
+
+		end
+	end
+	--挑战失败
+	if arg.opponent.hp ~= 0 or arg.winflag == 0 then
+		local trialdifficultyinfo  = hero_trial._attack_info:Find(curdifficulty)			
+		local trialstageinfo = trialdifficultyinfo._difficulty_attackinfo:Find(hero_trial._cur_stage)
+		
+		trialstageinfo._alive_flag = 1 
+		trialstageinfo._hp = arg.opponent.hp
+		trialstageinfo._anger = arg.opponent.anger				
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_FAILED"] 
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	-- 设置当前关卡
+	local trialdifficultyinfo  = hero_trial._attack_info:Find(curdifficulty)			
+	local trialstageinfo = trialdifficultyinfo._difficulty_attackinfo:Find(hero_trial._cur_stage)
+	trialstageinfo._alive_flag = 0 	
+	trialstageinfo._hp = 0
+	trialstageinfo._anger = 0				
+
+	local all_dead = true
+	local trialstageinfo_it = trialdifficultyinfo._difficulty_attackinfo:SeekToBegin()
+	local trialstageinfo = trialstageinfo_it:GetValue()
+	while trialstageinfo ~= nil do
+		if trialstageinfo._alive_flag == 1 then
+			all_dead = false
+			break
+		end
+		trialstageinfo_it:Next()
+		trialstageinfo = trialstageinfo_it:GetValue()
+	end
+
+	if add_dead == true then
+		--计算最大通关难度
+		if hero_trial._high_difficulty < 5 then
+			if hero_trial._cur_difficulty > hero_trial._high_difficulty then
+				hero_trial._high_difficulty = hero_trial._cur_difficulty
+			end	
+		end
+	
+		--通关难度关卡计算
+		if hero_trial._cur_difficulty == hero_trial._high_difficulty then			
+			hero_trial._cur_difficulty = hero_trial._cur_difficulty + 1		
+			if hero_trial._cur_difficulty > 5 then
+				hero_trial._cur_difficulty = 5
+			end
+		end
+	end
+	
+	--返回奖励数据
+	local ed = DataPool_Find("elementdata")
+	local stageinfo = ed:FindBy("trialstage_id", arg.stage) 
+	
+	resp.rewards = {}
+	if stageinfo ~= nil then
+		-- 固定奖励 + 随即奖励 + 宿主英雄奖励
+		local Reward = DROPITEM_Reward(role, stageinfo.reward_id)
+		ROLE_AddReward(role, Reward)
+			
+		for i =1 , #Reward.item do
+			local tmp_item = {}
+			tmp_item.tid = Reward.item[i].itemid
+			tmp_item.count = Reward.item[i].itemnum
+			resp.rewards[#resp.rewards +1] = tmp_item				
+		end
+		
+		local ditem = DROPITEM_DropItem(role, stageinfo.drop_id)
+		
+		if #ditem >= 1 then
+			for i = 1, #ditem do
+				if ditem[i] ~= nil then
+					local tmp_item = {}
+					tmp_item.tid = ditem[i].id
+					tmp_item.count = ditem[i].count
+					BACKPACK_AddItem(role,tmp_item.tid,tmp_item.count) 
+					resp.rewards[#resp.rewards +1] = tmp_item
+				end
+			end
+		end
+			
+		--获取宿主英雄的奖励
+		local suzhuwujiangreward = {}
+		suzhuwujiangreward[#suzhuwujiangreward+1] = stageinfo.speical_reward_id1
+		suzhuwujiangreward[#suzhuwujiangreward+1] = stageinfo.speical_reward_id2
+		suzhuwujiangreward[#suzhuwujiangreward+1] = stageinfo.speical_reward_id3
+	end		
+	--获取宿主英雄
+	local ed = DataPool_Find("elementdata")
+	local boss_infos = ed.FindBy("boss_id", arg.opponent.id)
+	if boss_infos ~= nil then
+		local num_id = {}
+	
+		num_id[#num_id+1] = boss_infos.sudi_role1
+		num_id[#num_id+1] = boss_infos.sudi_role2 
+		num_id[#num_id+1] = boss_infos.sudi_role3
+			
+		--添加宿主武将奖励
+		for i =1,#num_id do
+			for i = 1 ,#arg.hero  do
+				local hero_info = arg.hero[i]
+				if  hero_info.id == num_id[i] then
+					local Reward = DROPITEM_Reward(role, suzhuwujiangreward[i])
+					ROLE_AddReward(role, Reward)		
+				
+					--添加物品
+					for i =1 , #Reward.item do 
+						local tmp_item = {}
+						tmp_item.tid = Reward.item[i].itemid
+						tmp_item.count = Reward.item[i].itemnum
+						resp.rewards[#resp.rewards +1] = tmp_item				
+					end			
+				end
+			end
+		end
+	end
+	
+	player:SendToClient(SerializeCommand(resp))
+	
+end

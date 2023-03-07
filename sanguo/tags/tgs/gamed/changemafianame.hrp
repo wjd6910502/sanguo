@@ -1,0 +1,40 @@
+
+#ifndef __GNET_CHANGEMAFIANAME_HPP
+#define __GNET_CHANGEMAFIANAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "changemafianamearg"
+#include "changemafianameres"
+
+namespace GNET
+{
+
+class ChangeMafiaName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "changemafianame"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// ChangeMafiaNameArg *arg = (ChangeMafiaNameArg *)argument;
+		// ChangeMafiaNameRes *res = (ChangeMafiaNameRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// ChangeMafiaNameArg *arg = (ChangeMafiaNameArg *)argument;
+		// ChangeMafiaNameRes *res = (ChangeMafiaNameRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

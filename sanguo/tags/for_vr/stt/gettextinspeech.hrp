@@ -1,0 +1,73 @@
+
+#ifndef __GNET_GETTEXTINSPEECH_HPP
+#define __GNET_GETTEXTINSPEECH_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "gettextinspeecharg"
+#include "gettextinspeechres"
+#include "messagemanager.h"
+#include "base64.h"
+extern std::mutex g_lock;
+namespace GNET
+{
+
+class GetTextInSpeech : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "gettextinspeech"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GetTextInSpeechArg *arg = (GetTextInSpeechArg *)argument;
+		GetTextInSpeechRes *res = (GetTextInSpeechRes *)result;
+		//printf(" GetTextInSpeech rpc arg.speech = %.*s, arg.speech_size = %d\n",arg->speech_content.size(),(char*)arg->speech_content.begin(),arg->speech_content.size());
+		//SpeechMsg* pMsg = ObjectManager::GetInstance()->allocMsg();
+		g_lock.lock();
+		SpeechMsg* pMsg = new SpeechMsg();
+		g_lock.unlock();
+		
+
+		if(pMsg == NULL)
+		{
+			printf("***********分配内存失败，内存不够*************\n");
+			res->retcode = -1;
+			return;	
+		}
+		//base64解码 
+	
+		Octets speech_content;			
+		Base64Decoder::Convert(speech_content,arg->speech_content);
+		printf("Base64Decoder convert speech_content = %d\n",(int)speech_content.size());
+				
+		pMsg->_srcid = arg->src_id;
+		pMsg->SetdestId((char*)arg->dest_id.begin());
+		pMsg->_zoneid = arg->zone_id;
+		pMsg->_time = arg->time;
+		pMsg->_chatype = arg->chat_type;
+
+		//memcpy 直接内存拷贝
+		memcpy(pMsg->_speech,(unsigned char*)speech_content.begin(),speech_content.size());
+		pMsg->_speech_size = speech_content.size();
+
+		GMessageManager::GetInstance()->Push_back2(pMsg);
+		//ObjectManager::GetInstance()->setState(pMsg,POOL_OBJECT_STATUS_INUSE);	
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// GetTextInSpeechArg *arg = (GetTextInSpeechArg *)argument;
+		// GetTextInSpeechRes *res = (GetTextInSpeechRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

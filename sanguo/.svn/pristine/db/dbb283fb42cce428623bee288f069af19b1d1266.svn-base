@@ -1,0 +1,25 @@
+function OnMessage_PVPEnterRe(player, role, arg, others)
+	player:Log("OnMessage_PVPEnterRe, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("PvpEnter_Re")
+	resp.retcode = 0
+	resp.mode = 1
+	resp.N = 4
+	
+	cmd.p2p_magic = math.random(1000000)
+
+	if role._roledata._device_info._net_type>=2 then
+		cmd.p2p_peer_ip = role._roledata._device_info._udp_ip
+		cmd.p2p_peer_port = role._roledata._device_info._udp_port
+	else
+		cmd.p2p_peer_ip = ""
+		cmd.p2p_peer_port = 0
+	end
+
+	--开始发送PVP信息
+	resp.rolepvpinfo = {}
+	resp.fightpvpinfo = {}
+	is_idx,resp.player1 = DeserializeStruct(arg.role_pvpinfo, 1, "RolePVPInfo")
+	is_idx,resp.player2 = DeserializeStruct(arg.fight_pvpinfo, 1, "RolePVPInfo")
+	player:SendToClient(SerializeCommand(resp))
+end

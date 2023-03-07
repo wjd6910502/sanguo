@@ -1,0 +1,47 @@
+	public:
+		int net_type;
+		Octets public_ip;
+		unsigned short public_port;
+		Octets local_ip;
+		unsigned short local_port;
+		enum { PROTOCOL_TYPE = PROTOCOL_REPORTUDPINFO };
+	public:
+		ReportUDPInfo() { type = PROTOCOL_REPORTUDPINFO; }
+		ReportUDPInfo(void*) : Protocol(PROTOCOL_REPORTUDPINFO) { }
+		ReportUDPInfo (int l_net_type,const Octets& l_public_ip,unsigned short l_public_port,
+			const Octets& l_local_ip,unsigned short l_local_port)
+			 : net_type(l_net_type),public_ip(l_public_ip),public_port(l_public_port)
+			,local_ip(l_local_ip),local_port(l_local_port)
+		{
+			type = PROTOCOL_REPORTUDPINFO;
+		}
+
+		ReportUDPInfo(const ReportUDPInfo &rhs)
+			: Protocol(rhs),net_type(rhs.net_type),public_ip(rhs.public_ip),public_port(rhs.public_port)
+			,local_ip(rhs.local_ip),local_port(rhs.local_port) { }
+
+		GNET::Protocol *Clone() const { return new ReportUDPInfo(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << net_type;
+			os << public_ip;
+			os << public_port;
+			os << local_ip;
+			os << local_port;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> net_type;
+			os >> public_ip;
+			os >> public_port;
+			os >> local_ip;
+			os >> local_port;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

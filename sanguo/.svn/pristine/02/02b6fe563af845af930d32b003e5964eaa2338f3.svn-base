@@ -1,0 +1,190 @@
+function OnMessage_RoleUpdatePveArenaMisc(player, role, arg, others)
+	player:Log("OnMessage_RoleUpdatePveArenaMisc, "..DumpTable(arg).." "..DumpTable(others))
+
+	local pve_arena = others.misc._miscdata._pve_arena_map._pve_arena_data_map_data
+	others.misc._miscdata._pve_arena_map._all_num = others.misc._miscdata._pve_arena_map._all_num + 1
+	local insert_flag = 1
+	local minimum = 0
+	if pve_arena:Size() == 0 then
+		--第一个桶就弄成以第一个玩家的分数作为基准，前后各25的范围
+		local data = CACHE.PveArenaData()
+		data._begin_score = role._roledata._pve_arena_info._score - 25
+		data._end_score = role._roledata._pve_arena_info._score + 25
+		data._cur_num = 1
+
+		local role_pve_arena_list = CACHE.RolePveArenaDataMapData()
+		local role_pve_arena_data = CACHE.RolePveArenaData()
+
+		local pve_arena_hero_info = {}
+		pve_arena_hero_info.heroinfo = {}
+		local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+		local heroid = heroid_it:GetValue()
+		while heroid ~= nil do
+			local tmp_hero = {}
+			tmp_hero.id = heroid._value
+			pve_arena_hero_info.heroinfo[#pve_arena_hero_info.heroinfo+1] = tmp_hero
+			heroid_it:Next()
+			heroid = heroid_it:GetValue()
+		end
+	
+		local os = {}
+		SerializeStruct(os, "RolePveArenaInfo", pve_arena_hero_info)
+		role_pve_arena_data._role_id = role._roledata._base._id
+		role_pve_arena_data._name = role._roledata._base._name
+		role_pve_arena_data._level = role._roledata._status._level
+		role_pve_arena_data._mafia_name = role._roledata._mafia._name
+		role_pve_arena_data._hero_info = table.concat(os)
+
+		role_pve_arena_list._list_data:PushBack(role_pve_arena_data)
+		role_pve_arena_list._score = role._roledata._pve_arena_info._score
+		data._pve_arena_data_map:Insert(role._roledata._pve_arena_info._score, role_pve_arena_list)
+		
+		pve_arena:Insert(data._begin_score, data)
+		insert_flag = 0
+	else
+		local pve_arena_it = pve_arena:SeekToBegin()
+		local pve_arena_info = pve_arena_it:GetValue()
+		while pve_arena_info ~= nil do
+			local role_score = role._roledata._pve_arena_info._score
+			if role_score < pve_arena_info._begin_score and role_score > minimum then
+				--说明这个分数段里面还是没有人的
+				local data = CACHE.PveArenaData()
+				data._begin_score = minimum
+				data._end_score = pve_arena_info._begin_score - 1
+				data._cur_num = 1
+
+				local role_pve_arena_list = CACHE.RolePveArenaDataMapData()
+				local role_pve_arena_data = CACHE.RolePveArenaData()
+
+				local pve_arena_hero_info = {}
+				pve_arena_hero_info.heroinfo = {}
+				local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+				local heroid = heroid_it:GetValue()
+				while heroid ~= nil do
+					local tmp_hero = {}
+					tmp_hero.id = heroid._value
+					pve_arena_hero_info.heroinfo[#pve_arena_hero_info.heroinfo+1] = tmp_hero
+					heroid_it:Next()
+					heroid = heroid_it:GetValue()
+				end
+	
+				local os = {}
+				SerializeStruct(os, "RolePveArenaInfo", pve_arena_hero_info)
+				role_pve_arena_data._role_id = role._roledata._base._id
+				role_pve_arena_data._name = role._roledata._base._name
+				role_pve_arena_data._level = role._roledata._status._level
+				role_pve_arena_data._mafia_name = role._roledata._mafia._name
+				role_pve_arena_data._hero_info = table.concat(os)
+
+				role_pve_arena_list._list_data:PushBack(role_pve_arena_data)
+				role_pve_arena_list._score = role._roledata._pve_arena_info._score
+				data._pve_arena_data_map:Insert(role._roledata._pve_arena_info._score, role_pve_arena_list)
+				
+				pve_arena:Insert(data._begin_score, data)
+				insert_flag = 0
+				break
+			elseif role_score >= pve_arena_info._begin_score and role_score <= pve_arena_info._end_score then
+				pve_arena_info._cur_num = pve_arena_info._cur_num + 1
+				local find_info = pve_arena_info._pve_arena_data_map:Find(role_score)
+				if find_info == nil then
+					local role_pve_arena_list = CACHE.RolePveArenaDataMapData()
+					local role_pve_arena_data = CACHE.RolePveArenaData()
+
+					local pve_arena_hero_info = {}
+					pve_arena_hero_info.heroinfo = {}
+					local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+					local heroid = heroid_it:GetValue()
+					while heroid ~= nil do
+						local tmp_hero = {}
+						tmp_hero.id = heroid._value
+						pve_arena_hero_info.heroinfo[#pve_arena_hero_info.heroinfo+1] = tmp_hero
+						heroid_it:Next()
+						heroid = heroid_it:GetValue()
+					end
+	
+					local os = {}
+					SerializeStruct(os, "RolePveArenaInfo", pve_arena_hero_info)
+					role_pve_arena_data._role_id = role._roledata._base._id
+					role_pve_arena_data._name = role._roledata._base._name
+					role_pve_arena_data._level = role._roledata._status._level
+					role_pve_arena_data._mafia_name = role._roledata._mafia._name
+					role_pve_arena_data._hero_info = table.concat(os)
+
+					role_pve_arena_list._list_data:PushBack(role_pve_arena_data)
+					role_pve_arena_list._score = role._roledata._pve_arena_info._score
+					pve_arena_info._pve_arena_data_map:Insert(role._roledata._pve_arena_info._score, role_pve_arena_list)
+					insert_flag = 0
+					break
+				else
+					local role_pve_arena_data = CACHE.RolePveArenaData()
+
+					local pve_arena_hero_info = {}
+					pve_arena_hero_info.heroinfo = {}
+					local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+					local heroid = heroid_it:GetValue()
+					while heroid ~= nil do
+						local tmp_hero = {}
+						tmp_hero.id = heroid._value
+						pve_arena_hero_info.heroinfo[#pve_arena_hero_info.heroinfo+1] = tmp_hero
+						heroid_it:Next()
+						heroid = heroid_it:GetValue()
+					end
+	
+					local os = {}
+					SerializeStruct(os, "RolePveArenaInfo", pve_arena_hero_info)
+					role_pve_arena_data._role_id = role._roledata._base._id
+					role_pve_arena_data._name = role._roledata._base._name
+					role_pve_arena_data._level = role._roledata._status._level
+					role_pve_arena_data._mafia_name = role._roledata._mafia._name
+					role_pve_arena_data._hero_info = table.concat(os)
+					find_info._list_data:PushBack(role_pve_arena_data)
+					insert_flag = 0
+					break
+				end
+			end
+			minimum = pve_arena_info._end_score
+			pve_arena_it:Next()
+			pve_arena_info = pve_arena_it:GetValue()
+		end
+	end
+
+	if insert_flag == 1 then
+		--已经不再那个范围里面了，所以就新的建立一个
+		local data = CACHE.PveArenaData()
+		data._begin_score = role._roledata._pve_arena_info._score - 25
+		if minimum >= data._begin_score then
+			data._begin_score = minimum + 1
+		end
+		data._end_score = role._roledata._pve_arena_info._score + 25
+		data._cur_num = 1
+
+		local role_pve_arena_list = CACHE.RolePveArenaDataMapData()
+		local role_pve_arena_data = CACHE.RolePveArenaData()
+
+		local pve_arena_hero_info = {}
+		pve_arena_hero_info.heroinfo = {}
+		local heroid_it = role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+		local heroid = heroid_it:GetValue()
+		while heroid ~= nil do
+			local tmp_hero = {}
+			tmp_hero.id = heroid._value
+			pve_arena_hero_info.heroinfo[#pve_arena_hero_info.heroinfo+1] = tmp_hero
+			heroid_it:Next()
+			heroid = heroid_it:GetValue()
+		end
+	
+		local os = {}
+		SerializeStruct(os, "RolePveArenaInfo", pve_arena_hero_info)
+		role_pve_arena_data._role_id = role._roledata._base._id
+		role_pve_arena_data._name = role._roledata._base._name
+		role_pve_arena_data._level = role._roledata._status._level
+		role_pve_arena_data._mafia_name = role._roledata._mafia._name
+		role_pve_arena_data._hero_info = table.concat(os)
+
+		role_pve_arena_list._list_data:PushBack(role_pve_arena_data)
+		role_pve_arena_list._score = role._roledata._pve_arena_info._score
+		data._pve_arena_data_map:Insert(role._roledata._pve_arena_info._score, role_pve_arena_list)
+		
+		pve_arena:Insert(data._begin_score, data)
+	end
+end

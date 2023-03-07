@@ -1,0 +1,219 @@
+--DONT CHANGE ME!
+
+function SerializeStruct(__type__, obj)
+	if obj==nil then obj={} end
+
+	local os = ""
+
+	if false then
+		--never to here
+	elseif __type__ == "Instance_Star_Condition" then
+		os = os..Serialize(obj.tid)
+		os = os..Serialize(obj.flag)
+	elseif __type__ == "TopListData" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.photo)
+		os = os..Serialize(obj.data)
+	elseif __type__ == "RoleHeroHall" then
+		if obj.heros==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.heros)
+			for i = 1, #obj.heros do
+				os = os..SerializeStruct("RoleHero", obj.heros[i])
+			end
+		end
+	elseif __type__ == "PVEOperation" then
+		os = os..Serialize(obj.client_tick)
+		os = os..Serialize(obj.op)
+	elseif __type__ == "RoleBrief" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.photo)
+		os = os..Serialize(obj.level)
+		os = os..Serialize(obj.mafia_id)
+		os = os..Serialize(obj.mafia_name)
+	elseif __type__ == "RoleUserDefineData" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.value_define)
+	elseif __type__ == "RoleHero" then
+		os = os..Serialize(obj.tid)
+		os = os..Serialize(obj.level)
+		os = os..Serialize(obj.order)
+		os = os..Serialize(obj.exp)
+	elseif __type__ == "RoleCurrentTask" then
+		os = os..Serialize(obj.id)
+		if obj.condition==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.condition)
+			for i = 1, #obj.condition do
+				os = os..SerializeStruct("RoleTaskCondition", obj.condition[i])
+			end
+		end
+	elseif __type__ == "RoleInfo" then
+		os = os..SerializeStruct("RoleBase", obj.base)
+		os = os..SerializeStruct("RoleStatus", obj.status)
+		os = os..SerializeStruct("RoleHeroHall", obj.hero_hall)
+		os = os..SerializeStruct("RoleBackPack", obj.backpack)
+		os = os..SerializeStruct("RoleMafia", obj.mafia)
+		os = os..SerializeStruct("RoleTask", obj.task)
+		os = os..SerializeStruct("RoleUserDefine", obj.user_define)
+	elseif __type__ == "Friend" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.photo)
+		os = os..Serialize(obj.level)
+	elseif __type__ == "RoleTask" then
+		if obj.finish==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.finish)
+			for i = 1, #obj.finish do
+				os = os..Serialize(obj.finish[i])
+			end
+		end
+		if obj.current==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.current)
+			for i = 1, #obj.current do
+				os = os..SerializeStruct("RoleCurrentTask", obj.current[i])
+			end
+		end
+	elseif __type__ == "RoleStatus" then
+		os = os..Serialize(obj.level)
+		os = os..Serialize(obj.exp)
+		os = os..Serialize(obj.vp)
+		if obj.instances==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.instances)
+			for i = 1, #obj.instances do
+				os = os..SerializeStruct("RoleInstance", obj.instances[i])
+			end
+		end
+		os = os..Serialize(obj.money)
+		os = os..Serialize(obj.yuanbao)
+		if obj.common_use_limit==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.common_use_limit)
+			for i = 1, #obj.common_use_limit do
+				os = os..SerializeStruct("CommonUseLimit", obj.common_use_limit[i])
+			end
+		end
+		os = os..Serialize(obj.chongzhi)
+	elseif __type__ == "RoleBase" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.photo)
+	elseif __type__ == "RoleBackPack" then
+		os = os..Serialize(obj.capacity)
+		if obj.items==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.items)
+			for i = 1, #obj.items do
+				os = os..SerializeStruct("Item", obj.items[i])
+			end
+		end
+	elseif __type__ == "InstanceInfo" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.star)
+	elseif __type__ == "Condition" then
+		os = os..Serialize(obj.current)
+		os = os..Serialize(obj.max)
+	elseif __type__ == "Item" then
+		os = os..Serialize(obj.tid)
+		os = os..Serialize(obj.count)
+	elseif __type__ == "RoleTaskCondition" then
+		os = os..Serialize(obj.current_num)
+		os = os..Serialize(obj.max_num)
+	elseif __type__ == "MafiaBrief" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.flag)
+		os = os..Serialize(obj.announce)
+		os = os..Serialize(obj.level)
+		os = os..Serialize(obj.activity)
+		os = os..Serialize(obj.boss_id)
+		os = os..Serialize(obj.boss_name)
+	elseif __type__ == "CommonUseLimit" then
+		os = os..Serialize(obj.tid)
+		os = os..Serialize(obj.count)
+	elseif __type__ == "DropItem" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.count)
+	elseif __type__ == "RoleInstance" then
+		os = os..Serialize(obj.tid)
+		os = os..Serialize(obj.score)
+	elseif __type__ == "RoleUserDefine" then
+		if obj.role_define==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.role_define)
+			for i = 1, #obj.role_define do
+				os = os..SerializeStruct("RoleUserDefineData", obj.role_define[i])
+			end
+		end
+	elseif __type__ == "RoleMafia" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+	elseif __type__ == "MafiaMember" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.photo)
+		os = os..Serialize(obj.level)
+		os = os..Serialize(obj.activity)
+	elseif __type__ == "Chat" then
+		os = os..Serialize(obj.src_id)
+		os = os..Serialize(obj.src_name)
+		os = os..Serialize(obj.time)
+		os = os..Serialize(obj.content)
+	elseif __type__ == "PVPFighter" then
+		os = os..Serialize(obj.id)
+		if obj.ops==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.ops)
+			for i = 1, #obj.ops do
+				os = os..Serialize(obj.ops[i])
+			end
+		end
+	elseif __type__ == "Mafia" then
+		os = os..Serialize(obj.id)
+		os = os..Serialize(obj.name)
+		os = os..Serialize(obj.flag)
+		os = os..Serialize(obj.announce)
+		os = os..Serialize(obj.level)
+		os = os..Serialize(obj.activity)
+		os = os..Serialize(obj.boss_id)
+		os = os..Serialize(obj.boss_name)
+		if obj.members==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.members)
+			for i = 1, #obj.members do
+				os = os..SerializeStruct("MafiaMember", obj.members[i])
+			end
+		end
+	elseif __type__ == "SweepInstanceData" then
+		os = os..Serialize(obj.exp)
+		os = os..Serialize(obj.money)
+		os = os..Serialize(obj.heroexp)
+		if obj.item==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#obj.item)
+			for i = 1, #obj.item do
+				os = os..SerializeStruct("DropItem", obj.item[i])
+			end
+		end
+
+	end
+
+	return os
+end
+

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<service name="client">
+	<manager name="Gate" type="client" initstate="GateClient"/>
+	<manager name="Status" type="client" initstate="StatusClient"/>
+	<manager name="Trans" type="client" initstate="TransClient"/>
+	<manager name="UDPTrans" type="client" initstate="UDPTransClient"/>
+	
+	<state name="GateClient" timeout="86400">
+		<protocol ref="Challenge"/>
+		<protocol ref="AuthResult"/>
+	</state>
+	<state name="StatusClient" timeout="86400">
+		<protocol ref="ServerStatus"/>
+	</state>
+	<state name="TransClient" timeout="86400">
+		<protocol ref="TransChallenge"/>
+		<protocol ref="TransAuthResult"/>
+		<protocol ref="Continue"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="Kickout"/>
+		<protocol ref="SyncNetime"/>
+	</state>
+	<state name="UDPTransClient" timeout="86400">
+		<protocol ref="UDPGameProtocol"/>
+		<protocol ref="UDPKeepAlive"/>
+		<protocol ref="UDPS2CGameProtocols"/>
+		<protocol ref="UDPSTUNResponse"/>
+		<protocol ref="UDPP2PMakeHole"/>
+		<protocol ref="UDPC2SGameProtocols"/>
+	</state>
+	<state name="Null" timeout="5"/>
+
+	<protocol ref="Response"/>
+	<protocol ref="TransResponse"/>
+	<protocol ref="GameProtocol"/>
+	<protocol ref="KeepAlive"/>
+	<protocol ref="UDPC2SGameProtocols"/>
+	<protocol ref="SyncNetimeRe"/>
+	<protocol ref="UDPSTUNRequest"/>
+	<protocol ref="ReportUDPInfo"/>
+	<protocol ref="ServerLog"/>
+</service>
+

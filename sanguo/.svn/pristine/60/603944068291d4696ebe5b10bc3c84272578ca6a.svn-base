@@ -1,0 +1,101 @@
+
+#ifndef __GNET_PVPCREATE_HPP
+#define __GNET_PVPCREATE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "pvpcreatearg"
+#include "pvpcreateres"
+
+#include "pvpmatch.h"
+#include "pvpcentercreate.hpp"
+#include "gcenterserver.hpp"
+
+
+namespace GNET
+{
+
+class PVPCreate : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "pvpcreate"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// PVPCreateArg *arg = (PVPCreateArg *)argument;
+		// PVPCreateRes *res = (PVPCreateRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		PVPCreateArg *arg = (PVPCreateArg *)argument;
+		PVPCreateRes *res = (PVPCreateRes *)result;
+
+		GLog::log(LOG_INFO, "GCenter::PVPCreate:Client, id=%d, fighter1=%ld, fighter2=%ld",arg->id, arg->fighter1, arg->fighter2);
+		PvpCenterCreate pro;
+		pvp_match_data * tmp = PVPMatch::GetInstance().GetPvpMatchData(arg->id);
+		if(tmp)
+		{
+			if(res->retcode != 0)
+			{
+				PVPMatch::GetInstance().PvpdDelInfo(arg->id);
+			}
+			else
+			{
+				//创建成功的话就在这里创建一个实时观战的房间，来存储都有谁在观看。
+				PVPMatch::GetInstance().AddAudienceRoom(arg->id);
+			}
+			
+			pro.retcode = res->retcode;
+			pro.roleid = tmp->fight1_id;
+			pro.start_time = arg->start_time;
+			pro.ip = Octets((void*)tmp->ip.c_str(), tmp->ip.size());
+			pro.port = tmp->ip_port;
+
+			GCenterServer::GetInstance()->DispatchProtocol(tmp->fight1_zoneid, pro);
+
+			if(tmp->fight_robot != 1)
+			{
+				pro.roleid = tmp->fight2_id;
+				GCenterServer::GetInstance()->DispatchProtocol(tmp->fight2_zoneid, pro);
+			}
+
+		}
+		else
+		{
+			//输出错误的日志
+			GLog::log(LOG_ERR, "GCenter::PVPCreate:Client, id=%d, fighter1=%ld, fighter2=%ld",arg->id, arg->fighter1, arg->fighter2);
+		}
+
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		PVPCreateArg *arg = (PVPCreateArg *)argument;
+		GLog::log(LOG_ERR, "GCenter::PVPCreate:OnTimeout, id=%d, fighter1=%ld, fighter2=%ld",arg->id, arg->fighter1, arg->fighter2);
+		PvpCenterCreate pro;
+		pvp_match_data * tmp = PVPMatch::GetInstance().GetPvpMatchData(arg->id);
+		if(tmp)
+		{
+			pro.retcode = 2;
+			pro.roleid = tmp->fight1_id;
+			pro.start_time = arg->start_time;
+			pro.ip = Octets((void*)tmp->ip.c_str(), tmp->ip.size());
+			pro.port = tmp->ip_port;
+
+			GCenterServer::GetInstance()->DispatchProtocol(tmp->fight1_zoneid, pro);
+
+			pro.roleid = tmp->fight2_id;
+			GCenterServer::GetInstance()->DispatchProtocol(tmp->fight2_zoneid, pro);
+		}
+		//需要把玩家的信息删除掉，否则无法进行下一次新的重新PVP
+		PVPMatch::GetInstance().PvpdDelInfo(arg->id);
+	}
+
+};
+
+};
+#endif

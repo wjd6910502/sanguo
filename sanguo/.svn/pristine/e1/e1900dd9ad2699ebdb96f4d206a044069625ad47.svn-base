@@ -1,0 +1,8 @@
+function OnMessage_Heartbeat(player, role, arg, others)
+	--player:Log("OnMessage_Heartbeat, "..DumpTable(arg))
+
+	local now = API_GetTime()
+	if (now%3==0 and player:NetTime_NeedSync()) or (now%300==0) then
+		player:NetTime_Sync2Client()
+	end
+end

@@ -1,0 +1,68 @@
+
+#ifndef __GNET_UDPC2SGAMEPROTOCOLS_HPP
+#define __GNET_UDPC2SGAMEPROTOCOLS_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "c2sgameprotocol"
+#include "commonmacro.h"
+#include "connection.h"
+#include "script_wrapper.h"
+#include <lua.hpp>
+
+namespace GNET
+{
+
+class UDPC2SGameProtocols : public GNET::Protocol
+{
+	#include "udpc2sgameprotocols"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//printf("UDPC2SGameProtocols::Process, id=%ld, index=%d, protocols.size()=%lu, index_ack=%d\n", id, index, protocols.size(), index_ack);
+
+		Connection::GetInstance().FastSess_OnAck(index_ack, true);
+
+		for(auto it=protocols.begin(); it!=protocols.end(); ++it)
+		{
+			int idx = index+(it-protocols.begin());
+			if(idx-1>0 && !Connection::GetInstance().FastSess_IsReceived(idx-1, true)) return; //正常必然连续的，跳为对端异常
+			if(Connection::GetInstance().FastSess_IsReceived(idx, true)) continue;
+			Connection::GetInstance().FastSess_SetReceived(idx, true);
+
+			const Octets& data = it->data;
+			//check data
+			if(data.size() < 2)
+			{
+				fprintf(stderr, "UDPC2SGameProtocols::Process, index=%d, wrong length\n", idx);
+				continue;
+			}
+			for(size_t i=0; i<data.size(); ++i)
+			{
+				int c = ((char*)data.begin())[i];
+				if(!isupper(c) && !islower(c) && !isdigit(c) && c!='+' && c!='/' && c!='=' && c!=':') //并不标准的base64
+				{
+					fprintf(stderr, "UDPC2SGameProtocols::Process, index=%d, wrong char(%d)\n", index, c);
+					continue;
+				}
+			}
+
+			if(g_L)
+			{
+				LuaWrapper lw(g_L);
+				if(!lw.gExec("DeserializeAndProcessCommand", LuaParameter((void*)0, std::string((char*)data.begin(), data.size()), 0, 0)))
+				{
+					fprintf(stderr, "UDPC2SGameProtocols::Process, gExec, index=%d, DeserializeAndProcessCommand: data=%.*s\n",
+					        index, (int)data.size(), (char*)data.begin());
+				}
+			}
+		}
+		if(!protocols.empty()) Connection::GetInstance().FastSess_SendAck(true);
+	}
+};
+
+};
+
+#endif

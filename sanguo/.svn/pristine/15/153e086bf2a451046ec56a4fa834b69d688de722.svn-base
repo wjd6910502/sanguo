@@ -1,0 +1,72 @@
+
+#ifndef __GNET_GMCMD_MAILTOALLPLAYER_HPP
+#define __GNET_GMCMD_MAILTOALLPLAYER_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GMCmd_MailToAllPlayer : public GNET::Protocol
+{
+	#include "gmcmd_mailtoallplayer"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_MailItemToPlayer::Process, itemid=%.*s, itemnum=%.*s, mailtitle=%.*s, mailcontent=%.*s, session_id=%d", 
+				(int)itemid.size(), (char*)itemid.begin(), (int)itemnum.size(), (char*)itemnum.begin(), (int)mailtitle.size(), (char*)mailtitle.begin(), (int)mailcontent.size(), (char*)mailcontent.begin(), session_id);
+
+		GMCmd_MailToAllPlayer_Re resp;
+
+		std::string items = std::string((char*)itemid.begin(), itemid.size());
+		std::string msgitem = "";
+		if(atoi((char*)itemnum.begin())>0)
+		{
+			msgitem += "1:"+items+":"+(string)((char*)itemnum.begin());
+		}
+		else if(atoi((char*)itemnum.begin())==-1)
+		{
+			int locate = 0;
+			locate = items.find("@");
+			int num = 0;
+			while(locate!=-1)
+			{
+				std::string tmp_id = items.substr(0, locate);
+				msgitem += ":"+tmp_id+":";
+
+				items = items.substr(locate+1, items.size());
+				locate = items.find("@");
+				std::string tmp_num = items.substr(0, locate);
+				msgitem += tmp_num;
+
+				num += 1;
+				items = items.substr(locate+1, items.size());
+				locate = items.find("@");
+			}
+			std::stringstream ss;
+			ss << num;
+			msgitem = ss.str()+msgitem;
+		}
+		else
+		{
+			msgitem = "0";
+		}
+		
+		//TODO:新增加接口处理，不用下面这个
+		/*char msg[100];
+		snprintf(msg, sizeof(msg), "11001:%s:%.*s:%.*s:%d:%u:true:", 
+				msgitem.c_str(), (int)mailtitle.size(), (char*)mailtitle.begin(), (int)mailcontent.size(), (char*)mailcontent.begin(), session_id, sid);
+		MessageManager::GetInstance().Put(-1, -1, msg, 0);*/
+
+		resp.retcode = 0;
+		resp.session_id = session_id;
+		manager->Send(sid, resp);
+	}
+};
+
+};
+
+#endif

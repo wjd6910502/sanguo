@@ -1,0 +1,524 @@
+--DONT CHANGE ME!
+
+function SerializeMessage(msg)
+	local os = {}
+
+	if false then
+		--never to here
+	elseif msg.__type__ == "UpdateRoleInfo" then
+		Serialize(os, 1)
+		Serialize(os, msg.id)
+		Serialize(os, msg.name)
+		Serialize(os, msg.photo)
+		Serialize(os, msg.level)
+	elseif msg.__type__ == "PublicChat" then
+		Serialize(os, 2)
+		__SerializeStruct(os, "RoleBrief", msg.src)
+		Serialize(os, msg.text_content)
+		Serialize(os, msg.time)
+	elseif msg.__type__ == "MafiaAddMember" then
+		Serialize(os, 3)
+		__SerializeStruct(os, "MafiaMember", msg.member_info)
+	elseif msg.__type__ == "CheckClientVersion" then
+		Serialize(os, 4)
+	elseif msg.__type__ == "RoleUpdatePveArenaTop" then
+		Serialize(os, 5)
+	elseif msg.__type__ == "RoleUpdatePveArenaMisc" then
+		Serialize(os, 6)
+		Serialize(os, msg.last_rank)
+	elseif msg.__type__ == "RoleUpdateDefencePlayerPveArenaInfo" then
+		Serialize(os, 7)
+		Serialize(os, msg.id)
+		Serialize(os, msg.name)
+		Serialize(os, msg.level)
+		Serialize(os, msg.photo)
+		Serialize(os, msg.photo_frame)
+		if msg.badge_info==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.badge_info)
+			for i = 1, #msg.badge_info do
+				__SerializeStruct(os, "PhotoInfo", msg.badge_info[i])
+			end
+		end
+		Serialize(os, msg.mafia_name)
+		Serialize(os, msg.self_hero_info)
+		Serialize(os, msg.oppo_hero_info)
+		Serialize(os, msg.win_flag)
+		Serialize(os, msg.operation)
+		Serialize(os, msg.score)
+		Serialize(os, msg.reply_flag)
+		Serialize(os, msg.exe_ver)
+		Serialize(os, msg.data_ver)
+	elseif msg.__type__ == "RoleUpdatePveArenaHeroInfo" then
+		Serialize(os, 8)
+	elseif msg.__type__ == "RoleUpdatePveArenaInfo" then
+		Serialize(os, 9)
+	elseif msg.__type__ == "ClearPveArenaTop" then
+		Serialize(os, 10)
+	elseif msg.__type__ == "ClearPveArenaMisc" then
+		Serialize(os, 11)
+	elseif msg.__type__ == "PrintPveArenaMisc" then
+		Serialize(os, 12)
+	elseif msg.__type__ == "PveArenaHeartBeat" then
+		Serialize(os, 13)
+	elseif msg.__type__ == "PveArenaSendReward" then
+		Serialize(os, 14)
+	elseif msg.__type__ == "ErrorInfo" then
+		Serialize(os, 15)
+	elseif msg.__type__ == "TongQueTaiCancle" then
+		Serialize(os, 16)
+	elseif msg.__type__ == "TongQueTaiHeartBeat" then
+		Serialize(os, 17)
+	elseif msg.__type__ == "TongQueTaiMatchSuccess" then
+		Serialize(os, 18)
+		Serialize(os, msg.player_roleid1)
+		Serialize(os, msg.player_roleid2)
+	elseif msg.__type__ == "TongQueTaiNoticeRoleJoin" then
+		Serialize(os, 19)
+	elseif msg.__type__ == "TongQueTaiReload" then
+		Serialize(os, 20)
+		Serialize(os, msg.role_index)
+		Serialize(os, msg.monster_index)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "TongQueTaiFail" then
+		Serialize(os, 21)
+	elseif msg.__type__ == "RoleInfoInit" then
+		Serialize(os, 22)
+	elseif msg.__type__ == "TestDeleteTop" then
+		Serialize(os, 23)
+		Serialize(os, msg.id)
+	elseif msg.__type__ == "DelFriend" then
+		Serialize(os, 24)
+		Serialize(os, msg.roleid)
+	elseif msg.__type__ == "UpdateRoleMaShuScoreTop" then
+		Serialize(os, 25)
+	elseif msg.__type__ == "UpdateRoleMaShuScoreAllRoleTop" then
+		Serialize(os, 26)
+	elseif msg.__type__ == "DeleteTopList" then
+		Serialize(os, 27)
+		Serialize(os, msg.id)
+	elseif msg.__type__ == "MaShuHelpMail" then
+		Serialize(os, 28)
+		Serialize(os, msg.role_name)
+	elseif msg.__type__ == "MaShuUpdateRoleRank" then
+		Serialize(os, 29)
+		Serialize(os, msg.rank)
+	elseif msg.__type__ == "TopList_All_Role_HeartBeat" then
+		Serialize(os, 30)
+	elseif msg.__type__ == "RoleLogout" then
+		Serialize(os, 31)
+	elseif msg.__type__ == "RoleUpdateFriendInfo" then
+		Serialize(os, 32)
+		Serialize(os, msg.roleid)
+		Serialize(os, msg.level)
+		Serialize(os, msg.zhanli)
+		Serialize(os, msg.online)
+		Serialize(os, msg.mashu_score)
+		Serialize(os, msg.photo)
+		Serialize(os, msg.photo_frame)
+		if msg.badge_info==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.badge_info)
+			for i = 1, #msg.badge_info do
+				__SerializeStruct(os, "PhotoInfo", msg.badge_info[i])
+			end
+		end
+	elseif msg.__type__ == "RoleUpdateInfoMafiaTop" then
+		Serialize(os, 33)
+		Serialize(os, msg.mafia_id)
+		Serialize(os, msg.data)
+		Serialize(os, msg.score)
+	elseif msg.__type__ == "UpdateMafiaInfoTop" then
+		Serialize(os, 34)
+		Serialize(os, msg.level_flag)
+		Serialize(os, msg.id)
+		Serialize(os, msg.name)
+		Serialize(os, msg.announce)
+		Serialize(os, msg.declaration)
+		Serialize(os, msg.level)
+		Serialize(os, msg.boss_id)
+		Serialize(os, msg.boss_name)
+		Serialize(os, msg.level_limit)
+		Serialize(os, msg.num)
+	elseif msg.__type__ == "MafiaAddNewApply" then
+		Serialize(os, 35)
+		__SerializeStruct(os, "MafiaApplyRoleInfo", msg.apply_info)
+	elseif msg.__type__ == "MafiaDelNewApply" then
+		Serialize(os, 36)
+		Serialize(os, msg.id)
+	elseif msg.__type__ == "MafiaDelMember" then
+		Serialize(os, 37)
+		Serialize(os, msg.id)
+	elseif msg.__type__ == "MafiaDeleteTopList" then
+		Serialize(os, 38)
+		Serialize(os, msg.id)
+	elseif msg.__type__ == "DeleteMafiaInfoTop" then
+		Serialize(os, 39)
+		Serialize(os, msg.level)
+		Serialize(os, msg.id)
+	elseif msg.__type__ == "MafiaUpdateInterfaceInfo" then
+		Serialize(os, 40)
+		__SerializeStruct(os, "MafiaInterfaceInfo", msg.info)
+	elseif msg.__type__ == "RoleUpdateMafiaInfoLogin" then
+		Serialize(os, 41)
+	elseif msg.__type__ == "MafiaUpdateMember" then
+		Serialize(os, 42)
+		__SerializeStruct(os, "MafiaMember", msg.member_info)
+	elseif msg.__type__ == "MafiaUpdateExp" then
+		Serialize(os, 43)
+		Serialize(os, msg.jisi)
+		Serialize(os, msg.exp)
+		Serialize(os, msg.level)
+	elseif msg.__type__ == "MafiaHeartBeat" then
+		Serialize(os, 44)
+		Serialize(os, msg.now)
+	elseif msg.__type__ == "RoleUpdateMafiaInfo" then
+		Serialize(os, 45)
+		Serialize(os, msg.roleid)
+		Serialize(os, msg.level)
+		Serialize(os, msg.zhanli)
+		Serialize(os, msg.online)
+		Serialize(os, msg.photo)
+		Serialize(os, msg.photo_frame)
+		if msg.badge_info==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.badge_info)
+			for i = 1, #msg.badge_info do
+				__SerializeStruct(os, "PhotoInfo", msg.badge_info[i])
+			end
+		end
+	elseif msg.__type__ == "MafiaUpdateJiSi" then
+		Serialize(os, 46)
+		Serialize(os, msg.jisi)
+	elseif msg.__type__ == "RoleUpdateMafiaMaShuScore" then
+		Serialize(os, 47)
+	elseif msg.__type__ == "SendMailToMafia" then
+		Serialize(os, 48)
+		Serialize(os, msg.mail_id)
+		Serialize(os, msg.arg1)
+	elseif msg.__type__ == "TestSendMailToMafia" then
+		Serialize(os, 49)
+	elseif msg.__type__ == "ChangeMafiaName" then
+		Serialize(os, 50)
+		Serialize(os, msg.retcode)
+		Serialize(os, msg.name)
+	elseif msg.__type__ == "AudienceGetList" then
+		Serialize(os, 51)
+		Serialize(os, msg.fight_info)
+	elseif msg.__type__ == "AudienceGetRoomInfo" then
+		Serialize(os, 52)
+		Serialize(os, msg.retcode)
+		Serialize(os, msg.room_id)
+		Serialize(os, msg.fight_robot)
+		Serialize(os, msg.robot_seed)
+		Serialize(os, msg.fight1_pvpinfo)
+		Serialize(os, msg.fight2_pvpinfo)
+		Serialize(os, msg.operation)
+	elseif msg.__type__ == "AudienceSendOperation" then
+		Serialize(os, 53)
+		Serialize(os, msg.room_id)
+		Serialize(os, msg.operation)
+	elseif msg.__type__ == "AudienceFinishRoom" then
+		Serialize(os, 54)
+		Serialize(os, msg.room_id)
+		Serialize(os, msg.win_flag)
+		Serialize(os, msg.reason)
+		Serialize(os, msg.operation)
+	elseif msg.__type__ == "TestMafiaLevelUp" then
+		Serialize(os, 55)
+	elseif msg.__type__ == "MafiaUpdateNoticeInfo" then
+		Serialize(os, 56)
+		__SerializeStruct(os, "MafiaNoticeInfo", msg.notice_info)
+	elseif msg.__type__ == "MafiaBangZhuSendMail" then
+		Serialize(os, 57)
+		Serialize(os, msg.id)
+		Serialize(os, msg.name)
+		Serialize(os, msg.subject)
+		Serialize(os, msg.context)
+	elseif msg.__type__ == "TopListUpdateInfo" then
+		Serialize(os, 58)
+	elseif msg.__type__ == "TopListInsertInfo" then
+		Serialize(os, 59)
+		Serialize(os, msg.typ)
+		Serialize(os, msg.data)
+	elseif msg.__type__ == "ClientTimeRequest" then
+		Serialize(os, 60)
+	elseif msg.__type__ == "TestYueZhanCreate" then
+		Serialize(os, 61)
+	elseif msg.__type__ == "TestYueZhanJoin" then
+		Serialize(os, 62)
+		Serialize(os, msg.room_id)
+	elseif msg.__type__ == "YueZhanEnd" then
+		Serialize(os, 63)
+		Serialize(os, msg.reason)
+		Serialize(os, msg.typ)
+		Serialize(os, msg.room_id)
+		Serialize(os, msg.video_flag)
+	elseif msg.__type__ == "UpdateDanMuInfo" then
+		Serialize(os, 64)
+		Serialize(os, msg.role_id)
+		Serialize(os, msg.role_name)
+		Serialize(os, msg.tick)
+		Serialize(os, msg.danmu_info)
+	elseif msg.__type__ == "YueZhanInfo" then
+		Serialize(os, 65)
+		Serialize(os, msg.id)
+		Serialize(os, msg.channel)
+		Serialize(os, msg.typ)
+		__SerializeStruct(os, "RoleBrief", msg.creater)
+		__SerializeStruct(os, "RoleBrief", msg.joiner)
+		Serialize(os, msg.announce)
+		Serialize(os, msg.info_id)
+		Serialize(os, msg.time)
+	elseif msg.__type__ == "YueZhanUpdateState" then
+		Serialize(os, 66)
+		Serialize(os, msg.typ)
+		Serialize(os, msg.room_id)
+		Serialize(os, msg.info)
+	elseif msg.__type__ == "KickOut" then
+		Serialize(os, 67)
+		Serialize(os, msg.reason)
+	elseif msg.__type__ == "MafiaDeclarationBroadCast" then
+		Serialize(os, 68)
+		Serialize(os, msg.mafia_id)
+		Serialize(os, msg.mafia_name)
+		Serialize(os, msg.info)
+	elseif msg.__type__ == "ChongZhi" then
+		Serialize(os, 69)
+		Serialize(os, msg.money)
+	elseif msg.__type__ == "MafiaChat" then
+		Serialize(os, 70)
+		__SerializeStruct(os, "RoleBrief", msg.src)
+		Serialize(os, msg.time)
+		Serialize(os, msg.text_content)
+		Serialize(os, msg.speech_content)
+		Serialize(os, msg.channel)
+		Serialize(os, msg.chat_typ)
+	elseif msg.__type__ == "MafiaYueZhan" then
+		Serialize(os, 71)
+		Serialize(os, msg.id)
+		Serialize(os, msg.channel)
+		Serialize(os, msg.typ)
+		__SerializeStruct(os, "RoleBrief", msg.creater)
+		__SerializeStruct(os, "RoleBrief", msg.joiner)
+		Serialize(os, msg.announce)
+		Serialize(os, msg.info_id)
+		Serialize(os, msg.time)
+	elseif msg.__type__ == "CreateRoleResult" then
+		Serialize(os, 10001)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "Heartbeat" then
+		Serialize(os, 10002)
+		Serialize(os, msg.now)
+	elseif msg.__type__ == "CreateMafiaResult" then
+		Serialize(os, 10003)
+		Serialize(os, msg.retcode)
+		Serialize(os, msg.create_time)
+		Serialize(os, msg.name)
+	elseif msg.__type__ == "PVPHeartbeat" then
+		Serialize(os, 10004)
+		Serialize(os, msg.now)
+	elseif msg.__type__ == "PVPTriggerSend" then
+		Serialize(os, 10005)
+	elseif msg.__type__ == "DBHeartbeat" then
+		Serialize(os, 10006)
+	elseif msg.__type__ == "ReloadLua" then
+		Serialize(os, 10007)
+	elseif msg.__type__ == "PVPCreateResult" then
+		Serialize(os, 10008)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "PVPEnd" then
+		Serialize(os, 10009)
+		Serialize(os, msg.reason)
+	elseif msg.__type__ == "PVPMatchSuccess" then
+		Serialize(os, 10010)
+		Serialize(os, msg.retcode)
+		Serialize(os, msg.index)
+		Serialize(os, msg.time)
+		Serialize(os, msg.room_id)
+	elseif msg.__type__ == "PVPJoinRe" then
+		Serialize(os, 10011)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "PVPEnterRe" then
+		Serialize(os, 10012)
+		Serialize(os, msg.role_pvpinfo)
+		Serialize(os, msg.fight_pvpinfo)
+		Serialize(os, msg.robot_flag)
+		Serialize(os, msg.robot_seed)
+	elseif msg.__type__ == "PvpBegin" then
+		Serialize(os, 10013)
+		Serialize(os, msg.retcode)
+		Serialize(os, msg.start_time)
+		Serialize(os, msg.ip)
+		Serialize(os, msg.port)
+	elseif msg.__type__ == "PvpEnd" then
+		Serialize(os, 10014)
+		Serialize(os, msg.reason)
+		Serialize(os, msg.typ)
+		Serialize(os, msg.score)
+	elseif msg.__type__ == "PvpCancle" then
+		Serialize(os, 10015)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "PvpError" then
+		Serialize(os, 10016)
+		Serialize(os, msg.result)
+	elseif msg.__type__ == "PvpSpeed" then
+		Serialize(os, 10017)
+		Serialize(os, msg.speed)
+	elseif msg.__type__ == "PvpReset" then
+		Serialize(os, 10018)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "SendNotice" then
+		Serialize(os, 10019)
+		Serialize(os, msg.notice_id)
+		if msg.notice_para==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.notice_para)
+			for i = 1, #msg.notice_para do
+				__SerializeStruct(os, "NoticeParaInfo", msg.notice_para[i])
+			end
+		end
+	elseif msg.__type__ == "TopListHeartBeat" then
+		Serialize(os, 10020)
+	elseif msg.__type__ == "PvpVideoID" then
+		Serialize(os, 10021)
+		Serialize(os, msg.video_id)
+		Serialize(os, msg.first_pvpinfo)
+		Serialize(os, msg.second_pvpinfo)
+		Serialize(os, msg.win_flag)
+	elseif msg.__type__ == "PvpGetVideoErr" then
+		Serialize(os, 10022)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "PvpGetVideo" then
+		Serialize(os, 10023)
+		Serialize(os, msg.first)
+		Serialize(os, msg.second)
+		Serialize(os, msg.first_pvpinfo)
+		Serialize(os, msg.second_pvpinfo)
+		Serialize(os, msg.operation)
+		Serialize(os, msg.win_flag)
+		Serialize(os, msg.robot_flag)
+		Serialize(os, msg.robot_seed)
+		Serialize(os, msg.pvp_ver)
+		Serialize(os, msg.exe_ver)
+		Serialize(os, msg.data_ver)
+		Serialize(os, msg.danmu_info)
+		Serialize(os, msg.video_id)
+	elseif msg.__type__ == "SendMail" then
+		Serialize(os, 10024)
+		Serialize(os, msg.mail_id)
+		Serialize(os, msg.mafia_mail_id)
+		Serialize(os, msg.arg1)
+	elseif msg.__type__ == "SendServerEvent" then
+		Serialize(os, 10025)
+		Serialize(os, msg.event_type)
+		Serialize(os, msg.end_time)
+	elseif msg.__type__ == "RoleUpdateServerEvent" then
+		Serialize(os, 10026)
+	elseif msg.__type__ == "OpenServer" then
+		Serialize(os, 10027)
+	elseif msg.__type__ == "MiscHeartBeat" then
+		Serialize(os, 10028)
+	elseif msg.__type__ == "PvpSeasonFinish" then
+		Serialize(os, 10029)
+	elseif msg.__type__ == "RoleUpdatePvpEndTime" then
+		Serialize(os, 10030)
+	elseif msg.__type__ == "RoleUpdateLevelTop" then
+		Serialize(os, 10031)
+	elseif msg.__type__ == "BroadcastPvpVideo" then
+		Serialize(os, 10032)
+		Serialize(os, msg.typ)
+		__SerializeStruct(os, "RoleBrief", msg.src)
+		Serialize(os, msg.content)
+		Serialize(os, msg.video_id)
+		__SerializeStruct(os, "RoleClientPVPInfo", msg.player1)
+		__SerializeStruct(os, "RoleClientPVPInfo", msg.player2)
+		Serialize(os, msg.time)
+		Serialize(os, msg.win_flag)
+		Serialize(os, msg.channel)
+	elseif msg.__type__ == "RoleUpdateTopList" then
+		Serialize(os, 10033)
+		Serialize(os, msg.top_type)
+		Serialize(os, msg.data)
+	elseif msg.__type__ == "PVPPause" then
+		Serialize(os, 10034)
+		Serialize(os, msg.pause_tick)
+		Serialize(os, msg.role_id)
+		if msg.cmds==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.cmds)
+			for i = 1, #msg.cmds do
+				Serialize(os, msg.cmds[i])
+			end
+		end
+	elseif msg.__type__ == "PVPContinue" then
+		Serialize(os, 10035)
+		Serialize(os, msg.continue_time)
+	elseif msg.__type__ == "CloseServer" then
+		Serialize(os, 10300)
+		Serialize(os, msg.sid)
+	elseif msg.__type__ == "PublicChatnew" then
+		Serialize(os, 10100)
+		__SerializeStruct(os, "RoleBrief", msg.src)
+		Serialize(os, msg.time)
+		Serialize(os, msg.text_content)
+		Serialize(os, msg.speech_content)
+		Serialize(os, msg.channel)
+		Serialize(os, msg.chat_typ)
+	elseif msg.__type__ == "PrivateChatnew" then
+		Serialize(os, 10101)
+		Serialize(os, msg.id)
+		Serialize(os, msg.name)
+		Serialize(os, msg.photo)
+		Serialize(os, msg.level)
+		Serialize(os, msg.mafia_id)
+		Serialize(os, msg.mafia_name)
+		Serialize(os, msg.time)
+		Serialize(os, msg.text_content)
+		Serialize(os, msg.speech_content)
+		Serialize(os, msg.dest_id)
+		__SerializeStruct(os, "int", msg.typ)
+	elseif msg.__type__ == "BroadCastPublicChat" then
+		Serialize(os, 10102)
+		Serialize(os, msg.time)
+		Serialize(os, msg.text_content)
+		Serialize(os, msg.speech_content)
+		Serialize(os, msg.channel)
+		Serialize(os, msg.chat_typ)
+	elseif msg.__type__ == "TestMessage1" then
+		Serialize(os, 90001)
+	elseif msg.__type__ == "TestMessage2" then
+		Serialize(os, 90002)
+	elseif msg.__type__ == "TestMessage3" then
+		Serialize(os, 90003)
+	elseif msg.__type__ == "TestMessage4" then
+		Serialize(os, 90004)
+	elseif msg.__type__ == "JieYiUpdateReply" then
+		Serialize(os, 10200)
+		Serialize(os, msg.id)
+		Serialize(os, msg.typ)
+		Serialize(os, msg.name)
+		Serialize(os, msg.role_id)
+		Serialize(os, msg.agreement)
+	elseif msg.__type__ == "JieYiUpdateExit" then
+		Serialize(os, 10201)
+		Serialize(os, msg.id)
+		Serialize(os, msg.typ)
+		Serialize(os, msg.name)
+		Serialize(os, msg.brother_id)
+		Serialize(os, msg.retcode)
+	elseif msg.__type__ == "FlowerGiftUpdate" then
+		Serialize(os, 10220)
+
+	else
+		error("wrong message type: "..msg.__type__)
+	end
+
+	return table.concat(os)
+end
+

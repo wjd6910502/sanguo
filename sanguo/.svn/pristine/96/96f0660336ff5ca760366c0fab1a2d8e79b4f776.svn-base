@@ -1,0 +1,58 @@
+function OnCommand_FriendReply(player, role, arg, others)
+	player:Log("OnCommand_FriendReply, "..DumpTable(arg).." others="..DumpTable(others))
+
+	local s_role = others[arg.src_id]
+	if s_role==nil then return end
+
+	local reqs = role._roledata._friend._requests
+	--查找申请
+	local rit = reqs:SeekToBegin()
+	local r = rit:GetValue()
+	while r~=nil do
+		if r._brief._id:ToStr()==s_role._roledata._base._id:ToStr() then
+			if arg.accept == true then
+				--互加好友
+				local nf = CACHE.Friend:new()
+				nf._brief._id = role._roledata._base._id
+				nf._brief._name = role._roledata._base._name
+				nf._brief._photo = role._roledata._base._photo
+				nf._brief._level = role._roledata._status._level
+				nf._zhanli = role._roledata._status._zhanli
+				s_role._roledata._friend._friends:Insert(nf._brief._id, nf)
+				s_role._roledata._friend._other_friends:Insert(nf._brief._id, nf)
+
+				nf._brief._id = s_role._roledata._base._id
+				nf._brief._name = s_role._roledata._base._name
+				nf._brief._photo = s_role._roledata._base._photo
+				nf._brief._level = s_role._roledata._status._level
+				nf._zhanli = s_role._roledata._status._zhanli
+				role._roledata._friend._friends:Insert(nf._brief._id, nf)
+				role._roledata._friend._other_friends:Insert(nf._brief._id, nf)
+
+				--通知双方
+				local cmd = NewCommand("NewFriend")
+				cmd.friend = {}
+				cmd.friend.id = role._roledata._base._id:ToStr()
+				cmd.friend.name = role._roledata._base._name
+				cmd.friend.photo = role._roledata._base._photo
+				cmd.friend.level = role._roledata._status._level
+				cmd.friend.zhanli = role._roledata._status._zhanli
+				cmd.friend.faction = 0
+				s_role:SendToClient(SerializeCommand(cmd))
+
+				cmd.friend.id = s_role._roledata._base._id:ToStr()
+				cmd.friend.name = s_role._roledata._base._name
+				cmd.friend.photo = s_role._roledata._base._photo
+				cmd.friend.level = s_role._roledata._status._level
+				cmd.friend.zhanli = s_role._roledata._status._zhanli
+				cmd.friend.faction = 0
+				role:SendToClient(SerializeCommand(cmd))
+			end
+			rit:Pop()
+			return
+		end
+
+		rit:Next()
+		r = rit:GetValue()
+	end
+end

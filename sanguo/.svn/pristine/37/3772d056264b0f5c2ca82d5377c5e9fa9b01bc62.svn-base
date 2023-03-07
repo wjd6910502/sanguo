@@ -1,0 +1,10 @@
+function OnMessage_PvpError(player, role, arg, others)
+	player:Log("OnMessage_PvpError, "..DumpTable(arg).." "..DumpTable(others))
+	
+	role._roledata._pvp._typ = 0
+	role._roledata._pvp._id = 0
+
+	local resp = NewCommand("PVPError")
+	resp.result = G_ERRCODE["PVP_STATE_ERROR"]
+	player:SendToClient(SerializeCommand(resp))
+end

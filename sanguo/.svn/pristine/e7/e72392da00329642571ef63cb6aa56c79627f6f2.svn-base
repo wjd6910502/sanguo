@@ -1,0 +1,10 @@
+function OnMessage_PvpBegin(player, role, arg, others)
+	player:Log("OnMessage_PvpBegin, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PvpBegin")
+	resp.start_time = arg.start_time
+	resp.ip = arg.ip
+	resp.port = arg.port
+
+	player:SendToClient(SerializeCommand(resp))
+end

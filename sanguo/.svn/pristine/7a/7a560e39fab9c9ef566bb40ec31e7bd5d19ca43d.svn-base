@@ -1,0 +1,3 @@
+function OnCommand_MaShuGetRoleInfo(player, role, arg, others)
+	--player:Log("OnCommand_MaShuGetRoleInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

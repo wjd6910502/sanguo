@@ -1,0 +1,31 @@
+function OnCommand_PublicChat(player, role, arg, others)
+	player:Log("OnCommand_PublicChat, "..DumpTable(arg))
+	
+	--如果type为1 语音翻译 第二个参数为0 代表公聊
+	if arg.typ == 1 then
+		player:SendSpeechToSTT(0,0,arg.content);
+	end
+
+	--内容长度有限制
+	if string.len(arg.text_content)>200 then return end
+
+	----通知目标
+	--local msg = NewMessage("PublicChat")
+	--msg.src = ROLE_MakeRoleBrief(role)
+	--msg.text_content = arg.text_content
+	--msg.time = API_GetTime()
+	--player:SendMessageToAllRole(SerializeMessage(msg))
+
+	----通知目标
+	local msg = NewMessage("PublicChatnew")
+	msg.id = arg.id
+	msg.name = arg.name
+	msg.photo = arg.photo
+	msg.level = arg.level
+	msg.mafia_id = arg.mafia_id
+	msg.mafia_name = arg.mafia_name
+	msg.text_content = arg.text_content
+	msg.time = arg.time
+		
+	player:SendMessageToAllRole(SerializeMessage(msg))
+end

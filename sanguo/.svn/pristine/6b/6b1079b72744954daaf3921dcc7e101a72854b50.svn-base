@@ -1,0 +1,21 @@
+
+#ifndef __GNET_GAMEDBD_CALLID
+#define __GNET_GAMEDBD_CALLID
+
+namespace GNET
+{
+
+enum CallID
+{
+	RPC_DBLOADDATA	=	1001,
+	RPC_DBSAVEDATA	=	1002,
+};
+
+enum ProtocolType
+{
+	PROTOCOL_CENTERCOMMAND	=	1003,
+	PROTOCOL_CENTERCOMMANDRE	=	1004,
+};
+
+};
+#endif

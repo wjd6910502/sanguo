@@ -1,0 +1,48 @@
+function OnMessage_Heartbeat(player, role, arg, others)
+	--player:Log("OnMessage_Heartbeat, "..DumpTable(arg))
+
+	local now = API_GetTime()
+	if player:NetTime_NeedSync() or now%300==0 then
+		player:NetTime_Sync2Client()
+	end
+
+	if role._roledata._status._vp_refreshtime ~= 0 and now - role._roledata._status._vp_refreshtime >= 360 then
+		local point = math.floor((now - role._roledata._status._vp_refreshtime)/360)
+		role._roledata._status._vp_refreshtime = point*360 + role._roledata._status._vp_refreshtime
+		ROLE_Addvp(role, point, 0)
+		
+	end
+	
+	if role._roledata._status._hero_skill_point_refreshtime ~= 0 and now - role._roledata._status._hero_skill_point_refreshtime >= 600 then
+		local point = math.floor((now - role._roledata._status._hero_skill_point_refreshtime)/600)
+		role._roledata._status._hero_skill_point_refreshtime = point*600 + role._roledata._status._hero_skill_point_refreshtime
+		ROLE_AddHeroSkillPoint(role, point)
+	end
+
+	local now_time = os.date("*t", now)
+	local last_time = os.date("*t", role._roledata._status._last_heartbeat)
+	if now_time.year ~= last_time.year or now_time.month ~= last_time.month or last_time.yday ~= now_time.yday or now_time.hour ~= last_time.hour then
+		if now_time.wday == 1 then
+			now_time.wday = now_time.wday + 7
+		end
+		if last_time.wday == 1 then
+			last_time.wday = last_time.wday + 7
+		end
+		
+		local diff_time = {}
+		diff_time.last_year = last_time.year
+		diff_time.cur_year = now_time.year
+		diff_time.last_month = last_time.month
+		diff_time.cur_month = now_time.month
+		diff_time.last_week = last_time.wday - 1
+		diff_time.cur_week = now_time.wday - 1
+		diff_time.last_day = last_time.yday
+		diff_time.cur_day = now_time.yday
+		diff_time.last_hour = last_time.hour
+		diff_time.cur_hour = now_time.hour
+		
+		LIMIT_RefreshUseLimit(role, diff_time)
+		TASK_RefreshDailyTask(role, diff_time)
+	end
+	role._roledata._status._last_heartbeat = now
+end

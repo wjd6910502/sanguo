@@ -1,0 +1,20 @@
+function OnMessage_TestMafiaLevelUp(player, role, arg, others)
+	player:Log("OnMessage_TestMafiaLevelUp, "..DumpTable(arg).." "..DumpTable(others))
+
+	local mafia_data = others.mafias[role._roledata._mafia._id:ToStr()]
+	local mafia_info = mafia_data._data
+
+	mafia_info._level = mafia_info._level + 1
+	--更新帮会的信息到简易帮会表中去
+	local msg = NewMessage("UpdateMafiaInfoTop")
+	msg.level_flag = 1
+	msg.id = mafia_info._id:ToStr()
+	msg.name = mafia_info._name
+	msg.announce = mafia_info._announce
+	msg.level = mafia_info._level
+	msg.boss_id = mafia_info._boss_id:ToStr()
+	msg.boss_name = mafia_info._boss_name
+	msg.level_limit = mafia_info._level_limit
+	msg.num = mafia_info._member_map:Size()
+	player:SendMessage(CACHE.Int64(0), SerializeMessage(msg))
+end

@@ -1,0 +1,13 @@
+ifeq ($(shell getconf LONG_BIT), 32)
+	SRCDIR = i386
+else
+	SRCDIR = x86_64
+endif
+
+all:
+	@(cd $(SRCDIR) && make)
+	cp $(SRCDIR)/libperf.a .
+
+clean:
+	@(cd $(SRCDIR) && make clean)
+	rm -f libperf.a perf.lib

@@ -1,0 +1,863 @@
+#include "pvpmanager.h"
+#include "commonmacro.h"
+#include "playermanager.h"
+#include "pvpend.hpp"
+#include "pvpgameclient.hpp"
+#include "glog.h"
+#include "pvpcenterclient.hpp"
+#include "pvpoperation.hpp"
+#include "audienceoperation.hpp"
+#include "pvppause.hpp"
+#include "pvpcontinue.hpp"
+
+namespace GNET
+{
+
+PVP::~PVP()
+{
+	GLog::log(LOG_INFO, "PVPD::PVP::~PVP, id=%d, fighter1=%ld, fighter2=%ld", _id, _fighter1._id, _fighter2._id);
+	PlayerManager::GetInstance().Delete(_fighter1._id);
+	PlayerManager::GetInstance().Delete(_fighter2._id);
+}
+
+void PVP::OnTimer(int tick, int now)
+{
+	if(_mode == 1)
+	{
+		if(tick%(PVP_CONST_TRIGGER_SEND_INTERVAL) == _id%(PVP_CONST_TRIGGER_SEND_INTERVAL)) //per 20ms
+		{
+			//PVPTriggerSend
+			Player *player1 = PlayerManager::GetInstance().Find(_fighter1._id);
+			Player *player2 = PlayerManager::GetInstance().Find(_fighter2._id);
+			if(!player1 || !player2)
+			{
+				//TODO: 这怎么可能?
+				return;
+			}
+			player1->FastSess_TriggerSend();
+			player2->FastSess_TriggerSend();
+		}
+	}
+}
+
+int PVP::CheckFighter(time_t now, PVPFighter& fighter, int big_lag_count)
+{
+	if(now < _fight_start_time) return 0;
+
+	//断线检查
+	//auto it = fighter._ops.find(_next_client_tick);
+	//if(it == fighter._ops.end())
+	//{
+	//	fighter._wait_seconds++; //FIXME: 这里刻舟求剑了
+	//	if(fighter._wait_seconds > 3) return PVP_ERROR_LOST; //玩家已掉线
+	//}
+	if(now>_fight_start_time+PVP_CONST_NO_OP_TIMEOUT && now>_active_time+PVP_CONST_NO_OP_TIMEOUT) return PVP_ERROR_LOST;
+
+	//网络状态差?
+	//if(fighter._accumulate_latency > 15000) return 2;
+	//if(fighter._delay_count > 1000) return 3;
+	if(big_lag_count > PVP_CONST_BIG_LAG_COUNT_MAX) return PVP_ERROR_LATENCY;
+
+	return 0;
+}
+
+void PVP::OnTimer1s(time_t now)
+{
+	if(_robot_flag == 1)
+	{
+		if(_mode == 1)
+		{
+			//这里只需要判断fighter1。因为fighter2是机器人
+			//PVPHeartbeat
+			int ret = CheckFighter(now, _fighter1, 0); //TODO: sum==0会被用来标识机器人?
+			if(ret)
+			{
+				GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, robot, pvp=%d, fighter1=%ld, ret=%d, _wait_seconds=%d, sum=0",
+				          _id, _fighter1._id, ret, _fighter1._wait_seconds);
+				PVPEnd prot;
+				prot.id = _id;
+				prot.fighter1 = _fighter1._id;
+				prot.fighter2 = _fighter2._id;
+				prot.reason = ret;
+				if(_typ == 0)
+				{
+					PVPGameClient::GetInstance()->SendProtocol(prot);
+				}
+				else if(_typ == 1)
+				{
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+				}
+				else
+				{
+					//记录错误日志
+					GLog::log(LOG_ERR, "PVPD::PVP::OnTimer1s, typ=%d", _typ);
+
+				}
+				PVPManager::GetInstance().Delete(_id);
+				return;
+			}
+		}
+	}
+	else
+	{
+		if(_mode == 1)
+		{
+			//暂停中?
+			if(_status == PVP_STATUS_PAUSE_AND_WAIT_RESP1)
+			{
+				if(!_fighter1._waiting_pause_re && !_fighter2._waiting_pause_re)
+				{
+					//齐了
+					GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, PVP_STATUS_PAUSE_AND_WAIT_RESP1, ok, pvp=%d", _id);
+
+					_status = PVP_STATUS_PAUSE_AND_WAIT_RESP2;
+					_status_timeout = now+20;
+					return;
+				}
+				else if(now > _status_timeout)
+				{
+					//超时无响应则结束
+					GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, PVP_STATUS_PAUSE_AND_WAIT_RESP1, timeout, pvp=%d", _id);
+
+					PVPEnd prot;
+					prot.id = _id;
+					prot.fighter1 = _fighter1._id;
+					prot.fighter2 = _fighter2._id;
+					prot.reason = (_fighter1._waiting_pause_re ? PVP_ERROR_NO_PAUSE_RE : 100+PVP_ERROR_NO_PAUSE_RE);
+					if(_typ == 0)
+					{
+						PVPGameClient::GetInstance()->SendProtocol(prot);
+					}
+					else if(_typ == 1)
+					{
+						PVPCenterClient::GetInstance()->SendProtocol(prot);
+					}
+					else
+					{
+						assert(false);
+					}
+					PVPManager::GetInstance().Delete(_id);
+					return;
+				}
+				return;
+			}
+			else if(_status == PVP_STATUS_PAUSE_AND_WAIT_RESP2)
+			{
+				if(now > _status_timeout-10) //FIXME: 临时方案
+				{
+					//通知继续战斗时刻
+					GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, PVP_STATUS_PAUSE_AND_WAIT_RESP2, ok, pvp=%d", _id);
+
+					PVPContinue prot;
+					prot.id = _id;
+					prot.fighter = _fighter1._id;
+					prot.continue_time = now+5;
+					if(_typ == 0)
+					{
+						PVPGameClient::GetInstance()->SendProtocol(prot);
+					}
+					else if(_typ == 1)
+					{
+						PVPCenterClient::GetInstance()->SendProtocol(prot);
+					}
+					else
+					{
+						assert(false);
+					}
+
+					prot.fighter = _fighter2._id;
+					if(_typ == 0)
+					{
+						PVPGameClient::GetInstance()->SendProtocol(prot);
+					}
+					else if(_typ == 1)
+					{
+						PVPCenterClient::GetInstance()->SendProtocol(prot);
+					}
+					else
+					{
+						assert(false);
+					}
+
+					_status = PVP_STATUS_NORMAL;
+					_status_timeout = 0;
+					_fight_start_time = prot.continue_time;
+					memset(_big_lags, 0, sizeof(_big_lags));
+					_fighter1._wait_seconds = 0;
+					_fighter2._wait_seconds = 0;
+					return;
+				}
+				else if(now > _status_timeout)
+				{
+					//超时无响应则结束
+					GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, PVP_STATUS_PAUSE_AND_WAIT_RESP2, timeout, pvp=%d", _id);
+
+					PVPEnd prot;
+					prot.id = _id;
+					prot.fighter1 = _fighter1._id;
+					prot.fighter2 = _fighter2._id;
+					prot.reason = 202; //FIXME:
+					if(_typ == 0)
+					{
+						PVPGameClient::GetInstance()->SendProtocol(prot);
+					}
+					else if(_typ == 1)
+					{
+						PVPCenterClient::GetInstance()->SendProtocol(prot);
+					}
+					else
+					{
+						assert(false);
+					}
+					PVPManager::GetInstance().Delete(_id);
+					return;
+				}
+				return;
+			}
+
+			//PVPHeartbeat
+			int sum = 0;
+			for(auto i=0; i<PVP_CONST_BIG_LAG_SAMPLE_COUNT; i++)
+			{
+				sum += _big_lags[i];
+			}
+
+			int ret = CheckFighter(now, _fighter1, sum);
+			if(ret)
+			{
+				if(_fighter1._pause_count < PVP_CONST_PAUSE_COUNT_MAX)
+				{
+					//发起暂停
+					GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, pvp=%d, fighter1=%ld, ret=%d, _wait_seconds=%d, sum=%d, _pause_count=%d, PAUSE",
+					          _id, _fighter1._id, ret, _fighter1._wait_seconds, sum, _fighter1._pause_count);
+
+					//确认所有op，断线方op全部强制为空op
+					Player *player1 = PlayerManager::GetInstance().Find(_fighter1._id);
+					Player *player2 = PlayerManager::GetInstance().Find(_fighter2._id);
+					if(!player1 || !player2)
+					{
+						assert(false);
+					}
+					//是否已经收集齐?
+					while(true)
+					{
+						auto it2 = _fighter2._ops.find(_next_client_tick);
+						if(it2 == _fighter2._ops.end()) break;
+						OP& op2 = it2->second;
+
+						char buf[1024];
+						snprintf(buf, sizeof(buf)-1, "10307:%d:Njcg:%s:", _next_client_tick, op2._op.c_str()); //PVPOperationSet
+						//snprintf(buf, sizeof(buf)-1, "10307:%d:MzAwIA==:%s:", _next_client_tick, op2._op.c_str()); //PVPOperationSet
+						player1->FastSess_Send(buf, false); //dont do send immediately
+						player2->FastSess_Send(buf, false);
+
+						PvpVideo tmp;
+						tmp.tick = _next_client_tick;
+						tmp.first_operation = Octets("Njcg", 4);
+						tmp.second_operation = Octets((void*)op2._op.c_str(), op2._op.size());
+						_pvp_video.push_back(tmp);
+
+						AudienceOperation audience_operation;
+						audience_operation.room_id = _id;
+						audience_operation.operation = tmp;
+						PVPCenterClient::GetInstance()->SendProtocol(audience_operation);
+
+						_fighter2._ops.erase(it2);
+	
+						_next_client_tick++;
+					}
+
+					PVPPause prot;
+					prot.id = _id;
+					prot.fighter = _fighter1._id;
+					player1->FastSess_Dump(prot.fighter_cmds);
+					player1->FastSess_Clear();
+					prot.pause_tick = _next_client_tick-1;
+					prot.role_id = _fighter1._id;
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+
+					prot.fighter = _fighter2._id;
+					prot.fighter_cmds.clear();
+					player2->FastSess_Dump(prot.fighter_cmds);
+					player2->FastSess_Clear();
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+
+					//等待客户端响应暂停
+					_status = PVP_STATUS_PAUSE_AND_WAIT_RESP1;
+					_status_timeout = now+PVP_CONST_WAIT_PAUSE_RE_TIME;
+					_fighter1._waiting_pause_re = true;
+					_fighter2._waiting_pause_re = true;
+
+					_fighter1._pause_count++;
+
+					return;
+				}
+
+				GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, pvp=%d, fighter1=%ld, ret=%d, _wait_seconds=%d, sum=%d, END",
+				          _id, _fighter1._id, ret, _fighter1._wait_seconds, sum);
+				PVPEnd prot;
+				prot.id = _id;
+				prot.fighter1 = _fighter1._id;
+				prot.fighter2 = _fighter2._id;
+				prot.reason = ret;
+				if(_typ == 0)
+				{
+					PVPGameClient::GetInstance()->SendProtocol(prot);
+				}
+				else if(_typ == 1)
+				{
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+				}
+				else
+				{
+					//记录错误日志
+					GLog::log(LOG_ERR, "PVPD::PVP::OnTimer1s, typ=%d", _typ);
+
+				}
+				PVPManager::GetInstance().Delete(_id);
+				return;
+			}
+			ret = CheckFighter(now, _fighter2, -sum);
+			if(ret)
+			{
+				if(_fighter2._pause_count < PVP_CONST_PAUSE_COUNT_MAX)
+				{
+					//发起暂停
+					GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, pvp=%d, fighter2=%ld, ret=%d, _wait_seconds=%d, sum=%d, _pause_count=%d, PAUSE",
+					          _id, _fighter2._id, ret, _fighter2._wait_seconds, sum, _fighter2._pause_count);
+
+					//确认所有op，断线方op全部强制为空op
+					Player *player1 = PlayerManager::GetInstance().Find(_fighter1._id);
+					Player *player2 = PlayerManager::GetInstance().Find(_fighter2._id);
+					if(!player1 || !player2)
+					{
+						assert(false);
+					}
+					//是否已经收集齐?
+					while(true)
+					{
+						auto it1 = _fighter1._ops.find(_next_client_tick);
+						if(it1 == _fighter1._ops.end()) break;
+						OP& op1 = it1->second;
+
+						char buf[1024];
+						snprintf(buf, sizeof(buf)-1, "10307:%d:%s:MjE3:", _next_client_tick, op1._op.c_str()); //PVPOperationSet
+						//snprintf(buf, sizeof(buf)-1, "10307:%d:%s:MzAwIA==:", _next_client_tick, op1._op.c_str()); //PVPOperationSet
+						player1->FastSess_Send(buf, false); //dont do send immediately
+						player2->FastSess_Send(buf, false);
+
+						PvpVideo tmp;
+						tmp.tick = _next_client_tick;
+						tmp.first_operation = Octets((void*)op1._op.c_str(), op1._op.size());
+						tmp.second_operation = Octets("MjE3", 4);
+						_pvp_video.push_back(tmp);
+
+						AudienceOperation audience_operation;
+						audience_operation.room_id = _id;
+						audience_operation.operation = tmp;
+						PVPCenterClient::GetInstance()->SendProtocol(audience_operation);
+
+						_fighter1._ops.erase(it1);
+	
+						_next_client_tick++;
+					}
+
+					PVPPause prot;
+					prot.id = _id;
+					prot.fighter = _fighter1._id;
+					player1->FastSess_Dump(prot.fighter_cmds);
+					player1->FastSess_Clear();
+					prot.pause_tick = _next_client_tick-1;
+					prot.role_id = _fighter2._id;
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+
+					prot.fighter = _fighter2._id;
+					prot.fighter_cmds.clear();
+					player2->FastSess_Dump(prot.fighter_cmds);
+					player2->FastSess_Clear();
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+
+					//等待客户端响应暂停
+					_status = PVP_STATUS_PAUSE_AND_WAIT_RESP1;
+					_status_timeout = now+PVP_CONST_WAIT_PAUSE_RE_TIME;
+					_fighter1._waiting_pause_re = true;
+					_fighter2._waiting_pause_re = true;
+
+					_fighter2._pause_count++;
+
+					return;
+				}
+
+				GLog::log(LOG_INFO, "PVPD::PVP::OnTimer1s, pvp=%d, fighter2=%ld, ret=%d, _wait_seconds=%d, sum=%d, END",
+				          _id, _fighter2._id, ret, _fighter2._wait_seconds, sum);
+				PVPEnd prot;
+				prot.id = _id;
+				prot.fighter1 = _fighter1._id;
+				prot.fighter2 = _fighter2._id;
+				prot.reason = 100+ret;
+				if(_typ == 0)
+				{
+					PVPGameClient::GetInstance()->SendProtocol(prot);
+				}
+				else if(_typ == 1)
+				{
+					PVPCenterClient::GetInstance()->SendProtocol(prot);
+				}
+				else
+				{
+					//记录错误日志
+					GLog::log(LOG_ERR, "PVPD::PVP::OnTimer1s, typ=%d", _typ);
+
+				}
+				PVPManager::GetInstance().Delete(_id);
+				return;
+			}
+		}
+	}
+}
+
+//int64_t PVP::GetShouldArriveTime(int client_tick) const
+//{
+//	//PVP_CONST_CLIENT_TICK_MS略加一点, 不要限制太死
+//	return _fight_start_time*(int64_t)1000 + client_tick*(PVP_CONST_CLIENT_TICK_MS+2) + PVP_CONST_NET_TICK_MS/2 + _latency;
+//}
+
+bool PVP::IsValidOP(int64_t now_ms, int client_tick) const
+{
+	return true;
+}
+
+void PVP::OnPVPOperation(int64_t fighter, int client_tick, const char *op_encoded, const char *crc_encoded)
+{
+	if(_robot_flag == 1)
+	{
+		if(_mode == 1)
+		{
+			if(client_tick < _next_client_tick) return; //客户端重发包, 不理会
+
+			PVPFighter *ft = 0;
+			if(fighter == _fighter1._id)
+			{
+				ft = &_fighter1;
+			}
+			if(!ft) return;
+
+			timeval tv;
+			gettimeofday(&tv, 0);
+			int64_t now_ms = tv.tv_sec*(int64_t)1000+tv.tv_usec/1000;
+
+			auto it = ft->_ops.find(client_tick);
+			if(it != ft->_ops.end()) return; //操作已发出后不能修改
+			ft->_ops[client_tick]._op = op_encoded; //不用解码, 因为并不需要理解
+			ft->_ops[client_tick]._arrive_time_ms = now_ms;
+
+			if(client_tick==_next_client_tick) ft->_wait_seconds=0;
+
+			//int64_t l = now_ms-GetShouldArriveTime(client_tick);
+			//if(l > 0)
+			//{
+			//	ft->_accumulate_latency += (int)l;
+			//	ft->_delay_count += 1;
+			//}
+
+			_active_time = tv.tv_sec;
+
+			Player *player1 = PlayerManager::GetInstance().Find(_fighter1._id);
+			if(!player1)
+			{
+				//TODO: 这怎么可能?
+				return;
+			}
+			//是否已经收集齐?
+			while(true)
+			{
+				auto it1 = _fighter1._ops.find(_next_client_tick);
+				if(it1 == _fighter1._ops.end()) break;
+
+				OP& op1 = it1->second;
+
+				_big_lags[_big_lags_index%PVP_CONST_BIG_LAG_SAMPLE_COUNT] = 0;
+				_big_lags_index++;
+
+				char buf[1024];
+				snprintf(buf, sizeof(buf)-1, "10307:%d:%s:%s:", _next_client_tick, op1._op.c_str(), ""); //PVPOperationSet
+				player1->FastSess_Send(buf, false);
+
+				PvpVideo tmp;
+				tmp.tick = _next_client_tick;
+				tmp.first_operation = Octets((void*)op1._op.c_str(), op1._op.size());
+				_pvp_video.push_back(tmp);
+
+				AudienceOperation audience_operation;
+				audience_operation.room_id = _id;
+				audience_operation.operation = tmp;
+				PVPCenterClient::GetInstance()->SendProtocol(audience_operation);
+
+				_fighter1._ops.erase(it1);
+	
+				//int64_t l = now_ms - (_fight_start_time*(int64_t)1000 + _next_client_tick*(PVP_CONST_CLIENT_TICK_MS+2) + PVP_CONST_NET_TICK_MS/2);
+				//if(l > 0) _latency = (int)l;
+	
+				_next_client_tick++;
+			}
+		}
+	}
+	else
+	{
+		if(_mode == 1)
+		{
+			if(_status != PVP_STATUS_NORMAL) return; //暂停状态下直接丢弃op
+
+			if(client_tick < _next_client_tick) return; //客户端重发包, 不理会
+
+			PVPFighter *ft = 0;
+			if(fighter == _fighter1._id)
+			{
+				ft = &_fighter1;
+			}
+			else if(fighter == _fighter2._id)
+			{
+				ft = &_fighter2;
+			}
+			if(!ft) return;
+
+			timeval tv;
+			gettimeofday(&tv, 0);
+			int64_t now_ms = tv.tv_sec*(int64_t)1000+tv.tv_usec/1000;
+
+			auto it = ft->_ops.find(client_tick);
+			if(it != ft->_ops.end()) return; //操作已发出后不能修改
+			ft->_ops[client_tick]._op = op_encoded; //不用解码, 因为并不需要理解
+			ft->_ops[client_tick]._arrive_time_ms = now_ms;
+			//{
+			//timeval tv;
+			//gettimeofday(&tv, 0);
+			//GLog::log(LOG_INFO, "%d%03d: OP, fighter=%ld, client_tick=%d, op_encoded=%s", (int)tv.tv_sec, (int)tv.tv_usec/1000, fighter, client_tick, op_encoded);
+			//}
+
+			if(client_tick==_next_client_tick) ft->_wait_seconds=0;
+
+			//int64_t l = now_ms-GetShouldArriveTime(client_tick);
+			//if(l > 0)
+			//{
+			////GLog::log(LOG_INFO, "PVPD::PVP::OnPVPOpeartion, fighter=%ld, _accumulate_latency=%d, l=%ld, now_ms=%ld, client_tick=%d, should=%ld, _latency=%d", fighter, ft->_accumulate_latency, l, now_ms, client_tick, GetShouldArriveTime(client_tick), _latency);
+			//	ft->_accumulate_latency += (int)l;
+			//	ft->_delay_count += 1;
+			//}
+
+			_active_time = tv.tv_sec;
+
+			Player *player1 = PlayerManager::GetInstance().Find(_fighter1._id);
+			Player *player2 = PlayerManager::GetInstance().Find(_fighter2._id);
+			if(!player1 || !player2)
+			{
+				//TODO: 这怎么可能?
+				return;
+			}
+			//是否已经收集齐?
+			while(true)
+			{
+				//auto it1 = _fighter1._ops.find(_next_client_tick);
+				//auto it2 = _fighter2._ops.find(_next_client_tick);
+				auto it1 = _fighter1._ops.lower_bound(_next_client_tick);
+				auto it2 = _fighter2._ops.lower_bound(_next_client_tick);
+#if 0
+				//如果某个fighter延迟太大，强制补一个空操作给他，减少给另外一个正常玩家带来的影响
+				if(it1!=_fighter1._ops.end() && it2==_fighter2._ops.end())
+				{
+					if(now_ms > it1->second._arrive_time_ms+200)
+					{
+						GLog::log(LOG_INFO, "PVPD::PVP::OnPVPOpeartion, fighter2(%ld) op 150+67", _fighter2._id);
+						_fighter2._ops[_next_client_tick]._op = "MjE3"; //空操作，150+67
+						//_fighter2._ops[_next_client_tick]._op = "MzAwIA=="; //空操作，67
+						_fighter2._ops[_next_client_tick]._arrive_time_ms = now_ms+100000; //只是代表很大
+						it2 = _fighter2._ops.find(_next_client_tick);
+					}
+				}
+				else if(it1==_fighter1._ops.end() && it2!=_fighter2._ops.end())
+				{
+					if(now_ms > it2->second._arrive_time_ms+200)
+					{
+						GLog::log(LOG_INFO, "PVPD::PVP::OnPVPOpeartion, fighter1(%ld) op 67", _fighter1._id);
+						_fighter1._ops[_next_client_tick]._op = "Njcg"; //空操作，67
+						//_fighter1._ops[_next_client_tick]._op = "MzAwIA=="; //空操作，67
+						_fighter1._ops[_next_client_tick]._arrive_time_ms = now_ms+100000; //只是代表很大
+						it1 = _fighter1._ops.find(_next_client_tick);
+					}
+				}
+#endif
+				if(it1 == _fighter1._ops.end()) break;
+				if(it2 == _fighter2._ops.end()) break;
+
+				OP& op1 = it1->second;
+				OP& op2 = it2->second;
+
+				if(op1._arrive_time_ms-op2._arrive_time_ms> PVP_CONST_BIG_LAG_MS_MAX)
+				{
+					_big_lags[_big_lags_index%PVP_CONST_BIG_LAG_SAMPLE_COUNT] = 1;
+				}
+				else if(op2._arrive_time_ms-op1._arrive_time_ms> PVP_CONST_BIG_LAG_MS_MAX)
+				{
+					_big_lags[_big_lags_index%PVP_CONST_BIG_LAG_SAMPLE_COUNT] = -1;
+				}
+				else
+				{
+					_big_lags[_big_lags_index%PVP_CONST_BIG_LAG_SAMPLE_COUNT] = 0;
+				}
+				_big_lags_index++;
+
+				char buf[1024];
+				snprintf(buf, sizeof(buf)-1, "10307:%d:%s:%s:", _next_client_tick, op1._op.c_str(), op2._op.c_str()); //PVPOperationSet
+				player1->FastSess_Send(buf, false);
+				player2->FastSess_Send(buf, false);
+
+				//GLog::log(LOG_INFO, "PVPD::PVP::OnPVPOpeartion, pvp=%d, fighter1=%ld, fighter2=%ld, %s",
+				//          _id, _fighter1._id, _fighter2._id, buf);
+
+				PvpVideo tmp;
+				tmp.tick = _next_client_tick;
+				tmp.first_operation = Octets((void*)op1._op.c_str(), op1._op.size());
+				tmp.second_operation = Octets((void*)op2._op.c_str(), op2._op.size());
+				_pvp_video.push_back(tmp);
+
+				AudienceOperation audience_operation;
+				audience_operation.room_id = _id;
+				audience_operation.operation = tmp;
+				PVPCenterClient::GetInstance()->SendProtocol(audience_operation);
+				//{
+				//timeval tv;
+				//gettimeofday(&tv, 0);
+				//GLog::log(LOG_INFO, "%d-%d: OPSET, _next_client_tick=%d", (int)tv.tv_sec, (int)tv.tv_usec/1000, _next_client_tick);
+				//}
+
+				//_fighter1._ops.erase(it1);
+				//_fighter2._ops.erase(it2);
+				_fighter1._ops.erase(_next_client_tick);
+				_fighter2._ops.erase(_next_client_tick);
+	
+				//int64_t l = now_ms - (_fight_start_time*(int64_t)1000 + _next_client_tick*(PVP_CONST_CLIENT_TICK_MS+2) + PVP_CONST_NET_TICK_MS/2);
+				//if(l > 0) _latency = (int)l;
+	
+				_next_client_tick++;
+			}
+		}
+		//else if(_mode == 2)
+		//{
+		//	//int64_t opponent = 0;
+		//	//if(fighter == _fighter1._id)
+		//	//{
+		//	//	if(_fighter2._status == 2) return;
+		//	//	opponent = _fighter2._id;
+		//	//}
+		//	//else if(fighter == _fighter2._id)
+		//	//{
+		//	//	if(_fighter1._status == 2) return;
+		//	//	opponent = _fighter1._id;
+		//	//}
+		//	//if(opponent)
+		//	//{
+		//	//	char buf[1024];
+		//	//	snprintf(buf, sizeof(buf)-1, "10306:%lu:%d:%s:%s:", fighter, client_tick, op_encoded, crc_encoded);
+	
+		//	//	Player *oplayer = PlayerManager::GetInstance().Find(opponent);
+		//	//	if(oplayer) oplayer->SendUDPGameProtocol(buf);
+		//	//}
+		//}
+	}
+}
+
+void PVP::OnPVPOperationCommit(int64_t fighter)
+{
+}
+
+void PVP::OnPVPPeerLatency(int64_t src_role_id, int latency)
+{
+	if(_status != PVP_STATUS_NORMAL) return; //暂停状态下直接丢弃对方latency
+
+	{
+	timeval tv;
+	gettimeofday(&tv, 0);
+	GLog::log(LOG_INFO, "%d-%d: PVP Latency, role_id=%ld, latency=%d", (int)tv.tv_sec, (int)tv.tv_usec/1000, src_role_id, latency);
+	}
+
+	int64_t opponent = 0;
+	if(src_role_id == _fighter1._id)
+	{
+		if(_robot_flag == 0)
+			opponent = _fighter2._id;
+	}
+	else if(src_role_id == _fighter2._id)
+	{
+		opponent = _fighter1._id;
+	}
+	if(opponent)
+	{
+		char buf[1024];
+		snprintf(buf, sizeof(buf)-1, "10310:%d:", latency);
+
+		Player *oplayer = PlayerManager::GetInstance().Find(opponent);
+		if(oplayer) oplayer->SendUDPGameProtocol(buf);
+	}
+}
+
+void PVP::PVPSendAutoVoice(int64_t src_role_id, int hero_id, int voice_id)
+{
+//	if(_status != PVP_STATUS_NORMAL) return; //暂停状态下直接丢弃对方latency
+
+//	{
+//	timeval tv;
+//	gettimeofday(&tv, 0);
+//	GLog::log(LOG_INFO, "%d-%d: PVP Latency, role_id=%ld, latency=%d", (int)tv.tv_sec, (int)tv.tv_usec/1000, src_role_id, latency);
+//	}
+
+	int64_t opponent = 0;
+	if(src_role_id == _fighter1._id)
+	{
+		if(_robot_flag == 0)
+			opponent = _fighter2._id;
+	}
+	else if(src_role_id == _fighter2._id)
+	{
+		opponent = _fighter1._id;
+	}
+	if(opponent)
+	{
+		char buf[1024];
+		snprintf(buf, sizeof(buf)-1, "10314:%d:%d:", hero_id, voice_id);
+
+		Player *oplayer = PlayerManager::GetInstance().Find(opponent);
+		if(oplayer) oplayer->SendUDPGameProtocol(buf);
+	}
+}
+
+void PVP::SendOperation(int win_flag, int robot_flag, int robot_seed)
+{
+	PvpOperation prot;
+	prot.id = _id;
+	prot.first = _fighter1._id;
+	prot.second = _fighter2._id;
+	prot.first_pvpinfo = _fighter1_pvpinfo;
+	prot.second_pvpinfo = _fighter2_pvpinfo;
+	prot.operation = _pvp_video;
+	prot.first_zoneid = _fighter1_zoneid;
+	prot.second_zoneid = _fighter2_zoneid;
+	prot.win_flag = win_flag;
+	prot.robot_flag = robot_flag;
+	prot.robot_seed = robot_seed;
+	prot.exe_ver = _exe_ver;
+	prot.data_ver = _data_ver;
+	prot.pvp_ver = _pvp_ver;
+	prot.match_pvp = _match_pvp;
+	if(_typ == 1)
+	{
+		PVPCenterClient::GetInstance()->SendProtocol(prot);
+	}
+}
+
+void PVP::OnPauseRe(int64_t fighter)
+{
+	if(_status!=PVP_STATUS_PAUSE_AND_WAIT_RESP1) return;
+
+	if(fighter == _fighter1._id)
+	{
+		_fighter1._waiting_pause_re = false;
+	}
+	else if(fighter == _fighter2._id)
+	{
+		_fighter2._waiting_pause_re = false;
+	}
+	else
+	{
+		return;
+	}
+}
+
+void PVPManager::Initialize()
+{
+	IntervalTimer::Attach(this, (10000)/IntervalTimer::Resolution());
+}
+
+bool PVPManager::Update()
+{
+	static int _tick = 0;
+
+	_tick++;
+	time_t now = time(0);
+
+	for(auto it=_will_delete_list.begin(); it!=_will_delete_list.end(); ++it)
+	{
+		auto im = _map.find(*it);
+		if(im != _map.end())
+		{
+			delete im->second;
+			_map.erase(im);
+		}
+	}
+	_will_delete_list.clear();
+
+	for(auto it=_map.begin(); it!=_map.end(); ++it)
+	{
+		PVP *pvp = it->second;
+		pvp->OnTimer(_tick, now);
+		if(_tick%SERVER_CONST_TICK_PER_SECOND == pvp->_id%SERVER_CONST_TICK_PER_SECOND) pvp->OnTimer1s(now);
+	}
+
+	return true;
+}
+
+PVP* PVPManager::Find(int id)
+{
+	if(_will_delete_list.find(id) != _will_delete_list.end()) return 0;
+
+	auto it = _map.find(id);
+	if(it == _map.end()) return 0;
+	return it->second;
+}
+
+int PVPManager::Create(int id, int mode, int64_t fighter1, int64_t fighter2, int fight_start_time, int typ, Octets fighter1_pvpinfo, Octets fighter2_pvpinfo, int fighter1_zoneid, int fighter2_zoneid, int robot_flag, const Octets& exe_ver, const Octets& data_ver, int pvp_typ, const Octets& fighter1_key, const Octets& fighter2_key, int match_pvp)
+{
+	if(_map.find(id) != _map.end()) return -1;
+	if(PlayerManager::GetInstance().Find(fighter1)) return -2;
+	if(PlayerManager::GetInstance().Find(fighter2)) return -3;
+
+	_map[id] = new PVP(id, mode, fighter1, fighter2, fight_start_time, typ, fighter1_pvpinfo, fighter2_pvpinfo, 
+	                   fighter1_zoneid, fighter2_zoneid, robot_flag, exe_ver, data_ver, pvp_typ, match_pvp);
+
+	PlayerManager::GetInstance().Add(fighter1, id, fighter1_key);
+	PlayerManager::GetInstance().Add(fighter2, id, fighter2_key);
+
+	return 0;
+}
+
+void PVPManager::Delete(int id)
+{
+	_will_delete_list.insert(id);
+}
+
+void PVPManager::SendOperation(int id, int win_flag, int robot_flag, int robot_seed)
+{
+	if(_will_delete_list.find(id) != _will_delete_list.end()) return;
+
+	auto it = _map.find(id);
+	if(it == _map.end()) return;
+
+	it->second->SendOperation(win_flag, robot_flag, robot_seed);
+}
+
+int PVPManager::GetCurRoomNum()
+{
+	return _map.size() - _will_delete_list.size();
+}
+
+void PVPManager::OnPauseRe(int id, int64_t fighter)
+{
+	if(_will_delete_list.find(id) != _will_delete_list.end()) return;
+
+	auto it = _map.find(id);
+	if(it == _map.end()) return;
+
+	it->second->OnPauseRe(fighter);
+}
+
+}
+

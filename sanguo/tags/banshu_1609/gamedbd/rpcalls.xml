@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="rpcalls.xsl"?>
+
+<application namespace="GNET" project="SWORD MOBILE">
+
+	<!--  ****************************************************************  -->
+	<!--  Protocols used only logservice and logclient		 	-->
+	<!--  Protocols typeid is 59 - 62 					-->
+	<!--  ***************************************************************** -->
+
+	<protocol name="StatInfoVital" maxsize="1024" prior="1" type="59">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<protocol name="StatInfo" maxsize="1024" prior="2" type="60">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<protocol name="RemoteLogVital" maxsize="4096" prior="1" type="61">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<protocol name="RemoteLog" maxsize="4096" prior="2" type="62">
+		<variable name="priority" type="int"/>
+		<variable name="msg" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="hostname" type="std::string" default="std::string()" attr="ref"/>
+		<variable name="servicename" type="std::string" default="std::string()" attr="ref"/>
+	</protocol>
+
+	<state name="LogNull" timeout="3600" attr="null">
+	</state>
+
+	<state name="LogNormal" timeout="3600">
+		<protocol ref="StatInfoVital"/>
+		<protocol ref="StatInfo"/>
+		<protocol ref="RemoteLogVital"/>
+		<protocol ref="RemoteLog"/>
+	</state>
+
+	<service name="logclient">
+		<manager name="Logclient" type="client" initstate="LogNull" reconnect="1"/>
+		<manager name="LogclientTcp" type="client" initstate="LogNull" reconnect="1"/>
+
+		<state ref="LogNull" />
+
+		<protocol ref="StatInfoVital" />
+		<protocol ref="StatInfo" />
+		<protocol ref="RemoteLogVital" />
+		<protocol ref="RemoteLog" />
+	</service>
+
+	<state name="LoggerNull" timeout="3600" attr="null">
+	</state>
+
+</application>

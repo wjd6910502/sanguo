@@ -1,0 +1,99 @@
+
+#ifndef __GNET_DBSAVEDATA_HPP
+#define __GNET_DBSAVEDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbsavedataarg"
+#include "dbsavedatares"
+
+//extern std::map<Octets, Octets> g_save_data;
+extern std::map<string, string> g_save_data;
+
+namespace GNET
+{
+
+class DBSaveData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbsavedata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		DBSaveDataRes *res = (DBSaveDataRes *)result;
+		
+		LOG_TRACE("DB::DBSaveData, arg->result_key.size()=%d", (int)arg->result_key.size());
+
+		res->retcode = -1;
+		//等于0，说明没有数据了，可以进行存库操作了
+		if(arg->find_key.size() == 0)
+		{
+			//这里其实应该判断一下key和value的数量是否一致，如果不一致的话就会存在其余的问题
+			for(unsigned int i = 0; i < arg->result_key.size(); i++)
+			{
+				string key, value;
+				key = std::string((char*)arg->result_key[i].begin(), arg->result_key[i].size());
+				value = std::string((char*)arg->result_value[i].begin(), arg->result_value[i].size());
+				g_save_data[key] = value;
+			}
+
+			GLog::log(LOG_INFO, "DBSaveData, do insert, g_save_data.size()=%d", (int)g_save_data.size());
+
+			CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+			LOCK_TABLE(db_data)
+			START_TRANSACTION
+			{
+				std::map<string, string>::iterator it = g_save_data.begin();
+				for(; it != g_save_data.end() ; it++)
+				{
+					//Log::log( txnlog, "DBSaveData key=%s",it->first.c_str());
+					Marshal::OctetsStream key;
+					key << it->first;
+					db_data->insert(key,Marshal::OctetsStream()<< it->second,txnobj);
+				}
+			}
+			END_TRANSACTION
+			
+			if(txnerr)
+			{
+				Log::log( txnlog, "DB::DBSaveData,(%d) %s",txnerr, GamedbException::GetError(txnerr));
+				res->retcode = txnerr;
+			}
+			else
+			{
+				res->retcode = 0;
+				GLog::log(LOG_INFO, "DBSaveData ... ...");
+			}
+			g_save_data.clear();
+		}
+		else
+		{
+			for(unsigned int i = 0; i < arg->result_key.size(); i++)
+			{
+				string key, value;
+				key = std::string((char*)arg->result_key[i].begin(), arg->result_key[i].size());
+				value = std::string((char*)arg->result_value[i].begin(), arg->result_value[i].size());
+				g_save_data[key] = value;
+			}
+			res->retcode = 0;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBSaveDataArg *arg = (DBSaveDataArg *)argument;
+		// DBSaveDataRes *res = (DBSaveDataRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

@@ -1,0 +1,249 @@
+#ifndef _TOP_MANAGER_H_
+#define _TOP_MANAGER_H_
+
+#include <string>
+#include <map>
+#include <list>
+#include <set>
+
+#include "octets.h"
+#include "forlua.h"
+#include "itimer.h"
+#include "thread.h"
+#include "mutex.h"
+#include "role.h"
+#include "commonmacro.h"
+#include "glog.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+#define TOPLIST_TYPE_LEVEL 	1  //等级榜
+#define TOPLIST_TYPE_CAPACITY	2  //战力榜
+
+	
+#define TOPLIST_TIME_NOW 	1  //实时榜
+#define TOPLIST_TIME_HISTORY 	2  //历史榜
+	
+//排行榜中的数据在数据库中的存储格式
+struct TopListSaveData
+{
+public:
+	Int64 _id;
+	std::string _name;
+	int _photo;
+	Int64 data;
+	char type; //代表这个是历史榜还是实时榜
+	char top_type; //代表这个榜的类型是什么，是战力榜还是等级榜
+
+	Marshal::OctetsStream& marshal(Marshal::OctetsStream & os) const
+	{
+		int64_t tmp = 0;
+		tmp = _id;
+		os << tmp;
+		os << _name;
+		os << _photo;
+		tmp = data;
+		os << tmp;
+		os << type;
+		os << top_type;
+		return os;
+	}
+
+	const Marshal::OctetsStream& unmarshal(const Marshal::OctetsStream &os)
+	{
+		int64_t tmp = 0;
+		os >> tmp;
+		_id = tmp;
+		os >> _name;
+		os >> _photo;
+		os >> tmp;
+		data = tmp;
+		os >> type;
+		os >> top_type;
+		return os;
+	}
+};
+
+
+class TopListData
+{
+public:
+	Int64 _id;
+	std::string _name;
+	int _photo;
+	Int64 data;
+
+	TopListData(): _photo(0) {}
+};
+
+class TopListMap;
+class TopListMapIter
+{
+private:
+	MapIter<Int64, TopListData, std::map<Int64, TopListData>::iterator, TopListMap> _rep;
+
+public:
+	TopListMapIter(std::map<Int64, TopListData>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() {_rep.Next(); }
+
+	TopListData *GetValue() {return _rep.GetValue(); }
+
+};
+
+class TopListMap
+{
+private:
+	Map<Int64, TopListData, std::map<Int64, TopListData>::iterator, TopListMapIter> _rep;
+
+public:
+	TopListMap(): _rep(this) {}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::map<Int64, TopListData>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	TopListData* Find(const Int64& k) { return _rep.Find(k); }
+	void Insert(const Int64& k, const TopListData & v) { _rep.Insert(k, v); }
+	void Delete(const Int64& k) { _rep.Delete(k); }
+
+	TopListMapIter SeekToBegin() { return _rep.SeekToBegin(); }
+	TopListMapIter Seek(const Int64& k) { return _rep.Seek(k); }
+	TopListMapIter SeekToLast() { return _rep.SeekToLast(); }
+};
+
+class TopListMultiMap;
+class TopListMultiMapIter
+{
+private:
+	MultiMapIter<Int64, TopListData, std::multimap<Int64, TopListData>::iterator, TopListMultiMap> _rep;
+
+public:
+	TopListMultiMapIter(std::multimap<Int64, TopListData>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() { _rep.Next(); }
+
+	TopListData *GetValue() { return _rep.GetValue(); }
+	std::multimap<Int64, TopListData>::iterator GetIter() { return _rep.GetIter(); }
+
+};
+
+class TopListMultiMap
+{
+private:
+	MultiMap<Int64, TopListData, std::multimap<Int64, TopListData>::iterator, TopListMultiMapIter> _rep;
+
+public:
+	TopListMultiMap(): _rep(this) {}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::multimap<Int64, TopListData>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	TopListData* Find(const Int64& k) { return _rep.Find(k); }
+	void Insert(const Int64& k, const TopListData & v) { _rep.Insert(k, v); }
+	void Delete(const Int64& k) { _rep.Delete(k); }
+	void Delete(TopListMultiMapIter &iter) { _rep.Delete(iter);}
+
+	TopListMultiMapIter SeekToBegin() { return _rep.SeekToBegin(); }
+	TopListMultiMapIter Seek(const Int64& k) { return _rep.Seek(k); }
+	TopListMultiMapIter SeekToLast() { return _rep.SeekToLast(); }
+};
+
+class TopList
+{
+public:
+	TopListMap _new_top_list_by_id; //这个榜是一个实时榜，并且也是自己这个榜的cache
+	TopListMultiMap _new_top_list_by_data; 
+	TopListMultiMap _old_top_list; //这个榜是老榜
+};
+
+class TopManagerMap;
+class TopManagerMapIter
+{
+private:
+	MapIter<int, TopList, std::map<int, TopList>::iterator, TopManagerMap> _rep;
+
+public:
+	TopManagerMapIter(std::map<int, TopList>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() {_rep.Next(); }
+
+	TopList *GetValue() {return _rep.GetValue(); }
+
+};
+
+class TopManagerMap
+{
+private:
+	Map<int, TopList, std::map<int, TopList>::iterator, TopManagerMapIter> _rep;
+
+public:
+	TopManagerMap(): _rep(this) {}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::map<int, TopList>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	TopList* Find(const int& k) { return _rep.Find(k); }
+	void Insert(const int& k, const TopList & v) { _rep.Insert(k, v); }
+	void Delete(const int& k) { _rep.Delete(k); }
+
+	TopManagerMapIter SeekToBegin() { return _rep.SeekToBegin(); }
+	TopManagerMapIter Seek(const int& k) { return _rep.Seek(k); }
+	TopManagerMapIter SeekToLast() { return _rep.SeekToLast(); }
+};
+
+class TopManager
+{
+private:
+	TopManagerMap _top_manager;
+
+public:
+	mutable Thread::Mutex _lock;
+
+	static TopManager* GetInstance()
+	{
+		static TopManager _instance;
+		return &_instance;
+	}
+	
+	//for TopManagerMap
+	void OnChanged();
+	int Tag() const;
+	std::map<int, TopList>::iterator End();
+
+	//for lua
+	int Size() const;
+
+	TopList* Find(const int& k);
+	//void Insert(const Int64& k, const TopList& v);
+	//void Delete(const int& k);
+
+	TopManagerMapIter SeekToBegin();
+	TopManagerMapIter Seek(const int& k);
+
+
+	//for DB
+	void Load();
+	void Save();
+	void SaveToDB();
+
+	//Test
+	void SaveTest();
+};
+
+}
+
+inline CACHE::TopManager* API_GetLuaTopManager(void *r) { return (CACHE::TopManager*)r; }
+
+#endif //_TOP_MANAGER_H_
+

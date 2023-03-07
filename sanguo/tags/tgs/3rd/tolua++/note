@@ -1,0 +1,135 @@
+
+tolua_open(tolua_S);
+	LUA_REGISTRYINDEX:
+		.tolua_opened = true
+		.tolua_ubox = {}
+			weak value table
+			
+		.tolua_super = {}
+		.tolua_gc = {}
+		.tolua_gc_event = class_gc_event
+			upvalue: LUA_REGISTRYINDEX["tolua_gc"], LUA_REGISTRYINDEX["tolua_super"]
+	
+		.tolua_commonclass = {}
+			__index = class_index_event
+			__newindex = class_newindex_event
+			__add = class_add_event
+			...
+			__gc = LUA_REGISTRYINDEX["tolua_gc_event"]
+		{} = "tolua_commonclass"
+			LUA_REGISTRYINDEX[LUA_REGISTRYINDEX["tolua_commonclass"]] = "tolua_commonclass"
+	
+	LUA_GLOBALSINDEX:
+		.tolua = {}
+		.tolua.type = tolua_bnd_type
+		.tolua.takeownership = tolua_bnd_takeownership
+		...
+		.tolua.getpeer = tolua_bnd_getpeer
+
+tolua_reg_types(tolua_S);
+	LUA_REGISTRYINDEX:
+		//create metatable for each class, like "tolua_commonclass"
+
+		//NS_TEST::TestClass
+		//const NS_TEST::TestClass
+		//NS_TEST::TestObject
+		//const NS_TEST::TestObject
+	
+		//mapsuper
+		.tolua_super[LUA_REGISTRYINDEX["NS_TEST::TestClass"]] = { "const NS_TEST::TestClass"=true }
+		.tolua_super[LUA_REGISTRYINDEX["NS_TEST::TestObject"]] = { "const NS_TEST::TestObject"=true }
+		
+tolua_beginmodule(tolua_S,NULL);
+	lua_pushvalue(L,LUA_GLOBALSINDEX);
+
+tolua_module(tolua_S,"NS_TEST",0);
+	LUA_GLOBALSINDEX:
+		.NS_TEST = {}
+	
+tolua_beginmodule(tolua_S,"NS_TEST");
+	...
+
+tolua_cclass(tolua_S,"TestObject","NS_TEST::TestObject","",tolua_collect_NS_TEST__TestObject);
+	static void mapinheritance (lua_State* L, const char* name, const char* base)
+		if base_mt.tolua_ubox then
+			mt.tolua_ubox = base_mt.tolua_ubox
+		else
+			mt.tolua_ubox = {}
+				weak value table
+		end
+		mt.setmetatable(base_mt)
+	mapinheritance(L,"NS_TEST::TestObject","");
+	mapinheritance(L,"const NS_TEST::TestObject","NS_TEST::TestObject");
+
+	mapsuper(L,"const NS_TEST::TestObject","const ");
+	mapsuper(L,"NS_TEST::TestObject","");
+
+	push_collector(L, "NS_TEST::TestObject", col);
+
+	.TestObject = mt //mt???
+
+	push_collector(L, "const NS_TEST::TestObject", col);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TOLUA_API void tolua_pushusertype (lua_State* L, void* value, const char* type)
+	1, new userdata(value)
+	2, userdata.setmetatable("type")
+	3, ubox[value] = userdata
+	4, userdata.setfenv(LUA_REGISTRYINDEX)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+tolua_module:
+	upper[name] = {}
+tolua_beginmodule:
+	push(upper[name])
+tolua_endmodule:
+	pop
+
+
+
+
+
+
+
+
+
+
+mapsuper还是没看懂
+
+mapinheritance又是什么？
+
+ubox?
+
+

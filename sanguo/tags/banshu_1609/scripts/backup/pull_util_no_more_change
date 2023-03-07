@@ -1,0 +1,21 @@
+#!/bin/sh
+
+rm -f pull_util_no_more_change.log
+
+for i in $(seq 100)
+do
+        #echo $i
+        rsync -avz --stats xom2user@10.68.8.38:/export/svn/* . >tmp.log
+        date >>pull_util_no_more_change.log
+        cat tmp.log >>pull_util_no_more_change.log
+
+        no_more_change=`grep "Number of files transferred: 0" tmp.log -c`
+        if [ $no_more_change == "1" ]
+        then
+                echo "DONE!" >>pull_util_no_more_change.log
+                exit 0
+        fi
+done
+
+
+

@@ -1,0 +1,60 @@
+
+服务器端口分配表:
+
+
+
+
+内服(zoneid 1):
+	gamed:
+		GateServer:			9238
+		TransServer/UDPTransServer:	9240(TCP+UDP)
+		STUNDeafServer:			9236
+
+		PVPGameServer:			9241
+
+	statusd:
+		StatusServer:			9239
+
+	pvpd:
+		PVPUDPTransServer:		9237
+
+	gamedbd:
+		GamedbdServer:			9244
+
+
+	stund: 必须和gamed在不用机器上
+		STUNServer:			9235(UDP)
+		STUNDeafServer:			9233(UDP)
+
+		STUNGameServer:			9242
+		
+	pvpdcenter:	9234(UDP)
+		CenterServer:			9243
+		PVPGameServer:			9245
+	uniquenamed:				9246
+
+
+9220-9240
+
+
+DU(zoneid 2):
+	gamed:
+		GateServer:			19238
+		TransServer/UDPTransServer:	19240(TCP+UDP)
+		STUNDeafServer:			19236
+
+		PVPGameServer:			19241
+
+	statusd:
+		StatusServer:			19239
+
+	pvpd:
+		PVPUDPTransServer:		19237
+
+	gamedbd:
+		GamedbdServer:			19244
+
+
+
+
+

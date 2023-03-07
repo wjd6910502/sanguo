@@ -1,0 +1,58 @@
+
+#ifndef __GNET_GETIATEXTINSPEECHRE_HPP
+#define __GNET_GETIATEXTINSPEECHRE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GetIATextInSpeechRe : public GNET::Protocol
+{
+	#include "getiatextinspeechre"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		
+		//找到当前用户
+		Player* player = CACHE::PlayerManager::GetInstance().FindByRoleId(src_id);
+		if(player ==NULL)
+		{
+			printf("找不到用户........");
+			return;
+		}
+	
+		//内部类型 chat_type: 0 代表公聊  1 代表私聊
+		char roleinfo[1024];
+		std::string role_id = player->_role._roledata._base._id.ToStr();
+		std::string name = player->_role._roledata._base._name;
+		int photo = player->_role._roledata._base._photo;
+		int level = player->_role._roledata._status._level;
+		std::string mafia_id = player->_role._roledata._mafia._id.ToStr();
+		std::string mafia_name = player->_role._roledata._mafia._name;
+		std::string tt_content = (char*)text_content.begin();
+		std::string sh_content = (char*)speech_content.begin();
+		snprintf(roleinfo,sizeof(roleinfo),"%s:%s:%d:%d:%s:%s:%d",role_id.c_str(),name.c_str(),photo,level,mafia_id.c_str(),mafia_name.c_str(),time);
+			
+		if( chat_type == 0 )
+		{	
+			std::string msg = "10100:";
+			msg = msg + roleinfo + tt_content + sh_content;				
+			MessageManager::GetInstance().Put(src_id, src_id, msg.c_str(), 0);
+		}	
+
+		if( chat_type == 1 )
+		{
+			std::string msg = "10101:";	
+			msg = msg + roleinfo + (char*)dest_id.begin() + tt_content + sh_content;
+			MessageManager::GetInstance().Put(src_id, src_id, msg.c_str(), 0);	
+		}		
+	}
+};
+
+};
+
+#endif

@@ -1,0 +1,19 @@
+
+function GMCommand_Mail2Role()
+	Init()
+	Login()
+
+	--send GMCommand
+	local cmd = NewCommand("GMCommand")
+	cmd.gm_id = "8Xesom4oHQAAAIBhmIEsKyTVeG2V3ybNZxBa5huH2IVUGAH3a5fzvNEcsEQhmuTgpqO5ktAeYixOhgrHqjBS5838exqiTnD1eYpm"
+
+	cmd.typ = "Mail2Role"
+	cmd.arg1 = "562949953422313" --role_id
+	cmd.arg2 = "1347" --mailid
+	API_SendGameProtocol(SerializeCommand(cmd))
+
+        while true do
+		Sleep(1)
+	end
+end
+

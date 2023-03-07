@@ -1,0 +1,383 @@
+#include "gamedbclient.hpp"
+#include "gcenterclient.hpp"
+#include "gateserver.hpp"
+#include "transserver.hpp"
+#include "udptransserver.hpp"
+#include "pvpgameserver.hpp"
+#include "customerserviveserver.hpp"
+#include "conf.h"
+#include "glog.h"
+#include "thread.h"
+#include "gnet_init.h"
+#include <iostream>
+#include <unistd.h>
+#include <lua.hpp>
+#include "playermanager.h"
+#include "dbsavetask.h"
+#include "commonmacro.h"
+#include "message.h"
+#include "script_wrapper.h"
+#include "statistic_manager.h"
+#include <sys/time.h>
+#include <sys/resource.h>
+#include "pvpmanager.h"
+#include <signal.h>
+#include "stungameclient.hpp"
+#include "stundeafserver.hpp"
+#include "uniquenameclient.hpp"
+#include "TopList.h"
+#include "Misc.h"
+#include "PveArena.h"
+#include "NoLoadPlayer.h"
+#include "matcher.h"
+#include "TongQueTai.h"
+#include "sttclient.hpp"
+#include "registerclient.hpp"
+#include "TopList_All_Role.h"
+#include "Mafia_Info.h"
+#include "JieYi_Info.h"
+#include "mafiamanager.h"
+#include "YueZhan_Info.h"
+#include "Version_Info.h"
+
+using namespace GNET;
+
+extern __thread lua_State *g_L;
+extern lua_State* InitLuaEnv();
+
+//这个map用来存储需要存库的信息，在这里是不区分表的，因为所有的类型都是一致的
+std::map<Octets, Octets> g_save_data_map;
+
+static abase::timer g_timer(1000, 300000);
+extern int GNET::g_zoneid;
+
+extern int g_wait_count;
+extern GNET::Thread::Mutex g_wait_count_lock;
+extern GNET::Thread::Mutex g_big_lock;
+
+int g_server_state = 0;//用来表示服务器的当前状态
+
+int64_t AllocTransactionId()
+{
+	static GNET::Thread::Mutex _lock;
+	static int64_t _id = 0;
+
+	GNET::Thread::Mutex::Scoped keeper(_lock);
+	_id++;
+	return _id;
+}
+__thread int64_t g_transaction_id = 0;
+
+static void* timer_thread(void*)
+{
+	printf("TIMER THREAD: %u\n", (unsigned int)pthread_self());
+
+	pthread_detach(pthread_self());
+	g_timer.timer_thread(SERVER_CONST_TICK_MICROSEC, SERVER_CONST_TICK_MICROSEC/5);
+	return 0;
+}
+
+static void timer_tick(int index,void* object,int remain)
+{
+	{
+	GNET::Thread::Mutex::Scoped keeper(g_wait_count_lock);
+	g_wait_count++;
+	}
+	{
+	GNET::Thread::Mutex::Scoped keeper(g_big_lock);
+	GNET::Thread::Mutex::Scoped keeper2(g_wait_count_lock);
+	g_wait_count--;
+	}
+
+	if(g_server_state==SERVER_STATE_CLOSED)
+	{
+		//clear thread resource
+		//clear global resource
+		//inf loop
+		while(true) sleep(1);
+		return;
+	}
+
+	static int _tick = 0;
+
+	_tick++;
+	time_t now = GNET::Timer::GetTime();
+	MessageManager::GetInstance().OnTimer(_tick, now);
+	CACHE::PlayerManager::GetInstance().OnTimer(_tick, now);
+	CACHE::MafiaManager::GetInstance().OnTimer(_tick, now);
+	CACHE::PVPManager::GetInstance().OnTimer(_tick, now);
+	CACHE::SGT_TopList::GetInstance().OnTimer(_tick, now);
+	CACHE::SGT_Misc::GetInstance().OnTimer(_tick, now);
+	CACHE::SGT_PveArena::GetInstance().OnTimer(_tick, now);
+	CACHE::SGT_NoLoadPlayer::GetInstance();
+	CACHE::SGT_TongQueTai::GetInstance().OnTimer(_tick, now);
+	CACHE::SGT_TopList_All_Role::GetInstance().OnTimer(_tick, now);
+//	CACHE::SGT_Mafia_Info::GetInstance().OnTimer(_tick, now);
+	CACHE::SGT_Mafia_Info::GetInstance();
+	CACHE::SGT_JieYi_Info::GetInstance();
+	CACHE::SGT_YueZhan_Info::GetInstance();
+	CACHE::SGT_Version_Info::GetInstance();
+}
+
+void SigHandler_USR1(int sig)
+{
+	GLog::log(LOG_INFO, "SigHandler_USR1, sig=%d", sig);
+
+	if(sig == SIGUSR1)
+	{
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10007:"); //ReloadLua
+		MessageManager::GetInstance().Put(0, 0, msg, 0);
+	}
+}
+
+void SigHandler_USR2(int sig)
+{
+	GLog::log(LOG_INFO, "SigHandler_USR2, sig=%d", sig);
+
+	if(sig == SIGUSR2)
+	{
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10300:0:"); //CloseServer
+		MessageManager::GetInstance().Put(0, 0, msg, 0);
+	}
+}
+
+//这个用来做停服之前的存库操作。
+//void SigHandler_USR2(int sig)
+//{
+//	GLog::log(LOG_INFO, "SigHandler_USR2, sig=%d", sig);
+//
+//	if(sig == SIGUSR2)
+//	{
+//		char msg[100];
+//		snprintf(msg, sizeof(msg), "10007:"); //ReloadLua
+//		MessageManager::GetInstance().Put(0, 0, msg, 0);
+//	}
+//}
+
+int main(int argc, char *argv[])
+{
+	if (argc != 2 || access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Usage: " << argv[0] << " configurefile" << std::endl;
+		exit(-1);
+	}
+
+	signal(SIGUSR1, SigHandler_USR1);
+	signal(SIGUSR2, SigHandler_USR2);
+
+	Conf *conf = Conf::GetInstance(argv[1]);
+	g_server_state = SERVER_STATE_BEGIN;
+
+	rlimit rl;
+	getrlimit(RLIMIT_NOFILE, &rl);
+	//if(rl.rlim_cur < rl.rlim_max) rl.rlim_cur=rl.rlim_max;
+	//setrlimit(RLIMIT_NOFILE, &rl);
+	//getrlimit(RLIMIT_NOFILE, &rl);
+	printf("getrlimit: rlim_cur=%ld, rlim_max=%ld\n", rl.rlim_cur, rl.rlim_max);
+
+	GNET::Thread::Pool::_pool.CreateThread(timer_thread, 0);
+	GNET::InitStaticObjects();
+	GNET::PollIO::Init(false);
+	//GNET::IntervalTimer::PrepareTimer(&g_timer, SERVER_CONST_TICK_MICROSEC);
+
+	{
+		GateServer *manager = GateServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		TransServer *manager = TransServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+
+		//get public address/port
+		std::string pa = conf->find(manager->Identification(), "public_address");
+		if(!pa.empty())
+		{
+			manager->SetPublicAddress(pa.c_str());
+		}
+		else
+		{
+			manager->SetPublicAddress(conf->find(manager->Identification(), "address").c_str());
+		}
+		unsigned short pp = atoi(conf->find(manager->Identification(), "public_port").c_str());
+		if(pp)
+		{
+			manager->SetPublicPort(pp);
+		}
+		else
+		{
+			manager->SetPublicPort(atoi(conf->find(manager->Identification(), "port").c_str()));
+		}
+
+		Protocol::Server(manager);
+	}
+	{
+		UDPTransServer *manager = UDPTransServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+
+		//get public address/port
+		std::string pa = conf->find(manager->Identification(), "public_address");
+		if(!pa.empty())
+		{
+			manager->SetPublicAddress(pa.c_str());
+		}
+		else
+		{
+			manager->SetPublicAddress(conf->find(manager->Identification(), "address").c_str());
+		}
+		unsigned short pp = atoi(conf->find(manager->Identification(), "public_port").c_str());
+		if(pp)
+		{
+			manager->SetPublicPort(pp);
+		}
+		else
+		{
+			manager->SetPublicPort(atoi(conf->find(manager->Identification(), "port").c_str()));
+		}
+
+		Protocol::Server(manager);
+	}
+	{
+		PVPGameServer *manager = PVPGameServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		STUNGameClient *manager = STUNGameClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		STUNDeafServer *manager = STUNDeafServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		GameDBClient *manager = GameDBClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		GCenterClient *manager = GCenterClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		UniqueNameClient *manager = UniqueNameClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		STTClient *manager = STTClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager); 
+	}
+	{
+		RegisterClient *manager = RegisterClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		CustomerServiveServer *manager = CustomerServiveServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+
+	{
+		GNET::g_zoneid = atoi(conf->find("Global", "zoneid").c_str());
+	}
+	
+	//加载屏蔽字数据
+	int ret = Matcher::GetInstance()->Load(conf->find("Global","table_name").c_str(),"UCS2",
+			conf->find("Global","name_charset").c_str(),conf->find("Global","table_charset").c_str());
+	
+	if(ret )
+	{
+		fprintf(stderr, "Loading sensitive words table failed: %s\n.", Matcher::GetInstance()->GetError());
+		exit(1);
+	}
+	else
+	{
+		fprintf(stderr, "Loading sensitive words table SUCCESS!!!!!!!!!!\n");
+	}	
+	
+	GLog::Init("gamed");
+	g_timer.set_timer(1, 0, 0, timer_tick, 0);
+
+	if(!g_L) g_L = InitLuaEnv();
+	if(!g_L)
+	{
+		GLog::log(LOG_ERR, "main, error, InitLuaEnv");
+		exit(-1);
+	}
+	LuaWrapper lw(g_L);
+	if(!lw.gExec("InitInMainThread", 0))
+	{
+		GLog::log(LOG_ERR, "main, gExec, error, InitInMainThread, %s", lw.ErrorMsg());
+		exit(-1);
+	}
+	if(!lw.gExec("InitCommandInMainThread", 0))
+	{
+		GLog::log(LOG_ERR, "main, gExec, error, InitCommandInMainThread, %s", lw.ErrorMsg());
+		exit(-1);
+	}
+	if(!lw.gExec("InitMessageInMainThread", 0))
+	{
+		GLog::log(LOG_ERR, "main, gExec, error, InitMessageInMainThread, %s", lw.ErrorMsg());
+		exit(-1);
+	}
+	lua_close(g_L);
+	g_L = 0; //主线程之后用不着lua了所以销毁, 如果要打开则必须把reload也加上
+
+	GNET::ThreadPolicyBase *policy = new GNET::ThreadPolicyBase();
+	policy->AddGroup(-1, 0);
+	policy->SetSequenceCount(SERVER_CONST_WORKER_THREAD_COUNT);
+	for(auto i=0; i<SERVER_CONST_WORKER_THREAD_COUNT; ++i)
+	{
+		policy->AddThread(0, GNET::TASK_TYPE_SEQUENCE|GNET::TASK_TYPE_GLOBAL);
+	}
+	GNET::Thread::Pool::_pool.Init(policy);
+	GNET::Thread::Pool::_pool.Start();
+
+	GLog::log(LOG_INFO, "MAIN THREAD: %u", (unsigned int)pthread_self());
+
+	time_t t = Now();
+	while(1)
+	{
+		{
+		GNET::Thread::Mutex::Scoped keeper(g_wait_count_lock);
+		g_wait_count++;
+		}
+		{
+		GNET::Thread::Mutex::Scoped keeper(g_big_lock);
+		GNET::Thread::Mutex::Scoped keeper2(g_wait_count_lock);
+		g_wait_count--;
+		}
+
+		if(g_server_state==SERVER_STATE_CLOSED)
+		{
+			//clear thread resource
+			//clear global resource
+			//inf loop
+			while(true) sleep(1);
+			return 0;
+		}
+
+		PollIO::Poll(1);
+		GNET::Timer::Update();
+
+		time_t now = Now();
+		if(now-t >= 10)
+		{
+			t = now;
+			StatisticManager::GetInstance().Dump();
+		}
+	}
+
+	//GNET::IOMan::_man.SetDelayThreshold(50, 500);
+
+	return 0;
+}
+

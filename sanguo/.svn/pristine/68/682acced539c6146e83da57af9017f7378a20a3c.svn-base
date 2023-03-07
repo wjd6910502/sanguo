@@ -1,0 +1,68 @@
+
+#ifndef __GNET_UDPS2CGAMEPROTOCOLS_HPP
+#define __GNET_UDPS2CGAMEPROTOCOLS_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "commonmacro.h"
+#include "connection.h"
+#include "script_wrapper.h"
+#include <lua.hpp>
+
+extern lua_State *g_L;
+
+namespace GNET
+{
+
+class UDPS2CGameProtocols : public GNET::Protocol
+{
+	#include "udps2cgameprotocols"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//printf("UDPS2CGameProtocols::Process, index=%d, protocols.size()=%lu, index_ack=%d\n", index, protocols.size(), index_ack);
+
+		Connection::GetInstance().FastSess_OnAck(index_ack);
+
+		for(auto it=protocols.begin(); it!=protocols.end(); ++it)
+		{
+			int idx = index+(it-protocols.begin());
+			if(Connection::GetInstance().FastSess_IsReceived(idx)) continue;
+			Connection::GetInstance().FastSess_SetReceived(idx);
+
+			const Octets& data = *it;
+			//check data
+			if(data.size() < 2)
+			{
+				fprintf(stderr, "UDPS2CGameProtocols::Process, index=%d, wrong length\n", idx);
+				continue;
+			}
+			for(size_t i=0; i<data.size(); ++i)
+			{
+				int c = ((char*)data.begin())[i];
+				if(!isupper(c) && !islower(c) && !isdigit(c) && c!='-' && c!='_' && c!='=' && c!=':') //并不标准的base64
+				{
+					fprintf(stderr, "UDPS2CGameProtocols::Process, index=%d, wrong char(%d)\n", index, c);
+					continue;
+				}
+			}
+
+			if(g_L)
+			{
+				LuaWrapper lw(g_L);
+				if(!lw.gExec("DeserializeAndProcessCommand", LuaParameter((void*)0, std::string((char*)data.begin(), data.size()), 0, 0)))
+				{
+					fprintf(stderr, "UDPS2CGameProtocols::Process, gExec, index=%d, DeserializeAndProcessCommand: data=%.*s\n",
+					        index, (int)data.size(), (char*)data.begin());
+				}
+			}
+		}
+		if(!protocols.empty()) Connection::GetInstance().FastSess_SendAck();
+	}
+};
+
+};
+
+#endif

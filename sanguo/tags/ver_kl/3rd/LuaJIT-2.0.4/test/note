@@ -1,0 +1,273 @@
+
+luajit:
+	only deserialize:
+		[duxiaogang@localhost test]$ time ./test 
+		
+		real    0m4.000s
+		user    0m3.937s
+		sys     0m0.056s
+		[duxiaogang@localhost test]$ time ./test 
+		
+		real    0m3.930s
+		user    0m3.863s
+		sys     0m0.058s
+		[duxiaogang@localhost test]$ time ./test 
+		
+		real    0m4.084s
+		user    0m4.003s
+		sys     0m0.074s
+
+	deserialize+serialze:
+		[duxiaogang@localhost test]$ time ./test 
+		
+		real    0m6.984s
+		user    0m6.653s
+		sys     0m0.319s
+		[duxiaogang@localhost test]$ time ./test 
+		
+		real    0m6.880s
+		user    0m6.616s
+		sys     0m0.252s
+		[duxiaogang@localhost test]$ time ./test 
+		
+		real    0m7.010s
+		user    0m6.656s
+		sys     0m0.341s
+
+	deserialize+serialze(10, c++ base64/table.concat/no big sub):
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m0.362s
+		user    0m0.351s
+		sys     0m0.011s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m0.360s
+		user    0m0.351s
+		sys     0m0.008s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m0.361s
+		user    0m0.352s
+		sys     0m0.009s
+
+	deserialize+serialze(c++ implement base64):
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m4.533s
+		user    0m4.047s
+		sys     0m0.477s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m4.387s
+		user    0m3.890s
+		sys     0m0.489s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m4.455s
+		user    0m4.010s
+		sys     0m0.437s
+
+	1 deserialize + 10 dump table to file:
+		[duxiaogang@localhost test]$ ./run.duxg >out
+		
+		real    0m6.861s
+		user    0m3.427s
+		sys     0m3.421s
+		[duxiaogang@localhost test]$ ./run.duxg >out
+		
+		real    0m6.737s
+		user    0m3.349s
+		sys     0m3.376s
+		[duxiaogang@localhost test]$ ./run.duxg >out
+		
+		real    0m6.757s
+		user    0m3.443s
+		sys     0m3.301s
+
+
+
+lua:
+	only deserialize:
+		[duxiaogang@localhost test]$ time ./test
+		
+		real    0m13.256s
+		user    0m13.188s
+		sys     0m0.045s
+		[duxiaogang@localhost test]$ time ./test
+
+		real    0m13.080s
+		user    0m13.022s
+		sys     0m0.035s
+		[duxiaogang@localhost test]$ time ./test
+		
+		real    0m13.249s
+		user    0m13.188s
+		sys     0m0.038s
+
+	deserialize+serialze:
+		[duxiaogang@localhost test]$ time ./test
+		
+		real    0m22.691s
+		user    0m22.617s
+		sys     0m0.035s
+		[duxiaogang@localhost test]$ time ./test
+		
+		real    0m22.746s
+		user    0m22.667s
+		sys     0m0.039s
+		[duxiaogang@localhost test]$ time ./test
+		
+		real    0m22.686s
+		user    0m22.614s
+		sys     0m0.032s
+
+	deserialize+serialze(10, c++ base64/table.concat/no big sub):
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m0.785s
+		user    0m0.770s
+		sys     0m0.014s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m0.730s
+		user    0m0.722s
+		sys     0m0.007s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m0.762s
+		user    0m0.752s
+		sys     0m0.008s
+
+	deserialize+serialze(c++ implement base64):
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m3.882s
+		user    0m3.839s
+		sys     0m0.036s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m3.951s
+		user    0m3.891s
+		sys     0m0.053s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m3.862s
+		user    0m3.807s
+		sys     0m0.048s
+
+	1 deserialize + 10 dump table to file:
+		[duxiaogang@localhost test]$ ./run.duxg >out
+		
+		real    0m3.865s
+		user    0m3.488s
+		sys     0m0.370s
+		[duxiaogang@localhost test]$ ./run.duxg >out
+		
+		real    0m3.920s
+		user    0m3.529s
+		sys     0m0.383s
+		[duxiaogang@localhost test]$ ./run.duxg >out
+		
+		real    0m3.906s
+		user    0m3.533s
+		sys     0m0.366s
+
+
+
+scripts:
+	local s = ""
+	for i=1,100000 do
+		s = s..i..":"
+	end
+
+
+	strace ./test 2>out 
+	awk -F'(' '{ print $1 }' out | sort | uniq -c | sort -n
+
+
+	luajit:
+
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m14.243s
+		user    0m6.558s
+		sys     0m7.652s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m14.082s
+		user    0m6.478s
+		sys     0m7.571s
+		[duxiaogang@localhost test]$ ./run.duxg 
+		
+		real    0m14.540s
+		user    0m6.633s
+		sys     0m7.874s
+
+		      1 arch_prctl
+		      1 execve
+		      1 exit_group
+		      1 getcwd
+		      1 getrlimit
+		      1 rt_sigprocmask
+		      1 set_robust_list
+		      1 set_tid_address
+		      1 statfs
+		      2 access
+		      2 rt_sigaction
+		      3 brk
+		      4 futex
+		      8 stat
+		     22 close
+		     22 fstat
+		     23 read
+		     36 mprotect
+		    186 open
+		  13947 mremap
+		  72164 munmap
+		  72226 mmap
+
+	lua:
+
+		[root@localhost test]# ./run.duxg 
+		
+		real    0m6.686s
+		user    0m5.088s
+		sys     0m1.582s
+		[root@localhost test]# ./run.duxg 
+		
+		real    0m6.696s
+		user    0m5.145s
+		sys     0m1.536s
+		[root@localhost test]# ./run.duxg 
+		
+		real    0m6.638s
+		user    0m5.088s
+		sys     0m1.535s
+
+		      1 arch_prctl
+		      1 execve
+		      1 exit_group
+		      1 getcwd
+		      1 getrlimit
+		      1 rt_sigprocmask
+		      1 set_robust_list
+		      1 set_tid_address
+		      1 statfs
+		      2 access
+		      2 rt_sigaction
+		      3 futex
+		      8 stat
+		     22 close
+		     22 fstat
+		     23 read
+		     36 mprotect
+		    186 open
+		    647 munmap
+		    706 mmap
+		  13475 mremap
+		  17485 brk
+
+table.insert(t, v)±Èt[#v+1]=vÒªÂÔÂý, ºÃÆæ¹Ö
+
+

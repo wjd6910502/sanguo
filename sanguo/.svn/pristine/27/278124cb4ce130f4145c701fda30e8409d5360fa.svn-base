@@ -1,0 +1,277 @@
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <sys/time.h>
+#include <string>
+#include <vector>
+#include <map>
+#include <set>
+
+using namespace std;
+
+//only for UDP
+class Link
+{
+	int _c2s_delay_ms;
+	int _s2c_delay_ms;
+
+	sockaddr_in _cli_addr;
+	socklen_t _cli_addr_len;
+	int _to_svr_fd;
+
+	multimap<int64_t, string> _c2s_buffer; //time(ms)=>data
+	multimap<int64_t, string> _s2c_buffer;
+
+public:
+	Link(const sockaddr_in& cli_addr, int to_svr_fd, int c2s_delay_ms, int s2c_delay_ms)
+	    : _c2s_delay_ms(c2s_delay_ms), _s2c_delay_ms(s2c_delay_ms), _to_svr_fd(to_svr_fd)
+	{
+		_cli_addr_len = sizeof(_cli_addr);
+		memcpy(&_cli_addr, &cli_addr, _cli_addr_len);
+	}
+	~Link() {}
+
+	void Update(int64_t now_ms, int cli_fd, const struct sockaddr *svr_addr, socklen_t svr_addr_len)
+	{
+		{
+		auto it=_c2s_buffer.begin();
+		while(it!=_c2s_buffer.end())
+		{
+			int64_t t = it->first;
+			if(t > now_ms) break;
+
+			const string& data = it->second;
+			sendto(_to_svr_fd, data.c_str(), data.size(), 0, svr_addr, svr_addr_len);
+
+			_c2s_buffer.erase(it);
+
+			it = _c2s_buffer.begin();
+		}
+		}
+
+		{
+		auto it=_s2c_buffer.begin();
+		while(it!=_s2c_buffer.end())
+		{
+			int64_t t = it->first;
+			if(t > now_ms) break;
+
+			const string& data = it->second;
+			sendto(cli_fd, data.c_str(), data.size(), 0, (const sockaddr*)&_cli_addr, _cli_addr_len);
+
+			_s2c_buffer.erase(it);
+
+			it = _s2c_buffer.begin();
+		}
+		}
+	}
+
+	void OnReceiveData(int64_t now_ms, bool c2s, const string& data)
+	{
+		if(c2s)
+		{
+			int64_t t = now_ms+_c2s_delay_ms;
+			_c2s_buffer.insert(make_pair(t, data));
+		}
+		else
+		{
+			int64_t t = now_ms+_s2c_delay_ms;
+			_s2c_buffer.insert(make_pair(t, data));
+		}
+	}
+};
+
+class LinkManager
+{
+	map<string, Link*> _cli_addr_2_link;
+	map<int, Link*> _to_svr_fd_2_link;
+
+public:
+	static LinkManager& GetInstance()
+	{
+		static LinkManager instance;
+		return instance;
+	}
+
+	void Update(int64_t now_ms, int cli_fd, const struct sockaddr *svr_addr, socklen_t svr_addr_len)
+	{
+		for(auto it=_cli_addr_2_link.begin(); it!=_cli_addr_2_link.end(); ++it)
+		{
+			Link *link = it->second;
+			link->Update(now_ms, cli_fd, svr_addr, svr_addr_len);
+		}
+	}
+
+	Link* FindByClientAddr(const sockaddr_in& addr)
+	{
+		string str = ConvertAddr2Str(addr);
+		auto it = _cli_addr_2_link.find(str);
+		if(it==_cli_addr_2_link.end()) return 0;
+		return it->second;
+	}
+	Link* FindByToSvrFD(int fd)
+	{
+		auto it = _to_svr_fd_2_link.find(fd);
+		if(it==_to_svr_fd_2_link.end()) return 0;
+		return it->second;
+	}
+
+	Link* CreateLink(const sockaddr_in& cli_addr, int to_svr_fd, int c2s_delay_ms, int s2c_delay_ms)
+	{
+		Link *link = new Link(cli_addr, to_svr_fd, c2s_delay_ms, s2c_delay_ms);
+		_cli_addr_2_link[ConvertAddr2Str(cli_addr)] = link;
+		_to_svr_fd_2_link[to_svr_fd] = link;
+		return link;
+	}
+
+private:
+	string ConvertAddr2Str(const sockaddr_in& addr)
+	{
+		string str = inet_ntoa(addr.sin_addr);
+		str += ":";
+		char buf[100];
+		snprintf(buf, sizeof(buf), "%d", ntohs(addr.sin_port));
+		str += buf;
+		return str;
+	}
+};
+
+void SetNonBlock(int fd, bool non_block)
+{
+        int f = fcntl(fd, F_GETFL);
+        if (non_block) {
+                // non-block
+                if (f & O_NONBLOCK)
+                        return;
+                else
+                        f |= O_NONBLOCK;
+        } else {
+                // block
+                if (f & O_NONBLOCK)
+                        f &= ~O_NONBLOCK;
+                else
+                        return;
+        }   
+        fcntl(fd, F_SETFL, f);
+}
+
+int main(int argc, char *argv[])
+{
+	unsigned short listen_port = 19231;
+	const char *orig_server_ip = "127.0.0.1";
+	unsigned short orig_server_port = 19237;
+
+	//socket
+        int cli_fd = socket(AF_INET, SOCK_DGRAM, 0); //接收客户端来的数据
+        if(cli_fd == -1)
+	{
+		fprintf(stderr, "socket(cli_fd) error\n");
+		return -1;
+	}
+	SetNonBlock(cli_fd, true);
+        //bind
+        sockaddr_in listen_addr;
+        memset(&listen_addr, 0, sizeof(listen_addr));
+        listen_addr.sin_family = AF_INET;
+        listen_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+        listen_addr.sin_port = htons(listen_port);
+        if(bind(cli_fd, (sockaddr*)&listen_addr, sizeof(listen_addr)) == -1) 
+	{
+		fprintf(stderr, "bind(cli_fd) error\n");
+		return -1;
+	}
+	//server addr
+        sockaddr_in server_addr;
+        memset(&server_addr, 0, sizeof(server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_addr.s_addr = inet_addr(orig_server_ip);
+        server_addr.sin_port = htons(orig_server_port);
+
+	//loop
+	set<int> all_fds;
+	all_fds.insert(cli_fd);
+
+	fd_set rset;
+	FD_ZERO(&rset);
+
+	while(true)
+	{
+		int max_fd = 0;
+		for(auto it=all_fds.begin(); it!=all_fds.end(); ++it)
+		{
+			int fd = *it;
+			if(fd>max_fd) max_fd=fd;
+			FD_SET(fd, &rset);
+		}
+
+		timeval tv;
+		tv.tv_sec = 0;
+		tv.tv_usec = 10*1000;
+		if(select(max_fd+1, &rset, 0, 0, &tv) == -1)
+		{
+			if(errno == EINTR)
+			{
+				fprintf(stderr, "select error\n");
+				return -1;
+			}
+		}
+
+		gettimeofday(&tv, 0);
+		int64_t now_ms = tv.tv_sec*1000+tv.tv_usec/1000;
+
+		for(auto it=all_fds.begin(); it!=all_fds.end(); ++it)
+		{
+			int fd = *it;
+			if(FD_ISSET(fd, &rset))
+			{
+				char buf[1024*100];
+
+        			sockaddr_in src_addr;
+				socklen_t len = sizeof(src_addr);
+       				ssize_t ret = recvfrom(fd, buf, sizeof(buf), 0, (sockaddr*)&src_addr, &len);
+				if(ret > 0)
+				{
+					//printf(".");
+					fflush(stdout);
+
+					string data(buf, ret);
+
+					if(fd == cli_fd)
+					{
+						//from client
+						Link *link = LinkManager::GetInstance().FindByClientAddr(src_addr);
+						if(!link)
+						{
+        						int to_svr_fd = socket(AF_INET, SOCK_DGRAM, 0);
+							SetNonBlock(to_svr_fd, true);
+							all_fds.insert(to_svr_fd);
+							link = LinkManager::GetInstance().CreateLink(src_addr, to_svr_fd, 150, 150);
+							//link = LinkManager::GetInstance().CreateLink(src_addr, to_svr_fd, 200, 200);
+						}
+						link->OnReceiveData(now_ms, true, data);
+					}
+					else
+					{
+						//from server
+						Link *link = LinkManager::GetInstance().FindByToSvrFD(fd);
+						if(link)
+						{
+							link->OnReceiveData(now_ms, false, data);
+						}
+					}
+				}
+			}
+		}
+		
+		LinkManager::GetInstance().Update(now_ms, cli_fd, (const sockaddr*)&server_addr, sizeof(server_addr));
+	}
+
+	return 0;
+}
+

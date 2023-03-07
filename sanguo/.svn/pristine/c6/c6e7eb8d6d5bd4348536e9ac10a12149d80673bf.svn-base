@@ -1,0 +1,15 @@
+function OnCommand_DaTiGetInfo(player, role, arg, others)
+	player:Log("OnCommand_DaTiGetInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("DaTiGetInfo_Re")
+	
+	resp.cur_num = role._roledata._dati_data._cur_num
+	resp.cur_right_num = role._roledata._dati_data._cur_right_num
+	resp.today_reward = role._roledata._dati_data._today_reward
+	resp.exp = role._roledata._dati_data._exp
+	resp.yuanbao = role._roledata._dati_data._yuanbao
+	player:SendToClient(SerializeCommand(resp))
+
+	return
+	
+end

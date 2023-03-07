@@ -1,0 +1,13 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+
+
+/usr/bin/killall gcenterd
+
+(nohup setsid ./gcenterd gamesys.duxg.conf > center.log 2>&1 &)
+
+
+

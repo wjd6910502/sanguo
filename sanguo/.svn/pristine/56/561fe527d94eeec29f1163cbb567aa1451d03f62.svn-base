@@ -1,0 +1,33 @@
+function OnCommand_WriteHeroComments(player, role, arg, others)
+	player:Log("OnCommand_WriteHeroComments, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("WriteHeroComments_Re")
+
+	local mist = others.mist
+	local comments = mist._hero_comments
+
+	local com = comments:Find(arg.hero_id)
+	if com == nil then
+		--说明这个玩家是第一个评价这个武将的
+		local com_list = CACHE.HeroCommentsList:new()
+		local role_com = CACHE.HeroComments:new()
+		role_com._roleid:Set(role._roledata._base._id)
+		role_com._rolename = role._roledata._base._name
+		role_com._comments = arg.comments
+		role_com._agree = CACHE.Int64intMap:new()
+
+		com_list:PushFront(role_com)
+		comments:Insert(arg.hero_id, com_list)
+	else
+		local role_com = CACHE.HeroComments:new()
+		role_com._roleid:Set(role._roledata._base._id)
+		role_com._rolename = role._roledata._base._name
+		role_com._comments = arg.comments
+		role_com._agree = CACHE.Int64intMap:new()
+
+		com:PushFront(role_com)
+	end
+	resp.retcode = 0
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

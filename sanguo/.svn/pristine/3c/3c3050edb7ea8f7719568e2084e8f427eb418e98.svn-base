@@ -1,0 +1,50 @@
+#ifndef _STATISTIC_MANAGER_H_
+#define _STATISTIC_MANAGER_H_
+
+#include "iatomic.h"
+
+class StatisticManager
+{
+	struct _data_t
+	{
+		atomic_t _cmd_count;
+		atomic_t _udp_cmd_count;
+		atomic_t _msg_put_count;
+		atomic_t _msg_run_count;
+	};
+
+	_data_t _cur;
+	_data_t _prev_dump;
+
+	StatisticManager()
+	{
+		memset(&_cur, 0, sizeof(_cur));
+		memset(&_prev_dump, 0, sizeof(_prev_dump));
+	}
+
+public:
+	static StatisticManager& GetInstance()
+	{
+		static StatisticManager _instance;
+		return _instance;
+	}
+
+	inline void IncCmdCount() { atomic_inc(&_cur._cmd_count); }
+	inline void IncUDPCmdCount() { atomic_inc(&_cur._udp_cmd_count); }
+	inline void IncMsgPutCount() { atomic_inc(&_cur._msg_put_count); }
+	inline void IncMsgRunCount() { atomic_inc(&_cur._msg_run_count); }
+
+	void Dump()
+	{
+		printf("StatisticManager::Dump, _cmd_count=%d(+%d), _udp_cmd_count=%d(+%d), _msg_put_count=%d(+%d), _msg_run_count=%d(+%d)\n",
+		       atomic_read(&_cur._cmd_count), atomic_read(&_cur._cmd_count)-atomic_read(&_prev_dump._cmd_count),
+		       atomic_read(&_cur._udp_cmd_count), atomic_read(&_cur._udp_cmd_count)-atomic_read(&_prev_dump._udp_cmd_count),
+		       atomic_read(&_cur._msg_put_count), atomic_read(&_cur._msg_put_count)-atomic_read(&_prev_dump._msg_put_count),
+		       atomic_read(&_cur._msg_run_count), atomic_read(&_cur._msg_run_count)-atomic_read(&_prev_dump._msg_run_count)
+		      );
+
+		memcpy(&_prev_dump, &_cur, sizeof(_cur));
+	}
+};
+
+#endif //_STATISTIC_MANAGER_H_

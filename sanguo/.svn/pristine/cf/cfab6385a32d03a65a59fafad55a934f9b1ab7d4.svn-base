@@ -1,0 +1,55 @@
+#ifndef __GNET_DBSAVE_H
+#define __GNET_DBSAVE_H
+
+#include "thread.h"
+#include "dbsavedata.hrp"
+
+using namespace GNET;
+
+extern std::map<Octets, Octets> g_save_data_map;
+
+namespace CACHE
+{
+	class DelayDBSaveTask : public Thread::Runnable
+	{
+	public:
+		static DelayDBSaveTask * GetInstance()
+		{
+			static DelayDBSaveTask instance;
+			return &instance;
+		}
+		DelayDBSaveTask(): Runnable(1){ }
+
+		void Run()
+		{
+			GLog::log(LOG_INFO, "DelayDBSaveDataTask begin ... ...");
+			DBSaveDataArg new_arg;
+			std::map<Octets, Octets>::iterator it = g_save_data_map.begin();
+			if(it != g_save_data_map.end())
+			{
+				int num = 0;
+				for(; it != g_save_data_map.end(); it++)
+				{
+					if(num >= 33554432)
+					{
+						new_arg.find_key = it->first;;
+						break;
+					}
+					else
+					{
+						new_arg.result_key.push_back(it->first);
+						new_arg.result_value.push_back(it->second);
+						num += it->first.size();
+						num += it->second.size();
+					}
+				}
+				DBSaveData *rpc = (DBSaveData *)Rpc::Call(RPC_DBSAVEDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+			
+		};
+	};
+};
+
+#endif
+

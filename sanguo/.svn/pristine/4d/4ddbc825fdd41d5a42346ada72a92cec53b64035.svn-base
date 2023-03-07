@@ -1,0 +1,80 @@
+
+#ifndef __GNET_GMCMD_GETACCID_HPP
+#define __GNET_GMCMD_GETACCID_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GMCmd_GetAccID : public GNET::Protocol
+{
+	#include "gmcmd_getaccid"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetAccId::Process, roleid=%ld, rolename=%.*s, session_id=%d", 
+				roleid, (int)rolename.size(), (char*)rolename.begin(), session_id);
+
+		GMCmd_GetAccID_Re resp;
+
+		const Player *player = PlayerManager::GetInstance().FindByRoleId(roleid);
+		if(player)
+		{
+			resp.retcode = 0;
+			resp.account = player->GetAccount();
+			resp.roleid = roleid;
+			resp.rolename = Octets(player->_role._roledata._base._name.c_str(), player->_role._roledata._base._name.size());
+			resp.session_id = session_id;
+			manager->Send(sid, resp);
+			return;
+		}
+
+		if(rolename.size() > 0)
+		{
+			string role_name = std::string((char*)rolename.begin(), rolename.size());;
+			GMAdapterServer::GetInstance()->ConvertToUtf8(role_name);
+
+			RoleNameQueryResults *rets = SGT_RoleNameCache::GetInstance().Query_NoLock(role_name);
+			RoleNameQueryResultsIter iter = rets->SeekToBegin();
+			RoleBrief *role = iter.GetValue();
+			while(role != NULL)
+			{
+				if(role->_name == role_name)
+				{
+					player = PlayerManager::GetInstance().FindByRoleId(role->_id);
+					if(player)
+					{
+						resp.retcode = 0;
+						resp.account = player->GetAccount();
+						resp.roleid = player->_role._roledata._base._id;
+						resp.rolename = rolename;
+						resp.session_id = session_id;
+						manager->Send(sid, resp);
+						return;
+					}
+					break;
+				}
+				iter.Next();
+				role = iter.GetValue();
+			}
+			SGT_RoleNameCache::GetInstance().ReleaseResult(rets);
+		}
+
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetAccId::Process, Failure, roleid=%ld, rolename=%.*s, session_id=%d, not found", 
+				roleid, (int)rolename.size(), (char*)rolename.begin(), session_id);
+
+		resp.retcode = -1;
+		resp.session_id = session_id;
+		const char *desc = "not found";
+		resp.desc = Octets(desc, strlen(desc));
+		manager->Send(sid, resp);
+	}
+};
+
+};
+
+#endif

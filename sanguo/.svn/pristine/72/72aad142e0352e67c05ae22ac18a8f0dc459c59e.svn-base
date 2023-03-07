@@ -1,0 +1,45 @@
+
+TOP_SRCDIR = ..
+
+DEBUG_VERSION =	true
+
+#XO_BUILDER  := $$LOGNAME@$(shell hostname)
+#SVN_VERSION := $(shell svnversion -n)
+
+CC  = g++ -m64 -std=c++0x
+LD  = g++ -m64 -std=c++0x
+
+CFLAGS = -Wno-unused-local-typedefs
+
+INCLUDES = -I. -I$(TOP_SRCDIR) -I$(TOP_SRCDIR)/inl -I$(TOP_SRCDIR)/rpcdata -I$(TOP_SRCDIR)/common -I$(TOP_SRCDIR)/xinclude
+
+DEFINES = -Wall -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D__OLD_IOLIB_COMPATIBLE__ -D_DEBUG -D_LINUX -D_X64 -DGXDLL_API_INDEPENDENT -fpermissive
+
+EXES = statusd
+
+ifeq ($(DEBUG_VERSION),true)
+	DEFINES += -D_DEBUGINFO -D_DEBUG -g -ggdb -O0 $(SELF_DEBUG)
+	LDFLAGS += -g -ggdb $(PROFLIB)
+else
+	DEFINES += -O3 -D_DEBUGINFO -D_DEBUG $(SELF_DEBUG)
+	LDFLAGS += $(PROFLIB)
+endif
+
+
+OBJS = statusd.o statusserver.o state.o stubs.o
+
+all : $(EXES)
+
+$(EXES) : $(OBJS)  
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) -L../xlib -lio64 -llog64 -ldl -lpthread -lssl
+
+.cpp.o:
+	$(CC) -c $(DEFINES) $(INCLUDES) $(CFLAGS) $< -o $@
+
+%.o : %.cxx
+	$(CC) -c $(DEFINES) $(INCLUDES) $(CFLAGS) $< -o $@
+
+.PHONY: clean
+clean:
+	rm -rf $(OBJS) $(EXES)
+

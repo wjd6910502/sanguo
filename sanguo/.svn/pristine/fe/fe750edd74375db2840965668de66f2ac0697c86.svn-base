@@ -1,0 +1,35 @@
+	public:
+		int magic;
+		char request;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPP2PMAKEHOLE };
+	public:
+		UDPP2PMakeHole() { type = PROTOCOL_UDPP2PMAKEHOLE; }
+		UDPP2PMakeHole(void*) : Protocol(PROTOCOL_UDPP2PMAKEHOLE) { }
+		UDPP2PMakeHole (int l_magic,char l_request)
+			 : magic(l_magic),request(l_request)
+		{
+			type = PROTOCOL_UDPP2PMAKEHOLE;
+		}
+
+		UDPP2PMakeHole(const UDPP2PMakeHole &rhs)
+			: Protocol(rhs),magic(rhs.magic),request(rhs.request) { }
+
+		GNET::Protocol *Clone() const { return new UDPP2PMakeHole(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << magic;
+			os << request;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> magic;
+			os >> request;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

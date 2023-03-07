@@ -1,0 +1,1 @@
+link ../../gamed/scripts/common.lua

@@ -1,0 +1,18 @@
+function OnCommand_HotPvpVideoGet(player, role, arg, others)
+	player:Log("OnCommand_HotPvpVideoGet, "..DumpTable(arg).." "..DumpTable(others))
+
+	local hpv_manager = others.hot_pvp_video._data
+
+	local hpv = hpv_manager._map:Find(arg.seq)
+	if hpv==nil then
+		ROLE_SendErrorInfo(G_ERRCODE["HOT_PVP_VIDEO_NOT_FOUND"])
+		return
+	end
+
+	local video = hpv._video
+	
+	hpv._replayed_count = hpv._replayed_count+1
+	role._roledata._misc._hot_pvp_video_replayed_map:Insert(arg.seq, 1)
+
+	role:GetPVPVideo(video._id)
+end

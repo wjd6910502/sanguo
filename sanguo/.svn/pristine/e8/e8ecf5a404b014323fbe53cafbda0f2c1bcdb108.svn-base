@@ -1,0 +1,13 @@
+function OnMessage_BroadCastPublicChat(player, role, arg, others)
+	player:Log("OnMessage_BroadCastPublicChat, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local msg = NewMessage("PublicChatnew")
+	msg.src = ROLE_MakeRoleBrief(role)  
+	
+	msg.text_content = arg.text_content
+	msg.speech_content = arg.speech_content
+	msg.time = arg.time
+	msg.chat_typ = arg.chat_typ
+	msg.channel = arg.channel
+	player:SendMessageToAllRole(SerializeMessage(msg))
+end

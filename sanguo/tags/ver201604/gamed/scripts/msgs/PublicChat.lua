@@ -1,0 +1,9 @@
+function OnMessage_PublicChat(player, role, arg, others)
+	--player:Log("OnMessage_PublicChat, "..DumpTable(arg))
+
+	local cmd = NewCommand("PublicChat")
+	cmd.src = arg.src
+	cmd.content = arg.content
+	cmd.time = arg.time
+        player:SendToClient(SerializeCommand(cmd))
+end

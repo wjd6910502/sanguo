@@ -1,0 +1,12 @@
+#!/bin/sh
+
+rsync -avzL gamed game@10.68.8.16:/home/game/SANGUO
+rsync -avzL --exclude=".svn" scripts game@10.68.8.16:/home/game/SANGUO
+rsync -avzL ../xlib/*.so game@10.68.8.16:/home/game/SANGUO/xlib
+rsync -avzL *.so game@10.68.8.16:/home/game/SANGUO/xlib
+rsync -avzL elementdata.dpc  game@10.68.8.16:/home/game/SANGUO
+
+#rsync -avzL run game@10.68.8.16:/home/game/SANGUO
+#rsync -avzL gamesys.conf game@10.68.8.16:/home/game/SANGUO
+
+

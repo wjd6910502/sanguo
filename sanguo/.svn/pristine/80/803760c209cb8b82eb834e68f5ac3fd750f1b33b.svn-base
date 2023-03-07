@@ -1,0 +1,13 @@
+#!/bin/sh
+
+ln -sf ./PWSL/include xinclude
+ln -sf ./PWSL/compatible xlib
+
+mkdir -p ./gamed/scripts
+ln -sf ../../common/base64.lua ./gamed/scripts
+ln -sf ../../common/serialize.lua ./gamed/scripts
+
+mkdir -p ./client/scripts
+ln -sf ../../common/base64.lua ./client/scripts
+ln -sf ../../common/serialize.lua.4client ./client/scripts
+

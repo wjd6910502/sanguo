@@ -1,0 +1,54 @@
+
+#ifndef __GNET_UDPGAMEPROTOCOL_HPP
+#define __GNET_UDPGAMEPROTOCOL_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class UDPGameProtocol : public GNET::Protocol
+{
+	#include "udpgameprotocol"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//fprintf(stderr, "UDPGameProtocol::Process, data=%s\n", B16EncodeOctets(data).c_str());
+		//fprintf(stderr, "UDPGameProtocol::Process, data=%.*s\n", (int)data.size(), (char*)data.begin());
+		//printf("UDPGameProtocol::Process, data=%.*s\n", (int)data.size(), (char*)data.begin());
+
+		//Connection::GetInstance().OnReceivedGameProtocol();
+
+		//check data
+		if(data.size() < 2)
+		{
+			fprintf(stderr, "UDPGameProtocol::Process, wrong length\n");
+			return;
+		}
+		for(size_t i=0; i<data.size(); ++i)
+		{
+			int c = ((char*)data.begin())[i];
+			if(!isupper(c) && !islower(c) && !isdigit(c) && c!='-' && c!='_' && c!='=' && c!=':') //并不标准的base64
+			{
+				fprintf(stderr, "UDPGameProtocol::Process, wrong char(%d)\n", c);
+				return;
+			}
+		}
+
+		if(g_L)
+		{
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("DeserializeAndProcessCommand", LuaParameter((void*)0, std::string((char*)data.begin(), data.size()), 0, 0)))
+			{
+				fprintf(stderr, "UDPGameProtocol::Process, gExec, DeserializeAndProcessCommand, %.*s\n", (int)data.size(), (char*)data.begin());
+			}
+		}
+	}
+};
+
+};
+
+#endif

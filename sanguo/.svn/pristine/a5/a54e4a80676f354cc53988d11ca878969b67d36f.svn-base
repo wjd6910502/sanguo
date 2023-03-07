@@ -1,0 +1,30 @@
+function LIMIT_TestUseLimit(role, id, count)
+	local common_use_limit = role._status._common_use_limit
+	local it = common_use_limit:Find(id)
+	local inv = it:GetValue()
+	if inv~=nil then
+		local ed = DataPool_Find("elementdata")
+		local template_common = ed:FindBy("limit_id", id)
+		if template_common~=nil then
+			if template_common.upperlimit >= inv._count+count then
+				return true
+			end
+			return false
+		end
+		return false
+	end
+	return false
+end
+
+--注意
+function LIMIT_AddUseLimit(role, id, count)
+	local common_use_limit = role._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		inv._count = inv._count + count
+		--修改刷新时间
+		return true
+	else
+		return false
+	end
+end

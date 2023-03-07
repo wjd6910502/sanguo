@@ -1,0 +1,55 @@
+#!/bin/sh
+
+stop_run()
+{
+        killall client
+        exit 0
+}
+
+trap "stop_run" SIGINT
+
+
+
+
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+./client gamesys.duxg.conf 1 TestPVP &
+./client gamesys.duxg.conf 2 TestPVP &
+#./client gamesys.duxg.conf 1 TestPVPFriend &
+#./client gamesys.duxg.conf 1 TestGetServerTime &
+#./client gamesys.duxg.conf 1 TestPing &
+#./client gamesys.duxg.conf 1 TestGetNetType &
+
+#for i in `seq 10000`
+#do
+#	if [ $i -gt 100 -a $i -le 200 ]
+#	then
+#		./client gamesys.conf $i TestPublicChat &
+#	fi
+#done
+
+
+
+
+
+
+
+
+
+#./client gamesys.conf 1 TestPVPFriend &
+
+
+
+
+
+
+
+
+while true
+do
+        sleep 1
+done
+
+
+

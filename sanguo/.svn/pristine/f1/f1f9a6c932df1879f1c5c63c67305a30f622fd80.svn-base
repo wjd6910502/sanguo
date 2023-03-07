@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<?xml-stylesheet type="text/xsl" href="rpcalls.xsl"?>
+
+<application namespace="GNET" project="SANGUO MOBILE">
+	<!-- protocol -->
+	<protocol name="Challenge" maxsize="1024" prior="1" type="1">
+		<variable name="server_rand1" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="Response" maxsize="1024" prior="1" type="2">
+		<variable name="client_rand1_encoded" type="Octets" attr="ref"/>
+		<variable name="account_encoded" type="Octets" attr="ref"/>
+		<variable name="password_encoded" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="AuthResult" maxsize="1024" prior="1" type="3">
+		<variable name="retcode" type="int"/>
+		<variable name="trans_ip" type="Octets" attr="ref"/>
+		<variable name="trans_port" type="unsigned short"/>
+		<variable name="udp_trans_ip" type="Octets" attr="ref"/>
+		<variable name="udp_trans_port" type="unsigned short"/>
+		<variable name="trans_token" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="TransChallenge" maxsize="1024" prior="1" type="4">
+		<variable name="server_rand2" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="TransResponse" maxsize="1024" prior="1" type="5">
+		<variable name="device_id" type="Octets" attr="ref"/>
+		<variable name="trans_token" type="Octets" attr="ref"/>
+		<variable name="salt" type="Octets" attr="ref"/>
+		<variable name="server_rand2_encoded" type="Octets" attr="ref"/>
+		<variable name="client_rand2_encoded" type="Octets" attr="ref"/>
+		<variable name="client_received_count" type="int"/>
+	</protocol>
+
+	<protocol name="TransAuthResult" maxsize="1024" prior="1" type="6">
+		<variable name="retcode" type="int"/>
+		<variable name="server_received_count" type="int"/>
+		<variable name="do_reset" type="char"/>
+	</protocol>
+
+	<protocol name="Continue" maxsize="1024" prior="1" type="7">
+		<variable name="reset" type="char"/>
+	</protocol>
+
+	<protocol name="GameProtocol" maxsize="1024" prior="0" type="8">
+		<variable name="data" type="Octets" attr="ref"/>
+		<variable name="extra_roles" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_mafias" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_pvps" type="std::vector&lt;int&gt;" attr="ref"/>
+	</protocol>
+
+	<protocol name="Kickout" maxsize="1024" prior="1" type="9">
+		<variable name="reason" type="int"/>
+	</protocol>
+
+	<protocol name="ServerStatus" maxsize="1024" prior="1" type="10">
+		<variable name="info" type="Octets" attr="ref"/>
+	</protocol>
+
+	<protocol name="UDPGameProtocol" maxsize="1024" prior="0" type="11">
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="data" type="Octets" attr="ref"/>
+		<variable name="extra_roles" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_mafias" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_pvps" type="std::vector&lt;int&gt;" attr="ref"/>
+	</protocol>
+
+	<protocol name="KeepAlive" maxsize="1024" prior="1" type="12">
+		<variable name="dummy" type="char"/>
+	</protocol>
+
+	<protocol name="UDPKeepAlive" maxsize="1024" prior="1" type="13">
+		<variable name="account" type="Octets" attr="ref"/>
+	</protocol>
+	
+	<protocol name="SyncNetime" maxsize="1024" prior="1" type="14">
+		<variable name="index" type="int"/>
+		<variable name="orignatetime" type="int64_t"/>
+		<variable name="diffs2c" type="int64_t"/>
+		<variable name="rtt" type="int64_t"/>
+	</protocol>
+	
+	<protocol name="SyncNetimeRe" maxsize="1024" prior="1" type="15">
+		<variable name="orignatetime" type="int64_t"/>
+		<variable name="receivetime" type="int64_t"/>
+		<variable name="transmitime" type="int64_t"/>
+	</protocol>
+
+<!--
+	<protocol name="SyncCmd" maxsize="1024" prior="1" type="14">
+		<variable name="command" type="Octets" attr="ref"/>
+		<variable name="version" type="int"/>
+		<variable name="content" type="Octets" attr="ref"/>
+	</protocol>
+
+	<rpcdata name="Deletion">
+		<variable name="index" type="int"/>
+		<variable name="size" type="int"/>
+	</rpcdata>
+	<rpcdata name="Insertion">
+		<variable name="index" type="int"/>
+		<variable name="adds" type="std::vector&lt;Octets&gt;" attr="ref"/>
+	</rpcdata>
+	<protocol name="UDPIncreSyncCmd" maxsize="1024" prior="1" type="15">
+		<variable name="command" type="Octets" attr="ref"/>
+		<variable name="version" type="int"/>
+		<variable name="src_version" type="int"/>
+		<variable name="deletions" type="std::vector&lt;Deletion&gt;" attr="ref"/>
+		<variable name="insertions" type="std::vector&lt;Insertion&gt;" attr="ref"/>
+	</protocol>
+
+	<protocol name="SyncCmdAck" maxsize="1024" prior="1" type="33">
+		<variable name="command" type="Octets" attr="ref"/>
+		<variable name="version" type="int"/>
+	</protocol>
+-->
+
+	<rpcdata name="C2SGameProtocol">
+		<variable name="data" type="Octets" attr="ref"/>
+		<variable name="extra_roles" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_mafias" type="std::vector&lt;int64_t&gt;" attr="ref"/>
+		<variable name="extra_pvps" type="std::vector&lt;int&gt;" attr="ref"/>
+	</rpcdata>
+	<protocol name="UDPC2SGameProtocols" maxsize="1024" prior="0" type="35">
+		<variable name="account" type="Octets" attr="ref"/>
+		<variable name="index" type="int"/>
+		<variable name="protocols" type="std::vector&lt;C2SGameProtocol&gt;" attr="ref"/>
+		<variable name="index_ack" type="int"/>
+	</protocol>
+	<protocol name="UDPS2CGameProtocols" maxsize="1024" prior="0" type="36">
+		<variable name="index" type="int"/>
+		<variable name="protocols" type="std::vector&lt;Octets&gt;" attr="ref"/>
+		<variable name="index_ack" type="int"/>
+	</protocol>
+
+
+	<!--  1001-2000  -->
+	<rpcdata name="DBLoadDataArg">
+		<variable name="key_table" type="Octets" attr="ref"/>
+		<variable name="step" type="int64_t" default="0"/>
+	</rpcdata>
+
+	<rpcdata name="DBLoadDataRes">
+		<variable name="retcode" type="int"/>
+		<variable name="flag" type="char" default="0"/>
+		<variable name="result_key" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="result_value" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="result_step" type="int64_t" default="0"/>
+	</rpcdata>
+
+	<rpc name="DBLoadData" type="1001" maxsize="67108864" prior="1" argument="DBLoadDataArg" result="DBLoadDataRes" timeout="30"/>
+
+	<rpcdata name="DBSaveDataArg">
+		<variable name="result_key" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="result_value" type="std::vector&lt;Octets&gt;" attr="ref" />
+		<variable name="find_key" type="Octets" attr="ref"/>
+	</rpcdata>
+
+	<rpcdata name="DBSaveDataRes">
+		<variable name="retcode" type="int"/>
+	</rpcdata>
+
+	<rpc name="DBSaveData" type="1002" maxsize="67108864" prior="1" argument="DBSaveDataArg" result="DBSaveDataRes" timeout="30"/>
+	
+	<!-- service -->
+	<service name="client">
+		<manager name="Gate" type="client" initstate="GateClient"/>
+		<manager name="Status" type="client" initstate="StatusClient"/>
+		<manager name="Trans" type="client" initstate="TransClient"/>
+		<manager name="UDPTrans" type="client" initstate="UDPTransClient"/>
+		
+		<state ref="GateClient"/>
+		<state ref="StatusClient"/>
+		<state ref="TransClient"/>
+		<state ref="UDPTransClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="Response"/>
+		<protocol ref="TransResponse"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="UDPC2SGameProtocols"/>
+		<protocol ref="SyncNetimeRe"/>
+	</service>
+	<state name="GateClient" timeout="86400">
+		<protocol ref="Challenge"/>
+		<protocol ref="AuthResult"/>
+	</state>
+	<state name="StatusClient" timeout="86400">
+		<protocol ref="ServerStatus"/>
+	</state>
+	<state name="TransClient" timeout="86400">
+		<protocol ref="TransChallenge"/>
+		<protocol ref="TransAuthResult"/>
+		<protocol ref="Continue"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="Kickout"/>
+		<protocol ref="SyncNetime"/>
+	</state>
+	<state name="UDPTransClient" timeout="86400">
+		<protocol ref="UDPGameProtocol"/>
+		<protocol ref="UDPKeepAlive"/>
+		<protocol ref="UDPS2CGameProtocols"/>
+	</state>
+	<state name="Null" timeout="5"/>
+
+	<service name="gamed">
+		<manager name="Gate" type="server" initstate="GateServer"/>
+		<manager name="Trans" type="server" initstate="TransServer"/>
+		<manager name="UDPTrans" type="server" initstate="UDPTransServer"/>
+		<manager name="GameDB" type="client" initstate="GameDBClient"/>
+		
+		<state ref="GateServer"/>
+		<state ref="TransServer"/>
+		<state ref="UDPTransServer"/>
+		<state ref="GameDBClient"/>
+		<state ref="Null"/>
+
+		<protocol ref="Challenge"/>
+		<protocol ref="AuthResult"/>
+		<protocol ref="TransChallenge"/>
+		<protocol ref="TransAuthResult"/>
+		<protocol ref="Kickout"/>
+		<protocol ref="UDPS2CGameProtocols"/>
+		<protocol ref="SyncNetime"/>
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBSaveData"/>
+	</service>
+
+	<state name="GateServer" timeout="10">
+		<protocol ref="Response"/>
+	</state>
+	<state name="TransServer" timeout="600">
+		<protocol ref="TransResponse"/>
+		<protocol ref="Continue"/>
+		<protocol ref="GameProtocol"/>
+		<protocol ref="KeepAlive"/>
+		<protocol ref="SyncNetimeRe"/>
+	</state>
+	<state name="UDPTransServer" timeout="600">
+		<protocol ref="UDPGameProtocol"/>
+		<protocol ref="UDPKeepAlive"/>
+		<protocol ref="UDPC2SGameProtocols"/>
+	</state>
+	<state name="GameDBClient" timeout="86400">
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBSaveData"/>
+	</state>
+
+	<service name="gamedbd">
+		<manager name="GameDB" type="server" initstate="GameDBServer"/>
+
+		<state ref="GameDBServer"/>
+		
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBSaveData"/>
+	</service>
+
+	<state name="GameDBServer" timeout="600">
+		<rpc ref="DBLoadData"/>
+		<rpc ref="DBSaveData"/>
+	</state>
+
+<!--
+	<service name="statusd">
+		<manager name="Status" type="server" initstate="StatusServer"/>
+		
+		<state ref="StatusServer"/>
+		<state ref="Null"/>
+
+		<protocol ref="ServerStatus"/>
+	</service>
+	<state name="StatusServer" timeout="10">
+	</state>
+-->
+
+</application>
+

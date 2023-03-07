@@ -1,0 +1,998 @@
+#include <set>
+#include "playermanager.h"
+#include "gameprotocol.hpp"
+#include "udpgameprotocol.hpp"
+#include "udps2cgameprotocols.hpp"
+#include "transserver.hpp"
+#include "udptransserver.hpp"
+#include "script_wrapper.h"
+#include "message.h"
+#include "glog.h"
+#include "pvpmanager.h"
+#include "statistic_manager.h"
+//#include "syncnetime.hpp"
+#include "kickout.hpp"
+#include "udpsyncnettime.hpp"
+#include "syncnetime.hpp"
+#include "gamedbclient.hpp"
+#include "pvpjoin.hrp"
+#include "pvpenter.hpp"
+#include "pvpleave.hpp"
+#include "gcenterclient.hpp"
+#include "pvpready.hpp"
+#include "pvpcancle.hrp"
+#include "pvpspeed.hpp"
+#include "uniquenameclient.hpp"
+#include "createrolename.hrp"
+#include "pvpreset.hpp"
+#include "getpvpvideo.hpp"
+
+extern std::map<Octets, Octets> g_save_data_map;
+extern __thread int64_t g_transaction_id;
+
+namespace CACHE
+{
+
+unsigned int PlayerManager::_role_id_stub = 0;
+unsigned int PlayerManager::_mafia_id_stub = 0;
+Thread::Mutex PlayerManager::_role_id_stub_lock;
+Thread::Mutex PlayerManager::_mafia_id_stub_lock;
+
+void Role::SendToClient(const std::string& v)
+{
+	_player->SendToClient(v);
+}
+
+void Role::SendUDPToClient(const std::string& v)
+{
+	_player->SendUDPToClient(v);
+}
+
+void Role::FastSess_Reset()
+{
+	_player->FastSess_Reset();
+}
+
+void Role::FastSess_Send(const std::string& data)
+{
+	_player->FastSess_Send(data);
+}
+
+void Role::FastSess_OnAck(int index_ack)
+{
+	_player->FastSess_OnAck(index_ack);
+}
+
+bool Role::FastSess_IsReceived(int index) const
+{
+	return _player->FastSess_IsReceived(index);
+}
+
+void Role::FastSess_SetReceived(int index)
+{
+	_player->FastSess_SetReceived(index);
+}
+
+void Role::FastSess_SendAck()
+{
+	_player->FastSess_SendAck();
+}
+
+void Role::FastSess_TriggerSend()
+{
+	_player->FastSess_TriggerSend();
+}
+
+void Role::SendPVPJoin(int score)
+{
+	PvpJoinArg arg;
+	arg.roleid = _player->_role._roledata._base._id;
+	arg.zoneid = g_zoneid;
+	arg.pvpinfo = Octets((void*)_player->_role._roledata._pvp._pvpcenterinfo.c_str(), _player->_role._roledata._pvp._pvpcenterinfo.size());
+	arg.score = score;
+	arg.elo_score = _player->_role._roledata._pvp_info._elo_score;
+
+	PvpJoin *rpc = (PvpJoin*)Rpc::Call(RPC_PVPJOIN, arg);
+	GCenterClient::GetInstance()->SendProtocol(rpc);
+}
+
+void Role::SendPVPEnter(int flag)
+{
+	PvpEnter pro;
+
+	pro.roleid = _player->_role._roledata._base._id;
+	pro.index = _player->_role._roledata._pvp._id;
+	pro.flag = flag;
+
+	GCenterClient::GetInstance()->SendProtocol(&pro);
+}
+
+void Role::SendPVPReady()
+{
+	PvpReady pro;
+
+	pro.roleid = _player->_role._roledata._base._id;
+	pro.index = _player->_role._roledata._pvp._id;
+
+	GCenterClient::GetInstance()->SendProtocol(&pro);
+}
+
+void Role::SendPVPLeave(int reason, int typ)
+{
+	PvpLeave pro;
+
+	pro.roleid = _player->_role._roledata._base._id;
+	pro.index = _player->_role._roledata._pvp._id;
+	pro.reason = reason;
+	pro.typ = typ;
+
+	GCenterClient::GetInstance()->SendProtocol(&pro);
+}
+
+void Role::SendPVPCancle()
+{
+	PvpCancleArg arg;
+	arg.roleid = _player->_role._roledata._base._id;
+
+	PvpCancle *rpc = (PvpCancle*)Rpc::Call(RPC_PVPCANCLE, arg);
+	GCenterClient::GetInstance()->SendProtocol(rpc);
+}
+
+void Role::SendPVPSpeed(int speed)
+{
+	PvpSpeed pro;
+	pro.roleid = _player->_role._roledata._base._id;
+	pro.speed = speed;
+	pro.index = _player->_role._roledata._pvp._id;
+	GCenterClient::GetInstance()->SendProtocol(pro);
+}
+
+void Role::SendPVPReset()
+{
+	PvpReset pro;
+	pro.roleid = _player->_role._roledata._base._id;
+	pro.index = _player->_role._roledata._pvp._id;
+	GCenterClient::GetInstance()->SendProtocol(pro);
+}
+
+void Role::GetPVPVideo(const std::string& v)
+{
+	GetPvpVideo pro;
+	pro.roleid = _player->_role._roledata._base._id;
+	pro.zoneid = g_zoneid;
+	pro.video_id = Octets((void*)v.c_str(), v.size());
+	GCenterClient::GetInstance()->SendProtocol(pro);
+}
+
+void FastUDPSession::Reset()
+{
+	_index_stub = 0;
+	_data_map.clear();
+	_received_index = 0;
+	_need_send_ack = false;
+}
+
+void FastUDPSession::Send(const Octets& data)
+{
+	_index_stub++;
+	_data_map[_index_stub] = data;
+	TriggerSend();
+}
+
+void FastUDPSession::OnAck(int index_ack)
+{
+	auto it = _data_map.find(index_ack);
+	if(it != _data_map.end()) _data_map.erase(_data_map.begin(), ++it);
+}
+
+bool FastUDPSession::IsReceived(int index) const
+{
+	return (index<=_received_index);
+}
+
+void FastUDPSession::SetReceived(int index)
+{
+	assert(index==_received_index+1);
+	_received_index = index;
+}
+
+void FastUDPSession::SendAck()
+{
+	_need_send_ack = true;
+}
+
+void FastUDPSession::TriggerSend()
+{
+	if(_data_map.empty() && !_need_send_ack) return;
+
+	UDPS2CGameProtocols prot;
+	prot.index = 0;
+	if(!_data_map.empty()) prot.index = _data_map.begin()->first;
+	size_t sz = 0;
+	for(auto it=_data_map.begin(); it!=_data_map.end(); ++it)
+	{
+		const Octets& dat = it->second;
+		prot.protocols.push_back(dat);
+		sz += dat.size();
+		if(sz > 1024) break; //TODO:
+	}
+	prot.index_ack = _received_index;
+	_need_send_ack = false;
+
+	StatisticManager::GetInstance().IncUDPS2CCmdCount(prot.protocols.size());
+
+	_player->SendUDPProtocol(prot);
+}
+
+void NetworkTime::Reset()
+{ 
+	_delay = 0; 
+	_offset = 0; 
+	_cnt = 5;
+}
+
+void NetworkTime::EstimateNTP(int64_t delay, int64_t offset)
+{
+	/*
+	 时间估算算法
+	 EstmatisedRTT = (1-x)*EstimatedRTT + x*SampleRTT
+	*/
+	if(_delay == 0) _delay = delay;
+	if(_offset == 0) _offset = offset;
+		
+	_delay = (1-0.125)*_delay + 0.125*delay;
+	_offset = (1-0.125)*_offset + 0.125*offset;
+
+	if(_cnt > 0)
+	{
+		Send();
+		_cnt--;
+	}
+	else
+	{
+		GLog::log(LOG_INFO, "NetworkTime::EstimatedRTT, delay=%ld, offset=%ld", delay, offset);
+	}
+}
+
+void NetworkTime::Sync2Client()
+{
+	Reset();
+	Send();
+	_delay = 1; //防止重复Sync
+	_cnt--;
+}
+
+void NetworkTime::Send()
+{
+	timeval ori;
+	gettimeofday(&ori,NULL); //TODO: 替换掉
+		
+	//UDPSyncNetTime prot;
+	SyncNetime prot;
+	prot.orignate_time = ori.tv_sec*1000000 + ori.tv_usec;
+	prot.offset = _offset;
+	prot.delay = _delay;
+
+	//_player->SendUDPProtocol(prot);
+	_player->SendProtocol(prot);
+}
+
+bool Player::NeedDoReset(const Octets& device_id, int client_received_count) const
+{
+	//客户端设备换了
+	if(device_id.size()==0 || device_id!=_last_device_id) return true;
+	//历史不足以满足重传
+	if(client_received_count+1 < _first_game_protocol_id) return true;
+	//客户端收到的比服务器发过的还多，服务器重启了???
+	if((unsigned int)client_received_count > _first_game_protocol_id+_game_protocol_history.size()-1) return true;
+
+	return false;
+}
+
+void Player::OnContinue(bool reset)
+{
+	//fprintf(stderr, "Player::OnContinue, account=%s, reset=%d\n", B16EncodeOctets(_account).c_str(), reset);
+
+	_can_send_game_protocol = true;
+
+	if(reset)
+	{
+		_client_received_game_protocol_count = 0;
+		_server_received_game_protocol_count = 0;
+		_first_game_protocol_id = 1;
+		_game_protocol_history.clear();
+		return;
+	}
+
+	//触发重传
+	if((unsigned int)_client_received_game_protocol_count < _first_game_protocol_id+_game_protocol_history.size()-1)
+	{
+		auto it = _game_protocol_history.begin();
+		auto i = 0;
+		for(; it!=_game_protocol_history.end(); ++it, ++i)
+		{
+			if(_client_received_game_protocol_count < _first_game_protocol_id+i)
+			{
+				GameProtocol prot;
+				prot.data = *it;
+				TransServer::GetInstance()->Send(_trans_sid, prot);
+			}
+		}
+	}
+}
+
+void Player::UpdateUDPInfo(int net_type, const Octets& public_ip, unsigned short public_port, const Octets& local_ip, unsigned short local_port)
+{
+	_role._roledata._device_info._net_type = net_type;
+	_role._roledata._device_info._public_ip = std::string((char*)public_ip.begin(), public_ip.size());
+	_role._roledata._device_info._public_port = public_port;
+	_role._roledata._device_info._local_ip = std::string((char*)local_ip.begin(), local_ip.size());
+	_role._roledata._device_info._local_port = local_port;
+}
+
+void Player::SendGameProtocol(const Octets& data)
+{
+	GameProtocol prot;
+	prot.data = data;
+
+	if(_can_send_game_protocol) TransServer::GetInstance()->Send(_trans_sid, prot);
+
+	AddHistory(data);
+}
+
+void Player::SendUDPGameProtocol(const Octets& data)
+{
+	UDPGameProtocol prot;
+	//prot.account TODO:
+	prot.data = data;
+
+	UDPTransServer::GetInstance()->Send(_udp_trans_sid, prot);
+}
+
+void Player::OnTimer1s(time_t now)
+{
+	if((int64_t)_role._roledata._base._id == 0) return; //没创建角色前别心跳了
+	if(now-_last_active_time > 60) return; //TODO:	
+
+	//NetTime_SyncServer2Client(); //同步服务器时间
+
+	char msg[100];
+	snprintf(msg, sizeof(msg), "10002:%lu:", now);
+	MessageManager::GetInstance().Put(_role._roledata._base._id, _role._roledata._base._id, msg, 0);
+}
+
+void Player::Log(const char *v) const
+{
+	GLog::log(LOG_INFO, "===LUA LOG(%s, %.*s)===: thread=%u, %s", B16EncodeOctets(GetAccount()).c_str(), (int)GetAccount().size(),
+	          (char*)GetAccount().begin(), (unsigned int)pthread_self(), v);
+}
+
+void Player::Err(const char *v) const
+{
+	fprintf(stderr, "\033[31m!!!LUA ERR(%s, %.*s)!!!: thread=%u, %s\033[0m\n", B16EncodeOctets(GetAccount()).c_str(), (int)GetAccount().size(),
+	        (char*)GetAccount().begin(), (unsigned int)pthread_self(), v);
+	GLog::log(LOG_ERR, "!!!LUA ERR(%s, %.*s)!!!: thread=%u, %s", B16EncodeOctets(GetAccount()).c_str(), (int)GetAccount().size(),
+	          (char*)GetAccount().begin(), (unsigned int)pthread_self(), v);
+}
+
+void Player::SendToClient(const std::string& v)
+{
+	Octets data(v.c_str(), v.size());
+	if(_in_transaction)
+	{
+		_transaction_game_protocols.push_back(data);
+		return;
+	}
+	SendGameProtocol(data);
+}
+
+void Player::SendUDPToClient(const std::string& v)
+{
+	Octets data(v.c_str(), v.size());
+	//TODO: transaction
+	SendUDPGameProtocol(data);
+}
+
+void Player::SendProtocol(Protocol& prot)
+{
+	TransServer::GetInstance()->Send(_trans_sid, prot);
+}
+
+void Player::SendUDPProtocol(Protocol& prot)
+{
+	UDPTransServer::GetInstance()->Send(_udp_trans_sid, prot);
+}
+
+void Player::SendMessage(const Int64& target, const std::string& v, int delay)
+{
+	Int64List extra_roles;
+	Int64List extra_mafias;
+	IntList extra_pvps;
+	SendMessage(target, v, delay, extra_roles, extra_mafias, extra_pvps);
+}
+
+void Player::SendMessage(const Int64& target, const std::string& v, int delay, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps)
+{
+	std::vector<int64_t> vec;
+	{
+	const Int64List& er = extra_roles;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec.push_back(*id);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	std::vector<int64_t> vec2;
+	{
+	const Int64List& er = extra_mafias;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec2.push_back(*id);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	std::vector<int> vec3;
+	{
+	const IntList& er = extra_pvps;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec3.push_back(id->_value);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	Message msg(target, _role._roledata._base._id, v, delay, &vec, &vec2, &vec3);
+	if(_in_transaction)
+	{
+		_transaction_messages.push_back(msg);
+		return;
+	}
+	MessageManager::GetInstance().Put(msg);
+}
+
+void Player::SendMessageToAllRole(const std::string& v, int delay)
+{
+	SendMessage(SERVER_CONST_MESSAGE_TARGET_ACTIVE_ROLES, v, delay);
+}
+
+void Player::SendMessageToAllRole(const std::string& v, int delay, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps)
+{
+	SendMessage(SERVER_CONST_MESSAGE_TARGET_ACTIVE_ROLES, v, delay, extra_roles, extra_mafias, extra_pvps);
+}
+
+void Player::KickoutSelf(int reason)
+{
+	unsigned int old_sid = GetTransSid();
+	Kickout prot;
+	prot.reason = reason;
+	TransServer::GetInstance()->Send(old_sid, prot);
+	TransServer::GetInstance()->Close(old_sid);
+}
+
+void Player::CreateRole(const char *name, int photo, const char *errorinfo)
+{
+	if(_role._roledata._base._id) return;
+	if(!_role._roledata._base._name.empty()) return; //TODO: 得加超时检测
+
+	std::string tmp = name;
+	
+	CreateRoleNameArg arg;
+	arg.name = Octets((void*)tmp.c_str(), tmp.size());
+	arg.photo = photo;
+	arg.account = _account;
+	arg.errorinfo = Octets((void*)errorinfo, strlen(errorinfo));
+	
+	CreateRoleName *rpc = (CreateRoleName*)Rpc::Call(RPC_CREATEROLENAME, arg);
+	UniqueNameClient::GetInstance()->SendProtocol(rpc);
+
+}
+
+void Player::OnCreateRole(Octets name, int photo)
+{
+	_role._roledata._base._name = std::string((char*)name.begin(), name.size());
+	_role._roledata._base._photo = photo;
+	_role._roledata._base._id = PlayerManager::GetInstance().AllocRoleId();
+
+	MessageManager::GetInstance().Put(_role._roledata._base._id, _role._roledata._base._id, "10001:0:", 0);
+}
+
+void Player::CreateMafia(const char *name, int flag)
+{
+	//TODO: 去唯一名服务器验证
+	if(_role._roledata._mafia._id) return;
+	if(!_l_mafia_name.empty()) return; //TODO: 得加超时检测
+	_l_mafia_name = name;
+	_l_mafia_flag = flag;
+	//TODO: 去唯一名服务器验证
+}
+
+void Player::OnCreateMafia()
+{
+	Mafia mafia;
+	mafia._id = PlayerManager::GetInstance().AllocMafiaId();
+	mafia._name = _l_mafia_name;
+	mafia._flag = _l_mafia_flag;
+	mafia._level = 1;
+	mafia._activity = 0;
+	mafia._boss_id = _role._roledata._base._id;
+	mafia._boss_name = _role._roledata._base._name;
+	//member
+	MafiaMember member;
+	member._id = _role._roledata._base._id;
+	member._name = _role._roledata._base._name;
+	member._photo = _role._roledata._base._photo;
+	member._level = _role._roledata._status._level;
+	member._activity = 0;
+	mafia._member_map.Insert(_role._roledata._base._id, member);
+
+	MafiaManager::GetInstance().Insert(mafia._id, mafia);
+	_role._roledata._mafia._id = mafia._id;
+	_role._roledata._mafia._name = mafia._name;
+
+	std::vector<int64_t> extra_mafias;
+	extra_mafias.push_back(mafia._id);
+	MessageManager::GetInstance().Put(_role._roledata._base._id, _role._roledata._base._id, "10003:0:", 0, &extra_mafias);
+
+	_l_mafia_name = "";
+	_l_mafia_flag = 0;
+}
+
+void Player::restore(int transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_role");
+		if(it != _transaction_data.end())
+		{
+			OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _role;
+			_role.cleanup();
+		}
+		else
+		{
+			_role.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_role.restore(transaction_id);
+	}
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void Player::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_role.cleanup();
+}
+
+void Player::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_transaction_game_protocols.clear();
+	_transaction_messages.clear();
+}
+
+void Player::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	for(auto it=_transaction_game_protocols.begin(); it!=_transaction_game_protocols.end(); ++it)
+	{
+		SendGameProtocol(*it);
+	}
+	for(auto it=_transaction_messages.begin(); it!=_transaction_messages.end(); ++it)
+	{
+		MessageManager::GetInstance().Put(*it);
+	}
+}
+
+void Player::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+bool Player::IsValidRoleName(const char *name)
+{
+	//auto l = strlen(name);
+	//if(l<1 || l>12) return false;
+	return true;
+}
+
+bool Player::IsValidMafiaName(const char *name)
+{
+	auto l = strlen(name);
+	if(l<1 || l>12) return false;
+	return true;
+}
+
+void Player::AddHistory(const Octets& data)
+{
+	_game_protocol_history.push_back(data);
+	if(_game_protocol_history.size() > CONN_CONST_SERVER_SEND_HISTORY_MAX)
+	{
+		_first_game_protocol_id++;
+		_game_protocol_history.pop_front();
+	}
+}
+
+
+void RoleIter::Next()
+{
+	if(_saved_tag != _map->Tag()) return;
+	if(_it != _map->End()) _it++;
+}
+
+Role* RoleIter::GetValue()
+{
+	if(_saved_tag != _map->Tag()) return 0;
+	if(_it == _map->End()) return 0;
+	return _it->second;
+}
+
+void PlayerManager::OnTimer(int tick, time_t now)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	//统计活跃玩家
+	int prev_min = _cur_min;
+	_cur_min = now/60;
+	if(prev_min != _cur_min)
+	{
+		//新的分钟开始了
+		_active_players_history[_cur_min%SERVER_CONST_ACTIVE_PLAYERS_HISTORY_MAX].clear();
+		_active_players.clear();
+		for(int i=_cur_min-10; i<_cur_min; i++)
+		{
+			int idx = i%SERVER_CONST_ACTIVE_PLAYERS_HISTORY_MAX;
+			_active_players.insert(_active_players_history[idx].begin(), _active_players_history[idx].end());
+		}
+	}
+
+	for(auto it=_map.begin(); it!=_map.end(); ++it)
+	{
+		Player *player = it->second;
+		if(tick%SERVER_CONST_TICK_PER_SECOND == player->GetHash()%SERVER_CONST_TICK_PER_SECOND)
+		{
+			player->OnTimer1s(now);
+
+			//FIXME: 测试用临时实现, 正常不该有锁
+			Thread::Mutex::Scoped keeper2(player->_lock);
+			//if(player->IsCreatingRole())
+			//{
+			//	player->OnCreateRole();
+			//	_map_by_role_id[player->_role._roledata._base._id] = &player->_role;
+			//	OnChanged();
+			//}
+			if(player->IsCreatingMafia())
+			{
+				player->OnCreateMafia();
+			}
+		}
+	}
+}
+
+int64_t PlayerManager::AllocRoleId()
+{
+	Thread::Mutex::Scoped keeper(_role_id_stub_lock);
+	return ++_role_id_stub;
+}
+
+int64_t PlayerManager::AllocMafiaId()
+{
+	Thread::Mutex::Scoped keeper(_mafia_id_stub_lock);
+	return ++_mafia_id_stub;
+}
+
+Player* PlayerManager::FindByAccount(const Octets& account)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map.find(account);
+	if(it == _map.end()) return 0;
+	return it->second;
+}
+
+const Player* PlayerManager::FindByAccount(const Octets& account) const
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map.find(account);
+	if(it == _map.end()) return 0;
+	return it->second;
+}
+
+Player* PlayerManager::FindByTransToken(const Octets& trans_token, bool active)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map_by_trans_token.find(trans_token);
+	if(it == _map_by_trans_token.end()) return 0;
+	Player *player = it->second;
+	if(active)
+	{
+		_active_players_history[_cur_min%SERVER_CONST_ACTIVE_PLAYERS_HISTORY_MAX].insert(player);
+		_active_players.insert(player);
+	}
+	return player;
+}
+
+const Player* PlayerManager::FindByTransToken(const Octets& trans_token) const
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map_by_trans_token.find(trans_token);
+	if(it == _map_by_trans_token.end()) return 0;
+	return it->second;
+}
+
+Player* PlayerManager::FindByTransSid(unsigned int sid, bool active)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map_by_trans_sid.find(sid);
+	if(it == _map_by_trans_sid.end()) return 0;
+	Player *player = it->second;
+	if(active)
+	{
+		_active_players_history[_cur_min%SERVER_CONST_ACTIVE_PLAYERS_HISTORY_MAX].insert(player);
+		_active_players.insert(player);
+	}
+	return player;
+}
+
+const Player* PlayerManager::FindByTransSid(unsigned int sid) const
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map_by_trans_sid.find(sid);
+	if(it == _map_by_trans_sid.end()) return 0;
+	return it->second;
+}
+
+Player* PlayerManager::FindByRoleId(int64_t id)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map_by_role_id.find(id);
+	if(it == _map_by_role_id.end()) return 0;
+	Role *role = it->second;
+	return role->_player;
+}
+
+const Player* PlayerManager::FindByRoleId(int64_t id) const
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	auto it = _map_by_role_id.find(id);
+	if(it == _map_by_role_id.end()) return 0;
+	const Role *role = it->second;
+	return role->_player;
+}
+
+void PlayerManager::OnConnect(const Octets& account, const Octets& trans_token, const Octets& key1)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	Player *player = 0;
+	auto it = _map.find(account);
+	if(it != _map.end()) player = it->second;
+	if(!player)
+	{
+		player = new Player(account);
+		if(!player) return;
+		_map[account] = player;
+		//TODO: 可能需要从db获取player/role数据
+	}
+
+	Thread::Mutex::Scoped keeper2(player->_lock);
+
+	if(trans_token.size() > 0)
+	{
+		_map_by_trans_token.erase(player->GetTransToken());
+
+		player->SetTransToken(trans_token);
+		_map_by_trans_token[trans_token] = player;
+	}
+	player->SetKey1(key1);
+
+	//fprintf(stderr, "PlayerManager::OnConnect, account=%s, trans_token=%s, key1=%s\n",
+	//        B16EncodeOctets(account).c_str(), B16EncodeOctets(trans_token).c_str(), B16EncodeOctets(key1).c_str());
+	player->NetTime_Reset();
+}
+
+void PlayerManager::OnTransConnect(Player *player, const Octets& device_id, int client_received_game_protocol_count, unsigned int sid)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	Thread::Mutex::Scoped keeper2(player->_lock);
+
+	unsigned int old_sid = player->GetTransSid();
+	_map_by_trans_sid.erase(old_sid);
+	Kickout prot;
+	prot.reason = KICKOUT_REASON_MULTI_LOGIN;
+	TransServer::GetInstance()->Send(old_sid, prot);
+	TransServer::GetInstance()->Close(old_sid);
+
+	player->SetCanSendGameProtocol(false);
+	player->SetLastDeviceId(device_id);
+	player->SetClientReceivedGameProtocolCount(client_received_game_protocol_count);
+	player->SetTransSid(sid);
+	_map_by_trans_sid[sid] = player;
+
+	//fprintf(stderr, "PlayerManager::OnTransConnect, account=%s, device_id=%s, client_received_game_protocol_count=%d, sid=%u\n",
+	//        B16EncodeOctets(player->GetAccount()).c_str(), B16EncodeOctets(device_id).c_str(), client_received_game_protocol_count, sid);
+}
+
+void PlayerManager::OnDisconnect(const Octets& account)
+{
+	Player *player = FindByAccount(account);
+	if(player)
+	{
+		Thread::Mutex::Scoped keeper2(player->_lock);
+		player->SetDisconnect();
+	}
+}
+
+void PlayerManager::GetActiveRoles(std::vector<int64_t>& roles) const
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	roles.reserve(_active_players.size());
+	for(auto it=_active_players.begin(); it!=_active_players.end(); ++it)
+	{
+		const Player *player = *it;
+		if(!player->HaveRole()) continue;
+		roles.push_back(player->_role._roledata._base._id);
+	}
+}
+
+Role* PlayerManager::Find(const Int64& k)
+{
+	//这里不需要lock, 因为单线程化
+	auto it = _map_by_role_id.find(k);
+	if(it == _map_by_role_id.end()) return 0;
+	return it->second;
+}
+
+void PlayerManager::Load(Octets &key, Octets &value)
+{
+	std::string str_key  = std::string((char*)key.begin(),key.size());
+	std::string account = "";
+	const char *p = str_key.c_str();
+	const char *q = strrchr(p, '_');
+	if(q)
+	{
+		std::string s(q+1, p+str_key.size());
+		account = s;
+	}
+
+	Player *tmp = new Player(Octets(account.c_str(),account.size()));
+
+	Marshal::OctetsStream os(value);
+	int db_version = 0;
+	os >> db_version;
+	os._dbversion = db_version;
+	tmp->unmarshal(os);
+
+	_map[Octets(account.c_str(),account.size())] = tmp;
+	_map_by_role_id[tmp->_role._roledata._base._id] = &tmp->_role;
+}
+
+void PlayerManager::LoadPlayerInfo(Octets &key, Octets &value)
+{
+	Marshal::OctetsStream os(value);
+	int db_version = 0;
+	os >> db_version;
+	os >> _role_id_stub;
+	os >> _mafia_id_stub;
+}
+
+void PlayerManager::Save()
+{
+	Player * tmp_player = NULL;
+	std::map<Octets, Player*>::iterator it = _map.begin();
+	GNET::Marshal::OctetsStream value;
+	int db_version = GameDBClient::GetInstance()->GetDBVersion();
+	
+	for(; it != _map.end(); it++)
+	{
+		value.clear();
+		std::string key_str = "roleinfo_";
+		Octets key = it->first;
+		key_str += std::string((char*)key.begin(),key.size());
+		tmp_player = it->second;
+		
+		//先把version版本号放进去
+		value << db_version;
+		tmp_player->marshal(value);
+		g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+	}
+	//在这里再把现在有多少玩家的数据保存起来，否则会造成玩家的ID错误
+	std::string key_str = "playermanagerinfo";
+	value.clear();
+	value << db_version;
+	value << _role_id_stub;
+	value << _mafia_id_stub;
+
+	g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+
+}
+
+void Player::FastSess_Reset()
+{
+	_udp_session.Reset();
+}
+
+void Player::FastSess_Send(const std::string& data)
+{
+	Octets os((void*)data.c_str(), data.size());
+	_udp_session.Send(os);
+}
+
+void Player::FastSess_OnAck(int index_ack)
+{
+	_udp_session.OnAck(index_ack);
+}
+
+bool Player::FastSess_IsReceived(int index) const
+{
+	return _udp_session.IsReceived(index);
+}
+
+void Player::FastSess_SetReceived(int index)
+{
+	_udp_session.SetReceived(index);
+}
+
+void Player::FastSess_SendAck()
+{
+	_udp_session.SendAck();
+}
+
+void Player::FastSess_TriggerSend()
+{
+	_udp_session.TriggerSend();
+}
+
+void Player::NetTime_Sync2Client()
+{
+	_network_time.Sync2Client();
+}
+
+void PlayerManager::CreateRoleName(Octets account, Octets name, int photo)
+{
+	Player *player = FindByAccount(account);
+	if(player)
+	{
+		Thread::Mutex::Scoped keeper2(player->_lock);
+		player->OnCreateRole(name, photo);
+		_map_by_role_id[player->_role._roledata._base._id] = &player->_role;
+		OnChanged();
+	}
+}
+
+};
+

@@ -1,0 +1,66 @@
+--注意pvp_ver是从1开始的，不存在pvp_ver是0的情况
+--BundleID：
+--安卓开发版	PW.ProjectsEL.sangoku
+--安卓稳定版	PW.ProjectsEL.sangokumusou
+--苹果稳定版	PW.ProjectsEL.sangoku2
+
+--苹果APP抢注	PW.ProjectsEL.sangokumusou（和安卓稳定版一样）
+
+G_VERSION_INFO = {}
+G_VERSION_INFO["Robot"] = {
+{exe_ver = "1", res_ver = "0.1.23", pvp_ver = "4"},
+}
+G_VERSION_INFO["PW.ProjectsEL.sangoku"] = {
+{exe_ver = "1", res_ver = "0.0.1", pvp_ver = "1"}, 
+{exe_ver = "749", res_ver = "0.0.5", pvp_ver = "2"},
+{exe_ver = "753", res_ver = "0.0.10", pvp_ver = "3"},
+{exe_ver = "758", res_ver = "0.0.12", pvp_ver = "4"},
+{exe_ver = "792", res_ver = "0.0.16", pvp_ver = "5"},
+{exe_ver = "794", res_ver = "0.0.17", pvp_ver = "6"},
+{exe_ver = "811", res_ver = "0.0.20", pvp_ver = "7"},
+{exe_ver = "813", res_ver = "0.0.28", pvp_ver = "8"},
+{exe_ver = "814", res_ver = "0.0.30", pvp_ver = "9"},
+{exe_ver = "822", res_ver = "0.0.34", pvp_ver = "10"},
+{exe_ver = "835", res_ver = "0.0.39", pvp_ver = "11"},
+{exe_ver = "836", res_ver = "0.0.40", pvp_ver = "12"},
+{exe_ver = "837", res_ver = "0.0.41", pvp_ver = "13"},
+{exe_ver = "840", res_ver = "0.0.43", pvp_ver = "14"},
+{exe_ver = "844", res_ver = "0.0.44", pvp_ver = "15"},
+{exe_ver = "846", res_ver = "0.0.51", pvp_ver = "16"},
+}
+G_VERSION_INFO["PW.ProjectsEL.sangokumusou"] = {
+{exe_ver = "1", res_ver = "0.0.1", pvp_ver = "1"}, 
+{exe_ver = "749", res_ver = "0.0.5", pvp_ver = "2"},
+{exe_ver = "753", res_ver = "0.0.10", pvp_ver = "3"},
+{exe_ver = "758", res_ver = "0.0.12", pvp_ver = "4"},
+{exe_ver = "792", res_ver = "0.0.16", pvp_ver = "5"},
+{exe_ver = "794", res_ver = "0.0.17", pvp_ver = "6"},
+{exe_ver = "811", res_ver = "0.0.20", pvp_ver = "7"},
+{exe_ver = "813", res_ver = "0.0.28", pvp_ver = "8"},
+{exe_ver = "814", res_ver = "0.0.30", pvp_ver = "9"},
+{exe_ver = "822", res_ver = "0.0.34", pvp_ver = "10"},
+{exe_ver = "835", res_ver = "0.0.39", pvp_ver = "11"},
+{exe_ver = "836", res_ver = "0.0.40", pvp_ver = "12"},
+{exe_ver = "837", res_ver = "0.0.41", pvp_ver = "13"},
+{exe_ver = "840", res_ver = "0.0.43", pvp_ver = "14"},
+{exe_ver = "844", res_ver = "0.0.44", pvp_ver = "15"},
+{exe_ver = "846", res_ver = "0.0.51", pvp_ver = "16"},
+}
+G_VERSION_INFO["PW.ProjectsEL.sangoku2"] = {
+{exe_ver = "1", res_ver = "0.0.1", pvp_ver = "1"}, 
+{exe_ver = "33", res_ver = "0.0.4", pvp_ver = "2"},
+{exe_ver = "37", res_ver = "0.0.6", pvp_ver = "3"},
+{exe_ver = "40", res_ver = "0.0.8", pvp_ver = "4"},
+{exe_ver = "41", res_ver = "0.0.12", pvp_ver = "5"},
+{exe_ver = "42", res_ver = "0.0.13", pvp_ver = "6"},
+{exe_ver = "43", res_ver = "0.0.16", pvp_ver = "7"},
+{exe_ver = "44", res_ver = "0.0.23", pvp_ver = "8"},
+{exe_ver = "45", res_ver = "0.0.25", pvp_ver = "9"},
+{exe_ver = "46", res_ver = "0.0.29", pvp_ver = "10"},
+{exe_ver = "48", res_ver = "0.0.34", pvp_ver = "11"},
+{exe_ver = "49", res_ver = "0.0.35", pvp_ver = "12"},
+{exe_ver = "50", res_ver = "0.0.36", pvp_ver = "13"},
+{exe_ver = "53", res_ver = "0.0.38", pvp_ver = "14"},
+{exe_ver = "58", res_ver = "0.0.39", pvp_ver = "15"},
+{exe_ver = "59", res_ver = "0.0.45", pvp_ver = "16"},
+}

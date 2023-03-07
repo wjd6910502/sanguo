@@ -1,0 +1,18 @@
+
+
+
+PCvsMZ_no_op:
+	pc打mz，全程无操作，直到时间结束
+
+	1001是pc, 对应1/3
+	pc客户端操作发送的很均匀，tick也很理想
+	CAU2?
+	没有出现过CAU3
+
+	1004是mz, 对应2/4
+	明显CAU3很多，但CAU6几乎没有
+	有个诡异的点，mz client_tick 1发的很早，但client_tick 2发的很晚？
+
+
+
+

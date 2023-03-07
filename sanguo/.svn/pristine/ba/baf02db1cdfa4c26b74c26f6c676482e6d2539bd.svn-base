@@ -1,0 +1,3 @@
+function OnCommand_MafiaSetLevelLimit(player, role, arg, others)
+	--player:Log("OnCommand_MafiaSetLevelLimit, "..DumpTable(arg).." "..DumpTable(others))
+end

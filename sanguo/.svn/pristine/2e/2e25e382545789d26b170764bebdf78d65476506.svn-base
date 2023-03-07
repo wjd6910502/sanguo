@@ -1,0 +1,22 @@
+function OnMessage_BroadCastPublicChat(player, role, arg, others)
+	player:Log("OnMessage_BroadCastPublicChat, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local msg = NewMessage("PublicChatnew")
+	msg.src={}
+	msg.src.id = role._roledata._base._id:ToStr()
+	msg.src.name = role._roledata._base._name 
+	msg.src.photo = role._roledata._base._photo
+	msg.src.level = role._roledata._status._level
+	msg.src.mafia_id = role._roledata._mafia._id:ToStr()
+	msg.src.mafia_name = role._roledata._mafia._name
+	msg.src.sex = role._roledata._base._sex
+	msg.src.photo_frame = role._roledata._base._photo_frame
+	--msg.src.badge_info = role._roledata._base._phot 
+	
+	msg.text_content = arg.text_content
+	msg.speech_content = arg.speech_content
+	msg.time = arg.time
+	msg.chat_typ = arg.chat_typ
+	msg.channel = arg.channel
+	player:SendMessageToAllRole(SerializeMessage(msg))
+end

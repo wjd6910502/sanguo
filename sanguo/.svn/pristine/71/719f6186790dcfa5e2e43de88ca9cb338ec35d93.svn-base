@@ -1,0 +1,599 @@
+#include "gateclient.hpp"
+#include "transclient.hpp"
+#include "conf.h"
+#include "log.h"
+#include "thread.h"
+#include <iostream>
+#include <unistd.h>
+#include "gnet_init.h"
+#include "connection.h"
+#include "script_wrapper.h"
+#include <lua.hpp>
+#include <signal.h>
+#include "udpstunrequest.hpp"
+#include "udptransclient.hpp"
+
+using namespace GNET;
+
+//int64_t g_delay = 0; 
+//int64_t g_offset = 0;
+
+#if 0
+lua_State *g_L = 0;
+
+int64_t g_roleid = 0;
+std::string g_pvpd_ip;
+unsigned short g_pvpd_port = 0;
+#endif
+
+struct LogicClient
+{
+	std::string _account;
+
+	Connection *_conn;
+	lua_State *_L;
+
+	int64_t _roleid;
+	std::string _pvpd_ip;
+	unsigned short _pvpd_port;
+
+	LogicClient(): _conn(0), _L(0), _roleid(0), _pvpd_port(0) {}
+};
+static std::vector<LogicClient> g_logic_clients;
+//static std::map<void*,int> g_lua_state_2_logic_client_index;
+static int _cur_lua_client_index; //FIXME:
+
+inline LogicClient* FindLogicClient()
+{
+	//int idx = g_lua_state_2_logic_client_index[l];
+	//LogicClient *lc = &g_logic_clients[idx];
+	LogicClient *lc = &g_logic_clients[_cur_lua_client_index];
+	return lc;
+}
+
+static int script_Log(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	const char *log = lua_tostring(l, 1);
+
+	//fprintf(stderr, "===LUA LOG===: %s\n", log);
+	//printf("===LUA LOG(%s,%d)===: %s\n", lc->_account.c_str(), getpid(), log);
+	printf("===LUA LOG(%s)===: %s\n", FindLogicClient()->_account.c_str(), log);
+
+	return 0;
+}
+
+static int script_GetTime(lua_State *l)
+{
+	//printf("script_GetTime\n");
+
+	lua_pushinteger(l, (int)time(0));
+
+	return 1;
+}
+
+static int script_GetTime2(lua_State *l)
+{
+	//printf("script_GetTime2\n");
+
+	timeval tv;
+	gettimeofday(&tv, 0);
+	lua_pushnumber(l, (tv.tv_sec*1000+tv.tv_usec/1000));
+
+	return 1;
+}
+
+//获取服务器时间
+static int script_GetServerTime(lua_State *l)
+{
+	//printf("script_GetServerTime\n");
+
+	//timeval tval;
+	//gettimeofday(&tval,NULL);
+	//int servertime = (tval.tv_sec*1000000 + tval.tv_usec - g_offset)/1000000;
+	//
+	//lua_pushnumber(l, servertime);
+	//lua_pushnumber(l, Connection::GetInstance().GetServerTime());
+	lua_pushnumber(l, FindLogicClient()->_conn->GetServerTime());
+
+	return 1;
+}
+
+static int script_IsNULL(lua_State *l)
+{
+	//printf("script_IsNULL\n");
+
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	void *p = lua_touserdata(l, 1);
+
+	lua_pushboolean(l, !p);
+	return 1;
+}
+
+static int _SendGameProtocol(lua_State *l, int type)
+{
+	int n = lua_gettop(l);
+	if(n < 1) return 0;
+
+	const char *cmd = lua_tostring(l, 1);
+
+	std::vector<int64_t> extra_roles;
+	std::vector<int64_t> extra_mafias;
+	std::vector<int> extra_pvps;
+	for(auto i=2; i<=n; i++)
+	{
+		const char *s = lua_tostring(l, i);
+		if(*s == 'R')
+		{
+			//extra_role
+			int64_t id = strtoll(s+1, 0, 10);
+			if(id > 0) extra_roles.push_back(id);
+		}
+		else if(*s == 'M')
+		{
+			//extra_mafia
+			int64_t id = strtoll(s+1, 0, 10);
+			if(id > 0) extra_mafias.push_back(id);
+		}
+		else if(*s == 'P')
+		{
+			//extra_pvp
+			int id = strtoll(s+1, 0, 10);
+			if(id > 0) extra_pvps.push_back(id);
+		}
+		else
+		{
+			abort();
+		}
+	}
+
+	LogicClient *lc = FindLogicClient();
+	Octets data(cmd, strlen(cmd));
+	//printf("_SendGameProtocol, l=%p, account=%s, cmd=%s\n", l, lc->_account.c_str(), cmd);
+	if(type == 1)
+	{
+		//Connection::GetInstance().SendGameProtocol(data, extra_roles, extra_mafias, extra_pvps);
+		lc->_conn->SendGameProtocol(data, extra_roles, extra_mafias, extra_pvps);
+	}
+	else if(type == 2)
+	{
+		//Connection::GetInstance().SendUDPGameProtocol(data);
+		lc->_conn->SendUDPGameProtocol(data);
+	}
+	else
+	{
+		//Connection::GetInstance().FastSess_Send(data, extra_roles, extra_mafias, extra_pvps);
+		lc->_conn->FastSess_Send(data, extra_roles, extra_mafias, extra_pvps);
+	}
+
+	return 0;
+}
+
+static int script_SendGameProtocol(lua_State *l)
+{
+	//printf("script_SendGameProtocol\n");
+
+	return _SendGameProtocol(l, 1);
+}
+
+static int script_SendUDPGameProtocol(lua_State *l)
+{
+	//printf("script_SendUDPGameProtocol\n");
+
+	return _SendGameProtocol(l, 2);
+}
+
+static int script_SetRoleId(lua_State *l)
+{
+	//printf("script_SetRoleId\n");
+
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	const char *r = lua_tostring(l, 1);
+	//g_roleid = strtoll(r, 0, 10);
+	FindLogicClient()->_roleid = strtoll(r, 0, 10);
+
+	return 0;
+}
+
+static int script_FastSess_Send(lua_State *l)
+{
+	return _SendGameProtocol(l, 3);
+}
+
+static int script_FastSess_Open(lua_State *l)
+{
+	//Connection::GetInstance().FastSess_Open();
+	FindLogicClient()->_conn->FastSess_Open();
+	return 0;
+}
+
+static int script_FastSess_Reset(lua_State *l)
+{
+	//Connection::GetInstance().FastSess_Reset();
+	FindLogicClient()->_conn->FastSess_Reset();
+	return 0;
+}
+
+static int script_GetNetType(lua_State *l)
+{
+	//printf("script_GetNetType\n");
+
+	//lua_pushinteger(l, Connection::GetInstance().P2P_GetNetType());
+	lua_pushinteger(l, FindLogicClient()->_conn->P2P_GetNetType());
+	return 1;
+}
+
+//static int script_IsGettingNetType(lua_State *l)
+//{
+//	lua_pushboolean(l, Connection::GetInstance().IsGettingNetType());
+//	return 1;
+//}
+//
+//static int script_TryGetNetType(lua_State *l)
+//{
+//	Connection::GetInstance().TryGetNetType();
+//	return 0;
+//}
+
+static int script_TryMakeHole(lua_State *l)
+{
+	//printf("script_TryMakeHole\n");
+
+	int n = lua_gettop(l);
+	if(n != 3) return 0;
+
+	int magic = lua_tointeger(l, 1);
+	const char* ip = lua_tostring(l, 2);
+	int port = lua_tointeger(l, 3);
+	//Connection::GetInstance().P2P_TryConnect(magic, ip, port);
+	FindLogicClient()->_conn->P2P_TryConnect(magic, ip, port);
+
+	return 0;
+}
+
+static int script_SetPVPDInfo(lua_State *l)
+{
+	//printf("script_SetPVPDInfo\n");
+
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	//g_pvpd_ip = lua_tostring(l, 1);
+	FindLogicClient()->_pvpd_ip = lua_tostring(l, 1);
+	//g_pvpd_port = lua_tointeger(l, 2);
+	FindLogicClient()->_pvpd_port = lua_tointeger(l, 2);
+	//Connection::GetInstance().SetPVPDInfo(ip, port); TODO:
+
+	return 0;
+}
+
+static int script_GetLatency(lua_State *l)
+{
+	//printf("script_GetLatency\n");
+
+	//lua_pushinteger(l, Connection::GetInstance().GetLatency());
+	lua_pushinteger(l, FindLogicClient()->_conn->GetLatency());
+	return 1;
+}
+
+static int script_GetPVPLatency(lua_State *l)
+{
+	//printf("script_GetPVPLatency\n");
+
+	//lua_pushinteger(l, Connection::GetInstance().GetPVPLatency());
+	lua_pushinteger(l, FindLogicClient()->_conn->GetPVPLatency());
+	return 1;
+}
+
+static int script_Terminate(lua_State *l)
+{
+	//printf("script_Terminate\n");
+
+	exit(0);
+	return 0;
+}
+
+class GC: public GameClient
+{
+	int _index;
+	std::string _policy;
+	bool _random_seeded;
+
+public:
+	GC(int index, const char *policy): _index(index), _policy(policy), _random_seeded(false) {}
+
+	virtual void OnClientOutOfDate()
+	{
+		fprintf(stderr, "OnClientOutOfDate\n");
+	}
+	virtual void OnServerMaintaining(const Octets& info)
+	{
+		fprintf(stderr, "OnServerMaintaining\n");
+	}
+	virtual void OnAuthFailed()
+	{
+		fprintf(stderr, "OnAuthFailed\n");
+	}
+	virtual void OnSendGameProtocolTimeout()
+	{
+		fprintf(stderr, "OnSendGameProtocolTimeout\n");
+	}
+	virtual void OnTimeoutClear()
+	{
+		fprintf(stderr, "OnTimeoutClear\n");
+	}
+	virtual void OnKickout(int reason)
+	{
+		fprintf(stderr, "OnKickout\n");
+	}
+	virtual void DoReload()
+	{
+		//g_L = luaL_newstate();
+		lua_State *g_L = luaL_newstate();
+		g_logic_clients[_index]._L = g_L;
+		//g_lua_state_2_logic_client_index[g_L] = _index;
+		//fprintf(stderr, "DoReload, _index=%d, g_L=%p\n", _index, g_L);
+
+		_cur_lua_client_index = _index;
+
+		if(g_L)
+		{
+			luaL_openlibs(g_L);
+			lua_register(g_L, "API_Log", script_Log);
+			lua_register(g_L, "API_GetTime", script_GetTime);
+			lua_register(g_L, "API_GetTime2", script_GetTime2);
+			lua_register(g_L, "API_GetServerTime", script_GetServerTime);
+			lua_register(g_L, "API_IsNULL", script_IsNULL);
+			lua_register(g_L, "API_SendGameProtocol", script_SendGameProtocol);
+			lua_register(g_L, "API_SendUDPGameProtocol", script_SendUDPGameProtocol);
+			lua_register(g_L, "API_SetRoleId", script_SetRoleId);
+			lua_register(g_L, "API_FastSess_Send", script_FastSess_Send);
+			lua_register(g_L, "API_FastSess_Open", script_FastSess_Open);
+			lua_register(g_L, "API_FastSess_Reset", script_FastSess_Reset);
+			lua_register(g_L, "API_GetNetType", script_GetNetType);
+			//lua_register(g_L, "API_IsGettingNetType", script_IsGettingNetType);
+			//lua_register(g_L, "API_TryGetNetType", script_TryGetNetType);
+			lua_register(g_L, "API_TryMakeHole", script_TryMakeHole);
+			lua_register(g_L, "API_SetPVPDInfo", script_SetPVPDInfo);
+			lua_register(g_L, "API_GetLatency", script_GetLatency);
+			lua_register(g_L, "API_GetPVPLatency", script_GetPVPLatency);
+			lua_register(g_L, "API_Terminate", script_Terminate);
+
+			if(luaL_dofile(g_L, "./scripts/init_command.lua"))
+			{
+				fprintf(stderr, "GC::DoReload, luaL_dofile(init_command.lua) error\n");
+				lua_close(g_L);
+				g_L = 0;
+			}
+		}
+		if(g_L)
+		{
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("CreateThread", LuaParameter(_index, _policy.c_str())))
+			{
+				fprintf(stderr, "GC::DoReload, gExec error, CreateThread\n");
+			}
+		}
+	}
+
+	virtual void OnRecvGameProtocol(const Octets& lua_prot)
+	{
+		//check lua_prot
+		if(lua_prot.size() < 2)
+		{
+			fprintf(stderr, "OnRecvGameProtocol, wrong length\n");
+			return;
+		}
+		for(size_t i=0; i<lua_prot.size(); ++i)
+		{
+			int c = ((char*)lua_prot.begin())[i];
+			if(!isupper(c) && !islower(c) && !isdigit(c) && c!='+' && c!='/' && c!='=' && c!=':' && c!='.')
+			{
+				fprintf(stderr, "OnRecvGameProtocol, wrong char(%d)\n", c);
+				return;
+			}
+		}
+		lua_State *g_L = g_logic_clients[_index]._L;
+		if(g_L)
+		{
+			_cur_lua_client_index = _index;
+
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("DeserializeAndProcessCommand", LuaParameter((void*)0, std::string((char*)lua_prot.begin(), lua_prot.size()))))
+			{
+				fprintf(stderr, "OnRecvGameProtocol, gExec, DeserializeAndProcessCommand, %.*s\n", (int)lua_prot.size(), (char*)lua_prot.begin());
+			}
+		}
+	}
+
+	virtual time_t GetLocalTime()
+	{
+		return time(0);
+	}
+	virtual int64_t GetLocalTimeInMicroSec()
+	{
+		struct timeval tv;
+		gettimeofday(&tv, 0);
+		return (tv.tv_sec*1000000L+tv.tv_usec);
+	}
+	virtual const char* GetDeviceID()
+	{
+		return "Robot";
+	}
+	virtual int RandomInt()
+	{
+		if(!_random_seeded)
+		{
+			_random_seeded = true;
+			srand((int)GetLocalTimeInMicroSec());
+		}
+		return rand();
+	}
+	virtual int64_t GetRoleId()
+	{
+		//return g_roleid;
+		return g_logic_clients[_index]._roleid;
+	}
+	virtual const char* GetPVPDIP()
+	{
+		//return g_pvpd_ip.c_str();
+		return g_logic_clients[_index]._pvpd_ip.c_str();
+	}
+	virtual unsigned short GetPVPDPort()
+	{
+		//return g_pvpd_port;
+		return g_logic_clients[_index]._pvpd_port;
+	}
+};
+
+//static std::string account = "Account";
+//static GC *gc = 0;
+
+static void SIGUSR1_Handler(int sig)
+{
+	////printf("SIGUSR1\n");
+	//Connection::GetInstance().Close();
+	//account += "_x";
+	//Connection::GetInstance().Open(gc, "10.68.8.16", 19228, account.c_str(), "123456", "10.68.8.16", 19229);
+	////Connection::GetInstance().Open(gc, "10.68.8.39", 4001, account.c_str(), "123456", "10.68.8.39", 33229);
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc < 4 || access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Usage: " << argv[0] << " configurefile robot_name_prefix policy robot_count [all_login_then_exit]" << std::endl;
+		exit(-1);
+	}
+
+	srandom(time(0));
+
+	signal(SIGUSR1, SIGUSR1_Handler);
+
+	Conf *conf = Conf::GetInstance(argv[1]);
+	//Conf::GetInstance(argv[1]);
+	Log::setprogname("client");
+
+	GNET::InitStaticObjects();
+	GNET::IOMan::_man.SetDelayThreshold(50, 500);
+	GNET::PollIO::Init(true);
+	GNET::Thread::Pool::_pool.Init(new ThreadPolicySingle());
+	GNET::IntervalTimer::StartTimer(1000, true);
+	GLog::Init("client");
+
+	Log::setconsole(LOG_DEBUG, true);
+
+	//int index = atoi(argv[2]);
+	//account += argv[2];
+
+	//Connection::GetInstance().Initialize();
+	//gc = new GC(index, argv[3]);
+	//Connection::GetInstance().Open(gc, conf->find("Global", "ip").c_str(), atoi(conf->find("Global", "port").c_str()), account.c_str(), "123456", 
+	//                               conf->find("Global", "ip2").c_str(), atoi(conf->find("Global", "port2").c_str()));
+	////Connection::GetInstance().Open(gc, "10.68.8.16", 19238, "duxg", "123456", "10.68.8.16", 19239);
+	////Connection::GetInstance().Open(gc, "10.68.8.16", 9238, "pvprobot1", "123456", "10.68.8.16", 9239);
+
+	int robot_count=1;
+	if(argc>4) robot_count=atoi(argv[4]);
+	if(robot_count<=0) robot_count=1;
+
+	bool all_login_then_exit = false;
+	if(argc>5) all_login_then_exit=(bool)atoi(argv[5]);
+
+	for(int i=0; i<robot_count; i++)
+	{
+		LogicClient lc;
+
+		char acc[100];
+		snprintf(acc, sizeof(acc), "Account_%s_%d", argv[2], i);
+		lc._account = acc;
+		
+		Connection *c = new Connection();
+		c->Initialize();
+		c->Open(new GC(i, argv[3]), conf->find("Global", "ip").c_str(), atoi(conf->find("Global", "port").c_str()), acc, "123456", 
+	                conf->find("Global", "ip2").c_str(), atoi(conf->find("Global", "port2").c_str()));
+		lc._conn = c;
+
+		g_logic_clients.push_back(lc);
+	}
+
+	FILE *fp = fopen("./client.pid", "w");
+	fprintf(fp, "%d\n", getpid());
+	fclose(fp);
+	fp = 0;
+
+	int64_t t2 = 0;
+	while(1)
+	{
+		PollIO::Poll(1);
+		Timer::Update();
+		IntervalTimer::UpdateTimer();
+		Thread::Pool::_pool.TryProcessAllTask();
+		//STAT_MIN5("Poll",1);
+
+		timeval tv;
+		gettimeofday(&tv, 0);
+		int64_t now = tv.tv_sec*(int64_t)1000000+tv.tv_usec;
+		if(now-t2 >= 33333) //30fps
+		{
+			t2 = now;
+#if 0
+			if(g_L)
+			{
+				LuaWrapper lw(g_L);
+				if(!lw.gExec("Heartbeat"))
+				{
+					fprintf(stderr, "main, gExec error, Heartbeat\n");
+				}
+			}
+#endif
+			int login_count = 0;
+			for(size_t i=0; i<g_logic_clients.size(); i++)
+			{
+				LogicClient *lc = &g_logic_clients[i];
+				if(lc->_roleid) login_count++;
+				if(lc->_L)
+				{
+					_cur_lua_client_index = i;
+
+					//printf("Heartbeat, %s, %p\n", lc->_account.c_str(), lc->_L);
+					LuaWrapper lw(lc->_L);
+					if(!lw.gExec("Heartbeat"))
+					{
+						fprintf(stderr, "main, gExec error, Heartbeat\n");
+					}
+				}
+			}
+			if(all_login_then_exit && login_count==robot_count)
+			{
+				//所有玩家都已经登录游戏
+				exit(0);
+			}
+		}
+	}
+
+	return 0;
+}
+
+void GameProtocol::Process(Manager *manager, Manager::Session::ID sid)
+{
+	//fprintf(stderr, "GameProtocol::Process, data=%s\n", B16EncodeOctets(data).c_str());
+	//fprintf(stderr, "GameProtocol::Process, data=%.*s\n", (int)data.size(), (char*)data.begin());
+	//printf("GameProtocol::Process, data=%.*s\n", (int)data.size(), (char*)data.begin());
+
+	//assert(((TransClient*)manager)->GetCurSID() == (int)sid);
+	if(((TransClient*)manager)->GetCurSID()!=(int)sid) return;
+
+	//Connection::GetInstance().UpdateLatency(client_send_time, server_send_time);
+	//Connection::GetInstance().OnReceivedGameProtocol(data);
+	((TransClient*)manager)->GetConnection()->UpdateLatency(client_send_time, server_send_time);
+	//((TransClient*)manager)->GetConnection()->UpdateServerReceivedCount(server_received_count);
+	((TransClient*)manager)->GetConnection()->OnReceivedGameProtocol(data);
+}
+

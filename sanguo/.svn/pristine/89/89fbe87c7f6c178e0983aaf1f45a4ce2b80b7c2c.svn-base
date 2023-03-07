@@ -1,0 +1,98 @@
+[Global]
+zoneid			=       2
+
+[GateServer]
+type                    =       tcp
+port                    =       19238
+address                 =       0.0.0.0
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[TransServer]
+type                    =       tcp
+port                    =       19240
+address                 =       0.0.0.0
+public_port             =       19240
+public_address          =       10.68.8.16
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[UDPTransServer]
+type                    =       udp
+port                    =       19240
+address                 =       0.0.0.0
+public_port             =       19240
+public_address          =       10.68.8.16
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[PVPGameServer]
+type                    =       tcp
+port                    =       19241
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[STUNGameClient]
+type                    =       tcp
+port                    =       9242
+address                 =       10.68.8.39
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[STUNDeafServer]
+type                    =       udp
+port                    =       19236
+address                 =       0.0.0.0
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[GCenterClient]
+type                    =       tcp
+port                    =       9243
+address                 =       10.68.8.16
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+accumulate              =       16777216
+db_version              =       4
+
+;[GameDBClient]
+;type                    =       tcp
+;port                    =       4000
+;address                 =       127.0.0.1
+;so_sndbuf               =       32768
+;so_rcvbuf               =       32768
+;ibuffermax              =       1048576
+;obuffermax              =       1048576
+;accumulate              =       16777216
+;db_version		=	4

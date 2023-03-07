@@ -1,0 +1,14 @@
+function OnMessage_MafiaAddMember(player, role, arg, others)
+	player:Log("OnMessage_MafiaAddMember, "..DumpTable(arg).." "..DumpTable(others))
+
+	local my_mafia = others.mafias[role._mafia._id:ToStr()]
+	if my_mafia==nil then return end
+
+	local cmd = NewCommand("MafiaUpdate")
+	cmd.mafia = MAFIA_MakeMafia(my_mafia)
+	role:SendToClient(SerializeCommand(cmd))
+
+	local cmd2 = NewCommand("MafiaAddMember")
+	cmd2.member = arg.member
+	role:SendToClient(SerializeCommand(cmd2))
+end

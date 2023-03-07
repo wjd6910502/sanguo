@@ -1,0 +1,32 @@
+	public:
+		Octets server_rand1;
+		enum { PROTOCOL_TYPE = PROTOCOL_CHALLENGE };
+	public:
+		Challenge() { type = PROTOCOL_CHALLENGE; }
+		Challenge(void*) : Protocol(PROTOCOL_CHALLENGE) { }
+		Challenge (const Octets& l_server_rand1)
+			 : server_rand1(l_server_rand1)
+		{
+			type = PROTOCOL_CHALLENGE;
+		}
+
+		Challenge(const Challenge &rhs)
+			: Protocol(rhs),server_rand1(rhs.server_rand1) { }
+
+		GNET::Protocol *Clone() const { return new Challenge(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << server_rand1;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> server_rand1;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

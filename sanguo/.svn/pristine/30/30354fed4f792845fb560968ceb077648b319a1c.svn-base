@@ -1,0 +1,203 @@
+function _Mode1WaitPVPReady_Heartbeat(pvp, arg, others)
+	--等待PVPReady
+	if arg.now-pvp._data._status_change_time > 60 then
+		API_Log("OnMessage_PVPHeartbeat, "..DumpTable(arg).." "..DumpTable(others).." 等待PVPReady超时")
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 1 --等待PVPReady超时
+		return
+	end
+
+	if pvp._data._fighter1._status~=1 or pvp._data._fighter2._status~=1 then return end
+
+	--准备就绪，开始
+	pvp._data._status = 1
+	pvp._data._status_change_time = arg.now
+	pvp._data._fight_start_time = API_GetTime()+5
+	pvp._data._next_client_tick = 1
+
+	local cmd = NewCommand("PVPBegin")
+	cmd.fight_start_time = pvp._data._fight_start_time 
+
+	local role1 = others.roles[pvp._data._fighter1._id:ToStr()]
+	if role1==nil then ThrowException() end --FIXME: $_$
+	role1:SendToClient(SerializeCommand(cmd))
+
+	local role2 = others.roles[pvp._data._fighter2._id:ToStr()]
+	if role2==nil then ThrowException() end
+	role2:SendToClient(SerializeCommand(cmd))
+
+	role1:FastSess_Reset()
+	role2:FastSess_Reset()
+end
+
+function _Mode1Fighting_Heartbeat(pvp, arg, others)
+	--战斗中
+	--API_Log("_Mode1Fighting_Heartbeat, _latency="..pvp._latency.." _fighter1._accumulate_latency="..pvp._fighter1._accumulate_latency.." _fighter1._delay_count="..pvp._fighter1._delay_count.." _fighter2._accumulate_latency="..pvp._fighter2._accumulate_latency.." _fighter2._delay_count="..pvp._fighter2._delay_count)
+
+	if pvp._data._fighter1._status==2 or pvp._data._fighter2._status==2 then
+		--已经有人提交结果了
+		if pvp._data._fighter1._status==2 and pvp._data._fighter2._status==2 then
+			pvp._data._status = 2
+			pvp._data._status_change_time = arg.now
+			pvp._data._end_reason = 0 --正常结束
+		elseif pvp._data._end_counter>=5 then
+			pvp._data._status = 2
+			pvp._data._status_change_time = arg.now
+			pvp._data._end_reason = 0
+		else
+			pvp._data._end_counter = pvp._data._end_counter+1
+		end
+		return
+	end
+
+	if arg.now-pvp._data._status_change_time > 5*60 then
+		API_Log("OnMessage_PVPHeartbeat, "..DumpTable(arg).." "..DumpTable(others).." 战斗超时")
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 2 --战斗超时
+		return
+	end
+
+	--断线检查
+	if pvp._data._fighter1._ops:Find(pvp._data._next_client_tick)==nil then pvp._data._fighter1._wait_seconds=pvp._data._fighter1._wait_seconds+1 end
+	if pvp._data._fighter1._wait_seconds>5 then
+		API_Log("OnMessage_PVPHeartbeat, _fighter1 lost connection")
+		pvp._data._fighter1._status = 3 --已掉线
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 3 --有玩家掉线
+	end
+
+	if pvp._data._fighter2._ops:Find(pvp._data._next_client_tick)==nil then pvp._data._fighter2._wait_seconds=pvp._data._fighter2._wait_seconds+1 end
+	if pvp._data._fighter2._wait_seconds>5 then
+		API_Log("OnMessage_PVPHeartbeat, _fighter2 lost connection")
+		pvp._data._fighter2._status = 3 --已掉线
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 3
+	end
+end
+
+function _Mode1End_Heartbeat(pvp, arg, others)
+	--已结束
+	local cmd = NewCommand("PVPEnd")
+	cmd.result = 0 --TODO:
+
+	local role1 = others.roles[pvp._data._fighter1._id:ToStr()]
+	if role1~=nil then
+		role1._pvp._id = 0
+		role1:SendToClient(SerializeCommand(cmd))
+	end
+
+	local role2 = others.roles[pvp._data._fighter2._id:ToStr()]
+	if role2~=nil then
+		role2._pvp._id = 0
+		role2:SendToClient(SerializeCommand(cmd))
+	end
+
+	API_PVP_Delete(pvp._data._id)
+end
+
+function _Mode2WaitPVPReady_Heartbeat(pvp, arg, others)
+	--等待PVPReady
+	if arg.now-pvp._data._status_change_time > 60 then
+		API_Log("OnMessage_PVPHeartbeat, "..DumpTable(arg).." "..DumpTable(others).." 等待PVPReady超时")
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 1 --等待PVPReady超时
+		return
+	end
+
+	if pvp._data._fighter1._status~=1 or pvp._data._fighter2._status~=1 then return end
+
+	--准备就绪，开始
+	pvp._data._status = 1
+	pvp._data._status_change_time = arg.now
+	pvp._data._fight_start_time = API_GetTime()+5
+	pvp._data._next_client_tick = 1
+
+	local cmd = NewCommand("PVPBegin")
+	cmd.fight_start_time = pvp._data._fight_start_time 
+
+	local role1 = others.roles[pvp._data._fighter1._id:ToStr()]
+	if role1==nil then ThrowException() end --FIXME: $_$
+	role1:SendToClient(SerializeCommand(cmd))
+
+	local role2 = others.roles[pvp._data._fighter2._id:ToStr()]
+	if role2==nil then ThrowException() end
+	role2:SendToClient(SerializeCommand(cmd))
+end
+
+function _Mode2Fighting_Heartbeat(pvp, arg, others)
+	--战斗中
+	if arg.now-pvp._data._status_change_time > 5*60 then
+		API_Log("OnMessage_PVPHeartbeat, "..DumpTable(arg).." "..DumpTable(others).." 战斗超时")
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 2 --战斗超时
+		return
+	end
+
+	if pvp._data._fighter1._status==2 and pvp._data._fighter2._status==2 then
+		pvp._data._status = 2
+		pvp._data._status_change_time = arg.now
+		pvp._data._end_reason = 0 --正常结束
+		return
+	end
+end
+
+function _Mode2End_Heartbeat(pvp, arg, others)
+	--已结束
+	if pvp._data._fighter1._status~=2 then
+		pvp._data._fighter1._status = 2
+		local role1 = others.roles[pvp._data._fighter1._id:ToStr()]
+		if role1~=nil then
+			local cmd = NewCommand("PVPEnd")
+			cmd.result = 0 --TODO:
+			role1:SendToClient(SerializeCommand(cmd))
+			role1._pvp._id = 0
+		end
+	end
+
+	if pvp._data._fighter2._status~=2 then
+		pvp._data._fighter2._status = 2
+		local role2 = others.roles[pvp._data._fighter2._id:ToStr()]
+		if role2~=nil then
+			local cmd = NewCommand("PVPEnd")
+			cmd.result = 0 --TODO:
+			role2:SendToClient(SerializeCommand(cmd))
+			role2._pvp._id = 0
+		end
+	end
+
+	API_PVP_Delete(pvp._data._id)
+end
+
+function OnMessage_PVPHeartbeat(pvp, arg, others)
+	--API_Log("OnMessage_PVPHeartbeat, "..DumpTable(arg).." "..DumpTable(others))
+	if pvp._data._mode==1 then
+		if pvp._data._status==0 then
+			_Mode1WaitPVPReady_Heartbeat(pvp, arg, others)
+		elseif pvp._data._status==1 then
+			_Mode1Fighting_Heartbeat(pvp, arg, others)
+		elseif pvp._data._status==2 then
+			_Mode1End_Heartbeat(pvp, arg, others)
+		else
+			ThrowException()
+		end
+	elseif pvp._data._mode==2 then
+		if pvp._data._status==0 then
+			_Mode2WaitPVPReady_Heartbeat(pvp, arg, others)
+		elseif pvp._data._status==1 then
+			_Mode2Fighting_Heartbeat(pvp, arg, others)
+		elseif pvp._data._status==2 then
+			_Mode2End_Heartbeat(pvp, arg, others)
+		else
+			ThrowException()
+		end
+	else
+		ThrowException()
+	end
+end
+

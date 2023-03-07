@@ -1,0 +1,28 @@
+function OnCommand_Lottery(player, role, arg, others)
+	player:Log("OnCommand_Lottery, "..DumpTable(arg).." "..DumpTable(others))
+	
+
+	--
+	local resp = NewCommand("Lottery_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+
+	--free
+	local ed = DataPool_Find("elementdata")
+	local lottery = ed:FindBy("lottery_id",arg.lottery_id)
+	
+	local cost_type = arg.cost_type
+
+	--«Æµƒ¿‡–Õ  
+	if cost_type == 1 then
+		
+	
+	elseif cost_type == 2 then
+	
+
+	elseif cost_type == -1 then 
+	
+	else
+		return
+	end
+
+end

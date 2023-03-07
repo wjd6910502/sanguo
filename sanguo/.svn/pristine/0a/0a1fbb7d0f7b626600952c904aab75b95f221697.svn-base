@@ -1,0 +1,192 @@
+#include "RoleNameCache.h"
+
+namespace CACHE
+{
+
+SGT_RoleNameCache::SGT_RoleNameCache(): Singleton("SGT_RoleNameCache")
+{
+	_in_transaction = false;
+	_transaction_id = 0;
+
+	SingletonManager::GetInstance().Register(12, this);
+}
+
+void SGT_RoleNameCache::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_RoleNameCache::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void SGT_RoleNameCache::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+void SGT_RoleNameCache::backup(const char *name, int64_t transaction_id)
+{
+	if(transaction_id != _transaction_id)
+	{
+		_transaction_id = transaction_id;
+		_transaction_data.clear();
+	}
+	else if(_transaction_data.find(name) != _transaction_data.end())
+	{
+		return;
+	}
+
+	if(false)
+	{
+	}
+	else if(strcmp(name, "_data") == 0)
+	{
+		_data.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _data;
+		_transaction_data["_data"] = os;
+	}
+	else
+	{
+		abort();
+	}
+}
+
+void SGT_RoleNameCache::restore(int64_t transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_data");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _data;
+			_data.cleanup();
+		}
+		else
+		{
+			_data.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_data.restore(transaction_id);
+	}
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_RoleNameCache::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_data.cleanup();
+}
+
+void SGT_RoleNameCache::Insert(const std::string& name, const Role role)
+{
+	std::vector<std::string> nameword;
+	std::string strchar;
+	int size;
+	
+	size = name.size();
+	//对utf-8编码的处理
+	for(int i = 0; i < size; ){
+		char chr = name[i];
+		if((chr & 0x80)==0){
+			strchar = name.substr(i, 1);
+			nameword.push_back(strchar);
+			++i;
+		}
+		else if((chr & 0xF8)==0xF8){
+			strchar = name.substr(i, 5);
+			nameword.push_back(strchar);
+			i+=5;
+		}
+		else if((chr & 0xF0)==0xF0){
+			strchar = name.substr(i, 4);
+			nameword.push_back(strchar);
+			i+=4;
+		}
+		else if((chr & 0xE0)==0xE0){
+			strchar = name.substr(i, 3);
+			nameword.push_back(strchar);
+			i+=3;
+		}
+		else if((chr & 0xC0)==0xC0){
+			strchar = name.substr(i, 2);
+			nameword.push_back(strchar);
+			i+=2;
+		}
+	}
+
+	size = nameword.size();
+	for(int i = 1; i <= size; i++){
+		for(int j = 0; j <= size-i; j++){
+			std::string s;
+			for(int k = 0; k < i; k++){
+				s += nameword[k+j];
+			}
+			it = _map_pattern_to_roles.find(s);
+			if(it == _map_pattern_to_roles.end()){
+				std::vector<Role*> roles;
+				roles.push_back(&role);
+				_map_pattern_to_roles.insert(std::pair<std::string, std::vector<Role*> >(s, roles));
+			}
+			else{
+				int insert_flag = 1;
+				for(int m = 0; m < it->second.size(); m++){
+					if(it->second[m]->_roledata._base._name.size() > role._roledata._base._name.size()){
+						it->second.insert(it->second.begin()+m, &role);
+						insert_flag = 0;
+						break;
+					}
+				}
+				if(insert_flag == 1 && it->second.size() < 5){
+					it->second.push_back(&role);
+				}
+				else{
+					if(it->second.size()>5)
+						it->second.pop_back();
+				}
+			}
+		}
+	}
+}
+
+RoleNameQueryResults* SGT_RoleNameCache::Query(const std::string& pattern)
+{
+	//TODO: 
+	RoleNameQueryResults *rets = new RoleNameQueryResults();
+	RoleNameQueryResult node;
+
+	it = _map_pattern_to_roles.find(pattern);
+	if(it != _map_pattern_to_roles.end()){
+		std::vector<Role*> roles = it->second;
+		for(unsigned int i = 0; i < roles.size(); i++){
+			node._name = roles[i]->_roledata._base._name;
+			node._id = roles[i]->_roledata._base._id;
+			rets->PushBack(node);
+		}
+	}
+
+	return rets;
+}
+
+}
+

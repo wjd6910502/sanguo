@@ -1,0 +1,13 @@
+function OnCommand_MaShuBegin(player, role, arg, others)
+	player:Log("OnCommand_MaShuBegin, "..DumpTable(arg).." "..DumpTable(others))
+
+	role._roledata._mashu_info._cur_mashu_id = arg.id
+	role._roledata._mashu_info._cur_mashu_score = 0
+	role._roledata._mashu_info._cur_mashu_stage = 0
+
+	local resp = NewCommand("MaShuBegin_Re")
+	resp.id = arg.id
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

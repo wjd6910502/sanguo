@@ -1,0 +1,93 @@
+function OnCommand_JieYiLastCreate(player, role, arg, others)
+	player:Log("OnCommand_JieYiLastCreate, "..DumpTable(arg).." "..DumpTable(others))
+	
+	--
+	--正式创建结义 给所有小弟发消息 确认是否同意
+	local resp = NewCommand("JieYiLastCreate_Re")	
+	local jieyi_info = others.jieyi_info._data
+	
+	--验证所有人都是接受邀请状态
+	
+	--准备结义的
+	local brotherall = {}
+	local fit = {}
+	
+	--type = 1 代表已经结义 type =2 准备结义
+	if role._roledata._jieyi_info._cur_operate_typ == 1 then
+		fit = jieyi_info._jieyi_info:Find(role._roledata._jieyi_info._jieyi_id)
+		resp.id = role._roledata._jieyi_info._jieyi_id:ToStr()
+	elseif role._roledata._jieyi_info._cur_operate_typ == 2 then 
+		fit = jieyi_info._compare_jieyi_info:Find(role._roledata._jieyi_info._cur_operate_id)
+		resp.id = role._roledata._jieyi_info._cur_operate_id:ToStr()
+	else
+		--不存在的类型
+		return
+	end
+
+	if fit ~= nil then
+		--验证俩个人是否都是接受状态
+		local brother_ids = {}
+		local v = fit
+		local sit = v._brother_info:SeekToBegin()  
+		local s = sit:GetValue()
+		while s ~= nil do	
+			if s._accept ~= 1 then --接受邀请
+				-- 返回错误码
+				local cmd = NewCommand("ErrorInfo")
+				cmd.error_id = G_ERRCODE["JIEYI_INVITEROLE_NOT_ACCEPT"]
+				role:SendToClient(SerializeCommand(cmd))
+				return
+			end
+
+			sit:Next()
+			s = sit:GetValue()
+		end
+		
+		--这里需要刷新一下每个brother身上的时间 已确定这个二次确认的倒计时
+		local v = fit
+		local bossId = v._boss_info._id:ToStr()
+		local boss_role = others.roles[bossId]
+		if boss_role == nil then
+			--发起者不存在 不在线
+			local cmd = NewCommand("ErrorInfo")
+			cmd.error_id = G_ERRCODE["JIEYI_BOSS_NOT_FIND"] 
+			role:SendToClient(SerializeCommand(cmd))
+			return
+		end
+		
+		brotherall[#brotherall+1] = boss_role
+
+		local sit = v._brother_info:SeekToBegin()
+		s = sit:GetValue()
+		while s~= nil do
+			--这里如果不好使 直接在c++放一个接口 把消息发出去 
+			local brother_role = others.roles[s._id:ToStr()]
+			if brother_role == nil then	
+				--不存在的兄弟
+				local cmd = NewCommand("ErrorInfo")
+				cmd.error_id = G_ERRCODE["JIEYI_BROTHER_NOT_FIND"] 
+				role:SendToClient(SerializeCommand(cmd))
+				return
+			end
+			
+			brotherall[#brotherall+1] = brother_role	
+			sit:Next()
+			s = sit:GetValue()
+		end
+		
+
+		--这里用msg代替
+		--发送给俩个兄弟
+		for i = 1,string.len(brotherall) do
+			local dest_role = brotherall[i]
+			if dest_role ~= nil then
+				resp.boss_id = v._boss_info._id:ToStr()
+				resp.name = role._roledata._jieyi_info._jieyi_name
+				dest_role:SendToClient(SerializeCommand(resp))	
+			end
+		end
+
+	end
+	
+--]]	
+end

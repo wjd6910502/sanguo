@@ -1,0 +1,8 @@
+#!/bin/sh
+
+
+tar zcfh gamed.tar.gz xlib/ gamed/*.so gamed/run gamed/gamed gamed/gamesys.conf gamed/scripts/
+tar zcfh client.tar.gz xlib/ client/*.so client/run client/client client/gamesys.conf client/scripts/
+
+
+

@@ -1,0 +1,80 @@
+function OnCommand_TowerSelectArmyInfo(player, role, arg, others)
+	player:Log("OnCommand_TowerSelectArmyInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("TowerSelectArmyInfo_Re")
+	if arg.difficulty ~= 1 and arg.difficulty ~= 2 and arg.difficulty ~= 3 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if role._roledata._tower_data._select_layer_difficulty ~= 0 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARMY_SELECTED"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end	
+
+	local ed = DataPool_Find("elementdata")
+	local layer = role._roledata._tower_data._cur_layer
+	if role._roledata._tower_data._difficulty == 2 then
+		layer = layer + 100 
+	end
+	local towerstage = ed:FindBy("tower_stage", layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if towerstage.stage_category ~= 1 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_TYPE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	role._roledata._tower_data._select_layer_difficulty = arg.difficulty
+	resp.difficulty = role._roledata._tower_data._select_layer_difficulty
+
+	local enemy_id = 0
+	for enemy in DataPool_Array(towerstage.enemy_team) do
+		if enemy.enemy_level == arg.difficulty then
+			--随机敌人组 需要确认
+			local size = table.getn(enemy.team_ids)
+			local max = 0
+			for i = 1, size do
+				max = max + enemy.team_odds[i]
+			end
+			local randd = math.random(1, max)
+			local add = 0
+			for i = 1, size do
+				add = add + enemy.team_odds[i]
+				if randd <= add then
+					enemy_id = enemy.team_ids[i]
+					break
+				end
+			end
+			break
+		end
+	end
+	
+	if enemy_id == 0 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--保存玩家抽取到的敌人信息
+	local ed = DataPool_Find("elementdata")
+	local towerenemy = ed:FindBy("tower_enemy", enemy_id)
+	for monster in DataPool_Array(towerenemy.monster_ids) do
+		if monster ~= 0 then
+			local tmp = CACHE.TowerAttackInfo()
+			tmp._id = monster
+			role._roledata._tower_data._cur_attack_army_info:Insert(tmp._id, tmp)
+		end
+	end
+		
+	resp.army = enemy_id
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+end

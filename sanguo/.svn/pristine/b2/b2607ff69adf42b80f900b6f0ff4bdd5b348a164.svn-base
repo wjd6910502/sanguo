@@ -1,0 +1,31 @@
+function OnMessage_PVPCreateResult(pvp, arg, others)
+	API_Log("OnMessage_PVPCreateResult, "..DumpTable(arg).." "..DumpTable(others))
+
+	if pvp._data._status~=1 then return end
+
+	local now = API_GetTime()
+
+	if arg.retcode~=0 then
+		pvp._data._status = 99
+		pvp._data._status_change_time = now
+		pvp._data._end_reason = 3 --PVPCreateResult有错
+		return
+	end
+
+	--准备就绪，开始
+	pvp._data._status = 2
+	pvp._data._status_change_time = now
+
+	local cmd = NewCommand("PVPBegin")
+	cmd.fight_start_time = pvp._data._fight_start_time 
+	cmd.ip = pvp._data._pvpd_ip
+	cmd.port = pvp._data._pvpd_port
+
+	local role1 = others.roles[pvp._data._fighter1._id:ToStr()]
+	if role1==nil then ThrowException() end --FIXME: $_$
+	role1:SendToClient(SerializeCommand(cmd))
+
+	local role2 = others.roles[pvp._data._fighter2._id:ToStr()]
+	if role2==nil then ThrowException() end
+	role2:SendToClient(SerializeCommand(cmd))
+end

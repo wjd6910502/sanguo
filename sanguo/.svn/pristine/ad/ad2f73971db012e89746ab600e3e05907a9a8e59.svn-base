@@ -1,0 +1,3 @@
+function OnCommand_WuZheShiLianFinishBattle(player, role, arg, others)
+	--player:Log("OnCommand_WuZheShiLianFinishBattle, "..DumpTable(arg).." "..DumpTable(others))
+end

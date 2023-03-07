@@ -1,0 +1,82 @@
+function OnCommand_TowerSweep(player, role, arg, others)
+	player:Log("OnCommand_TowerSweep, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("TowerSweep_Re")
+
+	if arg.layer ~= role._roledata._tower_data._cur_layer then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if arg.difficulty ~= 1 and arg.difficulty ~= 2 and arg.difficulty ~= 3 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	resp.layer = role._roledata._tower_data._cur_layer
+	
+	local ed = DataPool_Find("elementdata")
+	local layer = resp.layer
+	if role._roledata._tower_data._difficulty == 2 then
+		layer = layer + 100
+	end
+	local towerstage = ed:FindBy("tower_stage", layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if towerstage.stage_category ~= 1 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_TYPE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local towerstage1 = ed:FindBy("tower_stage", role._roledata._tower_data._history_layer)
+	if towerstage1 == nil or towerstage1.can_skipped_level > arg.layer then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_SWEEP"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--为所有武将增加气血	
+	resp.hero = {}
+	local lit = role._roledata._hero_hall._heros:SeekBegin()
+	local l = lit:GetValue()
+	while l ~= nil do
+		local data = role._roledata._tower_data._injured_hero:Find(l._value)
+		if data ~= nil then
+			if data._anger < 300 then
+				data._anger = data._anger + 50
+				local tmp = {}
+				tmp.id = data._id
+				tmp.hp = data._hp
+				tmp.anger = data._anger
+				resp.hero[#resp.hero + 1] = tmp
+			end
+		else
+			local info = CACHE.ShiLianHeroInfo()
+			info._id = l._value
+			info._anger = 50
+			role._roledata._tower_data._injured_hero:Insert(info._id, info)
+			local tmp = {}
+			tmp.id = info._id
+			tmp.anger = info._anger
+			resp.hero[#resp.hero + 1] = tmp
+		end
+		lit:Next()
+		l = lit:GetValue()
+	end
+
+	--增加星星
+	role._roledata._tower_data._all_star = role._roledata._tower_data._all_star + arg.difficulty * 3
+	role._roledata._tower_data._cur_star = role._roledata._tower_data._cur_star + arg.difficulty * 3		
+
+	resp.all_star = role._roledata._tower_data._all_star
+	resp.cur_Star = role._roledata._tower_data._cur_star
+	
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+end

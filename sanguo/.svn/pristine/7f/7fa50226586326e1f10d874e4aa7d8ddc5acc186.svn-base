@@ -1,0 +1,11 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+ulimit -c unlimited
+
+./gamed gamesys.conf
+#gdb -args ./gamed gamesys.conf
+#valgrind ./gamed gamesys.conf
+

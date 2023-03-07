@@ -1,0 +1,28 @@
+
+#ifndef __GNET_TRANSCHALLENGE_HPP
+#define __GNET_TRANSCHALLENGE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "connection.h"
+
+namespace GNET
+{
+
+class TransChallenge : public GNET::Protocol
+{
+	#include "transchallenge"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		fprintf(stderr, "TransChallenge::Process, server_rand2=%s\n", B16EncodeOctets(server_rand2).c_str());
+
+		Connection::GetInstance().OnTransChallenge(manager, sid, server_rand2);
+	}
+};
+
+};
+
+#endif

@@ -1,0 +1,20 @@
+function OnMessage_PvpEnd(player, role, arg, others)
+	player:Log("OnMessage_PvpEnd, "..DumpTable(arg).." "..DumpTable(others))
+
+	role._roledata._pvp._typ = 0
+
+	if arg.reason == 1 then	--Ê¤Àû
+		role._roledata._pvp_info._win_count = role._roledata._pvp_info._win_count + 1
+		role._roledata._pvp_info._win_flag = role._roledata._pvp_info._win_flag + 1
+	elseif arg.reason == 0 then	--Ê§°Ü
+		role._roledata._pvp_info._win_victory = role._roledata._pvp_info._win_victory + 1
+		role._roledata._pvp_info._win_flag = role._roledata._pvp_info._win_flag + 1
+	end
+	
+	local resp = NewCommand("PVPEnd")
+
+	resp.result = arg.reason
+	resp.typ = arg.typ
+
+	player:SendToClient(SerializeCommand(resp))
+end

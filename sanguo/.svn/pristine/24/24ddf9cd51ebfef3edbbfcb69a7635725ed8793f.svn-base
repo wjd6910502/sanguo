@@ -1,0 +1,264 @@
+#include "gamedbclient.hpp"
+#include "gcenterclient.hpp"
+#include "gateserver.hpp"
+#include "transserver.hpp"
+#include "udptransserver.hpp"
+#include "pvpgameserver.hpp"
+#include "conf.h"
+#include "glog.h"
+#include "thread.h"
+#include "gnet_init.h"
+#include <iostream>
+#include <unistd.h>
+#include <lua.hpp>
+#include "playermanager.h"
+#include "dbsavetask.h"
+#include "commonmacro.h"
+#include "message.h"
+#include "script_wrapper.h"
+#include "statistic_manager.h"
+#include <sys/time.h>
+#include <sys/resource.h>
+#include "pvpmanager.h"
+#include <signal.h>
+#include "stungameclient.hpp"
+#include "stundeafserver.hpp"
+#include "uniquenameclient.hpp"
+
+using namespace GNET;
+
+extern __thread lua_State *g_L;
+extern lua_State* InitLuaEnv();
+
+//这个map用来存储需要存库的信息，在这里是不区分表的，因为所有的类型都是一致的
+std::map<Octets, Octets> g_save_data_map;
+
+static abase::timer g_timer(1000, 300000);
+int g_have_load_finish;//这个变量是为了保证不会在Load数据期间进行数据的Save操作
+extern int GNET::g_zoneid;
+
+extern int g_wait_count;
+extern GNET::Thread::Mutex g_wait_count_lock;
+extern GNET::Thread::Mutex g_big_lock;
+
+static void* timer_thread(void*)
+{
+	printf("TIMER THREAD: %u\n", (unsigned int)pthread_self());
+
+	pthread_detach(pthread_self());
+	g_timer.timer_thread(SERVER_CONST_TICK_MICROSEC, SERVER_CONST_TICK_MICROSEC/5);
+	return 0;
+}
+
+static void timer_tick(int index,void* object,int remain)
+{
+	{
+	GNET::Thread::Mutex::Scoped keeper(g_wait_count_lock);
+	g_wait_count++;
+	}
+	{
+	GNET::Thread::Mutex::Scoped keeper(g_big_lock);
+	GNET::Thread::Mutex::Scoped keeper2(g_wait_count_lock);
+	g_wait_count--;
+	}
+
+	static int _tick = 0;
+
+	_tick++;
+	time_t now = GNET::Timer::GetTime();
+	MessageManager::GetInstance().OnTimer(_tick, now);
+	CACHE::PlayerManager::GetInstance().OnTimer(_tick, now);
+	CACHE::PVPManager::GetInstance().OnTimer(_tick, now);
+}
+
+void SigHandler_USR1(int sig)
+{
+	GLog::log(LOG_INFO, "SigHandler_USR1, sig=%d", sig);
+
+	if(sig == SIGUSR1)
+	{
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10007:"); //ReloadLua
+		MessageManager::GetInstance().Put(0, 0, msg);
+	}
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc != 2 || access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Usage: " << argv[0] << " configurefile" << std::endl;
+		exit(-1);
+	}
+
+	signal(SIGUSR1, SigHandler_USR1);
+
+	Conf *conf = Conf::GetInstance(argv[1]);
+
+	rlimit rl;
+	getrlimit(RLIMIT_NOFILE, &rl);
+	//if(rl.rlim_cur < rl.rlim_max) rl.rlim_cur=rl.rlim_max;
+	//setrlimit(RLIMIT_NOFILE, &rl);
+	//getrlimit(RLIMIT_NOFILE, &rl);
+	printf("getrlimit: rlim_cur=%ld, rlim_max=%ld\n", rl.rlim_cur, rl.rlim_max);
+
+	GNET::Thread::Pool::_pool.CreateThread(timer_thread, 0);
+	GNET::InitStaticObjects();
+	GNET::PollIO::Init(false);
+	//GNET::IntervalTimer::PrepareTimer(&g_timer, SERVER_CONST_TICK_MICROSEC);
+
+	{
+		GateServer *manager = GateServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		TransServer *manager = TransServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+
+		//get public address/port
+		std::string pa = conf->find(manager->Identification(), "public_address");
+		if(!pa.empty())
+		{
+			manager->SetPublicAddress(pa.c_str());
+		}
+		else
+		{
+			manager->SetPublicAddress(conf->find(manager->Identification(), "address").c_str());
+		}
+		unsigned short pp = atoi(conf->find(manager->Identification(), "public_port").c_str());
+		if(pp)
+		{
+			manager->SetPublicPort(pp);
+		}
+		else
+		{
+			manager->SetPublicPort(atoi(conf->find(manager->Identification(), "port").c_str()));
+		}
+
+		Protocol::Server(manager);
+	}
+	{
+		UDPTransServer *manager = UDPTransServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+
+		//get public address/port
+		std::string pa = conf->find(manager->Identification(), "public_address");
+		if(!pa.empty())
+		{
+			manager->SetPublicAddress(pa.c_str());
+		}
+		else
+		{
+			manager->SetPublicAddress(conf->find(manager->Identification(), "address").c_str());
+		}
+		unsigned short pp = atoi(conf->find(manager->Identification(), "public_port").c_str());
+		if(pp)
+		{
+			manager->SetPublicPort(pp);
+		}
+		else
+		{
+			manager->SetPublicPort(atoi(conf->find(manager->Identification(), "port").c_str()));
+		}
+
+		Protocol::Server(manager);
+	}
+	{
+		PVPGameServer *manager = PVPGameServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		STUNGameClient *manager = STUNGameClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		STUNDeafServer *manager = STUNDeafServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		GameDBClient *manager = GameDBClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		manager->SetDBVersion(atoi(conf->find(manager->Identification(), "db_version").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		GCenterClient *manager = GCenterClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	{
+		UniqueNameClient *manager = UniqueNameClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+
+	{
+		GNET::g_zoneid = atoi(conf->find("Global", "zoneid").c_str());
+	}
+
+	GLog::Init("gamed");
+	g_timer.set_timer(1, 0, 0, timer_tick, 0);
+
+	if(!g_L) g_L = InitLuaEnv();
+	if(g_L)
+	{
+		LuaWrapper lw(g_L);
+		if(!lw.gExec("InitCommandInMainThread"))
+		{
+			GLog::log(LOG_ERR, "main, gExec, error, InitCommandInMainThread");
+			exit(-1);
+		}
+		if(!lw.gExec("InitMessageInMainThread"))
+		{
+			GLog::log(LOG_ERR, "main, gExec, error, InitMessageInMainThread");
+			exit(-1);
+		}
+		lua_close(g_L);
+		g_L = 0; //主线程之后用不着lua了所以销毁, 如果要打开则必须把reload也加上
+	}
+
+	GNET::ThreadPolicyBase *policy = new GNET::ThreadPolicyBase();
+	policy->AddGroup(-1, 0);
+	policy->SetSequenceCount(SERVER_CONST_WORKER_THREAD_COUNT);
+	for(auto i=0; i<SERVER_CONST_WORKER_THREAD_COUNT; ++i)
+	{
+		policy->AddThread(0, GNET::TASK_TYPE_SEQUENCE|GNET::TASK_TYPE_GLOBAL);
+	}
+	GNET::Thread::Pool::_pool.Init(policy);
+	GNET::Thread::Pool::_pool.Start();
+
+	GLog::log(LOG_INFO, "MAIN THREAD: %u", (unsigned int)pthread_self());
+
+	time_t t = Now();
+	while(1)
+	{
+		{
+		GNET::Thread::Mutex::Scoped keeper(g_wait_count_lock);
+		g_wait_count++;
+		}
+		{
+		GNET::Thread::Mutex::Scoped keeper(g_big_lock);
+		GNET::Thread::Mutex::Scoped keeper2(g_wait_count_lock);
+		g_wait_count--;
+		}
+
+		PollIO::Poll(1);
+		GNET::Timer::Update();
+
+		time_t now = Now();
+		if(now-t >= 10)
+		{
+			t = now;
+			StatisticManager::GetInstance().Dump();
+		}
+	}
+
+	//GNET::IOMan::_man.SetDelayThreshold(50, 500);
+
+	return 0;
+}
+

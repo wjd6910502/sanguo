@@ -1,0 +1,799 @@
+#ifndef _FOR_LUA_H_
+#define _FOR_LUA_H_
+
+#include <map>
+#include <list>
+#include "marshal.h"
+
+namespace CACHE
+{
+
+class Int64: public GNET::Marshal
+{
+	int64_t _v;
+	std::string _s;
+
+public:
+	Int64(): _v(0), _s("0") {}
+	Int64(int64_t v)
+	{
+		_v = v;
+		Update();
+	}
+	Int64(const char *s)
+	{
+		_v = strtoll(s, 0, 10);
+		Update();
+	}
+	virtual ~Int64() {}
+
+	operator int64_t() const { return _v; }
+	Int64& operator =(int64_t v)
+	{
+		_v = v;
+		Update();
+		return *this;
+	}
+	
+	const char* ToStr() const { return _s.c_str(); }
+	int64_t GetInt64() {return _v;}
+	
+	void Set(const char *s)
+	{
+		_v = strtoll(s, 0, 10);
+		Update();
+	}
+	void Set(const int &s)
+	{
+		_v = s;
+		Update();
+	}
+	void Set(const Int64 &s)
+	{
+		*this = s;
+	}
+	
+	void Add(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		_v += tmp;
+		Update();
+	}
+	void AddInt(const int &s)
+	{
+		_v += s;
+		Update();
+	}
+	void Add(const Int64 &s)
+	{
+		_v += s._v;
+		Update();
+	}
+	
+	void Sub(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		_v -= tmp;
+		Update();
+	}
+	void Sub(const int &s)
+	{
+		_v -= s;
+		Update();
+	}
+	void Sub(const Int64 &s)
+	{
+		_v -= s._v;
+		Update();
+	}
+	
+	void Mul(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		_v *= tmp;
+		Update();
+	}
+	void Mul(const int &s)
+	{
+		_v *= s;
+		Update();
+	}
+	void Mul(const Int64 &s)
+	{
+		_v *= s._v;
+		Update();
+	}
+	
+	void Div(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		_v /= tmp;
+		Update();
+	}
+	void Div(const int &s)
+	{
+		_v /= s;
+		Update();
+	}
+	void Div(const Int64 &s)
+	{
+		_v /= s._v;
+		Update();
+	}
+
+	int Mode(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v/tmp;
+	}
+	int Mode(const int &s)
+	{
+		return _v/s;
+	}
+	int Mode(const Int64 &s)
+	{
+		return _v/s._v;
+	}
+	
+	bool Less(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v<tmp;
+	}
+	bool Less(const int &s)
+	{
+		return _v<s;
+	}
+	bool Less(const Int64 &s)
+	{
+		return *this<s;
+	}
+	
+	bool Great(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v>tmp;
+	}
+	bool GreatInt(const int &s)
+	{
+		return _v>s;
+	}
+	bool Great(const Int64 &s)
+	{
+		return s<*this;
+	}
+	
+	bool Equle(const char *s)
+	{
+		int64_t tmp = strtoll(s, 0, 10);
+		return _v==tmp;
+	}
+	bool EquleInt(const int &s)
+	{
+		return _v==s;
+	}
+	bool Equle(const Int64 &s)
+	{
+		return *this==s;
+	}
+
+	bool operator <(const Int64& rhs) const { return (_v<rhs._v); }
+	bool operator ==(const Int64& rhs) const { return (_v==rhs._v); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << _v;
+		return os;
+	}
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		os >> _v;
+		Update();
+		return os;
+	}
+
+private:
+	void Update()
+	{
+		char buf[64];
+		snprintf(buf, sizeof(buf), "%ld", _v);
+		_s = buf;
+	}
+};
+
+template<typename K, typename V, typename Iter, typename Map>
+class MapIter
+{
+	Iter _it;
+	void *_map; //其实是map的shell
+	int _saved_tag;
+
+public:
+	MapIter(Iter it, void* map, int tag): _it(it), _map(map), _saved_tag(tag) {}
+
+	void Next()
+	{
+		if(_saved_tag != ((Map*)_map)->Tag()) return;
+		if(_it != ((Map*)_map)->End()) _it++;
+	}
+	V* GetValue()
+	{
+		if(_saved_tag != ((Map*)_map)->Tag()) return 0;
+		if(_it == ((Map*)_map)->End()) return 0;
+		return &_it->second;
+	}
+};
+template<typename K, typename V, typename Iter, typename MapIter>
+class Map
+{
+	mutable std::map<K, V> _map;
+	int _tag;
+	void *_shell;
+
+public:
+	Map(void *shell): _tag(0), _shell(shell) {}
+	void SetShell(void *p) { _shell = p; }
+
+	void OnChanged() { _tag++; }
+	int Tag() const { return _tag; }
+	Iter End() { return _map.end(); }
+
+	int Size() const { return _map.size(); }
+
+	V* Find(const K& k)
+	{
+		Iter it = _map.find(k);
+		if(it == _map.end()) return 0;
+		return &it->second;
+	}
+	void Insert(const K& k, const V& v)
+	{
+		_map[k] = v;
+		OnChanged();
+	}
+	void Delete(const K& k)
+	{
+		_map.erase(k);
+		OnChanged();
+	}
+	void Clear()
+	{
+		_map.clear();
+		OnChanged();
+	}
+
+	MapIter SeekToBegin() const { return MapIter(_map.begin(), _shell, _tag); }
+	MapIter Seek(const K& k) const { return MapIter(_map.find(k), _shell, _tag); }
+	MapIter SeekToLast() const
+	{ 
+		if (_map.size() == 0)
+			return MapIter(_map.begin(), _shell, _tag);
+		else
+			return MapIter(--_map.end(), _shell, _tag); 
+	}
+
+	GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << (int)_map.size();
+		for(auto it=_map.begin(); it!=_map.end(); ++it)
+		{
+			os << it->first << it->second;
+		}
+		return os;
+	}
+	const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		_map.clear();
+		int size = 0;
+		os >> size;
+		for(; size>0; size--)
+		{
+			K k;
+			V v;
+			os >> k >> v;
+			_map.insert(std::make_pair(k,v));
+		}
+		return os;
+	}
+};
+//class VALUEMap;
+//class VALUEMapIter
+//{
+//	MapIter<KEY, VALUE, std::map<KEY, VALUE>::iterator, VALUEMap> _rep;
+//
+//public:
+//	VALUEMapIter(std::map<KEY, VALUE>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+//
+//	void Next() { _rep.Next(); }
+//	VALUE* GetValue() { return _rep.GetValue(); }
+//};
+//class VALUEMap: public GNET::Marshal
+//{
+//	Map<KEY, VALUE, std::map<KEY, VALUE>::iterator, VALUEMapIter> _rep;
+//
+//public:
+//	VALUEMap(): _rep(this) {}
+//	VALUEMap(const VALUEMap& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+//	virtual ~VALUEMap() {}
+//
+//	VALUEMap& operator= (const VALUEMap& rhs)
+//	{
+//		_rep = rhs._rep;
+//		_rep.SetShell(this);
+//		return *this;
+//	}
+//
+//	void OnChanged() { _rep.OnChanged(); }
+//	int Tag() const { return _rep.Tag(); }
+//	std::map<KEY, VALUE>::iterator End() { return _rep.End(); }
+//
+//	int Size() const { return _rep.Size(); }
+//
+//	VALUE* Find(const KEY& k) { return _rep.Find(k); }
+//	void Insert(const KEY& k, const VALUE& v) { _rep.Insert(k, v); }
+//	void Delete(const KEY& k) { _rep.Delete(k); }
+//	void Clear() { _rep.Clear(); }
+//
+//	VALUEMapIter SeekToBegin() const { return _rep.SeekToBegin(); }
+//	VALUEMapIter Seek(const KEY& k) const { return _rep.Seek(k); }
+//	VALUEMapIter SeekToLast() const { return _rep.SeekToLast(); }
+//
+//	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+//	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+//};
+#define MapLuable(NAME, KEY, VALUE) \
+class NAME; \
+class NAME##Iter \
+{ \
+	MapIter<KEY, VALUE, std::map<KEY, VALUE>::iterator, NAME> _rep; \
+ \
+public: \
+	NAME##Iter(std::map<KEY, VALUE>::iterator it, void *map, int tag): _rep(it, map, tag) {} \
+ \
+	void Next() { _rep.Next(); } \
+	VALUE* GetValue() { return _rep.GetValue(); } \
+}; \
+class NAME: public GNET::Marshal \
+{ \
+	Map<KEY, VALUE, std::map<KEY, VALUE>::iterator, NAME##Iter> _rep; \
+ \
+public: \
+	NAME(): _rep(this) {} \
+	NAME(const NAME& rhs): _rep(rhs._rep) { _rep.SetShell(this); } \
+	virtual ~NAME() {} \
+ \
+	NAME& operator= (const NAME& rhs) \
+	{ \
+		_rep = rhs._rep; \
+		_rep.SetShell(this); \
+		return *this; \
+	} \
+ \
+	void OnChanged() { _rep.OnChanged(); } \
+	int Tag() const { return _rep.Tag(); } \
+	std::map<KEY, VALUE>::iterator End() { return _rep.End(); } \
+ \
+	int Size() const { return _rep.Size(); } \
+ \
+	VALUE* Find(const KEY& k) { return _rep.Find(k); } \
+	void Insert(const KEY& k, const VALUE& v) { _rep.Insert(k, v); } \
+	void Delete(const KEY& k) { _rep.Delete(k); } \
+	void Clear() { _rep.Clear(); } \
+ \
+	NAME##Iter SeekToBegin() const { return _rep.SeekToBegin(); } \
+	NAME##Iter Seek(const KEY& k) const { return _rep.Seek(k); } \
+	NAME##Iter SeekToLast() const { return _rep.SeekToLast(); } \
+ \
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); } \
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); } \
+};
+
+template<typename K, typename V, typename Iter, typename MultiMap>
+class MultiMapIter
+{
+	Iter _it;
+	void *_map; //FIXME: 没法直接用Map类型, 不知为何, 会导致编译不过
+	int _saved_tag;
+
+public:
+	MultiMapIter(Iter it, void* map, int tag): _it(it), _map(map), _saved_tag(tag) {}
+
+	void Next()
+	{
+		if(_saved_tag != ((MultiMap*)_map)->Tag()) return;
+		if(_it != ((MultiMap*)_map)->End()) _it++;
+	}
+	V* GetValue()
+	{
+		if(_saved_tag != ((MultiMap*)_map)->Tag()) return 0;
+		if(_it == ((MultiMap*)_map)->End()) return 0;
+		return &_it->second;
+	}
+	Iter GetIter()
+	{
+		return _it;
+	}
+};
+template<typename K, typename V, typename Iter, typename MultiMapIter>
+class MultiMap
+{
+	mutable std::multimap<K, V> _map;
+	int _tag;
+	void *_shell;
+
+public:
+	MultiMap(void *shell): _tag(0), _shell(shell) {}
+	void SetShell(void *p) { _shell = p; }
+
+	void OnChanged() { _tag++; }
+	int Tag() const { return _tag; }
+	Iter End() { return _map.end(); }
+
+	int Size() const { return _map.size(); }
+
+	V* Find(const K& k)
+	{
+		Iter it = _map.find(k);
+		if(it == _map.end()) return 0;
+		return &it->second;
+	}
+	void Insert(const K& k, const V& v)
+	{
+		_map.insert(std::make_pair(k,v));
+		OnChanged();
+	}
+	void Delete(const K& k)
+	{
+		//这个主意了，这个会删除key是k的所有元素
+		_map.erase(k);
+		OnChanged();
+	}
+	void Delete(MultiMapIter& it)
+	{
+		_map.erase(it.GetIter());
+		OnChanged();
+	}
+	void Clear()
+	{
+		_map.clear();
+		OnChanged();
+	}
+	int Count(const K& k)
+	{
+		return _map.count(k);
+	}
+
+	MultiMapIter SeekToBegin() const { return MultiMapIter(_map.begin(), _shell, _tag); }
+	MultiMapIter Seek(const K& k) const { return MultiMapIter(_map.find(k), _shell, _tag); }
+	MultiMapIter SeekToLast() const
+	{ 
+		if (_map.size() == 0)
+			return MultiMapIter(_map.begin(), _shell, _tag);
+		else
+			return MultiMapIter(--_map.end(), _shell, _tag); 
+	}
+	GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << (int)_map.size();
+		for(auto it=_map.begin(); it!=_map.end(); ++it)
+		{
+			os << it->first << it->second;
+		}
+		return os;
+	}
+	const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		int size = 0;
+		os >> size;
+		for(; size>0; size--)
+		{
+			K k;
+			V v;
+			os >> k >> v;
+			_map.insert(std::make_pair(k,v));
+		}
+		return os;
+	}
+};
+
+#define MultiMapLuable(NAME, KEY, VALUE) \
+class NAME; \
+class NAME##Iter \
+{ \
+	MultiMapIter<KEY, VALUE, std::multimap<KEY, VALUE>::iterator, NAME> _rep; \
+ \
+public: \
+	NAME##Iter(std::multimap<KEY, VALUE>::iterator it, void *map, int tag): _rep(it, map, tag) {} \
+ \
+	void Next() { _rep.Next(); } \
+	VALUE* GetValue() { return _rep.GetValue(); } \
+	Iter GetIter() { return _rep.GetIter(); }\
+}; \
+class NAME: public GNET::Marshal \
+{ \
+	MultiMap<KEY, VALUE, std::map<KEY, VALUE>::iterator, NAME##Iter> _rep; \
+ \
+public: \
+	NAME(): _rep(this) {} \
+	NAME(const NAME& rhs): _rep(rhs._rep) { _rep.SetShell(this); } \
+	virtual ~NAME() {} \
+ \
+	NAME& operator= (const NAME& rhs) \
+	{ \
+		_rep = rhs._rep; \
+		_rep.SetShell(this); \
+		return *this; \
+	} \
+ \
+	void OnChanged() { _rep.OnChanged(); } \
+	int Tag() const { return _rep.Tag(); } \
+	std::multimap<KEY, VALUE>::iterator End() { return _rep.End(); } \
+ \
+	int Size() const { return _rep.Size(); } \
+ \
+	VALUE* Find(const KEY& k) { return _rep.Find(k); } \
+	void Insert(const KEY& k, const VALUE& v) { _rep.Insert(k, v); } \
+	void Delete(const KEY& k) { _rep.Delete(k); } \
+	void Delete(NAME##Iter& it){ _rep.Delete(k); }\
+\
+	void Clear() { _rep.Clear(); } \
+	int Count(const KEY& k){ return _rep.Count(k);}\
+ \
+	NAME##Iter SeekToBegin() const { return _rep.SeekToBegin(); } \
+	NAME##Iter Seek(const KEY& k) const { return _rep.Seek(k); } \
+	NAME##Iter SeekToLast() const { return _rep.SeekToLast(); } \
+ \
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); } \
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); } \
+};
+template<typename V, typename Iter, typename List>
+class ListIter
+{
+	Iter _it;
+	void *_list;
+	int _saved_tag;
+
+public:
+	ListIter(Iter it, void *list, int tag): _it(it), _list(list), _saved_tag(tag) {}
+
+	void Next()
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it != list->End()) _it++;
+	}
+	V* GetValue()
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return 0;
+		if(_it == list->End()) return 0;
+		return &*_it;
+	}
+
+	void Pop()
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it != list->End()) list->Erase(_it);
+	}
+	void PushBefore(const V& v)
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it == list->End())
+		{
+			list->PushBack(v);
+		}
+		else
+		{
+			list->Insert(_it, v);
+		}
+	}
+	void PushAfter(const V& v)
+	{
+		List *list = (List*)_list;
+		if(_saved_tag != list->Tag()) return;
+		if(_it == list->End())
+		{
+			list->PushBack(v);
+		}
+		else
+		{
+			_it++; //PushBefore会导致it失效, 所以这里修改it也无所谓了
+			PushBefore(v);
+		}
+	}
+};
+template<typename V, typename Iter, typename ListIter>
+class List
+{
+	mutable std::list<V> _list;
+	int _tag;
+	void *_shell;
+
+public:
+	List(void *shell): _tag(0), _shell(shell) {}
+	void SetShell(void *p) { _shell=p; }
+
+	void OnChanged() { _tag++; }
+	int Tag() const { return _tag; }
+	Iter End() { return _list.end(); }
+	void Erase(Iter it)
+	{
+		_list.erase(it);
+		OnChanged();
+	}
+	void Insert(Iter it, const V& v)
+	{
+		_list.insert(it, v);
+		OnChanged();
+	}
+
+	int Size() const { return _list.size(); }
+
+	void PopFront()
+	{
+		if(!_list.empty())
+		{
+			_list.pop_front();
+			OnChanged();
+		}
+	}
+	void PushFront(const V& v)
+	{
+		_list.push_front(v);
+		OnChanged();
+	}
+	void PopBack()
+	{
+		if(!_list.empty())
+		{
+			_list.pop_back();
+			OnChanged();
+		}
+	}
+	void PushBack(const V& v)
+	{
+		_list.push_back(v);
+		OnChanged();
+	}
+	void Clear()
+	{
+		_list.clear();
+		OnChanged();
+	}
+
+	ListIter SeekToBegin() const { return ListIter(_list.begin(), _shell, _tag); }
+
+	GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const
+	{
+		os << (int)_list.size();
+		for(auto it=_list.begin(); it!=_list.end(); ++it)
+		{
+			os << *it;
+		}
+		return os;
+	}
+	const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os)
+	{
+		_list.clear();
+		int size = 0;
+		os >> size;
+		for(; size>0; size--)
+		{
+			V v;
+			os >> v;
+			_list.push_back(v);
+		}
+		return os;
+	}
+};
+//class VALUEList;
+//class VALUEListIter
+//{
+//	ListIter<VALUE, std::list<VALUE>::iterator, VALUEList> _rep;
+//
+//public:
+//	VALUEListIter(std::list<VALUE>::iterator it, void *list, int tag): _rep(it, list, tag) {}
+//
+//	void Next() { _rep.Next(); }
+//	VALUE* GetValue() { return _rep.GetValue(); }
+//
+//	void Pop() { _rep.Pop(); }
+//	void PushBefore(const VALUE& v) { _rep.PushBefore(v); }
+//	void PushAfter(const VALUE& v) { _rep.PushAfter(v); }
+//};
+//class VALUEList: public GNET::Marshal
+//{
+//	List<VALUE, std::list<VALUE>::iterator, VALUEListIter> _rep;
+//
+//public:
+//	VALUEList(): _rep(this) {}
+//	VALUEList(const VALUEList& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+//	virtual ~VALUEList() {}
+//
+//	VALUEList& operator= (const VALUEList& rhs)
+//	{
+//		_rep = rhs._rep;
+//		_rep.SetShell(this);
+//		return *this;
+//	}
+//
+//	void OnChanged() { _rep.OnChanged(); }
+//	int Tag() const { return _rep.Tag(); }
+//	std::list<VALUE>::iterator End() { return _rep.End(); }
+//	void Erase(std::list<VALUE>::iterator it) { _rep.Erase(it); }
+//	void Insert(std::list<VALUE>::iterator it, const VALUE& v) { _rep.Insert(it, v); }
+//
+//	int Size() const { return _rep.Size(); }
+//
+//	void PopFront() { _rep.PopFront(); }
+//	void PushFront(const VALUE& v) { _rep.PushFront(v); }
+//	void PopBack() { _rep.PopBack(); }
+//	void PushBack(const VALUE& v) { _rep.PushBack(v); }
+//	void Clear() { _rep.Clear(); }
+//
+//	VALUEListIter SeekToBegin() const { return _rep.SeekToBegin(); }
+//
+//	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+//	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+//};
+#define ListLuable(NAME, VALUE) \
+class NAME; \
+class NAME##Iter \
+{ \
+	ListIter<VALUE, std::list<VALUE>::iterator, NAME> _rep; \
+ \
+public: \
+	NAME##Iter(std::list<VALUE>::iterator it, void *list, int tag): _rep(it, list, tag) {} \
+ \
+	void Next() { _rep.Next(); } \
+	VALUE* GetValue() { return _rep.GetValue(); } \
+ \
+	void Pop() { _rep.Pop(); } \
+	void PushBefore(const VALUE& v) { _rep.PushBefore(v); } \
+	void PushAfter(const VALUE& v) { _rep.PushAfter(v); } \
+}; \
+class NAME: public GNET::Marshal \
+{ \
+	List<VALUE, std::list<VALUE>::iterator, NAME##Iter> _rep; \
+ \
+public: \
+	NAME(): _rep(this) {} \
+	NAME(const NAME& rhs): _rep(rhs._rep) { _rep.SetShell(this); } \
+	virtual ~NAME() {} \
+ \
+	NAME& operator= (const NAME& rhs) \
+	{ \
+		_rep = rhs._rep; \
+		_rep.SetShell(this); \
+		return *this; \
+	} \
+ \
+	void OnChanged() { _rep.OnChanged(); } \
+	int Tag() const { return _rep.Tag(); } \
+	std::list<VALUE>::iterator End() { return _rep.End(); } \
+	void Erase(std::list<VALUE>::iterator it) { _rep.Erase(it); } \
+	void Insert(std::list<VALUE>::iterator it, const VALUE& v) { _rep.Insert(it, v); } \
+ \
+	int Size() const { return _rep.Size(); } \
+ \
+	void PopFront() { _rep.PopFront(); } \
+	void PushFront(const VALUE& v) { _rep.PushFront(v); } \
+	void PopBack() { _rep.PopBack(); } \
+	void PushBack(const VALUE& v) { _rep.PushBack(v); } \
+	void Clear() { _rep.Clear(); } \
+ \
+	NAME##Iter SeekToBegin() const { return _rep.SeekToBegin(); } \
+ \
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); } \
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); } \
+};
+
+//ListLuable(Int64List, Int64);
+//MapLuable(Int64Map, Int64, Int64);
+
+};
+
+#endif //_FOR_LUA_H_
+

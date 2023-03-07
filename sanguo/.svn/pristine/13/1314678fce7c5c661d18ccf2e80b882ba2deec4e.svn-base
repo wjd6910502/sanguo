@@ -1,0 +1,610 @@
+#include "commonmacro.h"
+
+#include <syslog.h>
+#include <lua.hpp>
+#include <sys/time.h>
+
+#include "clstd.h"
+#include "cltypes.h"
+#include "gxBaseTypes.H"
+#include "clAllocator.h"
+#include "clString.H"
+#include "clBuffer.H"
+#include "GUnknown.H"
+#include "clFile.H"
+#include "GrapX.H"
+#include "DataPool.H"
+#include "DataPoolVariable.H"
+#include "DataPoolIterator.h"
+#include "GameDataPool.H"
+#include "glog.h"
+#include "script_wrapper.h"
+#include "dbsavemanager.h"
+
+__thread lua_State *g_L = 0;
+lua_State *g_L_new = 0;
+int g_reload_lua = 0;
+__thread int g_reload_lua_local = 0;
+lua_State* InitLuaEnv();
+
+extern int tolua_structs_open (lua_State* tolua_S);
+
+std::map<std::string, DataPool*> g_datapool_map; //datapool_name=>datapool
+std::map<std::string, std::pair<DataPoolDict*,DataPoolVariable*> > g_dict_map; //key_name=>(dict,array)
+
+std::map<int, int> g_cmd_extra_roles_max_map; //cmd=>extra_roles_max
+std::map<int, int> g_cmd_extra_mafias_max_map; //cmd=>extra_mafias_max
+std::map<int, int> g_cmd_extra_pvps_max_map; //cmd=>extra_pvps_max
+std::set<int> g_cmd_lock_toplist_map; //cmd=>lock_toplist
+
+std::map<int, std::string> g_msg_receiver2; //msg=>receiver2
+std::set<int> g_msg_lock_toplist_map; //msg=>lock_toplist
+
+int change_time = 0;
+int g_db_save_flag = 1;
+
+//TODO: 参数检查，不要让lua错误扩展到C++中来
+static int script_Log(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	const char *log = lua_tostring(l, 1);
+
+	GLog::log(LOG_INFO, "===LUA LOG===: thread=%u, %s", (unsigned int)pthread_self(), log);
+	return 0;
+}
+
+//TODO: 改用服务器时间
+static int script_GetTime(lua_State *l)
+{
+	lua_pushinteger(l, (int)Now()+change_time);
+
+	return 1;
+}
+
+static int script_GetTime2(lua_State *l) //毫秒计量
+{
+	//static time_t first_t = 0;
+	//timeval tv;
+	//gettimeofday(&tv, 0);
+	//if(first_t==0) first_t=tv.tv_sec;
+	//tv.tv_sec -= first_t;
+	//lua_pushinteger(l, (int)(tv.tv_sec*1000+tv.tv_usec/1000));
+
+	timeval tv;
+	gettimeofday(&tv, 0);
+	lua_pushnumber(l, (tv.tv_sec*1000+tv.tv_usec/1000)+change_time*1000);
+
+	return 1;
+}
+
+static int script_IsNULL(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	void *p = lua_touserdata(l, 1);
+
+	lua_pushboolean(l, !p);
+	return 1;
+}
+
+static int script_ReloadLua(lua_State *l)
+{
+	//必须在单线程模式下执行
+	if(g_L_new) return 0;
+
+	g_L_new = InitLuaEnv();
+	if(g_L_new)
+	{
+		LuaWrapper lw(g_L_new);
+		if(!lw.gExec("InitInMainThread"))
+		{
+			GLog::log(LOG_ERR, "script_ReloadLua, gExec, error, InitInMainThread");
+			return 0;
+		}
+		if(!lw.gExec("InitCommandInMainThread"))
+		{
+			GLog::log(LOG_ERR, "script_ReloadLua, gExec, error, InitCommandInMainThread");
+			return 0;
+		}
+		if(!lw.gExec("InitMessageInMainThread"))
+		{
+			GLog::log(LOG_ERR, "script_ReloadLua, gExec, error, InitMessageInMainThread");
+			return 0;
+		}
+	}
+	return 0;
+}
+
+static int script_DataPool_Clear(lua_State *l)
+{
+	//TODO: 用来支持热加载，资源并没真正释放
+	g_datapool_map.clear();
+	g_dict_map.clear();
+
+	return 0;
+}
+
+static int script_DataPool_Alloc(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	const char *name = lua_tostring(l, 1);
+	const char *path = lua_tostring(l, 2);
+
+	if(g_datapool_map.find(name) != g_datapool_map.end()) return 0;
+
+	DataPool *dp = 0;
+	DataPool::CreateFromFileA(&dp, path, DataPoolLoad_ReadOnly);
+	if(!dp) return 0;
+	g_datapool_map[name] = dp;
+
+	lua_pushlightuserdata(l, dp);
+	return 1;
+}
+
+static int script_DataPool_Find(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	const char *name = lua_tostring(l, 1);
+
+	auto it = g_datapool_map.find(name);
+	if(it == g_datapool_map.end()) return 0;
+
+	lua_pushlightuserdata(l, it->second);
+	return 1;
+}
+
+static int script_DataPool_LocateVar(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	DataPool *pool = (DataPool*)lua_touserdata(l, 1);
+	const char *expr = lua_tostring(l, 2);
+	
+	MOVariable *var = new MOVariable();
+	pool->QueryByExpression(expr, var);
+	if(!var->IsValid())
+	{
+		delete var;
+		return 0;
+	}
+
+	if(var->GetLength() > 1)
+	{
+		lua_pushlightuserdata(l, var);
+		return 1;
+	}
+	else if(var->GetLength() == 1)
+	{
+		if(var->GetCaps()&DataPoolVariable::CAPS_DYNARRAY)
+		{
+			lua_pushlightuserdata(l, var);
+			return 1;
+		}
+	}
+	else //GetLength==0
+	{
+		delete var;
+		return 0;
+	}
+
+	switch(var->GetTypeCategory())
+	{
+	case T_BYTE:         // 1 byte         
+	case T_WORD:         // 2 bytes
+	case T_DWORD:        // 4 bytes
+	case T_SBYTE:        // signed 1 byte
+	case T_SWORD:        // signed 2 bytes 
+	case T_SDWORD:       // signed 4 bytes
+	case T_ENUM:         //
+	case T_FLAG:         //
+		lua_pushinteger(l, var->ToInteger());
+		delete var;
+		break;
+
+	case T_FLOAT:        // float 32
+		lua_pushnumber(l, var->ToFloat());
+		delete var;
+		break;
+
+	case T_QWORD:        // 8 bytes
+	case T_SQWORD:       // signed 8 bytes
+		lua_pushnumber(l, var->ToInteger64());
+		delete var;
+		break;
+
+	case T_STRING:
+	case T_STRINGA:      // ANSI string    
+		lua_pushstring(l, var->ToStringA());
+		delete var;
+		break;
+
+	case T_STRUCT:
+		lua_pushlightuserdata(l, var); //TODO: 何时delete? weaktable?
+		break;
+
+	default:
+		delete var;
+		return 0;
+	}
+	return 1;
+}
+
+static int script_DataPool_VarIndex(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	MOVariable *var = (MOVariable*)lua_touserdata(l, 1);
+	const char *key = lua_tostring(l, 2);
+
+	bool is_array_index= false;
+	int array_index = 0;
+	const char *p = key;
+	while(*p!='\0' && isdigit(*p))
+	{
+		p++;
+	}
+	if(p!=key && *p=='\0')
+	{
+		is_array_index = true;
+		array_index = atoi(key)-1;
+		if(array_index<0 || (size_t)array_index>=var->GetLength()) return 0; //TODO: lua中index<0是有效的吗?
+	}
+
+	MOVariable *var2 = new MOVariable();
+	if(is_array_index)
+	{
+		*var2 = var->IndexOf(array_index);
+	}
+	else
+	{
+		*var2 = var->MemberOf(key);
+	}
+	if(!var2->IsValid())
+	{
+		delete var2;
+		return 0;
+	}
+
+	if(var2->GetLength() > 1)
+	{
+		lua_pushlightuserdata(l, var2);
+		return 1;
+	}
+	else if(var2->GetLength() == 1)
+	{
+		if(var2->GetCaps()&DataPoolVariable::CAPS_DYNARRAY)
+		{
+			lua_pushlightuserdata(l, var2);
+			return 1;
+		}
+	}
+	else //GetLength==0
+	{
+		delete var2;
+		return 0;
+	}
+	
+	switch(var2->GetTypeCategory())
+	{
+	case T_BYTE:         // 1 byte         
+	case T_WORD:         // 2 bytes
+	case T_DWORD:        // 4 bytes
+	case T_SBYTE:        // signed 1 byte
+	case T_SWORD:        // signed 2 bytes 
+	case T_SDWORD:       // signed 4 bytes
+	case T_ENUM:         //
+	case T_FLAG:         //
+		lua_pushinteger(l, var2->ToInteger());
+		delete var2;
+		break;
+
+	case T_FLOAT:        // float 32
+		lua_pushnumber(l, var2->ToFloat());
+		delete var2;
+		break;
+
+	case T_QWORD:        // 8 bytes
+	case T_SQWORD:       // signed 8 bytes
+		lua_pushnumber(l, var2->ToInteger64());
+		delete var2;
+		break;
+
+	case T_STRING:
+	case T_STRINGA:      // ANSI string    
+		lua_pushstring(l, var2->ToStringA());
+		delete var2;
+		break;
+
+	case T_STRUCT:
+		lua_pushlightuserdata(l, var2);
+		break;
+
+	default:
+		delete var2;
+		return 0;
+	}
+	return 1;
+}
+
+static int script_DataPool_Sort(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 4) return 0;
+
+	DataPool *pool = (DataPool*)lua_touserdata(l, 1);
+	const char *name = lua_tostring(l, 2);
+	const char *array = lua_tostring(l, 3);
+	const char *key = lua_tostring(l, 4);
+
+	if(!pool || !name || *name=='\0' || !array || *array=='\0' || !key || *key=='\0') return 0;
+	if(g_dict_map.find(name) != g_dict_map.end()) return 0;
+
+	MOVariable *var = new MOVariable();
+	pool->QueryByExpression(array, var);
+	if(!var->IsValid())
+	{
+		delete var;
+		return 0;
+	}
+
+	DataPoolDict *dict = new DataPoolDict(pool);
+	dict->SetArrayKey(name, array, key);
+
+	g_dict_map[name] = std::make_pair(dict, var);
+
+	lua_pushboolean(l, true);
+	return 1;
+}
+
+static int script_DataPool_FindBy(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 3) return 0;
+
+	//datapool *pool = (datapool*)lua_touserdata(l, 1);
+	const char *name = lua_tostring(l, 2);
+	int key = lua_tointeger(l, 3);
+
+	auto it = g_dict_map.find(name);
+	if(it == g_dict_map.end()) return 0;
+
+	DataPoolDict *dict = it->second.first;
+	MOVariable *array = it->second.second;
+
+	DataPool::LPCSTR _1 = 0;
+	int _2 = 0;
+	int index = dict->FindByKey(name, key, &_1, &_2);
+	if(index < 0) return 0;
+
+	MOVariable *var = new MOVariable();
+	*var = (*array)[index];
+	if(!var->IsValid())
+	{
+		delete var;
+		return 0;
+	}
+
+	switch(var->GetTypeCategory())
+	{
+	case T_BYTE:         // 1 byte         
+	case T_WORD:         // 2 bytes
+	case T_DWORD:        // 4 bytes
+	case T_SBYTE:        // signed 1 byte
+	case T_SWORD:        // signed 2 bytes 
+	case T_SDWORD:       // signed 4 bytes
+	case T_ENUM:         //
+	case T_FLAG:         //
+		lua_pushinteger(l, var->ToInteger());
+		delete var;
+		break;
+
+	case T_FLOAT:        // float 32
+		lua_pushnumber(l, var->ToFloat());
+		delete var;
+		break;
+
+	case T_QWORD:        // 8 bytes
+	case T_SQWORD:       // signed 8 bytes
+		lua_pushnumber(l, var->ToInteger64());
+		delete var;
+		break;
+
+	case T_STRING:
+	case T_STRINGA:      // ANSI string    
+		lua_pushstring(l, var->ToStringA());
+		delete var;
+		break;
+
+	case T_STRUCT:
+		lua_pushlightuserdata(l, var);
+		break;
+
+	default:
+		delete var;
+		return 0;
+	}
+	return 1;
+}
+
+static int script_ResetCmdExtraRolesMax(lua_State *l)
+{
+	g_cmd_extra_roles_max_map.clear();
+	return 0;
+}
+
+static int script_SetCmdExtraRolesMax(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	int type = lua_tointeger(l, 1);
+	int max = lua_tointeger(l, 2);
+
+	g_cmd_extra_roles_max_map[type] = max;
+	return 0;
+}
+
+static int script_ResetCmdExtraMafiasMax(lua_State *l)
+{
+	g_cmd_extra_mafias_max_map.clear();
+	return 0;
+}
+
+static int script_SetCmdExtraMafiasMax(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	int type = lua_tointeger(l, 1);
+	int max = lua_tointeger(l, 2);
+
+	g_cmd_extra_mafias_max_map[type] = max;
+	return 0;
+}
+
+static int script_ResetCmdExtraPVPsMax(lua_State *l)
+{
+	g_cmd_extra_pvps_max_map.clear();
+	return 0;
+}
+
+static int script_SetCmdExtraPVPsMax(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	int type = lua_tointeger(l, 1);
+	int max = lua_tointeger(l, 2);
+
+	g_cmd_extra_pvps_max_map[type] = max;
+	return 0;
+}
+
+static int script_ResetCmdLockToplist(lua_State *l)
+{
+	g_cmd_lock_toplist_map.clear();
+	return 0;
+}
+
+static int script_SetCmdLockToplist(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	int type = lua_tointeger(l, 1);
+
+	g_cmd_lock_toplist_map.insert(type);
+	return 0;
+}
+
+static int script_ResetMsgReceiver2(lua_State *l)
+{
+	g_msg_receiver2.clear();
+	return 0;
+}
+
+static int script_SetMsgReceiver2(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	int type = lua_tointeger(l, 1);
+	const char *receiver2 = lua_tostring(l, 2);
+
+	g_msg_receiver2[type] = receiver2;
+	return 0;
+}
+
+static int script_ResetMsgLockToplist(lua_State *l)
+{
+	g_msg_lock_toplist_map.clear();
+	return 0;
+}
+
+static int script_SetMsgLockToplist(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	int type = lua_tointeger(l, 1);
+
+	g_msg_lock_toplist_map.insert(type);
+	return 0;
+}
+
+static int script_SetSystemTime(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	int hour = lua_tointeger(l, 1);
+	int minute = lua_tointeger(l, 2);
+
+	change_time = hour*3600 + minute*60;
+	
+	g_db_save_flag = 0;
+
+	return 0;
+}
+
+lua_State* InitLuaEnv()
+{
+	lua_State *l = luaL_newstate();
+	if(l)
+	{
+		luaL_openlibs(l);
+		tolua_structs_open(l);
+		lua_register(l, "API_Log", script_Log);
+		lua_register(l, "API_GetTime", script_GetTime);
+		lua_register(l, "API_GetTime2", script_GetTime2);
+		lua_register(l, "API_IsNULL", script_IsNULL);
+		lua_register(l, "API_ReloadLua", script_ReloadLua);
+		lua_register(l, "API_SetSystemTime", script_SetSystemTime);
+		//datapool
+		lua_register(l, "API_DataPool_Clear", script_DataPool_Clear);
+		lua_register(l, "API_DataPool_Alloc", script_DataPool_Alloc);
+		lua_register(l, "API_DataPool_Find", script_DataPool_Find);
+		lua_register(l, "API_DataPool_LocateVar", script_DataPool_LocateVar);
+		lua_register(l, "API_DataPool_VarIndex", script_DataPool_VarIndex);
+		lua_register(l, "API_DataPool_Sort", script_DataPool_Sort);
+		lua_register(l, "API_DataPool_FindBy", script_DataPool_FindBy);
+		//cmd
+		lua_register(l, "API_ResetCmdExtraRolesMax", script_ResetCmdExtraRolesMax);
+		lua_register(l, "API_SetCmdExtraRolesMax", script_SetCmdExtraRolesMax);
+		lua_register(l, "API_ResetCmdExtraMafiasMax", script_ResetCmdExtraMafiasMax);
+		lua_register(l, "API_SetCmdExtraMafiasMax", script_SetCmdExtraMafiasMax);
+		lua_register(l, "API_ResetCmdExtraPVPsMax", script_ResetCmdExtraPVPsMax);
+		lua_register(l, "API_SetCmdExtraPVPsMax", script_SetCmdExtraPVPsMax);
+		lua_register(l, "API_ResetCmdLockToplist", script_ResetCmdLockToplist);
+		lua_register(l, "API_SetCmdLockToplist", script_SetCmdLockToplist);
+		//msg
+		lua_register(l, "API_ResetMsgReceiver2", script_ResetMsgReceiver2);
+		lua_register(l, "API_SetMsgReceiver2", script_SetMsgReceiver2);
+		lua_register(l, "API_ResetMsgLockToplist", script_ResetMsgLockToplist);
+		lua_register(l, "API_SetMsgLockToplist", script_SetMsgLockToplist);
+
+		if(luaL_dofile(l, "./scripts/init_command.lua"))
+		{
+			fprintf(stderr, "InitLuaEnv, error, luaL_dofile(init_command.lua)\n");
+			lua_close(l);
+			l = 0;
+		}
+		if(luaL_dofile(l, "./scripts/init_message.lua"))
+		{
+			fprintf(stderr, "InitLuaEnv, error, luaL_dofile(init_message.lua)\n");
+			lua_close(l);
+			l = 0;
+		}
+	}
+	return l;
+}
+

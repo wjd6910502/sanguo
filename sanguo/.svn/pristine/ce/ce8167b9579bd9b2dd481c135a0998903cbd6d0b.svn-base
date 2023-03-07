@@ -1,0 +1,113 @@
+function OnCommand_JieYiLastCreate(player, role, arg, others)
+	player:Log("OnCommand_JieYiLastCreate, "..DumpTable(arg).." "..DumpTable(others))
+	
+	--正式创建结义 给所有小弟发消息 确认是否同意
+	local resp = NewCommand("JieYiLastCreate_Re")	
+	local jieyi_info = others.jieyi_info._data
+		
+	--准备结义的
+	local fit = {}
+	
+	--type = 1 代表已经结义 type =2 准备结义
+	if role._roledata._jieyi_info._cur_operate_typ == 1 then
+		fit = jieyi_info._jieyi_info:Find(role._roledata._jieyi_info._jieyi_id)
+		resp.id = role._roledata._jieyi_info._jieyi_id:ToStr()
+	elseif role._roledata._jieyi_info._cur_operate_typ == 2 then 
+		fit = jieyi_info._compare_jieyi_info:Find(role._roledata._jieyi_info._cur_operate_id)
+		resp.id = role._roledata._jieyi_info._cur_operate_id:ToStr()
+	else
+		--不存在的类型
+		return
+	end
+
+	if next(fit) ~= nil then
+		--验证俩个人是否都是接受状态
+		local brother_ids = {}
+		local v = fit
+		local sit = v._brother_info:SeekToBegin()  
+		local s = sit:GetValue()
+		while s ~= nil do	
+			if s._accept ~= 1 then --接受邀请
+				-- 返回错误码
+				local cmd = NewCommand("ErrorInfo")
+				cmd.error_id = G_ERRCODE["JIEYI_INVITEROLE_NOT_ACCEPT"]
+				role:SendToClient(SerializeCommand(cmd))
+				return
+			else
+				s._time = API_GetTime()
+			end
+
+			sit:Next()
+			s = sit:GetValue()
+		end
+	else
+		throw()
+	end
+
+	--给所有人都发一下
+	local brotherall = GetbrotherIds(arg.typ,tmp_id )
+	for i = 1, #brotherall	do
+		local dest_id = brotherall[i]
+		if dest_id == role._roledata._base._id:ToStr() then
+			role:SendToClient(SerializeCommand(resp))
+		else
+			local dest_role = others.role[dest_id]
+			dest_role:SendToClient(SerializeCommand(resp))
+		end
+	end
+				
+end
+
+function GetbrotherIds(jieyityp,jieyiid)
+	
+	local brotherall = {} 	
+	local fit = jieyi_info._jieyi_info:Find(tmp_id)			
+	if fit ~= nil and jieyityp == 1 then
+		local v = fit
+		local bossId = v._boss_info._id:ToStr()
+		if boss_role == "0" then
+				--主A不存在 操作错误
+			throw()
+			return	
+		end
+		brotherall[#brotherall+1] = bossId 
+
+		local sit = v._brother_info:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local bro_id = s._id:ToStr()
+			
+			brotherall[#brotherall+1] = bro_id 
+				
+			sit:Next()
+			s = sit:GetValue()
+		end
+
+	end
+	
+	local fit = jieyi_info._compare_jieyi_info:Find(jieyiid)
+	if fit ~= nil and jieyityp == 2  then
+		local v = fit
+		local bossId = v._boss_info._id:ToStr()
+		if boss_role == "0" then
+				--主A不存在 操作错误
+			throw()
+			return	
+		end
+		brotherall[#brotherall+1] = bossId 
+
+		local sit = v._brother_info:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local bro_id = s._id:ToStr()
+			
+			brotherall[#brotherall+1] = bro_id 
+				
+			sit:Next()
+			s = sit:GetValue()
+		end	
+	end
+
+	return brotherall
+end
+

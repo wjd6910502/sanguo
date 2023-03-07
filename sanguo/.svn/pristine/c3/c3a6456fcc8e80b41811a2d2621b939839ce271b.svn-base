@@ -1,0 +1,63 @@
+#ifndef __GNET_TRANSSERVER_HPP
+#define __GNET_TRANSSERVER_HPP
+
+#include "protocol.h"
+#include "thread.h"
+#include "mutex.h"
+
+namespace GNET
+{
+
+class TransServer : public Protocol::Manager
+{
+public:
+	enum SESSION_STATUS
+	{
+		SESSION_STATUS_NONE = 0,
+		SESSION_STATUS_WAITING_RESPONSE,
+		SESSION_STATUS_PROCESSING_RESPONSE,
+		SESSION_STATUS_WAITING_CONTINUE,
+		SESSION_STATUS_PROCESSING_CONTINUE,
+		SESSION_STATUS_OK,
+	};
+
+	struct SessionInfo
+	{
+		SESSION_STATUS _status;
+		Octets _server_rand2;
+
+		SessionInfo(): _status(SESSION_STATUS_NONE) {}
+	};
+
+private:
+	static TransServer instance;
+	size_t		accumulate_limit;
+
+	std::map<Session::ID,SessionInfo> _session_map;
+	mutable Thread::Mutex2 _session_map_lock;
+
+	Octets public_address;
+	unsigned short public_port;
+
+	const Session::State *GetInitState() const;
+	bool OnCheckAccumulate(size_t size) const { return accumulate_limit == 0 || size < accumulate_limit; }
+	void OnAddSession(Session::ID sid);
+	void OnDelSession(Session::ID sid);
+public:
+	static TransServer *GetInstance() { return &instance; }
+	std::string Identification() const { return "TransServer"; }
+	void SetAccumulate(size_t size) { accumulate_limit = size; }
+	TransServer() : accumulate_limit(0), _session_map_lock("TransServer::_session_map_lock"), public_port(0) { }
+
+	//bool FindSession(Session::ID sid, Octets& server_rand2);
+	bool FindSessionAndChangeStatus(Session::ID sid, int cur_status, int to_status, Octets& server_rand2);
+
+	void SetPublicAddress(const char *addr) { public_address = Octets(addr, strlen(addr)); }
+	void SetPublicPort(unsigned short p) { public_port = p; }
+
+	const Octets& GetPublicAddress() const { return public_address; }
+	unsigned short GetPublicPort() const { return public_port; }
+};
+
+};
+#endif

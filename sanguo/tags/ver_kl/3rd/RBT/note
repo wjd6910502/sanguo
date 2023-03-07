@@ -1,0 +1,124 @@
+
+API_RBT_Init()
+
+local tbl = {}
+--local tbl = API_RBT_Create()
+
+for tick=1,1000000 do
+	API_RBT_SetCurVersion(tick)
+	
+	tbl.x = tick*100+1
+	tbl.y = tick*100+2
+	tbl.z = tick*100+3
+	
+	--print(tbl.x, tbl.y, tbl.z)
+end
+
+[duxiaogang@localhost RBT]$ time ./test 
+
+real    0m0.350s
+user    0m0.347s
+sys     0m0.001s
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+API_RBT_Init()
+
+--local tbl = {}
+local tbl = API_RBT_Create()
+
+for tick=1,1000000 do
+	API_RBT_SetCurVersion(tick)
+	
+	tbl.x = tick*100+1
+	tbl.y = tick*100+2
+	tbl.z = tick*100+3
+	
+	--print(tbl.x, tbl.y, tbl.z)
+end
+
+[duxiaogang@localhost RBT]$ time ./test 
+
+real    0m3.649s
+user    0m3.547s
+sys     0m0.095s
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+all as object except nil
+
+[duxiaogang@localhost RBT]$ time ./test
+
+real    0m6.170s
+user    0m6.039s
+sys     0m0.121s
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Next(false)			1
+...
+
+Next(false)			2
+...
+
+Confirm()			confirm 1
+
+Next(false)			3
+...
+
+Rollback()			1
+
+Next(true)			2
+
+Next(false)			3
+
+
+
+
+
+
+
+

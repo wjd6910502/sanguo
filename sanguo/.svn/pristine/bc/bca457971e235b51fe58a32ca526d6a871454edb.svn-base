@@ -1,0 +1,138 @@
+function OnCommand_WeaponResetSkill(player, role, arg, others)
+	player:Log("OnCommand_WeaponResetSkill, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("WeaponForge_Re")
+	
+	if role._roledata._forge_info._typ == 0 then
+		resp.retcode = G_ERRCODE["WEAPON_FORGE_RESET_ERROR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if arg.typ == 1 then --玩家确定
+		--道具放入背包，清空打造数据
+		local insert_weapon = CACHE.WeaponItem()
+		role._roledata._backpack._weapon_items._id = role._roledata._backpack._weapon_items._id + 1
+		insert_weapon._base_item._tid = role._roledata._forge_info._weapon_info._base_item._tid
+		insert_weapon._base_item._count = 1
+		
+		insert_weapon._weapon_pro._tid = role._roledata._backpack._weapon_items._id
+		insert_weapon._weapon_pro._level = role._roledata._forge_info._weapon_info._weapon_pro._level
+		insert_weapon._weapon_pro._star = role._roledata._forge_info._weapon_info._weapon_pro._star
+		insert_weapon._weapon_pro._quality = role._roledata._forge_info._weapon_info._weapon_pro._quality
+		insert_weapon._weapon_pro._prop = role._roledata._forge_info._weapon_info._weapon_pro._prop
+		insert_weapon._weapon_pro._attack = role._roledata._forge_info._weapon_info._weapon_pro._attack
+		insert_weapon._weapon_pro._weapon_skill = 0
+		insert_weapon._weapon_pro._level_up = role._roledata._forge_info._weapon_info._weapon_pro._level_up
+
+		insert_weapon._weapon_pro._skill_pro = role._roledata._forge_info._weapon_info._weapon_pro._skill_pro -- 测试下这
+
+		local tmp_skill_it = role._roledata._forge_info._weapon_info._weapon_pro._skill_pro
+		local tmp_skill = tmp_skill_it:GetValue()
+		while tmp_skill ~= nil do
+			local insert_skill = CACHE.WeaponSkill()
+			insert_skill._skill_id = tmp_skill._skill_id
+			insert_skill._skill_level =	tmp_skill._skill_level
+			insert_weapon._weapon_pro._skill_pro:Insert(insert_skill_id, insert_skill)
+				
+			tmp_skill_it:Next()
+			tmp_skill = tmp_skill_it:GetValue()
+		end
+
+		role._roledata._forge_info:Clear()
+		role._roledata._backpack._weapon_items._weapon_items:PushBack(insert_weapon)
+		
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.typ = arg.typ
+		role:SendToClient(SerializeCommand(resp))				
+	elseif arg.typ == 0 then -- 玩家随机
+		local ed = DataPool_Find("elementdata")
+		local forge_data = ed:FindBy("weaponforge_id", role._roledata._forge_info._typ)
+		if forge_data == nil then
+			resp.retcode = G_ERRCODE["WEAPON_EQUIP_SYS_ERR"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		
+		if role._roledata._forge_info._num >= forge_data.reforge_limit_times then
+			resp.retcode = G_ERRCODE["WEAPON_FORGE_TIMES_ERROR"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end	
+
+		--金币
+		if role._roledata._status._money < forge_data.reforge_cost[role._roledata._forge_info._typ].coin then
+			resp.retcode = G_ERRCODE["WEAPON_FORGE_MONEY_ERROR"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		
+		--元宝
+		if role._roledata._status._yuanbao < forge_data.reforge_cost[role._roledata._forge_info._typ].gold then
+			resp.retcode = G_ERRCODE["WEAPON_FORGE_YUANBAO_ERROR"]
+			player:SendToClient(SerializeCommand(resp))
+			return	
+		end
+
+		local item = ed:FindBy("item_id", role._roledata._forge_info._weapon_info._base_item._tid)
+		if item == nil then
+			resp.retcode = G_ERRCODE["WEAPON_EQUIP_SYS_ERR"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+
+		local weapon_info = ed:FindBy("weapon_id", item.type_data1)
+		if weapon_info == nil then
+			resp.retcode = G_ERRCODE["WEAPON_EQUIP_SYS_ERR"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+
+		--扣除货币
+		ROLE_SubMoney(role, forge_data.reforge_cost[role._roledata._forge_info._typ].coin)
+		ROLE_SubYuanBao(role, forge_data.reforge_cost[role._roledata._forge_info._typ].gold)
+
+		local max_skill_num = weapon_info.specialpropnummax
+		local min_skill_num = weapon_info.specialpropnummin
+		local num = 0
+		for tmp_skill in DataPool_Array(weapon_info.specialprop) do
+			if tmp_skill == 0 then
+				break
+			end
+			num = num + 1
+		end
+
+		local need_num = math.random(min_skill_num, max_skill_num)
+		role._roledata._forge_info._weapon_info._weapon_pro._skill_pro:Clear()
+		while role._roledata._forge_info._weapon_info._weapon_pro._skill_pro:Size() < need_num do
+			local tmp_num = math.random(num)
+			local insert_skill_id = weapon_info.specialprop[tmp_num]
+			if role._roledata._forge_info._weapon_info._weapon_pro._skill_pro:Find(insert_skill_id) == nil then
+				local insert_skill = CACHE.WeaponSkill()
+				insert_skill._skill_id = insert_skill_id
+				insert_skill._skill_level = math.random(weapon_info.specialproplvmin, weapon_info.specialproplvmax)
+				role._roledata._forge_info._weapon_info._weapon_pro._skill_pro:Insert(insert_skill_id, insert_skill)
+			end
+		end
+	
+		role._roledata._forge_info._num = role._roledata._forge_info._num + 1
+
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.typ = arg.typ
+		resp.reset_time = role._roledata._forge_info._num
+		resp.skill_pro = {}
+		local tmp_skill_it = role._roledata._forge_info._weapon_info._weapon_pro._skill_pro:SeekToBegin()
+		local tmp_skill = tmp_skill_it:GetValue()
+		while tmp_skill ~= nil do
+			local skill = {}
+			skill.skill_id = tmp_skill._skill_id
+			skill.skill_level = tmp_skill._skill_level
+			resp.skill_pro[#resp.skill_pro+1] = skill
+
+			tmp_skill_it:Next()
+			tmp_skill = tmp_skill_it:GetValue()
+		end
+		role:SendToClient(SerializeCommand(resp))
+	end
+end
+

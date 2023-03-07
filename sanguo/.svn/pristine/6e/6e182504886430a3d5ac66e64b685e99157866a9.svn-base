@@ -1,0 +1,315 @@
+--给武将加经验.如果是使用道具的话，那么需要更具返回值在进行是否扣除物品
+function HERO_AddExp(role, tid, itemexp)
+
+	--首先判断是否有这个武将，没有的话怎么办。
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(tid)
+	if hero == nil then
+		return G_ERRCODE["NO_HERO"]
+	end
+	--判断等级，经验
+	local role_level = role._roledata._status._level
+	local hero_level = hero._level
+	local hero_exp = hero._exp
+	local hero_order = hero._order
+	
+	--得到武将的升级表
+	local ed = DataPool_Find("elementdata")
+	local hero_levelup = ed.rolelevelexp
+	local herograde = ed:FindBy("herograde_id", tid)
+	local max_level = 0
+	for grade in DataPool_Array(herograde.grade) do
+		if grade.grade == hero_order then
+			max_level = grade.max_lv
+			break
+		end
+	end
+	if max_level == 0 then
+		return G_ERRCODE["NO_HERO"]
+	end
+	
+	local flag = 1
+	local need_exp = 0
+	for tmp_exp in DataPool_Array(hero_levelup.rolelevelexp) do
+		if flag == hero_level then
+			need_exp = tmp_exp
+			break
+		end
+		flag = flag + 1
+	end
+
+	local can_max_level = 0
+	if max_level > role_level then
+		can_max_level = role_level
+	else
+		can_max_level = max_level
+	end
+	--是否达到了当前界别的最高等级
+	if can_max_level == hero_level and hero_exp == need_exp then
+		return G_ERRCODE["HERO_EXP_FULL"]
+	end
+
+	--开始给武将升级
+	hero._exp = hero._exp + itemexp
+
+
+	while hero._exp >= need_exp do
+		if can_max_level == hero._level then
+			if hero._exp > need_exp then
+				hero._exp = need_exp
+			end
+			break
+		else
+			hero._level = hero._level + 1
+			hero._exp = hero._exp - need_exp
+		end
+		
+		flag = 1
+		need_exp = 0
+		for tmp_exp in DataPool_Array(hero_levelup.rolelevelexp) do
+			if flag == hero._level then
+				need_exp = tmp_exp
+				break
+			end
+			flag = flag + 1
+		end
+	end
+	--在这里检查是否由于等级提升，可以学习新的技能了
+	HERO_UpdateHeroSkill(role, tid)
+	HERO_UpdateHeroInfo(role, tid)
+	return G_ERRCODE["SUCCESS"]
+end
+
+--武将进阶的接口
+function HERO_UpGrade(role, heroid)
+	--首先判断是否有这个武将，没有的话怎么办。
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(heroid)
+	if hero == nil then
+		return G_ERRCODE["NO_HERO"]
+	end
+	--判断界别是否达到了最高
+	local hero_order = hero._order
+
+	if hero_order >= 12 then
+		return G_ERRCODE["MAX_HERO_ORDER"]
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local herograde = ed:FindBy("herograde_id", heroid)
+	local item_id1 = 0
+	local item_count1 = 0
+	local item_id2 = 0
+	local item_count2 = 0
+	local max_level = 0
+	for grade in DataPool_Array(herograde.grade) do
+		if grade.grade == hero_order then
+			max_level = grade.max_lv
+			item_id1 = grade.material1
+			item_count1 = grade.material1_quantity
+			item_id2 = grade.material2
+			item_count2 = grade.material2_quantity
+			break
+		end
+	end
+
+	--判断是否达到了当前界别的最高等级
+	if hero._level < max_level then
+		return G_ERRCODE["NOT_MAX_LEVEL_ORDER"]
+	end
+	
+	--判断物品是否存在
+	if item_id1 > 0 then
+		if BACKPACK_HaveItem(role, item_id1, item_count1) == false then
+			return G_ERRCODE["ITEM_COUNT_LESS"]
+		end
+	end
+	
+	if item_id2 > 0 then
+		if BACKPACK_HaveItem(role, item_id2, item_count2) == false then
+			return G_ERRCODE["ITEM_COUNT_LESS"]
+		end
+	end
+
+	--在这里开始扣除材料，修改武将的界别
+	if item_id1 > 0 then
+		BACKPACK_DelItem(role, item_id1, item_count1)
+	end
+	if item_id2 > 0 then
+		BACKPACK_DelItem(role, item_id2, item_count2)
+	end
+
+	hero._order = hero._order + 1
+	
+	--给客户端发送武将信息的修改
+	HERO_UpdateHeroInfo(role, heroid)
+	return G_ERRCODE["SUCCESS"]
+end
+
+function HERO_InitHero(role, tid)
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(tid)
+
+	local ed = DataPool_Find("elementdata")
+	local heroinfo = ed:FindBy("hero_id", tid)
+	if hero._attack_skill == 0 then
+		hero._attack_skill = heroinfo.normalatkID
+		local tmp = CACHE.HeroSkill:new()
+		tmp._skill_id = hero._attack_skill
+		tmp._skill_level = 1
+		hero._skill:Insert(hero._attack_skill, tmp)
+	end
+end
+
+function HERO_UpdateHeroSkill(role, tid)
+	--为了让每次更新就可以拿到，相当于一个补丁，后面可以删除掉
+	HERO_InitHero(role, tid)
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(tid)
+
+	local ed = DataPool_Find("elementdata")
+	local heroinfo = ed:FindBy("hero_id", tid)
+	local quanju = ed.gamedefine[1]
+	--首先检查无双技能
+	for i = 1, quanju.skillquantity do
+		local index = "skill"..i.."unlocklv"
+		if heroinfo[index] <= hero._level then
+			local index2 = "skill"..i.."ID"
+			local hit = hero._skill:Find(heroinfo[index2])
+			if hit == nil then
+				--没有这个技能，那么把这个技能添加进去，然后给客户端发消息，这个技能进行了修改
+				local tmp = CACHE.HeroSkill:new()
+				tmp._skill_id = heroinfo[index2]
+				tmp._skill_level = 1
+				hero._skill:Insert(heroinfo[index2], tmp)
+			end
+		end
+	end
+	--其次开始检查普通技能
+	for i = 1, quanju.cquantity do
+		local index = "C"..i.."unlocklv"
+		if heroinfo[index] <= hero._level then
+			local index2 = "C"..i.."ID"
+			local hit = hero._common_skill:Find(heroinfo[index2])
+			if hit == nil then
+				--没有这个技能，那么把这个技能添加进去，然后给客户端发消息，这个技能进行了修改
+				local tmp = CACHE.HeroSkill:new()
+				tmp._skill_id = heroinfo[index2]
+				tmp._skill_level = 1
+				hero._common_skill:Insert(heroinfo[index2], tmp)
+			end
+		end
+	end
+end
+
+function HERO_UpdateHeroInfo(role, heroid)
+	--给客户端发送武将信息的修改
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(heroid)
+	local resp = NewCommand("UpdateHeroInfo")
+	resp.hero_hall = {}
+	resp.hero_hall.tid = heroid
+	resp.hero_hall.level = hero._level
+	resp.hero_hall.order = hero._order
+	resp.hero_hall.exp = hero._exp
+	resp.hero_hall.attack_skill = hero._attack_skill
+	resp.hero_hall.skill = {}
+	resp.hero_hall.common_skill = {}
+	--武将无双技能赋值
+	local skills = hero._skill
+	local sit = skills:SeekToBegin()
+	local s = sit:GetValue()
+	while s ~= nil do
+		local h3 = {}
+		h3.skill_id = s._skill_id
+		h3.skill_level = s._skill_level
+		resp.hero_hall.skill[#resp.hero_hall.skill+1] = h3
+		sit:Next()
+		s = sit:GetValue()
+	end
+	--武将普通技能赋值
+	local common_skills = hero._common_skill
+	local com_it = common_skills:SeekToBegin()
+	local com = com_it:GetValue()
+	while com ~= nil do
+		local h3 = {}
+		h3.skill_id = com._skill_id
+		h3.skill_level = com._skill_level
+		resp.hero_hall.common_skill[#resp.hero_hall.common_skill+1] = h3
+		com_it:Next()
+		com = com_it:GetValue()
+	end
+	role:SendToClient(SerializeCommand(resp))
+end
+
+function HERO_UpgradeSkill(role, heroid, skillid)
+	--首先判断是否有这个武将，没有的话怎么办。
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(tid)
+	if hero == nil then
+		return G_ERRCODE["NO_HERO"]
+	end
+
+	--判断这个武将是否有这个技能
+	local skill_level = 0
+	local skills = hero._skill
+	local common_skills = hero._common_skill
+	local skill = skills:Find(skillid)
+	local common_skill = common_skills:Find(skillid)
+	
+	if skill ~= nil then
+		local skill_value = skill:GetValue()
+		skill_level = skill_value._skill_level
+	elseif common_skill ~= nil then
+		local common_value = common_skill:GetValue()
+		skill_level = common_value._skill_level
+	end
+	
+	if skill_level == 0 then
+		return G_ERRCODE["HERO_NO_SKILLID"]
+	end
+
+	if skill_level >= hero._level then
+		return G_ERRCODE["HERO_SKILLLV_MAX"]
+	end
+
+	--判断升级所需要的金钱是否足够
+	local ed = DataPool_Find("elementdata")
+	local hero_skilllevelup = ed.skilllvup
+	local needmoney = -1
+	local flag = 1
+	for tmp_money in DataPool_Array(hero_skilllevelup.skilllvupprice) do
+		if flag == skill_level then
+			needmoney = tmp_money
+			break
+		end
+		flag = flag + 1
+	end
+
+	if needmoney < 0 then
+		return G_ERRCODE["HERO_SKILLLV_WRONG"]
+	end
+
+	if role._roledata._status._money < need_money then
+		return G_ERRCODE["HERO_SKILLLV_MONEY_LESS"]
+	end
+
+	--扣钱，加技能等级
+	ROLE_SubMoney(role, needmoney)
+
+	if skill ~= nil then
+		local skill_value = skill:GetValue()
+		skill_value._skill_level = skill_value._skill_level + 1
+	elseif common_skill ~= nil then
+		local common_value = common_skill:GetValue()
+		common_value._skill_level = common_value._skill_level + 1
+	end
+
+	--给客户端发送技能点变化的值
+	role._roledata._status._hero_skill_point = role._roledata._status._hero_skill_point - 1
+	local resp = NewCommand("UpdateHeroSkillPoint")
+	resp.point = role._roledata._status._hero_skill_point
+	role:SendToClient(SerializeCommand(resp))
+
+	return G_ERRCODE["SUCCESS"]
+end

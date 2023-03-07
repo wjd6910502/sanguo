@@ -1,0 +1,72 @@
+
+#ifndef __GNET_CREATEMAFIANAME_HPP
+#define __GNET_CREATEMAFIANAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "createmafianamearg"
+#include "createmafianameres"
+#include "unamedefs.h"
+#include "storage.h"
+
+//#include "leveldb.h"
+//#include "write_batch.h"
+using namespace GNET;
+
+namespace GNET
+{
+
+class CreateMafiaName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "createmafianame"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+		CreateMafiaNameRes *res = (CreateMafiaNameRes *)result;
+		
+		Marshal::OctetsStream key,value;
+		string find_key = std::string((char*)arg->name.begin(), arg->name.size());
+		CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+		LOCK_TABLE(mafia_name)
+		START_TRANSACTION
+		{
+			key << find_key;
+			if(pmafia_name->find(key, value, txnobj))
+			{
+				res->retcode = 1;
+			}
+			else
+			{
+				pmafia_name->insert(key,Marshal::OctetsStream()<< 1,txnobj);
+				res->retcode = 0;
+			}
+		}
+		END_TRANSACTION
+		
+		if(txnerr)
+		{
+		        //Log::log(LOG_ERR, "CreateRoleName: name=%.*s", arg->name.size(), (char*)arg->name.begin());
+		        res->retcode = -1;
+		}
+
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+		// CreateMafiaNameRes *res = (CreateMafiaNameRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

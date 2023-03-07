@@ -1,0 +1,30 @@
+
+TODO:
+1, checkd
+2, center=>lua
+3, player manager
+4, pvp protocol sig check						v
+	包括大部分UDP协议以及少量TCP协议
+
+5, online?
+6, size check
+		no size check for all cmd
+		<protocol ref="GameProtocol"/>
+		<protocol ref="ServerLog"/>
+
+7, function transaction
+8, connect status
+9, use wdb
+	center
+10, pvp开场前掉线							v
+11, lua version table性能有问题...
+	read+write, not load/dump
+	luajit for android/arm
+12, 协议频率限制
+13, 切换服务器后不连新服务器？
+14, pvp ai过程不一致，表现在帧数不一样
+15, 回放对不对
+
+
+
+

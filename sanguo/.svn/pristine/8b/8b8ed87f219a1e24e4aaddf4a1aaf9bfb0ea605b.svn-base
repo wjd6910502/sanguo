@@ -1,0 +1,59 @@
+function OnCommand_TowerBuyBuff(player, role, arg, others)
+	player:Log("OnCommand_TowerBuyBuff, "..DumpTable(arg).." "..DumpTable(others))
+		
+	local resp = NewCommand("TowerOpenBox_Re")
+	if role._roledata._tower_data._cur_layer ~= arg.layer then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_LEVEL"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+    end
+	
+	local buffs = role._roledata._tower_data._buff_info:Find(arg.layer)
+	if buffs == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_BUFF"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local towerstage = ed:FindBy("tower_stage", resp.layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	local index = 0
+	local lit = buffs._buff:SeekToBegin()
+	local l = lit:GetValue()
+	while l ~= nil do
+		if l._id == arg.id then
+			--验证这层已经买过
+			if l._buy_flag == 1 then
+				resp.retcode = G_ERRCODE["TOWER_ERROR_GET_BUFF"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+			
+			--验证玩家星星数量是否足够  
+			if role._roledata._tower_data._cur_star < towerstage.buffs_cost[index] then
+				resp.retcode = G_ERRCODE["TOWER_ERROR_LESS_STAR"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+
+			role._roledata._tower_data._cur_star = role._roledata._tower_data._cur_star - towerstage.buffs_cost[index]
+			buffs._buff[index]._buy_flag = 1
+			local insert_data = CACHE.Int()
+			insert_data._value = arg.id
+			role._roledata._tower_data._buff:PushBack(insert_data)
+
+			resp.retcode = G_ERRCODE["SUCCESS"]
+			resp.layer = role._roledata._tower_data._cur_layer
+			resp.id = arg.id
+			player:SendToClient(SerializeCommand(resp))
+		end
+		lit:Next()
+		l = lit:GetValue()
+	end
+end

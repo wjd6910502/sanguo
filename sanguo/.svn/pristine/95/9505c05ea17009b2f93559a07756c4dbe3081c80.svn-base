@@ -1,0 +1,107 @@
+	public:
+		std::vector<int> zone_list;
+		std::vector<int> link_list;
+		std::vector<int> gs_list;
+		short cmd;
+		int gmsid;
+		Octets arg1;
+		Octets arg2;
+		Octets arg3;
+		Octets arg4;
+		Octets arg5;
+		Octets arg6;
+		Octets arg7;
+		Octets arg8;
+		Octets arg9;
+		Octets arg10;
+		Octets arg11;
+		Octets arg12;
+		int reserved1;
+		int reserved2;
+		int reserved3;
+		enum { PROTOCOL_TYPE = PROTOCOL_CENTERCOMMAND };
+	public:
+		CenterCommand() { type = PROTOCOL_CENTERCOMMAND; }
+		CenterCommand(void*) : Protocol(PROTOCOL_CENTERCOMMAND) { }
+		CenterCommand (const std::vector<int>& l_zone_list,const std::vector<int>& l_link_list,const std::vector<int>& l_gs_list,
+			short l_cmd,int l_gmsid,const Octets& l_arg1,
+			const Octets& l_arg2,const Octets& l_arg3,const Octets& l_arg4,
+			const Octets& l_arg5,const Octets& l_arg6,const Octets& l_arg7,
+			const Octets& l_arg8,const Octets& l_arg9,const Octets& l_arg10,
+			const Octets& l_arg11,const Octets& l_arg12,int l_reserved1,
+			int l_reserved2,int l_reserved3)
+			 : zone_list(l_zone_list),link_list(l_link_list),gs_list(l_gs_list)
+			,cmd(l_cmd),gmsid(l_gmsid),arg1(l_arg1)
+			,arg2(l_arg2),arg3(l_arg3),arg4(l_arg4)
+			,arg5(l_arg5),arg6(l_arg6),arg7(l_arg7)
+			,arg8(l_arg8),arg9(l_arg9),arg10(l_arg10)
+			,arg11(l_arg11),arg12(l_arg12),reserved1(l_reserved1)
+			,reserved2(l_reserved2),reserved3(l_reserved3)
+		{
+			type = PROTOCOL_CENTERCOMMAND;
+		}
+
+		CenterCommand(const CenterCommand &rhs)
+			: Protocol(rhs),zone_list(rhs.zone_list),link_list(rhs.link_list),gs_list(rhs.gs_list)
+			,cmd(rhs.cmd),gmsid(rhs.gmsid),arg1(rhs.arg1)
+			,arg2(rhs.arg2),arg3(rhs.arg3),arg4(rhs.arg4)
+			,arg5(rhs.arg5),arg6(rhs.arg6),arg7(rhs.arg7)
+			,arg8(rhs.arg8),arg9(rhs.arg9),arg10(rhs.arg10)
+			,arg11(rhs.arg11),arg12(rhs.arg12),reserved1(rhs.reserved1)
+			,reserved2(rhs.reserved2),reserved3(rhs.reserved3) { }
+
+		GNET::Protocol *Clone() const { return new CenterCommand(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << zone_list;
+			os << link_list;
+			os << gs_list;
+			os << cmd;
+			os << gmsid;
+			os << arg1;
+			os << arg2;
+			os << arg3;
+			os << arg4;
+			os << arg5;
+			os << arg6;
+			os << arg7;
+			os << arg8;
+			os << arg9;
+			os << arg10;
+			os << arg11;
+			os << arg12;
+			os << reserved1;
+			os << reserved2;
+			os << reserved3;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> zone_list;
+			os >> link_list;
+			os >> gs_list;
+			os >> cmd;
+			os >> gmsid;
+			os >> arg1;
+			os >> arg2;
+			os >> arg3;
+			os >> arg4;
+			os >> arg5;
+			os >> arg6;
+			os >> arg7;
+			os >> arg8;
+			os >> arg9;
+			os >> arg10;
+			os >> arg11;
+			os >> arg12;
+			os >> reserved1;
+			os >> reserved2;
+			os >> reserved3;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

@@ -1,0 +1,86 @@
+#ifndef _SERVERTIMER_H_
+#define _SERVERTIMER_H_
+
+#include "syncnetime.hpp"
+class ServerTimer
+{
+private:
+	
+	ServerTimer() : _rtt(0),_diffs2c(0) { bAck = true; }
+	int64_t _rtt;
+	int64_t _diffs2c;
+	bool bAck;
+public:
+	static ServerTimer *GetInstance() 
+	{ 
+		static ServerTimer instance;
+		return &instance; 
+	}  
+	
+	int sendSync(int sid, int index)
+	{
+		SyncNetime prot;
+		timeval ori;
+		gettimeofday(&ori,NULL);
+
+		prot.orignatetime = ori.tv_sec*1000000 + ori.tv_usec;
+		prot.diffs2c = _diffs2c;
+		prot.rtt	 = _rtt;
+		prot.index	 = index;	
+
+		TransServer::GetInstance()->Send(sid, prot);
+
+		return 0;
+	}
+
+	int SyncServer2Client(int sid, int cnt)
+	{
+		_rtt = 0;
+		_diffs2c = 0;
+		
+		// 这里服务器有时会卡	
+		time_t prev = time(NULL);
+		while(cnt > 0)
+		{
+			time_t now = time(NULL);
+			
+			if(bAck)
+			{
+				sendSync(sid,cnt); 
+				bAck = false;
+				cnt--;
+			}
+			else
+			{
+				//好像有问题
+				if(now - prev > 1)
+				{
+					cnt--;
+					sendSync(sid,cnt);		
+					bAck = false;
+				}
+			}
+		}
+				
+		return 0;
+	}
+	
+	void EstimateNTP(int64_t roundtrip, int64_t diifsec)
+	{
+		// 时间估算算法
+		// EstmatisedRTT = (1-x)*EstimatedRTT + x*SampleRTT
+		if(_rtt == 0)
+			_rtt = roundtrip;
+		if(_diffs2c == 0)
+			_diffs2c = diifsec;
+
+		_rtt = (1-0.125)*_rtt + 0.125*roundtrip;
+		_diffs2c = (1-0.125)*_diffs2c + 0.125*diifsec;
+		
+		 bAck = true;
+		//fprintf(stderr,"-----------------------_esstimatesRTT = %ld , _diffs2c = %ld \n", _rtt, _diffs2c );				
+	}
+
+};
+
+#endif

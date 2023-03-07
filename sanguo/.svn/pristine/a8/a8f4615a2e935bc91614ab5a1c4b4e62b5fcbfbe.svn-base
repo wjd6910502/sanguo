@@ -1,0 +1,47 @@
+#ifndef _MIST_MANAGER_H_
+#define _MIST_MANAGER_H_
+
+#include <string>
+#include <map>
+#include <list>
+#include <set>
+
+#include "octets.h"
+#include "forlua.h"
+#include "itimer.h"
+#include "thread.h"
+#include "mutex.h"
+#include "role.h"
+#include "commonmacro.h"
+#include "glog.h"
+#include "structs.h"
+#include "transaction.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+//这个里面的东西都是全局的
+class MistManager: public TransactionBase
+{
+public:
+	mutable Thread::Mutex _lock;
+	ServerMail _server_mail;
+	static MistManager* GetInstance()
+	{
+		static MistManager _instance;
+		return &_instance;
+	}
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	//for DB 
+	void Load(Octets &key, Octets &value);
+	void Save();
+};
+}
+
+inline CACHE::MistManager * API_GetLuaMistManager(void *r) { return (CACHE::MistManager*)r; }
+
+#endif //_MIST_MANAGER_H_ 

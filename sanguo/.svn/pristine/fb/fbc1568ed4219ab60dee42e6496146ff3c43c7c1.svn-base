@@ -1,0 +1,166 @@
+function OnCommand_MilitaryEndBattle(player, role, arg, others)
+	player:Log("OnCommand_MilitaryEndBattle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("MilitaryEndBattle_Re")
+
+	resp.reward_param = arg.reward_param
+	resp.stage_id = role._roledata._military_data._stage_id
+	resp.difficult = role._roledata._military_data._stage_difficult
+
+	if arg.reward_param > 100 then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryEndBattle, error=MILITARY_ERROR_ARG")
+		return
+	end
+
+	if role._roledata._military_data._stage_id == 0 or role._roledata._military_data._stage_difficult == 0 then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_BATTLE_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryEndBattle, error=MILITARY_ERROR_BATTLE_DATA")
+		return
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local military = ed:FindBy("military", role._roledata._military_data._stage_id)
+	if military == nil then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryJoinBattle, error=MILITARY_ERROR_DATA")
+		return
+	end
+
+	local battle_info = military.nandu_set[role._roledata._military_data._stage_difficult]
+	if battle_info == nil then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_BATTLE_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryEndBattle, error=MILITARY_ERROR_BATTLE_DATA1")
+		return
+	end
+
+	resp.item = {}
+	local now = API_GetTime()
+	local Reward = DROPITEM_Reward(role, battle_info.nandu_reward_id)
+	local item_count = table.getn(Reward.item)
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	local vip_data = ed:FindBy("vip_level", ROLE_GetVIP(role))
+
+	if role._roledata._military_data._stage_id == 3 then
+		local all_reward = {}
+		local result_reward = {}
+		result_reward.exp = 0
+		result_reward.heroexp = 0
+		result_reward.item = {}	
+
+		for i = 1, item_count do
+			local item_data = ed:FindBy("item_id", Reward.item[i].itemid)
+			if item_data == nil then
+				resp.retcode = G_ERRCODE["MILITARY_ERROR_BATTLE_DATA"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+		
+			local drop = ed:FindBy("drop_id", item_data.type_data1)
+			if drop == nil then
+				resp.retcode = G_ERRCODE["MILITARY_ERROR_BATTLE_DATA"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+
+			for j = 1, Reward.item[i].itemnum do
+				local reward = DROPITEM_DropItem(role, item_data.type_data1)
+				for k = 1, #reward do
+					if all_reward[reward[k].id] == nil then
+						all_reward[reward[k].id] = 0 
+					end
+					all_reward[reward[k].id] = all_reward[reward[k].id] + reward[k].count
+				end	
+			end
+		end
+
+		for key, value in pairs(all_reward) do
+			local reward_info = {}
+			local res_item = {}
+			reward_info.itemid = key
+			reward_info.itemnum = value
+			if arg.reward_param < 100 then
+				reward_info.itemnum = math.ceil(reward_info.itemnum*arg.reward_param/100)
+			end
+		
+			if role._roledata._status._little_fudai > now then
+				reward_info.itemnum = math.ceil(reward_info.itemnum*(quanju.dailybenefits_bonus_monthcard_1+100)/100)
+			end
+
+			if role._roledata._status._big_fudai > now then
+				reward_info.itemnum = math.ceil(reward_info.itemnum*(quanju.dailybenefits_bonus_monthcard_2+100)/100)
+			end
+
+			if reward_info.itemnum ~= 0 then
+				res_item.tid = key
+				res_item.count = reward_info.itemnum
+
+				resp.item[#resp.item+1] = res_item
+				result_reward.item[#result_reward.item+1] = reward_info
+			end
+		end
+		ROLE_AddReward(role, result_reward, 0)
+	else
+		for i = 1, item_count do
+			local reward_info = {}
+			reward_info.tid = Reward.item[i].itemid
+			if arg.reward_param < 100 then
+				Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*arg.reward_param/100)
+			end
+		
+			if role._roledata._status._little_fudai > now then
+				Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*(quanju.dailybenefits_bonus_monthcard_1+100)/100)
+			end
+			if role._roledata._status._big_fudai > now then
+				Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*(quanju.dailybenefits_bonus_monthcard_2+100)/100)
+			end
+			if Reward.item[i].itemnum ~= 0 then	
+				Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*(vip_data.dailybenefits_bonus+100)/100)
+				reward_info.count = Reward.item[i].itemnum
+				resp.item[#resp.item+1] = reward_info
+			end
+		end
+
+		if role._roledata._military_data._stage_id == 4 then
+			if arg.reward_param < 100 then  
+				Reward.exp = math.ceil(Reward.exp*arg.reward_param/100)
+			end 
+
+			if role._roledata._status._little_fudai > now then
+				Reward.exp = math.ceil(Reward.exp*(quanju.dailybenefits_bonus_monthcard_1+100)/100)
+			end 
+
+			if role._roledata._status._big_fudai > now then
+				Reward.exp = math.ceil(Reward.exp*(quanju.dailybenefits_bonus_monthcard_2+100)/100)
+			end 
+		end 
+		resp.exp = Reward.exp
+		ROLE_AddReward(role, Reward, 0)
+	end
+	
+	local info = role._roledata._military_data._stage_data:Find(role._roledata._military_data._stage_id)
+	local now = API_GetTime()
+	if info == nil then
+		local data = CACHE.MilitaryStageData()
+		data._id = role._roledata._military_data._stage_id
+		data._cd = now + military.CD_time
+		data._times = 1
+		role._roledata._military_data._stage_data:Insert(role._roledata._military_data._stage_id, data)
+	else
+		info._cd = now + military.CD_time
+		info._times = info._times + 1
+	end	
+
+	role._roledata._military_data._stage_id = 0
+	role._roledata._military_data._stage_difficult = 0
+	resp.retcode = G_ERRCODE["SUCCESS"]
+
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

@@ -1,0 +1,60 @@
+
+#include "gateclient.hpp"
+#include "state.hxx"
+
+#include "connection.h"
+
+namespace GNET
+{
+
+GateClient GateClient::instance;
+
+const Protocol::Manager::Session::State* GateClient::GetInitState() const
+{
+	return &state_GateClient;
+}
+
+void GateClient::OnAddSession(Session::ID sid)
+{
+	Thread::Mutex::Scoped l(locker_state);
+	if (conn_state)
+	{
+		Close(sid);
+		return;
+	}
+	if(_discard_sid_le_than>0 && sid<=_discard_sid_le_than)
+	{
+		Close(sid);
+		return;
+	}
+	conn_state = true;
+	this->sid = sid;
+}
+
+void GateClient::OnDelSession(Session::ID sid)
+{
+	//TODO:
+	Thread::Mutex::Scoped l(locker_state);
+	conn_state = false;
+}
+
+void GateClient::OnAbortSession(const SockAddr &sa)
+{
+	//TODO:
+	Thread::Mutex::Scoped l(locker_state);
+	conn_state = false;
+}
+
+void GateClient::OnCheckAddress(SockAddr &sa) const
+{
+}
+
+bool GateClient::LoadSessionConfig(GNET::NetSession::Config &cnf)
+{
+	if(!GNET::Protocol::Manager::LoadSessionConfig(cnf)) return false;
+	cnf.address = Connection::GetInstance().GetGateIP();
+	cnf.port = Connection::GetInstance().GetGatePort();
+	return true;
+}
+
+};

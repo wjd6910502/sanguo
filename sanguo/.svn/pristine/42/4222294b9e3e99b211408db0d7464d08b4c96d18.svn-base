@@ -1,0 +1,3 @@
+function OnCommand_LegionLearnJunXueXiangMu(player, role, arg, others)
+	--player:Log("OnCommand_LegionLearnJunXueXiangMu, "..DumpTable(arg).." "..DumpTable(others))
+end

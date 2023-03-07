@@ -1,0 +1,113 @@
+
+#ifndef __GNET_UDPINCRESYNCCMD_HPP
+#define __GNET_UDPINCRESYNCCMD_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "transclient.hpp"
+#include "diff.h"
+
+#include "deletion"
+#include "insertion"
+
+extern lua_State *g_L;
+
+std::map<Octets,std::pair<int,Octets> > g_command_version_content; //command=>(version,content)
+
+namespace GNET
+{
+
+class UDPIncreSyncCmd : public GNET::Protocol
+{
+	#include "udpincresynccmd"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		////fprintf(stderr, "UDPIncreSyncCmd::Process, command=%.*s, version=%d, src_version=%d, deletions.size()=%lu, insertions.size()=%lu\n",
+		////        (int)command.size(), (char*)command.begin(), version, src_version, deletions.size(), insertions.size());
+
+		//auto it = g_command_version_content.find(command);
+		//if(it == g_command_version_content.end()) return;
+
+		//int local_version = it->second.first;
+		//if(local_version != src_version) return;
+
+		//std::vector<std::string> src;
+		//std::string s;
+		//Octets& local_content = it->second.second;
+		//for(size_t i=0; i<local_content.size(); i++)
+		//{
+		//	char c = *((char*)local_content.begin()+i);
+		//	s.append(1, c);
+		//	if(c == ':')
+		//	{
+		//		src.push_back(s);
+		//		s = "";
+		//	}
+		//}
+
+		//vector<pair<int,int> > _deletions;
+		//for(auto it=deletions.begin(); it!=deletions.end(); ++it)
+		//{
+		//	_deletions.push_back(make_pair(it->index, it->size));
+		//}
+
+		//vector<pair<int,vector<string> > > _insertions;
+		//for(auto it=insertions.begin(); it!=insertions.end(); ++it)
+		//{
+		//	vector<string> vs;
+		//	const vector<Octets>& vo = it->adds;
+		//	for(auto it2=vo.begin(); it2!=vo.end(); ++it2)
+		//	{
+		//		Octets o = *it2;
+		//		vs.push_back(string((char*)o.begin(), o.size()));
+		//	}
+		//	_insertions.push_back(make_pair(it->index, vs));
+		//}
+
+		//if(!MyPatch(src, _deletions, _insertions)) return;
+
+		//SyncCmdAck prot;
+		//prot.command = command;
+		//prot.version = version;
+		//TransClient::GetInstance()->SendProtocol(prot);
+
+		//Octets content;
+		//for(auto it=src.begin(); it!=src.end(); ++it)
+		//{
+		//	string s = *it;
+		//	content.push_back(s.c_str(), s.size());
+		//}
+
+		//g_command_version_content[command] = std::make_pair(version, content);
+
+		//if(content.size() < 2)
+		//{
+		//	fprintf(stderr, "UDPIncreSyncCmd::Process, wrong length\n");
+		//	return;
+		//}
+		//for(size_t i=0; i<content.size(); ++i)
+		//{
+		//	int c = ((char*)content.begin())[i];
+		//	if(!isupper(c) && !islower(c) && !isdigit(c) && c!='+' && c!='/' && c!='=' && c!=':') //并不标准的base64
+		//	{
+		//		fprintf(stderr, "UDPIncreSyncCmd::Process, wrong char(%d)\n", c);
+		//		return;
+		//	}
+		//}
+
+		//if(g_L)
+		//{
+		//	LuaWrapper lw(g_L);
+		//	if(!lw.gExec("DeserializeAndProcessCommand", LuaParameter((void*)0, std::string((char*)content.begin(), content.size()), 0, 0)))
+		//	{
+		//		fprintf(stderr, "UDPIncreSyncCmd::Process, gExec, DeserializeAndProcessCommand\n");
+		//	}
+		//}
+	}
+};
+
+};
+
+#endif

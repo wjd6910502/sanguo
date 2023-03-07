@@ -1,0 +1,127 @@
+
+#ifndef __GNET_RESPONSE_HPP
+#define __GNET_RESPONSE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "authresult.hpp"
+#include "commonmacro.h"
+//#include "connection.h"
+#include "gateserver.hpp"
+#include "transserver.hpp"
+#include "udptransserver.hpp"
+#include "authresult.hpp"
+#include "playermanager.h"
+#include "rsa.h" 
+#include "glog.h" 
+
+namespace GNET
+{
+
+class Response : public GNET::Protocol
+{
+	#include "response"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "Response::Process, sid=%u, thread=%u, client_rand1_encoded=%s, account_encoded=%s, password_encoded=%s\n",
+		          sid, (unsigned int)pthread_self(), B16EncodeOctets(client_rand1_encoded).c_str(), B16EncodeOctets(account_encoded).c_str(),
+		          B16EncodeOctets(password_encoded).c_str());
+
+#ifdef ENABLE_RSA
+		Octets prikey;
+		prikey.push_back(RSA_D,strlen(RSA_D)+1);
+		Octets client_rand1 = rsa_decode(prikey,client_rand1_encoded);
+#else
+		Octets client_rand1 = client_rand1_encoded;
+#endif
+		//fprintf(stderr, "-------client_rand1=%s,  client_rand1_encoded=%s\n", B16EncodeOctets(client_rand1).c_str(),B16EncodeOctets(client_rand1_encoded).c_str());
+
+		if(client_rand1.size() != CONN_CONST_RAND1_SIZE) return;
+
+		Octets server_rand1;
+		Octets trans_token;
+		if(!GateServer::GetInstance()->FindSession(sid, server_rand1, trans_token)) return;
+
+		//_key1
+		Octets _key1;
+		_key1.resize(CONN_CONST_RAND1_SIZE);
+		for(auto i=0; i<CONN_CONST_RAND1_SIZE; ++i)
+		{
+			((unsigned char*)_key1.begin())[i] = ((unsigned char*)server_rand1.begin())[i]^((unsigned char*)client_rand1.begin())[i];
+		}
+		//enc_key, dec_key
+		Octets dec_key(_key1.begin(), CONN_CONST_RAND1_SIZE/2);
+		//Octets enc_key((unsigned char*)_key1.begin()+CONN_CONST_RAND1_SIZE/2, CONN_CONST_RAND1_SIZE/2);
+		//_enc_sec1/_dec_sec1
+		//Security *_enc_sec1 = Security::Create(ARCFOURSECURITY);
+		//_enc_sec1->SetParameter(enc_key);
+		Security *_dec_sec1 = Security::Create(ARCFOURSECURITY);
+		_dec_sec1->SetParameter(dec_key);
+		//TODO: SDKVerify
+		Octets account = account_encoded;
+		_dec_sec1->Update(account);
+		Octets password = password_encoded;
+		_dec_sec1->Update(password);
+		_dec_sec1->Destroy();
+		//strip
+		int password_len = 0;
+		for(; password_len<(int)password.size() && ((unsigned char*)password.begin())[password_len]; password_len++);
+		Octets password_new = Octets(password.begin(), password_len);
+		//compare
+		//Octets da("duxiaogang", strlen("duxiaogang"));
+		Octets dp("123456", strlen("123456"));
+		//if(account!=da || password_new!=dp)
+		if(account.size()==0 || password_new!=dp)
+		{
+			AuthResult prot;
+			prot.retcode = ERR_CODE_WRONG_ACCOUNT_OR_PASSWORD;
+			manager->Send(sid, prot);
+			return;
+		}
+		//GateServer::GetInstance()->MapAccount(account, sid); //TODO:
+		//Auth OK
+		CACHE::PlayerManager::GetInstance().OnConnect(account, trans_token, _key1);
+
+		AuthResult prot;
+		prot.retcode = 0;
+		{
+		unsigned short t_port = TransServer::GetInstance()->GetPort();
+		if(t_port != 0)
+		{
+			//fprintf(stderr,"----------------TransServer::GetInstance()->GetPort() =  %d",t_port);
+			prot.trans_port = t_port;
+		}
+		else
+			return;
+
+		std::string straddr = TransServer::GetInstance()->GetAddress();
+		if(!straddr.empty())
+			prot.trans_ip = Octets(straddr.c_str(), straddr.size());
+		else
+			return;
+		}
+
+		{
+		prot.udp_trans_port = UDPTransServer::GetInstance()->GetPort();
+
+		std::string straddr = UDPTransServer::GetInstance()->GetAddress();
+		if(!straddr.empty())
+			prot.udp_trans_ip = Octets(straddr.c_str(), straddr.size());
+		else
+			return;
+		}
+
+		prot.trans_token = trans_token;
+		manager->Send(sid, prot);
+
+		GLog::log(LOG_INFO, "Response::Process, sid=%u, thread=%u, account=%.*s\n",
+		          sid, (unsigned int)pthread_self(), (int)account.size(), (char*)account.begin());
+	}
+};
+
+};
+
+#endif

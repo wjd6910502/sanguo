@@ -1,0 +1,53 @@
+
+TODO:
+1, checkd
+2, center=>lua
+	暂时不做了
+	第一需求：pvpd能处理client cmd
+3, player manager
+	no lock								v
+	nolock=>indv lock						v
+4, pvp protocol sig check						v
+	包括大部分UDP协议以及少量TCP协议
+
+5, online?
+6, size check								v
+		no size check for all cmd
+		<protocol ref="GameProtocol"/>
+		<protocol ref="ServerLog"/>
+
+7, function transaction
+8, connect status
+9, use wdb
+	db								v
+	center
+10, pvp开场前掉线							v
+11, lua version table性能有问题...					v
+	read+write, not load/dump
+	luajit for android/arm
+12, 协议频率限制							v
+13, 切换服务器后不连新服务器？						v
+14, pvp ai过程不一致，表现在帧数不一样
+15, ai回放不对								v
+	zhangyang
+16, 玩家行为状态互斥
+17, 日志
+18, 多pvpd								v
+19, 观战
+20, pvp开战时刻不一致
+21, remove lua new							v
+22, 4g/wifi切换，patcher下载
+23, pvp流量优化
+24, 多线程编译								v
+25, 封号等功能
+	防止玩家攻击?
+26, kickout reason, c++/lua
+	anyazhou
+27, login status
+
+
+
+
+1, 版署服务器
+
+

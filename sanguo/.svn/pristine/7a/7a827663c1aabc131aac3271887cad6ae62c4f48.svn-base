@@ -1,0 +1,128 @@
+--DONT CHANGE ME!
+
+function DeserializeStruct(is, is_idx, __type__)
+	local item = {}
+
+	if false then
+		--never to here
+	elseif __type__ == "SweepInstanceData" then
+		is_idx, item.exp = Deserialize(is, is_idx, "number")
+		is_idx, item.money = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number")
+		item.item = {}
+		for i = 1, count do
+			is_idx, item.item[i] = DeserializeStruct(is, is_idx, "DropItem")
+		end
+	elseif __type__ == "TopListData" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.photo = Deserialize(is, is_idx, "number")
+		is_idx, item.data = Deserialize(is, is_idx, "string")
+	elseif __type__ == "MafiaBrief" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.flag = Deserialize(is, is_idx, "number")
+		is_idx, item.announce = Deserialize(is, is_idx, "string")
+		is_idx, item.level = Deserialize(is, is_idx, "number")
+		is_idx, item.activity = Deserialize(is, is_idx, "number")
+		is_idx, item.boss_id = Deserialize(is, is_idx, "string")
+		is_idx, item.boss_name = Deserialize(is, is_idx, "string")
+	elseif __type__ == "RoleHeroHall" then
+		is_idx, count = Deserialize(is, is_idx, "number")
+		item.heros = {}
+		for i = 1, count do
+			is_idx, item.heros[i] = DeserializeStruct(is, is_idx, "RoleHero")
+		end
+	elseif __type__ == "RoleMafia" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+	elseif __type__ == "RoleInfo" then
+		is_idx, item.base = DeserializeStruct(is, is_idx, "RoleBase")
+		is_idx, item.status = DeserializeStruct(is, is_idx, "RoleStatus")
+		is_idx, item.hero_hall = DeserializeStruct(is, is_idx, "RoleHeroHall")
+		is_idx, item.backpack = DeserializeStruct(is, is_idx, "RoleBackPack")
+		is_idx, item.mafia = DeserializeStruct(is, is_idx, "RoleMafia")
+	elseif __type__ == "MafiaMember" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.photo = Deserialize(is, is_idx, "number")
+		is_idx, item.level = Deserialize(is, is_idx, "number")
+		is_idx, item.activity = Deserialize(is, is_idx, "number")
+	elseif __type__ == "RoleBrief" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.photo = Deserialize(is, is_idx, "number")
+		is_idx, item.level = Deserialize(is, is_idx, "number")
+		is_idx, item.mafia_id = Deserialize(is, is_idx, "string")
+		is_idx, item.mafia_name = Deserialize(is, is_idx, "string")
+	elseif __type__ == "DropItem" then
+		is_idx, item.id = Deserialize(is, is_idx, "number")
+		is_idx, item.count = Deserialize(is, is_idx, "number")
+	elseif __type__ == "RoleBase" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.photo = Deserialize(is, is_idx, "number")
+	elseif __type__ == "Item" then
+		is_idx, item.tid = Deserialize(is, is_idx, "number")
+		is_idx, item.count = Deserialize(is, is_idx, "number")
+	elseif __type__ == "Friend" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.photo = Deserialize(is, is_idx, "number")
+		is_idx, item.level = Deserialize(is, is_idx, "number")
+	elseif __type__ == "Chat" then
+		is_idx, item.src_id = Deserialize(is, is_idx, "string")
+		is_idx, item.src_name = Deserialize(is, is_idx, "string")
+		is_idx, item.time = Deserialize(is, is_idx, "number")
+		is_idx, item.content = Deserialize(is, is_idx, "string")
+	elseif __type__ == "PVPFighter" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, count = Deserialize(is, is_idx, "number")
+		item.ops = {}
+		for i = 1, count do
+			is_idx, item.ops[i] = Deserialize(is, is_idx, "number")
+		end
+	elseif __type__ == "RoleHero" then
+		is_idx, item.tid = Deserialize(is, is_idx, "number")
+	elseif __type__ == "InstanceInfo" then
+		is_idx, item.id = Deserialize(is, is_idx, "number")
+		is_idx, item.star = Deserialize(is, is_idx, "number")
+	elseif __type__ == "Mafia" then
+		is_idx, item.id = Deserialize(is, is_idx, "string")
+		is_idx, item.name = Deserialize(is, is_idx, "string")
+		is_idx, item.flag = Deserialize(is, is_idx, "number")
+		is_idx, item.announce = Deserialize(is, is_idx, "string")
+		is_idx, item.level = Deserialize(is, is_idx, "number")
+		is_idx, item.activity = Deserialize(is, is_idx, "number")
+		is_idx, item.boss_id = Deserialize(is, is_idx, "string")
+		is_idx, item.boss_name = Deserialize(is, is_idx, "string")
+		is_idx, count = Deserialize(is, is_idx, "number")
+		item.members = {}
+		for i = 1, count do
+			is_idx, item.members[i] = DeserializeStruct(is, is_idx, "MafiaMember")
+		end
+	elseif __type__ == "RoleStatus" then
+		is_idx, item.level = Deserialize(is, is_idx, "number")
+		is_idx, item.exp = Deserialize(is, is_idx, "string")
+		is_idx, item.vp = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number")
+		item.instances = {}
+		for i = 1, count do
+			is_idx, item.instances[i] = DeserializeStruct(is, is_idx, "RoleInstance")
+		end
+	elseif __type__ == "RoleBackPack" then
+		is_idx, item.capacity = Deserialize(is, is_idx, "number")
+		is_idx, count = Deserialize(is, is_idx, "number")
+		item.items = {}
+		for i = 1, count do
+			is_idx, item.items[i] = DeserializeStruct(is, is_idx, "Item")
+		end
+	elseif __type__ == "RoleInstance" then
+		is_idx, item.tid = Deserialize(is, is_idx, "number")
+		is_idx, item.score = Deserialize(is, is_idx, "number")
+
+	end
+
+	return is_idx, item
+end
+

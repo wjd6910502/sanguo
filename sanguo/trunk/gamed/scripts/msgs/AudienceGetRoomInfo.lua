@@ -1,0 +1,40 @@
+function OnMessage_AudienceGetRoomInfo(player, role, arg, others)
+	player:Log("OnMessage_AudienceGetRoomInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("AudienceGetOperation_Re")
+
+	resp.retcode = arg.retcode
+	if arg.retcode == 0 then
+		resp.room_id = arg.room_id
+		resp.robot_flag = arg.fight_robot
+		resp.robot_seed = arg.robot_seed
+		resp.robot_type = arg.robot_type
+
+		local is_idx,player1 = DeserializeStruct(arg.fight1_pvpinfo, 1, "RolePVPInfo")
+		local is_idx,player2 = DeserializeStruct(arg.fight2_pvpinfo, 1, "RolePVPInfo")
+
+		resp.player1 = {}
+		resp.player2 = {}
+
+		resp.player1.brief = player1.brief
+		resp.player1.hero_hall = player1.hero_hall
+		resp.player1.pvp_score = player1.pvp_score
+		
+		resp.player2.brief = player2.brief
+		resp.player2.hero_hall = player2.hero_hall
+		resp.player2.pvp_score = player2.pvp_score
+		
+		local is_idx,operation = DeserializeStruct(arg.operation, 1, "PvpVideo")
+		resp.operation = {}
+		resp.operation.video = {}
+		for i = 1, table.getn(operation.video) do
+			resp.operation.video[#resp.operation.video+1] = operation.video[i]
+		end
+	elseif arg.retcode == 1 then
+		resp.retcode = G_ERRCODE["YUEZHAN_FINISH"]
+	elseif arg.retcode == 2 then
+		resp.retcode = G_ERRCODE["YUEZHAN_FINISH"]
+	end
+	
+	player:SendToClient(SerializeCommand(resp))
+end

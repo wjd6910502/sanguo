@@ -1,0 +1,8 @@
+cbc89abb6588bc7480749e548f6ecd6d  register
+ebcc488c4495ad9a2b352cdd5be81c11  register.o
+d89a0611d1ff77b7513fca1c00b1a0b8  registerserver.o
+4179acf91538205e20691a6b65aa0ea2  state.o
+85e3ed6cb58869694f2817adab63ac0b  stubs.o
+45fc799f143ee6f5abaa1b98d0e1fa3c  mysql_connector.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

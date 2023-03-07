@@ -1,0 +1,110 @@
+
+G_ERRCODE = {}
+G_ERRCODE["SUCCESS"] = 0
+G_ERRCODE["NO_ROLE"] = 1
+G_ERRCODE["CREATING_ROLE"] = 2
+G_ERRCODE["INVALID_NAME"] = 3
+G_ERRCODE["USED_NAME"] = 4
+G_ERRCODE["SYSTEM_INVALID"] = 5
+G_ERRCODE["YUANBAO_LESS"] = 6   --元宝不足
+G_ERRCODE["NO_MAFIA"] = 101
+G_ERRCODE["CREATING_MAFIA"] = 102
+
+G_ERRCODE["TASK_ID_CURRENT"]  = 201 --当前的任务中不存在这个ID
+G_ERRCODE["TASK_NOT_FINISH"]  = 202 --这个任务还没有完成
+G_ERRCODE["TASK_NOT_EXIST"]   = 203 --当前的模板中不存在这个任务
+G_ERRCODE["TASK_NOT_LEVEL"]   = 204 --当前等级还不应该有这个任务。
+
+G_ERRCODE["NO_TONGGUAN"] = 301 --不足3星，无法扫荡
+G_ERRCODE["NO_ENOUGHVP"] = 302 --体力不足，无法扫荡
+G_ERRCODE["NO_COUNT"]	 = 303 --副本次数不足
+G_ERRCODE["NO_SWEEPITEM"]= 304 --扫荡令不足，无法扫荡
+G_ERRCODE["NO_TONGGUAN"] = 305 --还没有通关副本，无法扫荡
+G_ERRCODE["NO_STAGE"] 	 = 306 --没有这个关卡
+G_ERRCODE["NO_REQSTAGE"] = 307 --没有打过前置关卡
+G_ERRCODE["NO_REQSTAR"]  = 308 --前置关卡的星级没有达到要求
+G_ERRCODE["NO_LEVEL"]	 = 309 --玩家的等级没有达到要求
+G_ERRCODE["NO_FAIL"]	 = 310 --玩家没有打过这个副本
+G_ERRCODE["NO_STAR"]	 = 311 --通关了，但是没有星星
+G_ERRCODE["NO_HERO"]	 = 312 --结束副本，发过来的武将信息有错误，玩家没有这个武将
+G_ERRCODE["NO_REQ_HERO"] = 313 --结束副本，发过来的强制出战的武将信息有错误
+G_ERRCODE["HERO_COUNT_ERR"] = 314 --武将的数量错误，大于了3个。
+G_ERRCODE["REQ_HERO_ERR"] = 315 --强制出战的武将ID信息错误
+G_ERRCODE["INSTANCE_NO_COUNT"] = 316 --副本购买次数达到上限
+
+G_ERRCODE["NO_COMLIMIT"] = 351 --没有配置体力的限次模板
+G_ERRCODE["VP_NO_COUNT"] = 352 --购买次数已经达到上限
+G_ERRCODE["VP_SYSTEM_ERROR"] = 353 --系统数据有了错误
+G_ERRCODE["VP_LESS_YUANBAO"] = 354 --玩家的元宝不足
+
+G_ERRCODE["BUY_INSTANCE_COUNT_HAVE"] = 361 --还有次数不可以重置
+G_ERRCODE["CAN_NOT_BUY_INSTANCE_COUNT"] = 362 --不可以购买次数
+
+
+G_ERRCODE["HERO_ID_ERROR"] = 371 --武将的ID错误
+G_ERRCODE["HAVED_HERO"] = 372 --已经有这个武将了，无法购买
+G_ERRCODE["HERO_CAN_NOT_BUY"] = 373 --这个武将无法通过购买获得
+G_ERRCODE["HERO_BUY_MONEY_LESS"] = 374 --铜币不足
+G_ERRCODE["HERO_BUY_TYPE_ERROR"] = 375 --英雄购买的类型错误
+
+G_ERRCODE["NO_ITEM"] = 381 --物品的ID不存在
+G_ERRCODE["NO_ITEM_TYPE"] = 382 --物品的TYPE类型没有进行填写.无法使用
+G_ERRCODE["HERO_EXP_FULL"] = 384 --玩家没有这个武将
+G_ERRCODE["TEM_NO_HERO"] = 385 --玩家没有这个武将
+G_ERRCODE["ITEM_COUNT_LESS"] = 386 --物品数量不足
+G_ERRCODE["NOT_EXP_ITEM"] = 387 --物品数量不足
+
+G_ERRCODE["MAX_HERO_ORDER"] = 390 --英雄达到最高的界别
+G_ERRCODE["NOT_MAX_LEVEL_ORDER"] = 391 --英雄未达到当前界别的最高等级
+
+G_ERRCODE["PVP_HERO_COUNT_ERR"] = 401 --出阵武将的数量错误
+
+G_ACH_TYPE = {}
+G_ACH_TYPE["STAGE_STAR"]  = 1
+
+function NewCommand(typ)
+	cmd = {}
+	cmd.__type__ = typ
+	return cmd
+end
+
+function NewMessage(typ)
+	msg = {}
+	msg.__type__ = typ
+	return msg
+end
+
+function DumpTable(t)
+	s = ""
+	for k,v in pairs(t) do
+		if type(v)=="table" then
+			s = s..k.."={"..DumpTable(v).."};"
+		elseif type(v)=="userdata" then
+			s = s..k.."=USERDATA;"
+		elseif type(v)=="boolean" then
+			s = s..k.."="..tostring(v)..";"
+		else
+			s = s..k.."="..v..";"
+		end
+	end
+	return s
+end
+
+-- debug info --
+local error=function( ... )
+
+	local info= debug.getinfo(1,"Sln")		
+	print("info.line :" .. (info.currentline or "null") .. "\ninfo.func :" .. (info.name or "") .. "\ninfo.source :" .. (info.source or "") )
+	
+	local info= debug.getinfo(2,"Sln")
+	print("info.line :" .. (info.currentline or "null") .. "\ninfo.func :" .. (info.name or "") .. "\ninfo.source" .. (info.source or ""));
+	return line
+end
+
+trycatch=function(fun)
+	local ret,info=xpcall(fun,error,6)
+	print("ret:" .. ( ret and "true" or "false"  ) .. "\nerrMessage:" .. ( errMessage or "null") );
+--	print("line : " .. info.currentline .. "name:" .. info.name .. "source" .. info.source );
+end
+
+

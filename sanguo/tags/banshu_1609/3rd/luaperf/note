@@ -1,0 +1,157 @@
+
+read:
+
+1, normal
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.074s
+user    0m1.070s
+sys     0m0.001s
+
+2, lua mt
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.749s
+user    0m1.744s
+sys     0m0.001s
+
+3, c mt
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.581s
+user    0m1.575s
+sys     0m0.003s
+
+4, userdata
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m1.451s
+user    0m1.448s
+sys     0m0.001s
+
+5, version table
+[duxiaogang@localhost luaperf]$ time ./test
+10000000
+real    0m3.777s
+user    0m3.768s
+sys     0m0.001s
+
+
+
+JIT read:
+1, normal
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m0.037s
+user    0m0.034s
+sys     0m0.002s
+
+2, lua mt
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m0.037s
+user    0m0.035s
+sys     0m0.002s
+
+3, c mt
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m1.637s
+user    0m1.633s
+sys     0m0.002s
+
+4, userdata
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m1.353s
+user    0m1.348s
+sys     0m0.002s
+
+5, version table
+[duxiaogang@localhost luaperf]$ time ./test 
+10000000
+real    0m0.039s
+user    0m0.036s
+sys     0m0.002s
+
+
+
+
+
+
+write:
+
+1, normal
+[duxiaogang@localhost luaperf]$ time ./write
+10000000
+real    0m1.380s
+user    0m1.375s
+sys     0m0.002s
+
+5, version table
+[duxiaogang@localhost luaperf]$ time ./write
+10000000
+real    0m14.096s
+user    0m14.059s
+sys     0m0.001s
+
+
+
+JIT write:
+
+1, normal
+[duxiaogang@localhost luaperf]$ time ./write
+10000000
+real    0m0.223s
+user    0m0.220s
+sys     0m0.002s
+
+5, version table
+[duxiaogang@localhost luaperf]$ time ./write
+10000000
+real    0m0.589s
+user    0m0.584s
+sys     0m0.003s
+
+
+综合看来：
+1, 是否开jit影响非常大
+2, 开了jit后version table的效率应该和lua原生table接近
+
+
+
+
+
+luaL_dostring(L, "local count=0; for i=1,100000000 do count=count+1.1 end; print(count)");
+
+lua64:
+[duxiaogang@localhost luaperf]$ time ./test 
+109999999.83176
+real    0m2.105s
+user    0m2.099s
+sys     0m0.003s
+
+luajit:
+[duxiaogang@localhost luaperf]$ time ./test 
+109999999.83176
+real    0m0.255s
+user    0m0.252s
+sys     0m0.001s
+
+luajit(interpretor):
+[duxiaogang@localhost luaperf]$ time ./test 
+109999999.83176
+real    0m1.005s
+user    0m1.002s
+sys     0m0.001s
+
+
+
+
+
+
+luajit -jv -e "require('jit.opt').start('sizemcode=524288','maxmcode=524288'); local count=0; for i=1,100 do count=count+1.1 end; print(count); for i=1,1000000 do count=count+1.1 end; print(count)"
+
+write(1, "L=0x41b0e378\n11000.000000002\n", 29L=0x41b0e378
+
+

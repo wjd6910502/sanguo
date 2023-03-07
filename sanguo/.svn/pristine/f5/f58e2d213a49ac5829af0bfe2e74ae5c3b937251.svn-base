@@ -1,0 +1,53 @@
+--DONT CHANGE ME!
+
+dofile "scripts/base64.lua"
+dofile "scripts/serialize.lua"
+dofile "scripts/serialize_struct.lua"
+dofile "scripts/deserialize_struct.lua"
+dofile "scripts/common.lua"
+dofile "scripts/util.lua"
+
+dofile "scripts/msgs/UpdateRoleInfo.lua"
+dofile "scripts/msgs/PublicChat.lua"
+dofile "scripts/msgs/MafiaAddMember.lua"
+dofile "scripts/msgs/CreateRoleResult.lua"
+dofile "scripts/msgs/Heartbeat.lua"
+dofile "scripts/msgs/CreateMafiaResult.lua"
+dofile "scripts/msgs/PVPHeartbeat.lua"
+dofile "scripts/msgs/PVPTriggerSend.lua"
+dofile "scripts/msgs/DBHeartbeat.lua"
+dofile "scripts/msgs/ReloadLua.lua"
+dofile "scripts/msgs/PVPCreateResult.lua"
+dofile "scripts/msgs/PVPEnd.lua"
+dofile "scripts/msgs/TestMessage1.lua"
+dofile "scripts/msgs/TestMessage2.lua"
+dofile "scripts/msgs/TestMessage3.lua"
+dofile "scripts/msgs/TestMessage4.lua"
+
+dofile "scripts/serialize_message.lua"
+dofile "scripts/deserialize_message.lua"
+
+function InitMessageInMainThread()
+	API_ResetMsgReceiver2()
+	API_ResetMsgLockToplist()
+
+	API_SetMsgReceiver2(1, "player")
+	API_SetMsgReceiver2(2, "player")
+	API_SetMsgReceiver2(3, "player")
+	API_SetMsgReceiver2(90001, "player")
+	API_SetMsgReceiver2(90002, "mafia")
+	API_SetMsgReceiver2(10001, "player")
+	API_SetMsgReceiver2(10002, "player")
+	API_SetMsgReceiver2(10003, "player")
+	API_SetMsgReceiver2(10004, "pvp")
+	API_SetMsgReceiver2(10005, "pvp")
+	API_SetMsgReceiver2(10006, "big")
+	API_SetMsgReceiver2(10007, "big")
+	API_SetMsgReceiver2(10008, "pvp")
+	API_SetMsgReceiver2(10009, "pvp")
+	API_SetMsgReceiver2(90004, "big")
+	API_SetMsgReceiver2(90003, "toplist")
+	API_SetMsgLockToplist(90001)
+
+end
+

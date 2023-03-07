@@ -1,0 +1,419 @@
+#!/usr/bin/env python
+#coding=GBK
+
+import sys, os
+from xml.dom import minidom
+
+SIMPLE_TYPES = ( "number", "boolean", "string" )
+RECEIVER2_LIST = ( "player", "mafia", "pvp", "big", "null", )
+
+g_msgs = {}
+g_type2msg = {}
+g_receiver_msgs = {}
+g_msg_2_receiver2 = {}
+
+g_locks = {} # lock_name=>[cmd1, cmd2, ...]
+
+class ParseError():
+	pass
+
+def abort(desc):
+	print u"FATAL ERROR: "+desc
+	raise ParseError
+
+def warning(desc):
+	print u"WARNING: "+desc
+
+def parseMsgNode(msg_node):
+	name = ""
+	maxsize = 1024
+	type = 0
+	receivers = []
+	receiver2 = ""
+	variables = []
+	locks = []
+
+	for (k,v) in msg_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "maxsize":
+			maxsize = int(v)
+		elif k == "type":
+			type = int(v)
+		elif k == "receiver":
+			receivers = v.split(",")
+		elif k == "receiver2":
+			receiver2 = v
+		elif k == "lock":
+			locks = v.split(",")
+	if len(name) == 0:
+		abort(u"message缺少name")
+	elif g_msgs.has_key(name):
+		abort(u"message name重复: %s"%name)
+	elif maxsize < 16:
+		abort(u"message maxsize<16")
+	elif type == 0:
+		abort(u"message(%s) type==0"%name)
+	elif g_type2msg.has_key(type):
+		abort(u"message(%s) type重复: %d"%(name,type))
+	elif len(receivers) == 0:
+		abort(u"message(%s)缺少receiver"%name)
+	elif len(receiver2) == 0:
+		abort(u"message(%s)缺少receiver2"%name)
+	elif receiver2 not in RECEIVER2_LIST:
+		abort(u"message(%s) receiver2有误: %s"%(name,receiver2))
+
+	g_msg_2_receiver2[type] = receiver2
+
+	for l in locks:
+		if not g_locks.has_key(l):
+			g_locks[l] = []
+		g_locks[l].append(type)
+
+	for nd in msg_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "variable":
+			var_name = ""
+			var_type = ""
+			var_is_vector = False
+			for (k,v) in nd.attributes.items():
+				if k == "name":
+					var_name = v
+				elif k == "type":
+					var_type = v
+				elif k == "vector":
+					if v == "true":
+						var_is_vector = True
+			if len(var_name) == 0:
+				abort(u"message(%s)变量缺少name"%name)
+			if len(var_type) == 0:
+				abort(u"message(%s)变量(%s)缺少type"%(name,var_name))
+			variables.append((var_name, var_type, var_is_vector))
+	#if len(variables) == 0:
+	#	abort(u"message(%s)缺少变量"%name)
+	return (name, maxsize, type, receivers, variables)
+
+def makeEntry(app, msgs):
+	list = ""
+	for c in msgs:
+		list += """dofile "scripts/msgs/%s.lua"
+""" % c
+
+	epm = ""
+
+	for k,v in g_msg_2_receiver2.items():
+		if len(v)>0:
+			epm += """	API_SetMsgReceiver2(%d, "%s")
+""" % (k,v)
+		else:
+			epm += """	API_SetMsgReceiver2(%d, "")
+""" % (k)
+	epm += "\n"
+
+	for lname,cmds in g_locks.items():
+		for cmd in cmds:
+			epm += """	API_SetMsgLock(%d,"%s")
+""" % (cmd,lname)
+
+	contents = """--DONT CHANGE ME!
+
+dofile "scripts/base64.lua"
+dofile "scripts/serialize.lua"
+dofile "scripts/serialize_struct.lua"
+dofile "scripts/deserialize_struct.lua"
+dofile "scripts/common.lua"
+dofile "scripts/util.lua"
+
+%s
+dofile "scripts/serialize_message.lua"
+dofile "scripts/prepare_others.lua"
+dofile "scripts/deserialize_message.lua"
+
+function InitMessageInMainThread()
+	API_ResetMsgReceiver2()
+	API_ReSetMsgLock()
+
+%s
+end
+
+""" % (list,epm)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/init_message.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+def makeMessages(app, msgs):
+	try:
+		os.makedirs("%s/scripts/msgs"%app, 0777)
+	except:
+		pass
+
+	for c in msgs:
+		path = "%s/scripts/msgs/%s.lua"%(app,c)
+		if os.access(path, os.F_OK):
+			continue
+
+		contents = ""
+		if g_msg_2_receiver2[g_msgs[c][1]] == "player":
+			contents = """function OnMessage_%s(player, role, arg, others)
+	--player:Log("OnMessage_%s, "..DumpTable(arg).." "..DumpTable(others))
+end
+""" % (c,c)
+		elif g_msg_2_receiver2[g_msgs[c][1]] == "mafia":
+			contents = """function OnMessage_%s(mafia, arg, others)
+	--mafia:Log("OnMessage_%s, "..DumpTable(arg).." "..DumpTable(others))
+end
+""" % (c,c)
+		elif g_msg_2_receiver2[g_msgs[c][1]] == "pvp":
+			contents = """function OnMessage_%s(pvp, arg, others)
+	--pvp:Log("OnMessage_%s, "..DumpTable(arg).." "..DumpTable(others))
+end
+""" % (c,c)
+		elif g_msg_2_receiver2[g_msgs[c][1]] == "big":
+			contents = """function OnMessage_%s(playermap, mafiamap, arg)
+	--API_Log("OnMessage_%s, "..DumpTable(arg))
+end
+""" % (c,c)
+		elif g_msg_2_receiver2[g_msgs[c][1]] == "null":
+			contents = """function OnMessage_%s(arg, others)
+	--API_Log("OnMessage_%s, "..DumpTable(arg))
+end
+""" % (c,c)
+
+		fp = open(path, "w")
+		fp.write(contents)
+		fp.close()
+
+def makeSerializeMessage(app):
+	#message
+	p3 = ""
+	for (type, name) in g_type2msg.items():
+		p4 = ""
+		(_, _, _, variables) = g_msgs[name]
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype!="number" and vtype!="boolean" and vtype!="string":
+				#structure
+				if v_is_vector:
+					p4 += """		if msg.%s==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.%s)
+			for i = 1, #msg.%s do
+				SerializeStruct(os, "%s", msg.%s[i])
+			end
+		end
+""" % (vname, vname, vname, vtype, vname)
+				else:
+					p4 += """		SerializeStruct(os, "%s", msg.%s)
+""" % (vtype, vname)
+			else:
+				#simple type
+				if v_is_vector:
+					p4 += """		if msg.%s==nil then
+			Serialize(os, 0)
+		else
+			Serialize(os, #msg.%s)
+			for i = 1, #msg.%s do
+				Serialize(os, msg.%s[i])
+			end
+		end
+""" % (vname, vname, vname, vname)
+				else:
+					p4 += """		Serialize(os, msg.%s)
+""" % vname
+
+		p3  += """	elseif msg.__type__ == "%s" then
+		Serialize(os, %d)
+%s""" % (name, type, p4)
+
+	contents = """--DONT CHANGE ME!
+
+function SerializeMessage(msg)
+	local os = {}
+
+	if false then
+		--never to here
+%s
+	end
+
+	return table.concat(os)
+end
+
+""" % p3
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/serialize_message.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+def makeDeserializeMessage(app, msgs):
+	#message
+	p3 = ""
+	for (type, name) in g_type2msg.items():
+		if not name in msgs:
+			continue
+		p4 = ""
+		(_, _, _, variables) = g_msgs[name]
+		for (vname, vtype, v_is_vector) in variables:
+			if vtype!="number" and vtype!="boolean" and vtype!="string":
+				#structure
+				if v_is_vector:
+					p4 += """		is_idx, count = Deserialize(is, is_idx, "number");
+		msg.%s = {}
+		for i = 1, count do
+			is_idx, msg.%s[i] = DeserializeStruct(is, is_idx, "%s")
+		end
+""" % (vname, vname, vtype)
+				else:
+					p4 += """		is_idx, msg.%s = DeserializeStruct(is, is_idx, "%s")
+""" % (vname, vtype)
+			else:
+				#simple type
+				if v_is_vector:
+					p4 += """		is_idx, count = Deserialize(is, is_idx, "number");
+		msg.%s = {}
+		for i = 1, count do
+			is_idx, msg.%s[i] = Deserialize(is, is_idx, "%s")
+		end
+""" % (vname, vname, vtype)
+				else:
+					p4 += """		is_idx, msg.%s = Deserialize(is, is_idx, "%s")
+""" % (vname, vtype)
+
+		if g_msg_2_receiver2[type] == "player":
+			p3  += """	elseif msg.__type__ == %d then
+		--%s
+%s
+		local player = API_GetLuaPlayer(ud)
+		local role = API_GetLuaRole(ud)
+		OnMessage_%s(player, role, msg, others)
+""" % (type, name, p4, name)
+		elif g_msg_2_receiver2[type] == "mafia":
+			p3  += """	elseif msg.__type__ == %d then
+		--%s
+%s
+		local mafia = API_GetLuaMafia(ud)
+		OnMessage_%s(mafia, msg, others)
+""" % (type, name, p4, name)
+		elif g_msg_2_receiver2[type] == "pvp":
+			p3  += """	elseif msg.__type__ == %d then
+		--%s
+%s
+		local pvp = API_GetLuaPVP(ud)
+		OnMessage_%s(pvp, msg, others)
+""" % (type, name, p4, name)
+		elif g_msg_2_receiver2[type] == "big":
+			p3  += """	elseif msg.__type__ == %d then
+		local playermap = CACHE.PlayerManager:GetInstance()
+		local mafiamap = CACHE.MafiaManager:GetInstance():GetMap()
+		--%s
+%s
+		OnMessage_%s(playermap, mafiamap, msg)
+""" % (type, name, p4, name)
+		elif g_msg_2_receiver2[type] == "null":
+			p3  += """	elseif msg.__type__ == %d then
+		--%s
+%s
+		OnMessage_%s(msg, others)
+""" % (type, name, p4, name)
+
+	contents = """--DONT CHANGE ME!
+
+function DeserializeAndProcessMessage(ud, is, ...)
+	local others = {}
+	others.roles = {}
+	others.mafias = {}
+	others.pvps = {}
+	local extra_roles_size = 0
+	local extra_mafias_size = 0
+	local extra_pvps_size = 0
+	local arg = {...}
+	for k,v in ipairs(arg) do
+		if k==1 then
+			--extra roles size
+			extra_roles_size = v
+		elseif k<=1+extra_roles_size then
+			--extra roles
+			v = API_GetLuaRole(v)
+			others.roles[v._roledata._base._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1 then
+			--extra mafias size
+			extra_mafias_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size then
+			--extra mafias
+			v = API_GetLuaMafia(v)
+			others.mafias[v._id:ToStr()] = v
+		elseif k==1+extra_roles_size+1+extra_mafias_size+1 then
+			--extra pvps size
+			extra_pvps_size = v
+		elseif k<=1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size then
+			--extra pvps
+			v = API_GetLuaPVP(v)
+			others.pvps[v._data._id] = v
+		else
+			PrepareOthers4Message(others,k-(1+extra_roles_size+1+extra_mafias_size+1+extra_pvps_size),v)
+		end
+	end
+
+	local msg = {}
+	local is_idx = 1
+	is_idx, msg.__type__ = Deserialize(is, is_idx, "number")
+
+	if false then
+		--never to here
+%s
+	end
+end
+
+""" % p3
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/deserialize_message.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+def main():
+	xmldoc = minidom.parse("./msgs.xml")
+	if xmldoc.firstChild.tagName != "messages":
+		abort(u"msgs.xml文件格式有错误")
+
+	root_node = xmldoc.firstChild
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "message":
+			msg = parseMsgNode(nd)
+			(name, maxsize, type, receivers, variables) = msg
+			g_msgs[name] = (maxsize, type, receivers, variables)
+			g_type2msg[type] = name
+			for r in receivers:
+				if g_receiver_msgs.has_key(r):
+					g_receiver_msgs[r].append(name)
+				else:
+					g_receiver_msgs[r] = [name, ]
+	#print g_msgs
+	#print g_type2msg
+	#print g_receiver_msgs
+
+	for (k,v) in g_receiver_msgs.items():
+		makeEntry(k, v)
+	for (k,v) in g_receiver_msgs.items():
+		makeMessages(k, v)
+	for (k,v) in g_receiver_msgs.items():
+		makeSerializeMessage(k)
+	for (k,v) in g_receiver_msgs.items():
+		makeDeserializeMessage(k, v)
+
+if __name__ == "__main__":
+	main()
+

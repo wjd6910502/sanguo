@@ -1,0 +1,15 @@
+function OnMessage_PVPEnterRe(player, role, arg, others)
+	player:Log("OnMessage_PVPEnterRe, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("PvpEnter_Re")
+	resp.retcode = 0
+	resp.mode = 1
+	resp.N = 4
+
+	--开始发送PVP信息
+	resp.rolepvpinfo = {}
+	resp.fightpvpinfo = {}
+	is_idx,resp.player1 = DeserializeStruct(arg.role_pvpinfo, 1, "RolePVPInfo")
+	is_idx,resp.player2 = DeserializeStruct(arg.fight_pvpinfo, 1, "RolePVPInfo")
+	player:SendToClient(SerializeCommand(resp))
+end

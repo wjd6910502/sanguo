@@ -1,0 +1,34 @@
+function OnCommand_GetOtherPveArenaInfo(player, role, arg, others)
+	player:Log("OnCommand_GetOtherPveArenaInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local dest_role = others.roles[arg.roleid]
+
+	--查看你自己的信息没有任何的意义呀
+	if role._roledata._base._id:ToStr() == dest_role._roledata._base._id:ToStr() then
+		return 
+	end
+
+	local resp = NewCommand("GetOtherPveArenaInfo_Re")
+	resp.info = {}
+	resp.info.name = dest_role._roledata._base._name
+	resp.info.id = dest_role._roledata._base._id:ToStr()
+	resp.info.rank = PVEARENA_GetRank(others.mist._pve_arena_map._pve_arena_data_map_data, dest_role._roledata._base._id, dest_role._roledata._pve_arena_info._score)
+	resp.info.score = dest_role._roledata._pve_arena_info._score
+	resp.info.hero_score = 100
+	resp.info.mafia_name = dest_role._roledata._mafia._name
+	resp.info.hero_info = {}
+	resp.info.hero_info.heroinfo = {}
+	local heroid_it = dest_role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+	local heroid = heroid_it:GetValue()
+	while heroid ~= nil do
+		local tmp_hero = {}
+		tmp_hero.id = heroid._value
+		resp.info.hero_info.heroinfo[#resp.info.hero_info.heroinfo+1] = tmp_hero
+
+		heroid_it:Next()
+		heroid = heroid_it:GetValue()
+	end
+
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

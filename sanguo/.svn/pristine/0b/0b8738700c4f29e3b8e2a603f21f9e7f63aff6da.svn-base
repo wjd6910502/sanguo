@@ -1,0 +1,9 @@
+#!/bin/sh
+
+./rpcgen
+./strugen
+./cmdgen
+./msggen
+cd gamed; make clean; make -j; cd ..
+cd client; make clean; make -j; cd ..
+

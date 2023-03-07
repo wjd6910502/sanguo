@@ -1,0 +1,139 @@
+function OnCommand_BattleFieldMove(player, role, arg, others)
+	player:Log("OnCommand_BattleFieldMove, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("BattleFieldMove_Re")
+	resp.battle_id = arg.battle_id
+	resp.src_id = arg.src_id
+	resp.dst_id = arg.dst_id
+	resp.dst_position = arg.dst_position
+
+	--基本信息的判断
+	local battle = role._roledata._battle_info:Find(arg.battle_id)
+	if battle == nil then
+		--直接给客户端返回，认为这个不存在
+		resp.retcode = G_ERRCODE["BATTLE_ID_NOT_EXIST"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if battle._state == 0 then
+		--战役还没有开始
+		resp.retcode = G_ERRCODE["BATTLE_NOT_BEGIN"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	elseif battle._state == 2 then
+		resp.retcode = G_ERRCODE["BATTLE_HAVE_END"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if battle._cur_position ~= arg.src_position then
+		--直接给客户端返回，认为这个不存在
+		resp.retcode = G_ERRCODE["BATTLE_MOVE_SRC_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local cur_position_info = battle._position_info:Find(battle._cur_position)
+	local cur_id = cur_position_info._id
+
+	local ed = DataPool_Find("elementdata")
+	local battle_info = ed:FindBy("battle_id", arg.battle_id)
+	local battlefielddata_info = ed:FindBy("battlefielddata_id", battle_info.battlefieldid)
+
+	local received_flag = 0
+	for slot in DataPool_Array(battlefielddata_info.init_slots) do
+		if slot.id == cur_id then
+			for near_pos in DataPool_Array(slot.nearpos) do
+				if near_pos == arg.dst_position then
+					received_flag = 1
+					break
+				end
+			end
+			break
+		end
+	end
+
+	if received_flag ~= 1 then
+		--直接给客户端返回，不可以到达这个位置
+		resp.retcode = G_ERRCODE["BATTLE_MOVE_DST_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	--判断将要到达的位置是否有存活的敌军
+	--local alive_army_flag = 0
+	--local dst_position_info = battle._position_info:Find(arg.dst_position)
+
+	--local dst_npc_it = dst_position_info._npc_info:SeekToBegin()
+	--local dst_npc = dst_npc_it:GetValue()
+	--while dst_npc ~= nil do
+	--	if dst_npc._camp == 2 and dst_npc._alive == 1 then
+	--		alive_army_flag = 1
+	--		break
+	--	end
+	--	dst_npc_it:Next()
+	--	dst_npc = dst_npc_it:GetValue()
+	--end
+
+	battle._last_position = battle._cur_position
+	battle._cur_position = arg.dst_position
+
+	--event_type的类型，0没有事件发生，1代表需要进入战斗。
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	--if alive_army_flag == 1 then
+	--	resp.event_type = 1
+	--else
+	--	resp.event_type = 0
+	--end
+	player:SendToClient(SerializeCommand(resp))
+
+	--判断这个战役的结束是否是占领这个格子，是的话直接让这个战役结束，然后发送奖励
+	--胜利条件（0占领大营/1击败总大将）
+	--if alive_army_flag == 0 then
+	--	if battlefielddata_info.battle_target_type == 0 then
+	--		if battlefielddata_info.enemy_camp_pos == arg.dst_position then
+	--			battle._state = 2
+	--			--设置已经通关的战役
+	--			local tmp_int = CACHE.Int()
+	--			tmp_int._value = arg.battle_id
+	--			role._roledata._have_finish_battle:Insert(arg.battle_id, tmp_int)
+	--			_have_finish_battle
+	--			local resp = NewCommand("BattleFieldEnd")
+	--			resp.battle_id = arg.battle_id
+	--			resp.win_flag = 1
+	--			local items = DROPITEM_DropItem(role, reward_mould_id)
+	--			local instance_info = {}
+	--			instance_info.exp = 0
+	--			instance_info.heroexp = 0
+	--			instance_info.item = {}
+	--			for i = 1, table.getn(Item) do
+	--				local instance_item = {}
+	--				local have_flag = 1
+	--				for j = 1, #instance_info.item do
+	--					if instance_info.item[j].id == Item[i].id then
+	--						instance_info.item[j].count = instance_info.item[j].count + Item[i].count
+	--						have_flag = 0
+	--						break
+	--					end
+	--				end
+	--				
+	--				instance_item.id = Item[i].id
+	--				instance_item.count = Item[i].count
+	--				if have_flag == 1 then
+	--					instance_info.item[#instance_info.item+1] = instance_item
+	--				end
+	--				BACKPACK_AddItem(role, instance_item.id, instance_item.count)
+	--			end
+	--			resp.rewards = instance_info
+	--			player:SendToClient(SerializeCommand(resp))
+	--
+	--			resp = NewCommand("ChangeBattleState")
+	--			resp.battle_id = arg.battle_id
+	--			resp.state = battle._state
+	--			player:SendToClient(SerializeCommand(resp))
+	--		end
+	--	end
+	--end
+	return
+end

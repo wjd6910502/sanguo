@@ -1,0 +1,40 @@
+function OnCommand_PVPReply(player, role, arg, others)
+	player:Log("OnCommand_PVPReply, "..DumpTable(arg).." "..DumpTable(others))
+
+	if role._pvp._id~=0 then return end
+
+	local found = false
+	local invs = role._pvp._invites
+	--查找申请, 获取邀请中的mafia_id
+	local it = invs:SeekToBegin()
+	local inv = it:GetValue()
+	while inv~=nil do
+		if inv._src._id:ToStr()==arg.src_id then
+			found = true
+			it:Pop()
+			break
+		end
+		it:Next()
+		inv = it:GetValue()
+	end
+	if not found then return end
+
+	if not arg.accept then return end
+
+	local s_role = others.roles[arg.src_id]
+	if s_role==nil then return end
+	if s_role._pvp._id~=0 then return end --TODO: 喊句话吧，加个通用协议
+
+	--建立PVP
+	local pvp_id = API_PVP_Create(s_role._base._id, role._base._id)
+	if pvp_id<=0 then return end
+	s_role._pvp._id = pvp_id
+	role._pvp._id = pvp_id
+
+	local cmd = NewCommand("PVPPrepare")
+	cmd.id = pvp_id
+	cmd.player1 = ROLE_MakeRoleBrief(s_role)
+	cmd.player2 = ROLE_MakeRoleBrief(role)
+	s_role:SendToClient(SerializeCommand(cmd))
+	role:SendToClient(SerializeCommand(cmd))
+end

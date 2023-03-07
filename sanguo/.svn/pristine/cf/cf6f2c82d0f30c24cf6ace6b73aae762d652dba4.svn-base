@@ -1,0 +1,35 @@
+	public:
+		Octets ip;
+		unsigned short port;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPSERVERREGISTER };
+	public:
+		PVPServerRegister() { type = PROTOCOL_PVPSERVERREGISTER; }
+		PVPServerRegister(void*) : Protocol(PROTOCOL_PVPSERVERREGISTER) { }
+		PVPServerRegister (const Octets& l_ip,unsigned short l_port)
+			 : ip(l_ip),port(l_port)
+		{
+			type = PROTOCOL_PVPSERVERREGISTER;
+		}
+
+		PVPServerRegister(const PVPServerRegister &rhs)
+			: Protocol(rhs),ip(rhs.ip),port(rhs.port) { }
+
+		GNET::Protocol *Clone() const { return new PVPServerRegister(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << ip;
+			os << port;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> ip;
+			os >> port;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

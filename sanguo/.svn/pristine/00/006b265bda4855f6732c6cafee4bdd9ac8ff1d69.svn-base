@@ -1,0 +1,8 @@
+function OnMessage_TestMessage1(player, role, arg, others)
+	--player:Log("OnMessage_TestMessage1, "..DumpTable(arg))
+
+	local msg = NewMessage("TestMessage1")
+	player:SendMessage(role._roledata._base._id, SerializeMessage(msg))
+
+	--ThrowException()
+end

@@ -1,0 +1,70 @@
+#ifndef _SERVERTIMER_H_
+#define _SERVERTIMER_H_
+
+#include "syncnetime.hpp"
+class ServerTimer
+{
+private:
+	
+	ServerTimer() : _rtt(0),_diffs2c(0) {  }
+	int64_t _rtt;
+	int64_t _diffs2c;
+	int m_cnt;
+public:
+	static ServerTimer *GetInstance() 
+	{ 
+		static ServerTimer instance;
+		return &instance; 
+	}  
+	
+	int sendSync(int sid, int index)
+	{
+		SyncNetime prot;
+		timeval ori;
+		gettimeofday(&ori,NULL);
+
+		prot.orignatetime = ori.tv_sec*1000000 + ori.tv_usec;
+		prot.diffs2c = _diffs2c;
+		prot.rtt	 = _rtt;
+		prot.index	 = index;	
+
+		TransServer::GetInstance()->Send(sid, prot);
+
+		return 0;
+	}
+
+	int SyncServer2Client(int sid, int cnt)
+	{
+		_rtt = 0;
+		_diffs2c = 0;
+		
+		sendSync(sid,cnt); 
+		m_cnt = cnt;
+		m_cnt--;
+		return 0;
+	}
+	
+	void EstimateNTP(int sid,int64_t roundtrip, int64_t diifsec)
+	{
+		// Ê±¼ä¹ÀËãËã·¨
+		// EstmatisedRTT = (1-x)*EstimatedRTT + x*SampleRTT
+		if(_rtt == 0)
+			_rtt = roundtrip;
+		if(_diffs2c == 0)
+			_diffs2c = diifsec;
+
+		_rtt = (1-0.125)*_rtt + 0.125*roundtrip;
+		_diffs2c = (1-0.125)*_diffs2c + 0.125*diifsec;
+
+		 if(m_cnt > 0)
+		 {
+		 	sendSync(sid,m_cnt);
+			m_cnt--;
+		 }
+
+		fprintf(stderr,"-----------------------_esstimatesRTT = %ld , _diffs2c = %ld \n", _rtt, _diffs2c );				
+	}
+
+};
+
+#endif

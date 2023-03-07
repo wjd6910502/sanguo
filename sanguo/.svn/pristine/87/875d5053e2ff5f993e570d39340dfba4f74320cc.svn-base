@@ -1,0 +1,48 @@
+#include "callid.hxx"
+
+#ifdef WIN32
+#include <winsock2.h>
+#include "gnproto.h"
+#include "gncompress.h"
+#else
+#include "protocol.h"
+//#include "binder.h"
+#endif
+
+namespace GNET
+{
+
+static GNET::Protocol::Type _state_GMAdapterClient[] = 
+{
+	PROTOCOL_GMCMD_GETACCCHARLIST_RE,
+	PROTOCOL_GMCMD_GETCHAR_RE,
+	PROTOCOL_GMCMD_ADDFORBIDLOGIN_RE,
+	PROTOCOL_GMCMD_DELFORBIDLOGIN_RE,
+	PROTOCOL_GMCMD_ADDFORBIDTALK_RE,
+	PROTOCOL_GMCMD_DELFORBIDTALK_RE,
+	PROTOCOL_GMCMD_GETACCID_RE,
+	PROTOCOL_GMCMD_BULL_RE,
+	PROTOCOL_GMCMD_MAILITEMTOPLAYER_RE,
+	PROTOCOL_GMCMD_MAILTOALLPLAYER_RE,
+	PROTOCOL_GMCMD_GETROLEFORBIDCHAT_RE,
+	PROTOCOL_GMCMD_GETROLEFORBIDLOGIN_RE,
+	PROTOCOL_GMCMD_ADDFORBIDWORD_RE,
+	PROTOCOL_GMCMD_DELFORBIDWORD_RE,
+	PROTOCOL_GMCMD_ADDSERVERREWARD_RE,
+	PROTOCOL_GMCMD_LISTSERVERREWARD_RE,
+	PROTOCOL_GMCMD_REMOVESERVERREWARD_RE,
+};
+
+GNET::Protocol::Manager::Session::State state_GMAdapterClient(_state_GMAdapterClient,
+						sizeof(_state_GMAdapterClient)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_Null[] = 
+{
+};
+
+GNET::Protocol::Manager::Session::State state_Null(_state_Null,
+						sizeof(_state_Null)/sizeof(GNET::Protocol::Type), 5);
+
+
+};
+

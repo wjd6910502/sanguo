@@ -1,0 +1,1238 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<structures dbversion="32">
+	<structure name="Int">
+		<variable name="_value" type="int" dbversion="1"/>
+	</structure>
+	<structure name="Str">
+		<variable name="_value" type="std::string" dbversion="1"/>
+	</structure>
+
+	<list name="IntList" value_type="Int"/>
+	<list name="Int64List" value_type="Int64"/>
+
+	<map name="intIntMap" key_type="int" value_type="Int"/>
+	<map name="intStrMap" key_type="int" value_type="Str"/>
+	<!-- <map name="StringIntMap" key_type="std::string" value_type="Int"/> -->
+	
+	<structure name="RoleBase">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_create_time" type="int" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleInstance">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_score" type="int" dbversion="1"/>
+		<variable name="_star" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="RoleInstanceMap" key_type="int" value_type="RoleInstance"/>
+
+	<structure name="CommonUseLimit">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_type" type="int" dbversion="1"/>
+		<variable name="_count" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="CommonUseLimitMap" key_type="int" value_type="CommonUseLimit"/>
+	
+	<structure name="PrizeTemplate">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_tid2" type="int" dbversion="1"/>
+		<variable name="_position" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="PrizeTemplateMap" key_type="int" value_type="PrizeTemplate"/>
+
+	<list name="StrList" value_type="Str"/>
+
+	<structure name="PvpVideo">
+		<variable name="_id" type="Str" dbversion="1"/>
+		<variable name="_first_pvpinfo" type="Str" dbversion="1"/>
+		<variable name="_second_pvpinfo" type="Str" dbversion="1"/>
+		<variable name="_win_flag" type="int" dbversion="1"/>
+		<variable name="_time" type="int" dbversion="1"/>
+	</structure>
+	
+	<list name="PvpVideoList" value_type="PvpVideo"/>
+
+	<!--
+	<structure name="HeroSoul">
+		<variable name="_id" type="int" dbversion="1"/>
+		<variable name="_num" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="HeroSoulMap" key_type="int" value_type="HeroSoul"/>
+
+	-->
+	
+	<structure name="Horse_Hero">
+		<variable name="_heroinfo" type="IntList" dbversion="1"/>
+		<variable name="_horse" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="Lottery_LastFreeTimeMap" key_type="int" value_type="Int"/>
+
+	<structure name="Daily_Sign">
+		<variable name="_today_flag" type="int" dbversion="1"/>
+		<variable name="_sign_date" type="int" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleStatus">
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_exp" type="Int64" dbversion="1"/>
+		<variable name="_vp" type="int" dbversion="1"/>
+		<variable name="_vp_refreshtime" type="int" dbversion="1"/>
+		<variable name="_instances" type="RoleInstanceMap" dbversion="1"/>
+		<variable name="_instance_id" type="int" dbversion="1"/>
+		<variable name="_money" type="int" dbversion="1"/>
+		<variable name="_yuanbao" type="int" dbversion="1"/>
+		<variable name="_chongzhi" type="int" dbversion="1"/>
+		<variable name="_common_use_limit" type="CommonUseLimitMap" dbversion="1"/>
+		<variable name="_prize_template" type="PrizeTemplateMap" dbversion="1"/>
+		<variable name="_last_heartbeat" type="int" dbversion="1"/>
+		<variable name="_last_hero" type="IntList" dbversion="1"/>
+		<variable name="_last_horse_hero" type="Horse_Hero" dbversion="1"/>
+		<variable name="_hero_skill_point" type="int" dbversion="1"/>
+		<variable name="_hero_skill_point_refreshtime" type="int" dbversion="1"/>
+		<variable name="_pvp_video" type="PvpVideoList" dbversion="1"/>
+		<variable name="_update_server_event" type="int" dbversion="1"/>
+		<variable name="_cur_battle_id" type="int" dbversion="1"/>
+		<variable name="_last_lotterytime" type="Lottery_LastFreeTimeMap" dbversion="1"/>
+		<variable name="_dailly_sign" type="Daily_Sign" dbversion="1"/>
+		<variable name="_lottery_one_flag" type="int" dbversion="1" comments="ÊÇ·ñ½øÐÐ¹ý1Á¬³é"/>
+		<variable name="_lottery_ten_flag" type="int" dbversion="1" comments="ÊÇ·ñ½øÐÐ¹ý10Á¬³é"/>
+		<variable name="_zhanli" type="int" comments="Íæ¼ÒµÄÕ½Á¦"/>
+		<variable name="_online" type="int" comments="1´ú±íÔÚÏß£¬0´ú±í²»ÔÚÏß"/>
+		<variable name="_notice_other" type="int" comments="1´ú±íÊý¾ÝÓÐ¸üÐÂ"/>
+		<variable name="_fight_seed" type="int" comments="Ã¿´ÎÕ½¶·Ê¹ÓÃµÄÕ½¶·ÖÖ×Ó"/>
+		<variable name="_time_line" type="int" comments="Íæ¼ÒµÄÊ±¼äÏß"/>
+	</structure>
+
+	<structure name="HeroSkill">
+		<variable name="_skill_id" type="int" dbversion="1"/>
+		<variable name="_skill_level" type="int" dbversion="1"/>
+	</structure>
+	
+	<map name="HeroSkillMap" key_type="int" value_type="HeroSkill"/>
+
+	<structure name="EquipmentPosInfo">
+		<variable name="_pos" type="int" dbversion="2"/>
+		<variable name="_id" type="int" dbversion="2"/>
+	</structure>
+	
+	<map name="EquipmentPosInfoMap" key_type="int" value_type="EquipmentPosInfo"/>
+
+	<structure name="RoleHero">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_exp" type="int" dbversion="1"/>
+		<variable name="_order" type="int" dbversion="1" comments="½×±ð"/>
+		<variable name="_star" type="int" dbversion="1" comments="ÐÇ¼¶"/>
+		<variable name="_skill" type="HeroSkillMap" dbversion="1" comments="ÎÞË«¼¼ÄÜ"/>
+		<variable name="_common_skill" type="HeroSkillMap" dbversion="1" comments="ÆÕÍ¨¼¼ÄÜ"/>
+		<variable name="_select_skill" type="IntList" dbversion="1" comments="Ñ¡ÖÐµÄÎÞË«¼¼ÄÜ"/>
+		<variable name="_cur_skill_point" type="int" dbversion="1" comments="µ±Ç°µÄ¼¼ÄÜµãÊý"/>
+		<variable name="_relation" type="intIntMap" comments="Õâ¸öÊý¾Ý²»½øÐÐÈÎºÎµÄ´æ¿â²Ù×÷£¬Ö»ÊÇÎªÁË·þÎñÆ÷¼ÆËãÊý¾ÝÀ´½øÐÐÊ¹ÓÃ,Ö»ÓÐ¼¤»îµÄ"/>
+		<variable name="_weapon_id" type="int" dbversion="1"/>
+		<variable name="_equipment" type="EquipmentPosInfoMap" dbversion="2" comments="Îä½«ÉíÉÏµÄ×°±¸ÐÅÏ¢ 1-6·Ö±ð±íÊ¾Í·¿ø¡¢±øÊé¡¢ÊÎÆ·¡¢îø¼×¡¢±¦Îï"/>
+		<variable name="_beidong_skill" type="IntList" dbversion="13" comments="Îä½«ÉíÉÏµÄ±»¶¯¼¼ÄÜ"/>
+		<variable name="_zhanli" type="int" comments="Îä½«µÄÕ½Á¦"/>
+	</structure>
+
+	<map name="RoleHeroMap" key_type="int" value_type="RoleHero"/>
+
+	<structure name="RoleHeroHall">
+		<variable name="_heros" type="RoleHeroMap" dbversion="1"/>
+	</structure>
+	
+	<structure name="RoleHorse">
+		<variable name="_tid" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="RoleHorseMap" key_type="int" value_type="RoleHorse"/>
+
+	<structure name="RoleHorseHall">
+		<variable name="_horses" type="RoleHorseMap" dbversion="1"/>
+	</structure>
+
+	<structure name="Item">
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_count" type="int" dbversion="1"/>
+	</structure>
+
+	<structure name="WeaponSkill">
+		<variable name="_skill_id" type="int" dbversion="1"/>
+		<variable name="_skill_level" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="WeaponSkillMap" key_type="int" value_type="WeaponSkill"/>
+	
+	<structure name="WeaponPro">
+		<variable name="_tid" type="int" dbversion="1" comments="ÎäÆ÷µÄÎ¨Ò»ID"/>
+		
+		<variable name="_prop" type="int" dbversion="1" comments="ÎäÆ÷µÄÊôÐÔ£¬±ù»ðÀ×"/>
+		<variable name="_level" type="int" dbversion="1" comments="ÎäÆ÷µÄ¹Ì¶¨µÈ¼¶"/>
+		<variable name="_star" type="int" dbversion="1" comments="ÎäÆ÷µÄÐÇ¼¶"/>
+		<variable name="_quality" type="int" dbversion="1" comments="ÎäÆ÷µÄÆ·ÖÊ"/>
+		<variable name="_attack" type="int" dbversion="1" comments="ÎäÆ÷µÄ¹¥»÷Á¦"/>
+		
+		<variable name="_strengthen" type="int" dbversion="1" comments="ÎäÆ÷µÄÇ¿»¯µÈ¼¶"/>
+		<variable name="_level_up" type="int" dbversion="1" comments="ÎäÆ÷µÄÉý¼¶µÈ¼¶"/>
+		<variable name="_skill" type="int" dbversion="1" comments="×°±¸Ó¡"/>
+		<variable name="_weapon_skill" type="int" dbversion="1" comments="ÎäÆ÷¼¼ÄÜ"/>
+		
+		<variable name="_level_up_money" type="int" dbversion="1" comments="ÎäÆ÷Éý¼¶ÐèÒªµÄÇ®"/>
+		<variable name="_strengthen_cost" type="int" dbversion="1" comments="ÎäÆ÷Ç¿»¯ÐèÒªµÄÇ¿»¯Ê¯"/>
+		<variable name="_strengthen_high_cost" type="int" dbversion="1" comments="ÎäÆ÷Ç¿»¯ÐèÒªµÄ¸ß¼¶Ç¿»¯Ê¯"/>
+		<variable name="_skill_pro" type="WeaponSkillMap" dbversion="1" comments="×°±¸Ó¡"/>
+		<variable name="_strengthen_prob" type="int" dbversion="1" comments="ÎäÆ÷µÄÇ¿»¯°Ù·Ö±È"/>
+	</structure>
+
+	<structure name="WeaponItem">
+		<variable name="_base_item" type="Item" dbversion="1"/>
+		<variable name="_weapon_pro" type="WeaponPro" dbversion="1"/>
+	</structure>
+
+	<structure name="EquipmentRefinableData">
+		<variable name="_typ" type="int" dbversion="2"/>
+		<variable name="_num" type="int" dbversion="2"/>
+	</structure>
+
+	<map name="EquipmentRefinableDataMap" key_type="int" value_type="EquipmentRefinableData"/>
+
+	<structure name="EquipmentPro">
+		<variable name="_tid" type="int" dbversion="2" comments="×°±¸µÄÎ¨Ò»ID"/>
+		<variable name="_hero_id" type="int" dbversion="2" comments="Õâ¼þ×°±¸°ó¶¨¸øÁËÄÄÒ»¸öÎä½«"/>
+		<variable name="_wear_flag" type="int" dbversion="3" comments="Õâ¼þ×°±¸µ±Ç°ÊÇ·ñÕý×°±¸ÔÚÎä½«ÉíÉÏ"/>
+		
+		<variable name="_level_up" type="int" dbversion="2" comments="×°±¸µÄÉý¼¶µÈ¼¶"/>
+		<variable name="_order" type="int" dbversion="2" comments="×°±¸µÄ½ç±ð"/>
+		<variable name="_refinable_pro" type="EquipmentRefinableDataMap" dbversion="2" comments="×°±¸µÄÏ´Á·ÊôÐÔ"/>
+		<variable name="_tmp_refinable_pro" type="EquipmentRefinableDataMap" dbversion="2" comments="×°±¸µÄÏ´Á·ÊôÐÔ,ÐèÒª½øÐÐÌæ»»"/>
+		
+		<variable name="_level_up_money" type="int" dbversion="2" comments="×°±¸ÏûºÄµÄÇ®"/>
+		<variable name="_strengthen_cost" type="int" dbversion="2" comments="×°±¸ÏûºÄµÄÇ¿»¯Ê¯"/>
+		<variable name="_yuanbao_cost" type="int" dbversion="2" comments="×°±¸ÏûºÄµÄ¹´Óñ"/>
+	</structure>
+
+	<structure name="EquipmentItem">
+		<variable name="_base_item" type="Item" dbversion="2"/>
+		<variable name="_equipment_pro" type="EquipmentPro" dbversion="2"/>
+	</structure>
+
+	<list name="ItemList" value_type="Item"/>
+	<list name="WeaponList" value_type="WeaponItem"/>
+	<map name="EquipmentMap" key_type="int" value_type="EquipmentItem"/>
+
+	<structure name="WeaponInfo">
+		<variable name="_id" type="int" dbversion="1"/>
+		<variable name="_weapon_items" type="WeaponList" dbversion="1"/>
+	</structure>
+
+	<structure name="EquipmentInfo">
+		<variable name="_id" type="int" dbversion="2"/>
+		<variable name="_equipment_items" type="EquipmentMap" dbversion="2"/>
+	</structure>
+
+	<structure name="RoleBackPack">
+		<variable name="_capacity" type="int" dbversion="1"/>
+		<variable name="_items" type="ItemList" dbversion="1"/>
+		<variable name="_weapon_items" type="WeaponInfo" dbversion="1"/>
+		<variable name="_equipment_items" type="EquipmentInfo" dbversion="2"/>
+	</structure>
+
+	<structure name="RoleBrief">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_mafia_id" type="Int64" dbversion="1"/>
+		<variable name="_mafia_name" type="std::string" dbversion="1"/>
+	</structure>
+
+	<structure name="RoleClientDefineData">
+		<variable name="_id" type="int" dbversion="1"/>
+		<variable name="_value" type="std::string" dbversion="1"/>
+	</structure>
+
+	<map name="RoleClientDefineMap" key_type="int" value_type="RoleClientDefineData"/>
+	
+	<structure name="RoleClientDefine">
+		<variable name="_define" type="RoleClientDefineMap" dbversion="1"/>
+	</structure>
+
+	<structure name="Friend">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+		<variable name="_zhanli" type="int" dbversion="14" comments="Íæ¼ÒµÄÕ½Á¦"/>
+		<variable name="_faction" type="int" dbversion="14" comments="»¥ÏàÖ®¼äµÄÓÑºÃ¶È,Õâ¸öÖ»ÓÐ»¥ÎªºÃÓÑµÄÊ±ºò²Å»áÓÐÐ§µÄ"/>
+		<variable name="_mashu_score" type="int" dbversion="22" comments="Íæ¼ÒµÄÂíÊõ»ý·Ö"/>
+		<variable name="_online" type="int" comments="Íæ¼ÒºÃÓÑÊÇ·ñÔÚÏß£¬Õâ¸öÊý¾Ý²»½øÐÐ´æ¿â"/>
+	</structure>
+
+	<map name="FriendMap" key_type="Int64" value_type="Friend"/>
+
+	<structure name="FriendRequest">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+		<variable name="_zhanli" type="int" dbversion="14" comments="Íæ¼ÒµÄÕ½Á¦"/>
+	</structure>
+
+	<list name="FriendRequestList" value_type="FriendRequest"/>
+
+	<structure name="BlackList">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<map name="BlackListMap" key_type="Int64" value_type="BlackList"/>
+	
+	<structure name="RoleFriend">
+		<variable name="_friends" type="FriendMap" dbversion="1" comments="×Ô¼ºµÄºÃÓÑÁÐ±í£¬ºÃÓÑ¶¼ÊÇË«ÏòµÄ"/>
+		<variable name="_requests" type="FriendRequestList" dbversion="1"/>
+		<variable name="_blacklist" type="BlackListMap" dbversion="1"/>
+		<variable name="_other_friends" type="FriendMap" dbversion="14" comments="Ë­¼ÓÁË×Ô¼ºÊÇºÃÓÑ"/>
+	</structure>
+
+	<structure name="PrivateChat">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+		<variable name="_dest" type="RoleBrief" dbversion="1"/>
+		<variable name="_time" type="int" dbversion="1"/>
+		<variable name="_content" type="std::string" dbversion="1"/>
+		<variable name="_speech_content" type="std::string" dbversion="21"/>
+	</structure>
+
+	<list name="PrivateChatList" value_type="PrivateChat"/>
+
+	<structure name="RoleChat">
+		<variable name="_received_private_chats" type="PrivateChatList" dbversion="1"/>
+	</structure>
+
+	<structure name="MafiaInvite">
+		<variable name="_brief" type="RoleBrief" dbversion="1"/>
+	</structure>
+
+	<list name="MafiaInviteList" value_type="MafiaInvite"/>
+
+	<structure name="RoleMafia">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_create_time" type="int" dbversion="1"/>
+		<variable name="_invites" type="MafiaInviteList" dbversion="1" comments="É¾³ýµôÕâ¸öÐÅÏ¢"/>
+		<variable name="_position" type="int" dbversion="23" comments="°ï»áÀïÃæµÄÖ°Î»"/>
+		<variable name="_apply_mafia" type="Int64List" dbversion="23" comments="×Ô¼ºÉêÇëµÄ°ï»á"/>
+	</structure>
+
+	<structure name="PVPInvite">
+		<variable name="_src" type="RoleBrief"/>
+		<variable name="_mode" type="int"/>
+		<variable name="_time" type="int"/>
+	</structure>
+
+	<list name="PVPInviteList" value_type="PVPInvite"/>
+
+
+	<!--×¢ÒâÕâ¸ö½á¹¹ÀïÃæµÄPVPÐÅÏ¢¶¼ÊÇ²»»á½øÐÐÊý¾Ý¿â´æ´¢µÄ£¬ËùÒÔÐ´µÄÊ±ºòÐèÒª×¢ÒâÒ»µã -->
+	<structure name="RolePVP">
+		<variable name="_id" type="int"/>
+		<variable name="_invites" type="PVPInviteList"/>
+		<variable name="_pvpcenterinfo" type="std::string"/>
+		<variable name="_typ" type="int"/>
+		<variable name="_state" type="int"/>
+	</structure>
+
+	<!--pvpÎä½«µÄ³öÕ¾ÐÅÏ¢-->
+	<structure name="HeroPVPInfo">
+		<variable name="_join_count" type="int"/>
+		<variable name="_win_count" type="int"/>
+	</structure>
+
+	<map name="HeroPVPInfoMap" key_type="int" value_type="HeroPVPInfo"/>
+
+	<structure name="RolePVPInfo">
+		<variable name="_win_flag" type="int" dbversion="1" comments="´ú±íÒÑ¾­Á¬ÐøÊ¤ÀûÁË¼¸³¡"/>
+		<variable name="_win_victory" type="int" dbversion="1" comments="ÍêÊ¤µÄ³¡´Î"/>
+		<variable name="_win_count" type="int" dbversion="1" comments="Ê¤Àû³¡´Î"/>
+		<variable name="_fail_count" type="int" dbversion="1" comments="Ê§°Ü³¡´Î"/>
+		
+		<variable name="_elo_score" type="int" dbversion="1" comments="Íæ¼ÒµÄÌìÌÝ»ý·Ö"/>
+		<variable name="_pvp_grade" type="int" dbversion="1" comments="Íæ¼Òµ±Ç°½×±ð"/>
+		<variable name="_cur_star" type="int" dbversion="1" comments="µ±Ç°ÐÇÊý"/>
+		<variable name="_pvp_time" type="int" dbversion="1" comments="Æ¥ÅäÊ±¼ä"/>
+		<variable name="_last_hero" type="IntList" dbversion="1"/>
+		<variable name="_pvp_season_end_time" type="int" dbversion="1" comments="×Ô¼ºÉíÉÏµÄÈü¼¾½áÊøÊ±¼ä"/>
+		<variable name="_pvp_server_season_end_time" type="int" dbversion="1" comments="·þÎñÆ÷µÄµ±Ç°Èü¼¾½áÊøÊ±¼ä"/>
+		<variable name="_hero_pvp_info" type="HeroPVPInfoMap" dbversion="1" comments="Îä½«µÄPVP³öÕ½ÐÅÏ¢"/>
+	</structure>
+	
+	<structure name="MafiaMember">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_activity" type="int" dbversion="1"/>
+		<variable name="_zhanli" type="int" dbversion="23"/>
+		<variable name="_contribution" type="int" dbversion="23" comments="Íæ¼ÒµÄ¹±Ï×"/>
+		<variable name="_position" type="int" dbversion="23" comments="Íæ¼ÒµÄÖ°Î»"/>
+		<variable name="_logout_time" type="int" dbversion="23" comments="ÀëÏßÊ±¼ä£¬Èç¹ûÔÚÏßµÄ»°Õâ¸öÊ±¼äÊÇ0"/>
+		<variable name="_join_time" type="int" dbversion="25" comments="Íæ¼Ò¼ÓÈëÕâ¸ö°ï»áµÄÊ±¼ä"/>
+		<variable name="_online" type="int"/>
+	</structure>
+
+	<map name="MafiaMemberMap" key_type="Int64" value_type="MafiaMember"/>
+	
+	<structure name="MafiaNoticeRoleData">
+		<variable name="_id" type="Int64" dbversion="23"/>
+		<variable name="_name" type="std::string" dbversion="23"/>
+	</structure>
+
+	<list name="MafiaNoticeRoleDataList" value_type="MafiaNoticeRoleData"/>
+	
+	<structure name="MafiaNoticeData">
+		<variable name="_typ" type="int" dbversion="23" comments="ÊÂ¼þµÄÀàÐÍ£¬²ß»®½øÐÐµÄÅäÖÃ"/>
+		<variable name="_id" type="int" dbversion="23" comments="ÊÂ¼þµÄÎ¨Ò»ID"/>
+		<variable name="_role_info" type="MafiaNoticeRoleDataList" dbversion="23" comments="ÊÂ¼þÉæ¼°µ½µÄÍæ¼ÒÐÅÏ¢"/>
+	</structure>
+
+	<list name="MafiaNoticeDataList" value_type="MafiaNoticeData"/>
+	
+	<structure name="MafiaApplyMemberData">
+		<variable name="_id" type="Int64" dbversion="23" comments="Íæ¼ÒµÄID"/>
+		<variable name="_name" type="std::string" dbversion="23" comments="Íæ¼ÒµÄÃû×Ö"/>
+		<variable name="_photo" type="int" dbversion="23" comments="Íæ¼ÒµÄÍ·Ïñ"/>
+		<variable name="_level" type="int" dbversion="23" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="_zhanli" type="int" dbversion="23" comments="Íæ¼ÒµÄÕ½Á¦"/>
+	</structure>
+
+	<list name="MafiaApplyMemberDataList" value_type="MafiaApplyMemberData"/>
+
+	<structure name="MafiaData">
+		<variable name="_deleted" type="char" dbversion="1" comments="µÈÓÚ1µÄÊ±ºò±íÊ¾É¾³ý"/>
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_flag" type="int" dbversion="1"/>
+		<variable name="_announce" type="std::string" dbversion="1" comments="°ï»á¹«¸æ"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_activity" type="int" dbversion="1"/>
+		<variable name="_boss_id" type="Int64" dbversion="1"/>
+		<variable name="_boss_name" type="std::string" dbversion="1"/>
+		<variable name="_member_map" type="MafiaMemberMap" dbversion="1"/>
+		<variable name="_exp" type="int" dbversion="23" comments="°ï»áµÄÉý¼¶¾­Ñé"/>
+		<variable name="_jisi" type="int" dbversion="23" comments="°ï»áµÄ¼Àìë½ø¶È"/>
+		<variable name="_notice" type="MafiaNoticeDataList" dbversion="23" comments="°ï»áµÄÊÂ¼þ"/>
+		<variable name="_applylist" type="MafiaApplyMemberDataList" dbversion="23" comments="°ï»áµÄÉêÇëÁÐ±í"/>
+		<variable name="_mashu_toplist_id" type="int" dbversion="23" comments="ÂíÊõµÄ°ï»áÅÅÐÐ°ñ»ý·Ö"/>
+		<variable name="_level_limit" type="int" dbversion="23"/>
+		<variable name="_notice_id" type="int" dbversion="23" comments="°ï»áÊÂ¼þIDµÄ¼ÇÂ¼"/>
+		<variable name="_need_approval" type="int" dbversion="24" comments="°ï»áÊÇ·ñÐèÒªÅú×¼,µÈÓÚ1´ú±íÐèÒªÅú×¼"/>
+		<variable name="_last_heartbeat" type="int" dbversion="26" comments="ÉÏÒ»´ÎµÄÐÄÌøÊ±¼ä"/>
+		<variable name="_declaration" type="std::string" dbversion="27" comments="°ï»áÐûÑÔ"/>
+		<variable name="_all_mashu_score" type="int" dbversion="29" comments="ÂíÊõ°ï»á³ÉÔ±×ÜµÄÂíÊõ»ý·Ö"/>
+	</structure>
+
+	<structure name="TopListSaveData">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="data" type="Int64" dbversion="1"/>
+		<variable name="type" type="char" dbversion="1"/>
+		<variable name="top_type" type="char" dbversion="1"/>
+	</structure>
+
+	<structure name="TopListItemInfo">
+		<variable name="_item_id" type="int" dbversion="1"/>
+		<variable name="_tid" type="int" dbversion="1"/>
+		<variable name="_typ" type="int" dbversion="1"/>
+	</structure>
+	
+	<structure name="TopListData">
+		<variable name="_id" type="Int64" dbversion="1"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_photo" type="int" dbversion="1"/>
+		<variable name="data" type="Int64" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_item" type="TopListItemInfo" dbversion="1"/>
+	</structure>
+	
+	<map name="TopListMap" key_type="Int64" value_type="TopListData"/>
+	
+	<list name="TopListMultiList" value_type="TopListData"/>
+	<map name="TopListMultiMap" key_type="Int64" value_type="TopListMultiList"/>
+
+	<structure name="TopMap">
+		<variable name="_timestamp" type="int" dbversion="1"/>
+		<variable name="_data" type="TopListMultiMap" dbversion="1"/>
+	</structure>
+	
+	<structure name="TopList">
+		<variable name="_top_list_type" type="int" dbversion="1"/>
+		<variable name="_new_top_list_by_id" type="TopListMap" dbversion="1"/>
+		<variable name="_new_top_list_by_data" type="TopMap" dbversion="1"/>
+		<variable name="_old_top_list" type="TopListMultiMap" dbversion="1"/>
+	</structure>
+	
+	<map name="TopManagerMap" key_type="int" value_type="TopList"/>
+	
+	<structure name="TopManagerData">
+		<variable name="_top_list_type" type="int" dbversion="23"/>
+		<variable name="_top_data" type="TopManagerMap" dbversion="23"/>
+	</structure>
+
+	<structure name="TaskData">
+		<variable name="_type" type="int" dbversion="1"/>
+		<variable name="_condition" type="int" dbversion="1"/>
+		<variable name="_num" type="int" dbversion="1"/>
+		<variable name="_maxnum" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="TaskDataList" value_type="TaskData"/>
+	
+	<structure name="Task">
+		<variable name="_task_id" type="int" dbversion="1" comments="ÈÎÎñµÄÎ¨Ò»ID"/>
+		<variable name="_task_condition" type="TaskDataList" dbversion="1" comments="ÈÎÎñÍê³ÉÌõ¼þ"/>
+	</structure>
+	
+	<structure name="Finish_Task">
+		<variable name="_task_id" type="int" dbversion="1" comments="ÈÎÎñµÄÎ¨Ò»ID"/>
+		<variable name="_finish_time" type="int" dbversion="1" comments="ÈÎÎñÍê³ÉµÄÊ±¼ä"/>
+	</structure>
+
+	<map name="FinishedTask" key_type="int" value_type="Finish_Task"/>
+	<map name="CurrentTask" key_type="int" value_type="Task"/>
+
+	<structure name="RoleTask">
+		<variable name="_finish_task" type="FinishedTask" dbversion="1"/>
+		<variable name="_current_task" type="CurrentTask" dbversion="1"/>
+	</structure>
+
+	<structure name="Compensate">
+		<variable name="_seq" type="int" dbversion="1"/>
+		<variable name="_begin" type="Int64" dbversion="1"/>
+		<variable name="_end" type="Int64" dbversion="1"/>
+		<variable name="_msgid" type="int" dbversion="1"/>
+		<variable name="_itemid" type="int" dbversion="1"/>
+		<variable name="_subject" type="std::string" dbversion="1"/>
+		<variable name="_context" type="std::string" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_type" type="int" dbversion="1"/>
+		<variable name="_date" type="int" dbversion="1"/>
+		<variable name="_week" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="CompensateMap" key_type="int" value_type="Compensate"/>
+
+	<structure name="Shop_item">
+		<variable name="_item_id" type="int" dbversion="1" comments="ÎïÆ·µÄID"/>
+		<variable name="_count" type="int" dbversion="1" comments="ÒÑ¾­¹ºÂòµÄ´ÎÊý"/>
+		<variable name="_max_count" type="int" dbversion="1" comments="¿ÉÒÔ¹ºÂòµÄ×î´ó´ÎÊý"/>
+		<variable name="_price" type="int" dbversion="1" comments="¹ºÂò¼Û¸ñ"/>
+	</structure>
+	
+	<list name="ShopItemList" value_type="Shop_item"/>
+
+	<structure name="Shop">
+		<variable name="_shop_id" type="int" dbversion="1" comments="ÉÌµêµÄID"/>
+		<variable name="_type" type="int" dbversion="1" comments="ÉÌµêµÄ¹ºÂòÀàÐÍ£¬Ôª±¦£¬Ç®£¬ÉùÍû"/>
+		<variable name="_level" type="int" dbversion="1" comments="ÉÌµê¿ªÆôµÄµÈ¼¶"/>
+		<variable name="_itemlist" type="ShopItemList" dbversion="1" comments="ÉÌµêÀïµÄÎïÆ·"/>
+	</structure>
+	
+	<map name="ShopMap" key_type="int" value_type="Shop"/>
+	
+	<structure name="Package_Item">
+		<variable name="_seq" type="int" dbversion="1" comments="ÁìÈ¡¹ýµÄ½±ÀøID"/>
+		<variable name="_date" type="int" dbversion="1" comments="ÁìÈ¡Ê±¼ä£¬Õâ¸öÊÇÎªÁËÖÜ½±Àø£¬ÔÂ½±ÀøÀ´Éè¼ÆµÄ"/>
+	</structure>
+	
+	<list name="PackageList" value_type="Package_Item"/>
+	
+	<structure name="Mail_Item">
+		<variable name="_item_id" type="int" dbversion="1" comments="ÎïÆ·µÄID"/>
+		<variable name="_item_count" type="int" dbversion="1" comments="ÎïÆ·µÄÊýÁ¿"/>
+	</structure>
+	
+	<list name="Mail_ItemList" value_type="Mail_Item"/>
+	
+	<structure name="Mail">
+		<variable name="_mail_id" type="int" dbversion="1" comments="Î¨Ò»µÄÓÊ¼þID"/>
+		<variable name="_msg_id" type="int" dbversion="1" comments="ÓÊ¼þµÄ±êÌâÄÚÈÝID"/>
+		<variable name="_mail_type" type="int" dbversion="1" comments="ÓÊ¼þµÄÀàÐÍ"/>
+		<variable name="_subject" type="std::string" dbversion="1" comments="ÓÊ¼þµÄ±êÌâ"/>
+		<variable name="_context" type="std::string" dbversion="1" comments="ÓÊ¼þµÄÄÚÈÝ"/>
+		<variable name="_time" type="int" dbversion="1" comments="ÓÊ¼þµÄÊ±¼ä"/>
+		<variable name="_from_id" type="Int64" dbversion="1" comments="ÓÊ¼þµÄ·¢ËÍÈËID£¬0´ú±íÏµÍ³"/>
+		<variable name="_from_name" type="std::string" dbversion="1" comments="ÓÊ¼þµÄ·¢ËÍÈËÃû×Ö"/>
+		<variable name="_item" type="Mail_ItemList" dbversion="1" comments="ÓÊ¼þµÄ¸½¼ÓÎïÆ·"/>
+		<variable name="_mail_arg" type="StrList" dbversion="1" comments="ÓÊ¼þ²ÎÊýÁÐ±í"/>
+		<variable name="_read_flag" type="int" dbversion="1" comments="ÓÊ¼þÊÇ·ñÒÑ¾­¶Á¹ýÁË"/>
+	</structure>
+
+	<map name="MailMap" key_type="int" value_type="Mail"/>
+
+	<structure name="RoleMail">
+		<variable name="_mail_index" type="int" dbversion="1" comments="Íæ¼ÒÄ¿Ç°µÄÓÊ¼þIDµÄindex"/>
+		<variable name="_mail_info" type="MailMap" dbversion="1"/>
+	</structure>
+
+	<structure name="Event">
+		<variable name="_event_id" type="int" dbversion="1" comments="ÊÂ¼þµÄÎ¨Ò»ID"/>
+		<variable name="_event_type" type="int" dbversion="1" comments="ÊÂ¼þµÄÀàÐÍ"/>
+		<variable name="_event_time" type="int" dbversion="1" comments="ÊÂ¼þµÄ¼ÓÈëÊ±¼ä"/>
+		<variable name="_event_end_time" type="int" dbversion="1" comments="ÊÂ¼þµÄ½ØÖ¹Ê±¼ä,Ä¬ÈÏÊÂ¼þÊÇÒ»Ìì"/>
+		<variable name="_event_arg" type="StrList" dbversion="1" comments="ÊÂ¼þµÄ²ÎÊý"/>
+	</structure>
+	
+	<map name="EventMap" key_type="int" value_type="Event"/>
+	
+	<structure name="ServerEvent">
+		<variable name="_event_index" type="int" dbversion="1" comments="ÊÂ¼þµÄÎ¨Ò»ID"/>
+		<variable name="_event_info" type="EventMap" dbversion="1"/>
+	</structure>
+	
+	<map name="Int64intMap" key_type="Int64" value_type="Int"/>
+
+	<structure name="HeroComments">
+		<variable name="_roleid" type="Int64" dbversion="1" comments="ÆÀÂÛÈËµÄID"/>
+		<variable name="_rolename" type="std::string" dbversion="1" comments="ÆÀÂÛÈËµÄÃû×Ö"/>
+		<variable name="_comments" type="std::string" dbversion="1" comments="ÆÀÂÛ"/>
+		<variable name="_agree" type="Int64intMap" dbversion="1" comments="µãÔÞÈËÊý"/>
+		<variable name="_time_stamp" type="int" dbversion="1" comments="²åÈëµÄÊ±¼ä"/>
+	</structure>
+
+	<list name="HeroCommentsList" value_type="HeroComments"/>
+
+	<map name="HeroCommentsMap" key_type="int" value_type="HeroCommentsList"/>
+	
+	<structure name="Notice">
+		<variable name="_notice_id" type="int" comments="¹«¸æµÄÎ¨Ò»ID"/>
+		<variable name="_notice" type="std::string" comments="¹«¸æµÄÄÚÈÝ"/>
+		<variable name="_weekday" type="int" comments="ÖÜ¼¸£¬0´ú±íÈÎÒâÒ»Ìì"/>
+		<variable name="_type" type="int" comments="±íÊ¾ÖÜÆÚ£¬1´ú±íµÄÊÇÌì£¬ÆäÓàµÄ¸ù¾ÝÒÔºóµÄÐèÇóÔÙ¶¨"/>
+		<variable name="_hour" type="int" comments="Ê±¼ä"/>
+		<variable name="_minute" type="int" comments="Ê±¼ä"/>
+		<variable name="_interval" type="int" comments="Á½Ìõ¹«¸æÖ®¼äµÄÊ±¼ä¼ä¸ô"/>
+		<variable name="_count" type="int" comments="µ±Ç°ÒÑ¾­¹ã²¥µÄ´ÎÊý"/>
+		<variable name="_max_count" type="int" comments="¹«¸æµÄ´ÎÊý,Õâ¸öÅäÖÃµÄ²»ÐèÒª£¬ÊÇ¿Í·þÄÇ±ßµÄ»áÓÃµ½"/>
+	</structure>
+
+	<map name="NoticeMap" key_type="int" value_type="Notice"/>
+
+	<structure name="PVPFighter">
+		<variable name="_id" type="Int64"/>
+		<variable name="_status" type="int" comments="0:initial; 1:ready(ÒÑ×¼±¸¾ÍÐ÷); 2:end(ÒÑÌá½»Õ½¶·½á¹û»òÑ¡Ôñ·ÅÆú);"/>
+<!--
+		<variable name="_ops" type="intStrMap"/>
+		<variable name="_accumulate_latency" type="int"/>
+		<variable name="_delay_count" type="int"/>
+		<variable name="_wait_seconds" type="int"/>
+-->
+		<variable name="_result" type="int"/>
+		<variable name="_typ" type="int"/>
+	</structure>
+
+	<structure name="PVPData">
+		<variable name="_id" type="int"/>
+		<variable name="_mode" type="int"/>
+		<variable name="_status" type="int"/>
+		<variable name="_status_change_time" type="int"/>
+		<variable name="_fighter1" type="PVPFighter"/>
+		<variable name="_fighter2" type="PVPFighter"/>
+		<variable name="_fight_start_time" type="int"/>
+<!--
+		<variable name="_next_client_tick" type="int"/>
+		<variable name="_latency" type="int"/>
+-->
+		<variable name="_pvpd_ip" type="std::string"/>
+		<variable name="_pvpd_port" type="int"/>
+		<variable name="_end_counter" type="int"/>
+		<variable name="_end_reason" type="int"/>
+	</structure>
+	
+	<structure name="DeviceInfo">
+		<variable name="_net_type" type="int"/>
+		<variable name="_public_ip" type="std::string"/>
+		<variable name="_public_port" type="int"/>
+		<variable name="_local_ip" type="std::string"/>
+		<variable name="_local_port" type="int"/>
+	</structure>
+
+	<list name="OverLoadList" value_type="Str"/>
+	<map name="OverLoadMap" key_type="int" value_type="OverLoadList"/>
+
+	<structure name="RepData">
+		<variable name="_rep_id" type="int" dbversion="1"/>
+		<variable name="_rep_num" type="int" dbversion="1"/>
+	</structure>
+
+	<map name="RoleRepMap" key_type="int" value_type="RepData"/>
+	
+	<structure name="PrivateShopData">
+		<variable name="_item_id" type="int" dbversion="1"/>
+		<variable name="_buy_count" type="int" dbversion="1"/>
+		<variable name="_max_count" type="int" dbversion="1"/>
+	</structure>
+
+	<list name="PrivateShopDataList" value_type="PrivateShopData"/>
+	
+	<structure name="PrivateShop">
+		<variable name="_shop_id" type="int" dbversion="1"/>
+		<variable name="_last_refresh_time" type="int" dbversion="1"/>
+		<variable name="_shop_data" type="PrivateShopDataList" dbversion="1"/>
+	</structure>
+	
+	<map name="PrivateShopMap" key_type="int" value_type="PrivateShop"/>
+	
+	<structure name="BattleFieldNPCData">
+		<variable name="_id" type="int" dbversion="1" comments="NPCµÄID"/>
+		<variable name="_camp" type="int" dbversion="1" comments="NPCµÄÕóÓª1-ÎÒ£¬2-µÐ£¬3-ÓÑ"/>
+		<variable name="_armyid" type="int" dbversion="1" comments="¾ü¶ÓµÄID"/>
+		<variable name="_alive" type="int" dbversion="1" comments="ÊÇ·ñ´æ»î,1´ú±íµÄÊÇ´æ»î£¬0´ú±íµÄÊÇËÀÍö"/>
+		<variable name="_event_flag" type="int" dbversion="1" comments="0´ú±íÃ»ÓÐ´¥·¢£¬1´ú±íÒÑ¾­´¥·¢"/>
+		<variable name="_army_buff" type="int" dbversion="1" comments="NPCµÄÊ¿Æø,0´ú±íÃ»ÓÐ"/>
+	</structure>
+	
+	<map name="BattleFieldNPCMap" key_type="int" value_type="BattleFieldNPCData"/>
+	
+	<structure name="BattleFieldPositionData">
+		<variable name="_id" type="int" dbversion="1" comments="Õ½ÒÛ½ÚµãµÄID"/>
+		<variable name="_position" type="int" dbversion="1" comments="Õ½ÒÛ½ÚµãµÄÎ»ÖÃ"/>
+		<variable name="_flag" type="int" dbversion="1" comments="Õ½ÒÛ½ÚµãÀàÐÍ1ÎÒ·½ 2µÐ·½ 3µÐ·½BOSS"/>
+		<variable name="_event_flag" type="int" dbversion="1" comments="0´ú±íÃ»ÓÐ´¥·¢£¬1´ú±íÒÑ¾­´¥·¢"/>
+		<variable name="_npc_info" type="BattleFieldNPCMap" dbversion="1" comments="Õ½ÒÛ½ÚµãµÄNPCÐÅÏ¢"/>
+		<variable name="_pos_buff" type="int" dbversion="1" comments="posµÄbuff,0´ú±íÃ»ÓÐ"/>
+	</structure>
+	
+	<map name="BattleFieldPositionMap" key_type="int" value_type="BattleFieldPositionData"/>
+	
+	<structure name="BattleFieldHeroData">
+		<variable name="_id" type="int" dbversion="1" comments="Ó¢ÐÛµÄID"/>
+		<variable name="_hp" type="int" dbversion="1" comments="Ó¢ÐÛµÄÑªÁ¿"/>
+	</structure>
+	
+	<map name="BattleFieldHeroMap" key_type="int" value_type="BattleFieldHeroData"/>
+	
+	<structure name="BattleFieldData">
+		<variable name="_battle_id" type="int" dbversion="1" comments="Õ½ÒÛµÄID"/>
+		<variable name="_hero_info" type="BattleFieldHeroMap" dbversion="1" comments="Õ½ÒÛµÄÓ¢ÐÛÐÅÏ¢"/>
+		<variable name="_cur_hero_info" type="IntList" dbversion="1" comments="Õ½ÒÛµÄµ±Ç°Ó¢ÐÛÐÅÏ¢"/>
+		<variable name="_cur_hero_horse_info" type="Horse_Hero" dbversion="1" comments="Õ½ÒÛµÄµ±Ç°Ó¢ÐÛÐÅÏ¢"/>
+		<variable name="_cur_position" type="int" dbversion="1" comments="Íæ¼Òµ±Ç°µÄÎ»ÖÃ"/>
+		<variable name="_last_position" type="int" dbversion="1" comments="Íæ¼Òµ±Ç°µÄÎ»ÖÃ"/>
+		<variable name="_state" type="int" dbversion="1" comments="0´ú±íÎ´¿ªÊ¼£¬1´ú±í¿ªÊ¼£¬2´ú±í½áÊø"/>
+		<variable name="_position_info" type="BattleFieldPositionMap" dbversion="1" comments="Õ½ÒÛµÄ½ÚµãÐÅÏ¢"/>
+		<variable name="_npc_id" type="int" dbversion="1" comments="·þÎñÆ÷Î¬»¤µÄnpcµÄidÐÅÏ¢"/>
+		<variable name="_round_num" type="int" dbversion="9" comments="µ±Ç°»ØºÏÊý"/>
+		<variable name="_round_flag" type="int" dbversion="9" comments="µ±Ç°Õ½ÒÛÊÇ·ñÓÐ»ØºÏÊýÏÞÖÆ"/>
+		<variable name="_round_state" type="int" dbversion="9" comments="µ±Ç°Õ½ÒÛµÄ»ØºÏ×´Ì¬£¬»ØºÏÊÂ¼þ£¬×Ô¼ºÐÐ¶¯£¬NPCÐÐ¶¯,0´ú±íÕ½ÒÛ»¹Ã»ÓÐÕýÊ½¿ªÊ¼"/>
+		<variable name="_cur_morale" type="int" dbversion="9" comments="Íæ¼ÒµÄµ±Ç°Ê¿ÆøÖµ"/>
+		<variable name="_eventid" type="intIntMap" dbversion="20" comments="²ß»®Ê¹ÓÃ"/>
+		<variable name="_battleevent" type="intIntMap" dbversion="20" comments="²ß»®Ê¹ÓÃ"/>
+		<variable name="_occupyevent" type="intIntMap" dbversion="20" comments="²ß»®Ê¹ÓÃ"/>
+	</structure>
+	
+	<map name="BattleFieldMap" key_type="int" value_type="BattleFieldData"/>
+
+	<structure name="ClientVersionLimit">
+		<variable name="_client_id" type="std::string" dbversion="1" comments="°üID, ²»Í¬ÇþµÀ°üID²»Í¬£¬²»Í¬×ÊÁÏÆ¬Ò²¿ÉÄÜµ¼ÖÂ°üID²»Í¬"/>
+		<variable name="_exe_ver_min" type="std::string" dbversion="1"/>
+		<variable name="_data_ver_min" type="std::string" dbversion="1"/>
+	</structure>
+	<map name="ClientVersionLimitMap" key_type="std::string" value_type="ClientVersionLimit"/>
+	
+	<list name="HeroSkillList" value_type="HeroSkill"/>
+
+	<structure name="PveArenaHeroEquipmentInfo">
+		<variable name="_pos" type="int" dbversion="4"/>
+		<variable name="_item_id" type="int" dbversion="4"/>
+		<variable name="_level" type="int" dbversion="4"/>
+		<variable name="_order" type="int" dbversion="4"/>
+		<variable name="_refinable_data" type="EquipmentRefinableDataMap" dbversion="4"/>
+	</structure>
+
+	<list name="PveArenaHeroEquipmentInfoList" value_type="PveArenaHeroEquipmentInfo"/>
+	
+	<structure name="PveArenaHeroInfo">
+		<variable name="_heroid" type="int" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_star" type="int" dbversion="1"/>
+		<variable name="_grade" type="int" dbversion="1"/>
+		<variable name="_skill" type="HeroSkillList" dbversion="1"/>
+		<variable name="_common_skill" type="HeroSkillList" dbversion="1"/>
+		<variable name="_select_skill" type="IntList" dbversion="1"/>
+		<variable name="_relations" type="IntList" dbversion="1"/>
+		<variable name="_weapon_info" type="WeaponItem" dbversion="1"/>
+		<variable name="_equipment_info" type="PveArenaHeroEquipmentInfoList" dbversion="4"/>
+	</structure>
+	
+	<list name="PveArenaHeroInfoList" value_type="PveArenaHeroInfo"/>
+	
+	<structure name="RolePveArenaData">
+		<variable name="_role_id" type="Int64" dbversion="1" comments="Íæ¼ÒµÄID"/>
+		<variable name="_name" type="std::string" dbversion="1" comments="Íæ¼ÒµÄ½ÇÉ«Ãû×Ö"/>
+		<variable name="_level" type="int" dbversion="1" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="_mafia_name" type="std::string" dbversion="1" comments="Íæ¼ÒµÄ°ï»áÃû×Ö"/>
+		<variable name="_hero_info" type="PveArenaHeroInfoList" dbversion="1" comments="Îä½«ÐÅÏ¢"/>
+	</structure>
+
+	<list name="RolePveArenaDataList" value_type="RolePveArenaData"/>
+
+	<structure name="RolePveArenaDataMapData">
+		<variable name="_score" type="int" dbversion="1" comments="·ÖÊý"/>
+		<variable name="_list_data" type="RolePveArenaDataList" dbversion="1"/>
+	</structure>
+	
+	<map name="RolePveArenaDataMap" key_type="int" value_type="RolePveArenaDataMapData"/>
+
+	<structure name="PveArenaData">
+		<variable name="_begin_score" type="int" dbversion="1" comments="¿ªÊ¼·ÖÊý"/>
+		<variable name="_end_score" type="int" dbversion="1" comments="½áÊø·ÖÊý"/>
+		<variable name="_cur_num" type="int" dbversion="1" comments="Õâ¸ö·¶Î§Ö®ÄÚµÄÈËÊý"/>
+		<variable name="_pve_arena_data_map" type="RolePveArenaDataMap" dbversion="1" comments="ÏêÏ¸Êý¾Ý"/>
+	</structure>
+	
+	<map name="PveArenaDataMap" key_type="int" value_type="PveArenaData"/>
+
+	<structure name="PveArenaDataMapData">
+		<variable name="_all_num" type="int" dbversion="1" comments="×ÜÈËÊý"/>
+		<variable name="_pve_arena_data_map_data" type="PveArenaDataMap" dbversion="1" comments="ÏêÏ¸Êý¾Ý"/>
+		<variable name="_time_stamp" type="int" dbversion="1" comments="·¢½±µÄÊ±¼ä"/>
+	</structure>
+	
+	<structure name="MiscData">
+		<variable name="_hero_comments" type="HeroCommentsMap" dbversion="1"/>
+		<variable name="_server_event" type="ServerEvent" dbversion="1"/>
+		<variable name="_open_server_time" type="int" dbversion="1"/>
+		<variable name="_pvp_season_end_time" type="int" dbversion="1"/>
+		<variable name="_client_ver_limit_map" type="ClientVersionLimitMap" dbversion="1" comments="ÔËÓª·½ÉèÖÃµÄ¿Í»§¶Ë°æ±¾ÏÞÖÆ °üID=>ClientVersionLimit"/>
+		<variable name="_pve_arena_map" type="PveArenaDataMapData" dbversion="1"/>
+	</structure>
+
+	<structure name="ClientVersion">
+		<variable name="_client_id" type="std::string" dbversion="1" comments="°üID, ²»Í¬ÇþµÀ°üID²»Í¬£¬²»Í¬×ÊÁÏÆ¬Ò²¿ÉÄÜµ¼ÖÂ°üID²»Í¬"/>
+		<variable name="_exe_ver" type="std::string" dbversion="1"/>
+		<variable name="_data_ver" type="std::string" dbversion="1"/>
+	</structure>
+	
+	<structure name="PveArenaRoleInfo">
+		<variable name="_match_id" type="int" dbversion="1" comments="±ÈÈüµÄ±àºÅ"/>
+		<variable name="_id" type="std::string" dbversion="1" comments="¶ÔÊÖµÄÐÅÏ¢"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_win_flag" type="int" dbversion="1"/>
+		<variable name="_attack_flag" type="int" dbversion="1"/>
+		<variable name="_self_hero_info" type="PveArenaHeroInfoList" dbversion="1"/>
+		<variable name="_oppo_hero_info" type="PveArenaHeroInfoList" dbversion="1"/>
+		<variable name="_operation" type="std::string" dbversion="1"/>
+		<variable name="_time" type="int" dbversion="1"/>
+		<variable name="_self_level" type="int" dbversion="1"/>
+		<variable name="_oppo_level" type="int" dbversion="1"/>
+		<variable name="_self_mafia" type="std::string" dbversion="1"/>
+		<variable name="_oppo_mafia" type="std::string" dbversion="1"/>
+		<variable name="_reply_flag" type="int" dbversion="1"/>
+		<variable name="_exe_ver" type="std::string" dbversion="1"/>
+		<variable name="_data_ver" type="std::string" dbversion="1"/>
+	</structure>
+
+	<map name="PveArenaRoleInfoMap" key_type="int" value_type="PveArenaRoleInfo"/>
+	
+	<structure name="CurPveArenaAttackRole">
+		<variable name="_id" type="std::string" dbversion="1" comments="¶ÔÊÖµÄÐÅÏ¢"/>
+		<variable name="_name" type="std::string" dbversion="1"/>
+		<variable name="_hero_info" type="PveArenaHeroInfoList" dbversion="1"/>
+		<variable name="_level" type="int" dbversion="1"/>
+		<variable name="_mafia_name" type="std::string" dbversion="1"/>
+		<variable name="_score" type="int"/>
+	</structure>
+	
+	<structure name="PveArenaInfo">
+		<variable name="_score" type="int" dbversion="1" comments="Íæ¼ÒµÄJJC»ý·Ö"/>
+		<variable name="_defence_hero_info" type="IntList" dbversion="1" comments="Íæ¼ÒµÄJJC·ÀÊØÕóÈÝ"/>
+		<variable name="_attack_hero_info" type="IntList" dbversion="1" comments="Íæ¼ÒµÄJJC½ø¹¥ÕóÈÝ"/>
+		<variable name="_last_attack_time" type="int" dbversion="1" comments="Íæ¼ÒÔÚJJCµÄÉÏÒ»´ÎÌôÕ½Ê±¼ä"/>
+		<variable name="_pve_arena_history" type="PveArenaRoleInfoMap" dbversion="1" comments="Íæ¼ÒÔÚJJCÖÐµÄ¼ÇÂ¼"/>
+		<variable name="_cur_num" type="int" dbversion="1" comments="Íæ¼ÒÄ¿Ç°´òÁË¼¸³¡±ÈÈüÁË"/>
+		<variable name="_cur_attack_player" type="CurPveArenaAttackRole" comments="µ±Ç°½ø¹¥µÄÍæ¼Ò"/>
+		<variable name="_new_video" type="int" dbversion="1" comments="Õâ¸öÍæ¼ÒÊÇ·ñÓÐÐÂµÄÂ¼Ïñ"/>
+	</structure>
+
+	<structure name="ShiLianHeroInfo">
+		<variable name="_id" type="int" dbversion="1" comments="Îä½«µÄID"/>
+		<variable name="_hp" type="int" dbversion="1" comments="Îä½«µÄµ±Ç°ÑªÁ¿"/>
+		<variable name="_anger" type="int" dbversion="1" comments="Îä½«µÄµ±Ç°Å­Æø"/>
+	</structure>
+	
+	<map name="ShiLianHeroInfoMap" key_type="int" value_type="ShiLianHeroInfo"/>
+
+	<structure name="ShiLianAttackInfo">
+		<variable name="_id" type="int" dbversion="1" comments="¶ÔÊÖµÄID"/>
+		<variable name="_level" type="int" dbversion="1" comments="¶ÔÊÖµÄµÈ¼¶"/>
+		<variable name="_stage" type="int" dbversion="1" comments="µ±Ç°µÄ¹Ø¿¨ID"/>
+		<variable name="_alive_flag" type="int" dbversion="1" comments="¶ÔÊÖµÄµ±Ç°»î×ÅµÄ×´Ì¬"/>
+		<variable name="_hp" type="int" dbversion="1" comments="¶ÔÊÖµÄµ±Ç°ÑªÁ¿"/>
+		<variable name="_anger" type="int" dbversion="1" comments="Îä½«µÄµ±Ç°Å­Æø"/>
+		<variable name="_reward_flag" type="int" dbversion="5" comments="ÁìÈ¡½±Àø±êÖ¾"/>
+		<variable name="_suzhu_flag" type="int" dbversion="6" comments="ËÞÖ÷±êÖ¾Î»"/>
+	</structure>
+
+	<map name="ShiLianAttackInfoMap" key_type="int" value_type="ShiLianAttackInfo"/>
+
+	<structure name="ShiLianDifficultyAttackInfo">
+		<variable name="_difficulty" type="int" dbversion="1" comments="ÄÑ¶È"/>
+		<variable name="_camp" type="int" dbversion="1" comments="ÕóÓª"/>
+		<variable name="_difficulty_attackinfo" type="ShiLianAttackInfoMap" dbversion="1" comments="¶ÔÊÖµÄÐÅÏ¢"/>
+	</structure>
+
+	<map name="ShiLianDifficultyAttackInfoMap" key_type="int" value_type="ShiLianDifficultyAttackInfo"/>
+
+	<structure name="WuZheShiLianInfo">
+		<variable name="_dead_hero_info" type="intIntMap" dbversion="1" comments="ÒÑ¾­ËÀÍöµÄÎä½«"/>
+		<variable name="_injured_hero_info" type="ShiLianHeroInfoMap" dbversion="1" comments="ÒÑ¾­Ê¹ÓÃ¹ýµÄÎä½«£¬µ«ÊÇ»¹Ã»ÓÐÕóÍöµÄÎä½«"/>
+		<variable name="_attack_info" type="ShiLianDifficultyAttackInfoMap" dbversion="1" comments="ÎäÕßÊÔÁ¶ÖÐ¶ÔÊÖµÄÐÅÏ¢"/>
+		<variable name="_cur_difficulty" type="int" dbversion="1" comments="ÎäÕßÊÔÁ¶µÄµ±Ç°½ø¹¥ÄÑ¶È"/>
+		<variable name="_high_difficulty" type="int" dbversion="1" comments="ÎäÕßÊÔÁ¶´òÍ¨µÄ×î¸ßÄÑ¶È"/>
+		<variable name="_cur_stage" type="int" comments="ÎäÕßÊÔÁ¶µÄµ±Ç°½ø¹¥¹Ø¿¨"/>
+	</structure>
+
+	<structure name="NoLoadPlayerInfoData">
+		<variable name="_role_id" type="Int64" dbversion="1" comments="Ã»ÓÐ½øÐÐLoadÍæ¼ÒµÄ½ÇÉ«ID"/>
+	</structure>
+
+	<map name="NoLoadPlayerInfo" key_type="std::string" value_type="NoLoadPlayerInfoData"/>
+	<map name="NoLoadPlayerInfoRoleID" key_type="Int64" value_type="Str"/>
+	
+	<structure name="NoLoadPlayerData">
+		<variable name="_player_info" type="NoLoadPlayerInfo" dbversion="1" comments="Ã»ÓÐLoad½øÀ´Íæ¼ÒÕËºÅµ½½ÇÉ«IDµÄÒ»¸öÓ³Éä"/>
+		<variable name="_player_info_roleid" type="NoLoadPlayerInfoRoleID" dbversion="1" comments="Ã»ÓÐLoad½øÀ´Íæ¼ÒÕËºÅµ½½ÇÉ«IDµÄÒ»¸öÓ³Éä"/>
+	</structure>
+	
+	<structure name="TongQueTaiHeroInfo">
+		<variable name="_heroid" type="int"/>
+		<variable name="_level" type="int"/>
+		<variable name="_star" type="int"/>
+		<variable name="_grade" type="int"/>
+		<variable name="_skill" type="HeroSkillList"/>
+		<variable name="_common_skill" type="HeroSkillList"/>
+		<variable name="_select_skill" type="IntList"/>
+		<variable name="_relations" type="IntList"/>
+		<variable name="_weapon_info" type="WeaponItem"/>
+		<variable name="_equipment_info" type="PveArenaHeroEquipmentInfoList"/>
+		<variable name="_cur_hp" type="int"/>
+		<variable name="_cur_anger" type="int"/>
+		<variable name="_alive_flag" type="int"/>
+	</structure>
+	
+	<list name="TongQueTaiHeroInfoList" value_type="TongQueTaiHeroInfo"/>
+	
+	<structure name="TongQueTaiRoleData">
+		<variable name="_role_base" type="RoleBase" comments="Íæ¼ÒµÄ»ù±¾ÐÅÏ¢"/>
+		<variable name="_hero_info" type="TongQueTaiHeroInfoList" comments="Íæ¼ÒµÄÎä½«ÐÅÏ¢"/>
+		<variable name="_double_flag" type="int" comments="ÊÇ·ñ¿ªÆôÁË¶à±¶½±Àø"/>
+		<variable name="_auto_flag" type="int" comments="ÊÇ·ñ¿ªÆôÁË×Ô¶¯Õ½¶·"/>
+		<variable name="_hero_fight" type="int" comments="Õ½Á¦Öµ"/>
+		<variable name="_match_success" type="int" comments="ÊÇ·ñÆ¥Åä³É¹¦ÁË"/>
+		<variable name="_level" type="int" comments="Íæ¼ÒµÄµÈ¼¶"/>
+	</structure>
+	
+	<list name="TongQueTaiRoleDataList" value_type="TongQueTaiRoleData"/>
+	
+	<map name="TongQueTaiRoleDataMap" key_type="int" value_type="TongQueTaiRoleDataList"/>
+	
+	<structure name="TongQueTaiMatchRoleData">
+		<variable name="_role_base" type="RoleBase" comments="Íæ¼ÒµÄ»ù±¾ÐÅÏ¢"/>
+		<variable name="_hero_info" type="TongQueTaiHeroInfoList" comments="Íæ¼ÒµÄÎä½«ÐÅÏ¢"/>
+		<variable name="_double_flag" type="int" comments="ÊÇ·ñ¿ªÆôÁË¶à±¶½±Àø"/>
+		<variable name="_auto_flag" type="int" comments="ÊÇ·ñ¿ªÆôÁË×Ô¶¯Õ½¶·"/>
+		<variable name="_hero_fight" type="int" comments="Õ½Á¦Öµ"/>
+		<variable name="_load_finish" type="int" comments="ÊÇ·ñLoad½áÊø"/>
+		<variable name="_level" type="int" comments="Íæ¼ÒµÄµÈ¼¶"/>
+	</structure>
+	
+	<map name="TongQueTaiMatchRoleDataMap" key_type="int" value_type="TongQueTaiMatchRoleData"/>
+	
+	<structure name="TongQueTaiMatchData">
+		<variable name="_tongquetai_id" type="int" comments="Æ¥Åäµ½µÄID"/>
+		<variable name="_cur_state" type="int" comments="µ±Ç°µÄ×´Ì¬"/>
+		<variable name="_time" type="int" comments="µ±Ç°×´Ì¬¿ªÊ¼µÄÊ±¼ä"/>
+		<variable name="_cur_fight_role" type="int" comments="µ±Ç°ÄÄÒ»¸öÍæ¼ÒÕýÔÚ´ò"/>
+		<variable name="_cur_monster_index" type="int" comments="µ±Ç°ÕýÔÚ´òÄÄÒ»¸ö"/>
+		<variable name="_role_info" type="TongQueTaiMatchRoleDataMap" comments="Íæ¼ÒµÄ»ù±¾ÐÅÏ¢"/>
+		<variable name="_defence_info" type="TongQueTaiMatchRoleDataMap" comments="±»´òµÄ¹ÖÎïµÄµ±Ç°ÐÅÏ¢"/>
+	</structure>
+	
+	<map name="TongQueTaiMatchDataMap" key_type="int" value_type="TongQueTaiMatchData"/>
+	
+	<structure name="TongQueTaiJoinRoleData">
+		<variable name="_fight" type="int" comments="Õ½Á¦"/>
+		<variable name="_difficulty" type="int" comments="ÄÑ¶È"/>
+	</structure>
+	
+	<map name="TongQueTaiJoinRoleMap" key_type="Int64" value_type="TongQueTaiJoinRoleData"/>
+	
+	<!--Õâ¸öÊý¾Ý²»½øÐÐÈÎºÎµÄ´æ¿â²Ù×÷-->
+	<structure name="TongQueTaiData">
+		<variable name="_tongquetai_id" type="int" comments="µ±Ç°µÄID,Õâ¸öÊÇÒ»¸öÎ¨Ò»µÄ"/>
+		<variable name="_easy_difficulty" type="TongQueTaiRoleDataMap" comments="¼òµ¥ÄÑ¶È,keyÊÇÕ½Á¦"/>
+		<variable name="_hard_difficulty" type="TongQueTaiRoleDataMap" comments="À§ÄÑÄÑ¶È,keyÊÇÕ½Á¦"/>
+		<variable name="_match_data" type="TongQueTaiMatchDataMap" comments="Æ¥ÅäºÃµÄÍæ¼Ò£¬»òÕßËµÊÇ¿ªÊ¼Õ½¶·µÄÄ¿±ê"/>
+		<variable name="_join_role" type="TongQueTaiJoinRoleMap" comments="µ±Ç°ÕýÔÚ½øÐÐÍ­È¸Ì¨µÄÍæ¼ÒÐÅÏ¢"/>
+		<variable name="_del_list" type="IntList" comments="ÒÑ¾­½áÊøµÄ£¬ÐèÒª½øÐÐÉ¾³ýµÄÐÅÏ¢"/>
+	</structure>
+
+	<structure name="TongQueTai">
+		<variable name="_cur_tongquetai_id" type="int" comments="Í­È¸Ì¨µÄid,Õâ¸öÊý¾Ý²»½øÐÐÊý¾Ý¿âµÄ´æ¿â"/>
+		<variable name="_cur_state" type="int" comments="µ±Ç°µÄÒ»¸ö»î¶¯×´Ì¬£¬0´ú±íÃ»ÓÐ²Î¼Ó£¬1´ú±íÕýÔÚÆ¥Åä£¬2´ú±íÕýÔÚ´ò"/>
+		<variable name="_hero_info" type="intIntMap" dbversion="7" comments="Îä½«µÄÕóÈÝÐÅÏ¢"/>
+		<variable name="_reward_flag" type="int" dbversion="8" comments="ÊÇ·ñ´æÔÚÎ´ÁìÈ¡µÄ½±Àø£¬1´ú±íÓÐ£¬0´ú±íÃ»ÓÐ"/>
+		<variable name="_double_flag" type="int" dbversion="8" comments="½±ÀøÊÇ·ñ·­±¶"/>
+		<variable name="_hero_info_list" type="IntList" dbversion="10" comments="Îä½«µÄÕóÈÝÐÅÏ¢"/>
+	</structure>
+
+	<!--¾üÑ§ÐÅÏ¢-->
+	<structure name="JunXueZhuanJingData">
+		<variable name="_id" type="int" dbversion="11" comments="¾üÑ§×¨¾«µÄID"/>
+		<variable name="_level" type="int" dbversion="11" comments="¾üÑ§×¨¾«µÄµÈ¼¶"/>
+		<variable name="_learned" type="intIntMap" dbversion="11" comments="ÒÑ¾­Ñ§Ï°ÁËµÄ¾üÑ§ÏîÄ¿"/>
+	</structure>
+	
+	<map name="JunXueZhuanJingInfoMap" key_type="int" value_type="JunXueZhuanJingData"/>
+
+	<structure name="JunXueGuanInfo">
+		<variable name="_level" type="int" dbversion="11" comments="¾üÑ§¹ÝµÄµÈ¼¶,µÈ¼¶ÊÇ0´ú±íÃ»ÓÐ¿ªÆô"/>
+		<variable name="_junxueinfo" type="JunXueZhuanJingInfoMap" dbversion="11" comments="¾üÑ§µÄÐÅÏ¢"/>
+	</structure>
+
+	<structure name="LegionInfo">
+		<variable name="_level" type="int" dbversion="11" comments="¾üÍÅµÄµÈ¼¶"/>
+		<variable name="_junxueguan" type="JunXueGuanInfo" dbversion="11" comments="¾üÑ§¹ÝµÄÐÅÏ¢"/>
+	</structure>
+
+	<structure name="TemporaryBackPackData">
+		<variable name="_id" type="int" dbversion="12" comments="ÁÙÊ±±³°üµÄÎ¨Ò»ID±êÊ¶"/>
+		<variable name="_typ" type="int" dbversion="12" comments="À´Ô´"/>
+		<variable name="_iteminfo" type="ItemList" dbversion="12" comments="ÁÙÊ±±³°üµÄÐÅÏ¢"/>
+	</structure>
+
+	<map name="TemporaryBackPackDataMap" key_type="int" value_type="TemporaryBackPackData"/>
+	
+	<structure name="RoleTemporaryBackPack">
+		<variable name="_id" type="int" dbversion="12" comments="ÁÙÊ±±³°üµÄÎ¨Ò»ID±êÊ¶"/>
+		<variable name="_data" type="TemporaryBackPackDataMap" dbversion="12" comments="ÁÙÊ±±³°üµÄÐÅÏ¢"/>
+	</structure>
+	
+	<structure name="RoleTopListData">
+		<variable name="_role_id" type="Int64" dbversion="15" comments="Íæ¼ÒµÄID"/>
+		<variable name="_name" type="std::string" dbversion="15" comments="Íæ¼ÒµÄ½ÇÉ«Ãû×Ö"/>
+		<variable name="_level" type="int" dbversion="15" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="_photoid" type="int" dbversion="15" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="_mafia_name" type="std::string" dbversion="15" comments="Íæ¼ÒµÄ°ï»áÃû×Ö"/>
+	</structure>
+
+	<list name="RoleTopListDataList" value_type="RoleTopListData"/>
+
+	<structure name="RoleTopListDataMapData">
+		<variable name="_score" type="int" dbversion="15" comments="·ÖÊý"/>
+		<variable name="_list_data" type="RoleTopListDataList" dbversion="15"/>
+	</structure>
+	
+	<map name="RoleTopListDataMap" key_type="int" value_type="RoleTopListDataMapData" comments="ÓÃ·ÖÊý×÷ÎªkeyµÄ"/>
+
+	<structure name="TopListAllRoleData">
+		<variable name="_begin_score" type="int" dbversion="15" comments="¿ªÊ¼·ÖÊý"/>
+		<variable name="_end_score" type="int" dbversion="15" comments="½áÊø·ÖÊý"/>
+		<variable name="_cur_num" type="int" dbversion="15" comments="Õâ¸ö·¶Î§Ö®ÄÚµÄÈËÊý"/>
+		<variable name="_toplist_data_map" type="RoleTopListDataMap" dbversion="15" comments="ÏêÏ¸Êý¾Ý"/>
+	</structure>
+	
+	<map name="TopListAllRoleDataMap" key_type="int" value_type="TopListAllRoleData" comments="key´ú±íµÄÊÇ¿ªÊ¼·ÖÊý"/>
+	
+	<structure name="TopListAllRoleDataMapData">
+		<variable name="_typ" type="int" dbversion="15" comments="ÀàÐÍ"/>
+		<variable name="_all_num" type="int" dbversion="15" comments="×ÜÈËÊý"/>
+		<variable name="_data_map" type="TopListAllRoleDataMap" dbversion="15" comments="ÏêÏ¸Êý¾Ý"/>
+		<variable name="_time_stamp" type="int" dbversion="15" comments="·¢½±µÄÊ±¼ä"/>
+	</structure>
+	
+	<map name="TopListAllRoleDataMapDataMap" key_type="int" value_type="TopListAllRoleDataMapData" comments="key´ú±íµÄÊÇÅÅÐÐ°ñµÄÊý¾ÝÀàÐÍ"/>
+	
+	<structure name="TopList_All_RoleData">
+		<variable name="_data" type="TopListAllRoleDataMapDataMap" dbversion="15" comments="ÏêÏ¸Êý¾Ý"/>
+	</structure>
+	
+	<structure name="MaShu_FriendInfo">
+		<variable name="_roleid" type="Int64" dbversion="16" comments="Íæ¼ÒµÄID"/>
+		<variable name="_count" type="int" dbversion="16" comments="½ñÌìµÄÑûÇë´ÎÊý"/>
+	</structure>
+	
+	<map name="MaShu_FriendInfoMap" key_type="Int64" value_type="MaShu_FriendInfo"/>
+	
+	<structure name="MaShu_HeroInfo">
+		<variable name="_heroid" type="int" dbversion="17" comments="³öÕ½µÄÎä½«ID"/>
+		<variable name="_horse_id" type="int" dbversion="17" comments="³öÕ½µÄÂíID"/>
+	</structure>
+	
+	<structure name="MaShu_BuffInfo">
+		<variable name="_typ" type="int" dbversion="17" comments="BUFFµÄÀ´Ô´£¬1´ú±íÊ¹ÓÃÎïÆ·£¬2´ú±í¹ºÂò"/>
+		<variable name="_buff_id" type="int" dbversion="17" comments="BUFFµÄID"/>
+		<variable name="_id" type="int" dbversion="18" comments="BUFFµÄID"/>
+	</structure>
+	
+	<map name="MaShu_BuffInfoMap" key_type="int" value_type="MaShu_BuffInfo"/>
+	
+	<structure name="MaShu_FightFriend">
+		<variable name="_roleid" type="Int64" dbversion="17" comments="BUFFµÄÀ´Ô´£¬1´ú±íÊ¹ÓÃÎïÆ·£¬2´ú±í¹ºÂò"/>
+		<variable name="_name" type="std::string" dbversion="17" comments="BUFFµÄID"/>
+		<variable name="_zhanli" type="int" dbversion="17" comments="BUFFµÄID"/>
+	</structure>
+	
+	<structure name="Mafia_Info">
+		<variable name="_id" type="Int64" dbversion="23"/>
+		<variable name="_name" type="std::string" dbversion="23"/>
+		<variable name="_announce" type="std::string" dbversion="23"/>
+		<variable name="_level" type="int" dbversion="23"/>
+		<variable name="_boss_id" type="Int64" dbversion="23"/>
+		<variable name="_boss_name" type="std::string" dbversion="23"/>
+		<variable name="_level_limit" type="int" dbversion="23"/>
+		<variable name="_num" type="int" dbversion="23" comments="°ï»áµÄ³ÉÔ±ÈËÊý"/>
+	</structure>
+	
+	<map name="Mafia_InfoMap" key_type="Int64" value_type="Mafia_Info" comments="keyÊÇ°ï»áµÄID"/>
+	
+	<structure name="Mafia_InfoMapData">
+		<variable name="_level" type="int" dbversion="23"/>
+		<variable name="_info" type="Mafia_InfoMap" dbversion="23"/>
+	</structure>
+	
+	<map name="Mafia_InfoMapDataMap" key_type="int" value_type="Mafia_InfoMapData" comments="keyÊÇ°ï»áµÄµÈ¼¶"/>
+	
+	<structure name="Mafia_InfoData">
+		<variable name="_mafia_info" type="Mafia_InfoMapDataMap" dbversion="23"/>
+	</structure>
+	
+	<structure name="RoleMaShuData">
+		<variable name="_history_max_score" type="int" dbversion="16" comments="ÀúÊ·×î¸ß·ÖÊý"/>
+		<variable name="_today_max_score" type="int" dbversion="16" comments="½ñÌì×î¸ß·ÖÊý"/>
+		<variable name="_yestaday_rank" type="int" dbversion="16" comments="×òÈÕÃû´Î£¬ÓÃÀ´ÁìÈ¡½±Àø"/>
+		<variable name="_timestamp" type="int" dbversion="16" comments="Ê±¼ä´Á£¬ÓÃÀ´¼ÇÂ¼ÁìÈ¡×òÈÕ½±ÀøµÄ×îÍíÊ±¼ä"/>
+		<variable name="_help_count" type="int" dbversion="16" comments="×Ô¼ºµÄ½ñÌìÖúÕ½´ÎÊý,ºóÃæ°ÑÕâ¸öÊý¾Ý½øÐÐÉ¾³ý"/>
+		<variable name="_friend_info" type="MaShu_FriendInfoMap" dbversion="16" comments="ºÃÓÑµÄÖúÕ½ÐÅÏ¢"/>
+		<variable name="_hero_info" type="MaShu_HeroInfo" dbversion="17" comments="³öÕ½ÕóÈÝ"/>
+		<variable name="_buff" type="MaShu_BuffInfoMap" dbversion="17" comments="µ±Ç°µÄBUFF"/>
+		<variable name="_fight_friend" type="MaShu_FightFriend" dbversion="17" comments="µ±Ç°ÖúÕ½ºÃÓÑµÄÐÅÏ¢"/>
+		<variable name="_history_max_stage" type="int" dbversion="17" comments="ÀúÊ·×î¸ß¹Ø¿¨"/>
+		<variable name="_today_max_stage" type="int" dbversion="17" comments="½ñÌì×î¸ß¹Ø¿¨"/>
+		<variable name="_cur_mashu_id" type="int" comments="µ±Ç°ÕýÔÚ´òµÃÂíÊõ´óÈü"/>
+		<variable name="_cur_mashu_score" type="int" comments="µ±Ç°ÕýÔÚ´òµÃÂíÊõ´óÈüµÄ·ÖÊý"/>
+		<variable name="_cur_mashu_stage" type="int" comments="µ±Ç°ÕýÔÚ´òµÃÂíÊõ´óÈüµÄ¹Ø¿¨"/>
+		<variable name="_get_prize_flag" type="int" dbversion="19" comments="×òÌì½±ÀøÊÇ·ñÒÑ¾­ÁìÈ¡µÄ±êÖ¾Î»£¬1´ú±íÒÑ¾­ÁìÈ¡£¬0´ú±íÃ»ÓÐ"/>
+	</structure>
+	
+	<structure name="CompareJieYiRoleInfo">
+		<variable name="_id" type="Int64" dbversion="28" comments="Íæ¼ÒµÄID"/>
+		<variable name="_name" type="std::string" dbversion="28" comments="Íæ¼ÒµÄÃû×Ö"/>
+		<variable name="_level" type="int" dbversion="28" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="_photo" type="int" dbversion="28" comments="Íæ¼ÒµÄÍ·Ïñ"/>
+		<variable name="_accept" type="int" dbversion="28" comments="½ÓÊÜÑûÇë"/>
+		<variable name="_ready" type="int" dbversion="28" comments="Í¬Òâ½áÒå"/>
+		<variable name="_time" type="int" dbversion="28" comments="ÑûÇëµÄÊ±¼ä"/>
+	</structure>
+	
+	<list name="CompareJieYiRoleInfoList" value_type="CompareJieYiRoleInfo"/>
+	
+	<structure name="CompareJieYiInfo">
+		<variable name="_id" type="Int64" dbversion="28" comments="½áÒåµÄÎ¨Ò»ID"/>
+		<variable name="_boss_info" type="CompareJieYiRoleInfo" dbversion="28" comments="´ó¸çµÄÐÅÏ¢"/>
+		<variable name="_brother_info" type="CompareJieYiRoleInfoList" dbversion="28" comments="×¢Òâ£¬ÕâÀïµÄÐ¡µÜÐÅÏ¢ÊÇÒ»¸öList"/>
+	</structure>
+	
+	<map name="CompareJieYiInfoMap" key_type="Int64" value_type="CompareJieYiInfo"/>
+	
+	<structure name="JieYiRoleInfo">
+		<variable name="_id" type="Int64" dbversion="28" comments="Íæ¼ÒµÄID"/>
+		<variable name="_name" type="std::string" dbversion="28" comments="Íæ¼ÒµÄÃû×Ö"/>
+		<variable name="_level" type="int" dbversion="28" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="_photo" type="int" dbversion="28" comments="Íæ¼ÒµÄÍ·Ïñ"/>
+	</structure>
+	
+	<list name="JieYiRoleInfoList" value_type="JieYiRoleInfo"/>
+	
+	<structure name="JieYiInfo">
+		<variable name="_id" type="Int64" dbversion="28" comments="½áÒåµÄÎ¨Ò»ID"/>
+		<variable name="_name" type="std::string" dbversion="28" comments="½áÒåµÄÃû×Ö"/>
+		<variable name="_boss_info" type="JieYiRoleInfo" dbversion="28" comments="´ó¸çµÄÐÅÏ¢"/>
+		<variable name="_level" type="int" dbversion="28" comments="½áÒåµÄµÈ¼¶"/>
+		<variable name="_exp" type="int" dbversion="28" comments="½áÒåµÄ¾­Ñé"/>
+		<variable name="_brother_info" type="JieYiRoleInfoList" dbversion="28" comments="×¢Òâ£¬ÕâÀïµÄÐ¡µÜÐÅÏ¢ÊÇÒ»¸öList"/>
+		<variable name="_invite_member" type="CompareJieYiRoleInfoList" dbversion="28" comments="×¢Òâ£¬ÕâÀïµÄÐ¡µÜÐÅÏ¢ÊÇÒ»¸öList"/>
+	</structure>
+	
+	<map name="JieYiInfoMap" key_type="Int64" value_type="JieYiInfo"/>
+	
+	<structure name="JieYi_InfoData">
+		<variable name="_id" type="Int64" dbversion="28" comments="Î¨Ò»µÄID£¬½øÐÐÀÛ¼ÓµÄ"/>
+		<variable name="_jieyi_info" type="JieYiInfoMap" dbversion="28" comments="·þÎñÆ÷ËùÓÐµÄ½áÒåÐÅÏ¢"/>
+		<variable name="_compare_id" type="Int64" comments="×¼±¸½áÒåµÄÐÅÏ¢ID"/>
+		<variable name="_compare_jieyi_info" type="CompareJieYiInfoMap" comments="×¼±¸½áÒåµÄÐÅÏ¢"/>
+	</structure>
+
+	<!--
+	<structure name="JieYiInviteData">
+		<variable name="_id" type="Int64" dbversion="28" comments="ÑûÇëµÄID"/>
+		<variable name="_roleid" type="Int64" dbversion="28"/>
+		<variable name="_name" type="string" dbversion="28"/>
+		<variable name="_level" type="int" dbversion="28"/>
+		<variable name="_time" type="int" dbversion="28" comments="ÊÕµ½ÑûÇëµÄÊ±¼ä"/>
+	</structure>
+	
+	<list name="JieYiInviteDataList" value_type="JieYiInviteData"/>
+	!-->
+	<structure name="InviteJieInfo">
+		<variable name="_id" type="Int64" dbversion="32" comments="Íæ¼ÒµÄ½áÒåid"/>
+		<variable name="_typ" type="int" dbversion="32" comments="µ±Ç°ÕýÔÚ´¦ÀíµÄ½áÒåIDÀàÐÍ"/>
+		<variable name="_name" type="std::string" dbversion="32" comments="µ±Ç°ÕýÔÚ´¦ÀíµÄ½áÒåIDÀàÐÍ"/>
+		<variable name="_time" type="int" dbversion="32" comments="Õâ¸öÑûÇëµÄÊ±¼ä"/>
+	</structure>
+	
+	<map name="InviteJieyiMap" key_type="Int64" value_type="InviteJieInfo"/>
+
+	<structure name="RoleJieYiData">
+		<variable name="_jieyi_id" type="Int64" dbversion="28" comments="Íæ¼ÒµÄ½áÒåid"/>
+		<variable name="_jieyi_name" type="std::string" dbversion="28" comments="Íæ¼ÒµÄ½áÒåÃû×Ö"/>
+		<variable name="_cur_operate_id" type="Int64" dbversion="28" comments="µ±Ç°ÕýÔÚ´¦ÀíµÄ½áÒåID"/>
+		<variable name="_cur_operate_typ" type="int" dbversion="28" comments="µ±Ç°ÕýÔÚ´¦ÀíµÄ½áÒåIDÀàÐÍ"/>
+		<variable name="_invite_member" type="InviteJieyiMap" dbversion="32" comments="±»ÑûÇëµÄËùÓÐ½áÒåid"/>
+	</structure>
+	
+	<structure name="RoleData">
+		<variable name="_base" type="RoleBase" dbversion="1"/>
+		<variable name="_status" type="RoleStatus" dbversion="1"/>
+		<variable name="_hero_hall" type="RoleHeroHall" dbversion="1"/>
+		<variable name="_backpack" type="RoleBackPack" dbversion="1"/>
+		<variable name="_friend" type="RoleFriend" dbversion="1"/>
+		<variable name="_chat" type="RoleChat" dbversion="1"/>
+		<variable name="_mafia" type="RoleMafia" dbversion="26"/>
+		<variable name="_task" type="RoleTask" dbversion="1"/>
+		<variable name="_pvp_info" type="RolePVPInfo" dbversion="1"/>
+		<variable name="_user_define" type="RoleClientDefine" dbversion="1"/>
+		<variable name="_horse_hall" type="RoleHorseHall" dbversion="1"/>
+		<variable name="_mail_info" type="RoleMail" dbversion="1"/>
+		<variable name="_rep_info" type="RoleRepMap" dbversion="1"/>
+		<variable name="_private_shop" type="PrivateShopMap" dbversion="1"/>
+		<variable name="_battle_info" type="BattleFieldMap" dbversion="1"/>
+		<variable name="_have_finish_battle" type="intIntMap" dbversion="1"/>
+		<variable name="_pve_arena_info" type="PveArenaInfo" dbversion="1"/>
+		<variable name="_wuzhe_shilian" type="WuZheShiLianInfo" dbversion="1"/>
+		<variable name="_tongquetai_data" type="TongQueTai" dbversion="7"/>
+		<variable name="_legion_info" type="LegionInfo" dbversion="11"/>
+		<variable name="_temporary_backpack" type="RoleTemporaryBackPack" dbversion="12" comments="Íæ¼ÒµÄÁÙÊ±±³°üÐÅÏ¢"/>
+		<variable name="_mashu_info" type="RoleMaShuData" dbversion="16" comments="Íæ¼ÒµÄÂíÊõ´óÈüµÄÐÅÏ¢"/>
+		<variable name="_jieyi_info" type="RoleJieYiData" dbversion="28" comments="Íæ¼ÒµÄ½áÒåÐÅÏ¢"/>
+	<!--	<variable name="_hero_soul" type="HeroSoulMap" dbversion="1"/> -->
+		
+		<variable name="_pvp" type="RolePVP"/>
+		<variable name="_device_info" type="DeviceInfo"/>
+		<variable name="_overload" type="OverLoadMap"/>
+		<variable name="_overload_list" type="OverLoadList"/>
+		<variable name="_client_ver" type="ClientVersion" dbversion="1" comments="¿Í»§¶ËÌá½»µÄ×ÔÉí°æ±¾ÐÅÏ¢"/>
+	</structure>
+
+</structures>
+

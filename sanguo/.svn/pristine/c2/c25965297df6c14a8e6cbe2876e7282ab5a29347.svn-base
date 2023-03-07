@@ -1,0 +1,45 @@
+	public:
+		int64_t id;
+		Octets data;
+		int signature;
+		int reserved1;
+		int reserved2;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPGAMEPROTOCOL };
+	public:
+		UDPGameProtocol() { type = PROTOCOL_UDPGAMEPROTOCOL; }
+		UDPGameProtocol(void*) : Protocol(PROTOCOL_UDPGAMEPROTOCOL) { }
+		UDPGameProtocol (int64_t l_id,const Octets& l_data,int l_signature,
+			int l_reserved1 = 0,int l_reserved2 = 0)
+			 : id(l_id),data(l_data),signature(l_signature)
+			,reserved1(l_reserved1),reserved2(l_reserved2)
+		{
+			type = PROTOCOL_UDPGAMEPROTOCOL;
+		}
+
+		UDPGameProtocol(const UDPGameProtocol &rhs)
+			: Protocol(rhs),id(rhs.id),data(rhs.data),signature(rhs.signature)
+			,reserved1(rhs.reserved1),reserved2(rhs.reserved2) { }
+
+		GNET::Protocol *Clone() const { return new UDPGameProtocol(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << data;
+			os << signature;
+			os << reserved1;
+			os << reserved2;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> data;
+			os >> signature;
+			os >> reserved1;
+			os >> reserved2;
+			return os;
+		}
+
+		bool SizePolicy(size_t size) const { return size <= 10240; }

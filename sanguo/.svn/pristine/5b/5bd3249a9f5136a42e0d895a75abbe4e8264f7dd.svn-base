@@ -1,0 +1,55 @@
+function OnCommand_PvpJoin(player, role, arg, others)
+	player:Log("OnCommand_PvpJoin, "..DumpTable(arg).." "..DumpTable(others))
+	
+	--在这里不进行任何的验证。直接就把消息发给中心服务器去
+	if table.getn(arg.heroinfo) < 1 or table.getn(arg.heroinfo) > 3 then
+		local resp = NewCommand("ErrorInfo")
+		resp.error_id = G_ERRCODE["PVP_HERO_COUNT_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	--检查武将的合法性,检查玩家是否有这些武将
+	local heros = role._roledata._hero_hall._heros
+
+	for i = 1, table.getn(arg.heroinfo) do
+		local h = heros:Find(arg.heroinfo[i])
+		if h == nil then
+			local resp = NewCommand("ErrorInfo")
+			resp.error_id = G_ERRCODE["NO_HERO"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+	
+	local rolebrief = ROLE_MakeRoleBrief(role)
+	local pvpinfo ={}
+	pvpinfo.brief = {}
+	pvpinfo.brief = rolebrief
+	pvpinfo.hero_hall = {}
+
+	for i = 1, table.getn(arg.heroinfo) do
+		local hero = {}
+		local h = heros:Find(arg.heroinfo[i])
+		hero.tid = arg.heroinfo[i]
+		hero.level = h._level
+		hero.order = h._order
+		pvpinfo.hero_hall[i] = hero
+	end
+
+	pvpinfo.p2p_magic = math.random(1000000)
+	if role._roledata._device_info._net_type>=2 then
+		pvpinfo.p2p_peer_ip = role._roledata._device_info._udp_ip
+		pvpinfo.p2p_peer_port = role._roledata._device_info._udp_port
+	else
+		pvpinfo.p2p_peer_ip = ""
+		pvpinfo.p2p_peer_port = 0
+	end
+	
+
+	--typ等于1的时候代表的是跨服战斗
+	role._roledata._pvp._pvpcenterinfo = SerializeStruct("RolePVPInfo", pvpinfo)
+	role._roledata._pvp._typ = arg.typ
+
+	role:SendPVPJoin()
+end

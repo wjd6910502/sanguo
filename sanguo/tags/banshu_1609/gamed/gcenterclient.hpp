@@ -1,0 +1,37 @@
+#ifndef __GNET_GCENTERCLIENT_HPP
+#define __GNET_GCENTERCLIENT_HPP
+
+#include "protocol.h"
+#include "thread.h"
+#include "glog.h"
+
+namespace GNET
+{
+extern int g_zoneid;
+
+class GCenterClient : public Protocol::Manager
+{
+	static GCenterClient instance;
+	size_t		accumulate_limit;
+	Session::ID	sid;
+	bool		conn_state;
+	Thread::Mutex	locker_state;
+	const Session::State *GetInitState() const;
+	bool OnCheckAccumulate(size_t size) const { return accumulate_limit == 0 || size < accumulate_limit; }
+	void OnAddSession(Session::ID sid);
+	void OnDelSession(Session::ID sid);
+	void OnAbortSession(const SockAddr &sa);
+	void OnCheckAddress(SockAddr &) const;
+	void Reconnect();
+public:
+	static GCenterClient *GetInstance() { return &instance; }
+	std::string Identification() const { return "GCenterClient"; }
+	void SetAccumulate(size_t size) { accumulate_limit = size; }
+	GCenterClient() : accumulate_limit(0), conn_state(false), locker_state("GCenterClient::locker_state") { }
+
+	bool SendProtocol(const Protocol &protocol) { return conn_state && Send(sid, protocol); }
+	bool SendProtocol(const Protocol *protocol) { return conn_state && Send(sid, protocol); }
+};
+
+};
+#endif

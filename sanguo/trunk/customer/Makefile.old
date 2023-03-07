@@ -1,0 +1,17 @@
+
+TOP_SRCDIR = ..
+
+SINGLE_THREAD = false
+DEBUG_VERSION = false
+
+include ../mk/gcc.defs.mk
+
+OBJS = customerserviceclient.o state.o stubs.o customer.o
+
+all : customer
+
+customer : $(OBJS) $(SHAREOBJ) $(SHARE_SOBJ)
+	$(LD) $(LDFLAGS) -o $@ $(OBJS) $(SHAREOBJ) $(SHARE_SOBJ)
+
+include ../mk/gcc.rules.mk
+

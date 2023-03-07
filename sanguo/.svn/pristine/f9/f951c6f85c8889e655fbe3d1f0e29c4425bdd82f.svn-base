@@ -1,0 +1,9 @@
+function OnMessage_PvpEnd(player, role, arg, others)
+	player:Log("OnMessage_PvpEnd, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PVPEnd")
+
+	resp.result = arg.reason
+
+	player:SendToClient(SerializeCommand(resp))
+end

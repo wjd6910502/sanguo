@@ -1,0 +1,70 @@
+
+#ifndef __GNET_CREATEMAFIANAME_HPP
+#define __GNET_CREATEMAFIANAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "createmafianamearg"
+#include "createmafianameres"
+
+#include "leveldb.h"
+#include "write_batch.h"
+namespace GNET
+{
+
+class CreateMafiaName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "createmafianame"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+		CreateMafiaNameRes *res = (CreateMafiaNameRes *)result;
+		
+		std::string find_key = std::string((char*)arg->name.begin(), arg->name.size());
+		std::string value;
+		find_key = "2_" + find_key;
+		leveldb::Status status = g_db->Get(leveldb::ReadOptions(),find_key,&value);
+
+		if(!status.ok())
+		{
+			leveldb::WriteBatch batch;
+			std::string key = find_key;
+			value = "1";
+			batch.Put(key, value);
+			leveldb::Status s = g_db->Write(leveldb::WriteOptions(), &batch);
+			
+			if(!s.ok())
+			{
+				//¼ÇÂ¼´íÎóÈÕÖ¾
+				res->retcode = 1;
+			}
+			else
+			{
+				res->retcode = 0;
+			}
+		}
+		else
+		{
+			res->retcode = 1;
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// CreateMafiaNameArg *arg = (CreateMafiaNameArg *)argument;
+		// CreateMafiaNameRes *res = (CreateMafiaNameRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

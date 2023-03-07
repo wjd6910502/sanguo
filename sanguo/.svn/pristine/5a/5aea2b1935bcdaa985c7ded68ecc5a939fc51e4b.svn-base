@@ -1,0 +1,109 @@
+function OnCommand_TowerSweep(player, role, arg, others)
+	player:Log("OnCommand_TowerSweep, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("TowerSweep_Re")
+
+	if arg.layer ~= role._roledata._tower_data._cur_layer then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if arg.difficulty ~= 1 and arg.difficulty ~= 2 and arg.difficulty ~= 3 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local layer = role._roledata._tower_data._cur_layer 
+	if role._roledata._tower_data._difficulty == 2 then
+		layer = layer + 100
+	end
+	local towerstage = ed:FindBy("tower_stage", layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	if towerstage.stage_category ~= 1 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_TYPE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local towerstage1 = ed:FindBy("tower_stage", role._roledata._tower_data._history_layer)
+	if towerstage1 == nil or towerstage1.can_skipped_level < arg.layer then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_SWEEP"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--为所有武将增加气血	
+	resp.hero = {}
+	local lit = role._roledata._hero_hall._heros:SeekToBegin()
+	local l = lit:GetValue()
+	while l ~= nil do
+		local data = role._roledata._tower_data._injured_hero:Find(l._tid)
+		if data ~= nil then
+			if data._anger < 100000 then
+				data._anger = data._anger + 10000
+			end
+			local tmp = {}
+			tmp.id = data._id
+			tmp.hp = data._hp
+			tmp.anger = data._anger
+			resp.hero[#resp.hero + 1] = tmp
+		else
+			local info = CACHE.ShiLianHeroInfo()
+			info._id = l._tid
+			info._anger = 10000
+			info._hp = 100000
+			role._roledata._tower_data._injured_hero:Insert(info._id, info)
+			local tmp = {}
+			tmp.id = info._id
+			tmp.anger = info._anger
+			tmp.hp = info._hp
+			resp.hero[#resp.hero + 1] = tmp
+		end
+		lit:Next()
+		l = lit:GetValue()
+	end
+
+	local last_score = role._roledata._tower_data._all_star
+	--增加星星
+	role._roledata._tower_data._all_star = role._roledata._tower_data._all_star + arg.difficulty * 3
+	role._roledata._tower_data._cur_star = role._roledata._tower_data._cur_star + arg.difficulty * 3
+	role._roledata._tower_data._reward_star = role._roledata._tower_data._reward_star + arg.difficulty * 3
+	role._roledata._tower_data._select_layer_difficulty = 0	
+
+	role._roledata._tower_data._cur_layer = role._roledata._tower_data._cur_layer + 1
+	resp.layer = role._roledata._tower_data._cur_layer
+	resp.all_star = role._roledata._tower_data._all_star
+	resp.cur_star = role._roledata._tower_data._cur_star
+	resp.difficulty = arg.difficulty
+
+	--更新排行榜
+	local msg = NewMessage("TopListInsertInfo")
+	if role._roledata._tower_data._difficulty == 1 then
+		msg.typ = 10
+	elseif role._roledata._tower_data._difficulty == 2 then
+		msg.typ = 11
+	end
+	msg.data = tostring(role._roledata._tower_data._all_star)
+	API_SendMsg(role._roledata._base._id:ToStr(), SerializeMessage(msg), 0)
+	
+	--更新奖励榜
+	if role._roledata._tower_data._difficulty == 1 then
+		TOP_ALL_Role_UpdateData(others.toplist_all_role._data._data, 2, role._roledata._base._id, role._roledata._base._name,
+			role._roledata._base._photo, role._roledata._status._level, role._roledata._mafia._name,
+			role._roledata._tower_data._all_star, last_score)
+	elseif role._roledata._tower_data._difficulty == 2 then
+		TOP_ALL_Role_UpdateData(others.toplist_all_role._data._data, 3, role._roledata._base._id, role._roledata._base._name,
+			role._roledata._base._photo, role._roledata._status._level, role._roledata._mafia._name,
+			role._roledata._tower_data._all_star, last_score)
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+end

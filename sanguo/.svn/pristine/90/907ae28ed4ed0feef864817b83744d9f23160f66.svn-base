@@ -1,0 +1,4 @@
+function OnCommand_PvpJoin_Re(player, role, arg, others)
+	API_Log("OnCommand_PvpJoin_Re, "..DumpTable(arg).." "..DumpTable(others))
+
+end

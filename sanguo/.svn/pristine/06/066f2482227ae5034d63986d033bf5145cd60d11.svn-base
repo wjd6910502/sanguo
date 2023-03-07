@@ -1,0 +1,69 @@
+#include <iostream>
+#include <math.h>
+#include <string.h>
+#include <stdio.h>
+#include <sstream>
+#include <time.h>
+#include <unistd.h>
+#include "glog.h"
+
+#include "leveldb.h"
+#include "write_batch.h"
+#include "conf.h"
+#include "log.h"
+#include "thread.h"
+#include "gnet_init.h"
+#include "gamedbserver.hpp"
+
+using namespace GNET;
+
+leveldb::DB* g_db;
+std::map<Octets, Octets> g_save_data;
+//std::map<std::string, std::string> g_save_data;
+int main(int argc, char *argv[])
+{
+	if(argc != 2)
+	{
+		std::cout << "²ÎÊý´íÎó" << std::endl;
+	}
+
+	Conf *conf = Conf::GetInstance(argv[1]);
+	Log::setprogname("gamedbd");
+	
+	
+	leveldb::Options options;
+	options.create_if_missing = true;
+	std::string dbpath = "game_db";
+	leveldb::Status status = leveldb::DB::Open(options, dbpath, &g_db);
+
+	if(!status.ok())
+	{
+		Log::log(LOG_ERR,"Initialize storage environment failed.\n");
+		exit(-1);
+	}
+
+	GNET::InitStaticObjects();
+	GNET::IOMan::_man.SetDelayThreshold(50, 500);
+	GNET::PollIO::Init(true);
+	GNET::Thread::Pool::_pool.Init(new ThreadPolicySingle());
+	GNET::IntervalTimer::StartTimer(50000, true);
+	
+	{
+		GameDBServer *manager = GameDBServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+		GLog::log(LOG_INFO, "GameDBServer is OK ... ...");
+	}
+
+	while(1)
+	{
+		PollIO::Poll(10);
+		Timer::Update();
+		IntervalTimer::UpdateTimer();
+		Thread::Pool::_pool.TryProcessAllTask();
+		STAT_MIN5("Poll",1);
+	}
+
+	delete g_db;
+	return 0;
+}

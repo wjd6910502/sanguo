@@ -1,0 +1,51 @@
+#ifndef _TONGQUETAI_H_
+#define _TONGQUETAI_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_TongQueTai: public Singleton, TransactionBase
+{
+	bool _in_transaction;
+	int _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	TongQueTaiData _data;
+
+private:
+	SGT_TongQueTai();
+
+public:
+	static SGT_TongQueTai& GetInstance()
+	{
+		static SGT_TongQueTai _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "TongQueTai"; }
+	virtual int GetID() const { return 5; }
+	virtual const char* GetLockName() const { return "tongquetai"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int transaction_id);
+	void restore(int transaction_id);
+	void cleanup();
+	void OnTimer(int tick, int now);
+};
+
+}
+
+inline CACHE::SGT_TongQueTai* API_GetLuaTongQueTai(void *r) { return (CACHE::SGT_TongQueTai*)r; }
+inline CACHE::SGT_TongQueTai* API_GetLuaTongQueTai() { return (InBigLock() ? &CACHE::SGT_TongQueTai::GetInstance() : 0); }
+
+#endif //_TONGQUETAI_H_
+

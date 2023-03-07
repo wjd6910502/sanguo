@@ -1,0 +1,12 @@
+#!/bin/sh
+
+./rpcgen && ./strugen && ./cmdgen && ./msggen && ./sgtgen
+cd gamed; make clean; make -j; cd ..
+cd pvpd; make clean; make -j; cd ..
+#cd stund; make clean; make -j; cd ..
+cd gcenterd; make clean; make -j; cd ..
+cd client; make clean; make -j; cd ..
+cd gamedbd; make clean; make -j; cd ..
+#cd uniquenamed; make clean; make -j; cd ..
+cd statusd; make clean; make -j; cd ..
+cd gmadapterd; make clean; make -j; cd ..

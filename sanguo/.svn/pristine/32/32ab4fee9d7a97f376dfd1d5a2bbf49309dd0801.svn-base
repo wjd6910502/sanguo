@@ -1,0 +1,503 @@
+#include <unistd.h>
+#include <fcntl.h>
+#include <poll.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <assert.h>
+#include <iostream>
+#include <sstream>
+#include "pwrd.h"
+#include "gmadapterclient.hpp"
+#include "gmcmd_getacccharlist.hpp"
+#include "gmcmd_getchar.hpp"
+#include "glog.h"
+#include "tinyxml.h"
+
+using namespace GNET;
+
+// exceptions
+class Error 
+{
+public:
+	~Error() {};
+	virtual std::string desc() const = 0;
+};
+
+class SysError: public Error 
+{
+	int e;
+public:
+	SysError(int eno): e(eno) {};
+	virtual std::string desc() const {
+		char s[256];
+		snprintf(s, sizeof(s), "System error: errno=%d", e);
+		return s;
+	}
+};
+
+class NetError: public Error 
+{
+	int e;
+public:
+	NetError(int eno): e(eno) {};
+	virtual std::string desc() const {
+		char s[256];
+		snprintf(s, sizeof(s), "Network error: errno=%d", e);
+		return s;
+	}
+};
+
+class FdKeeper
+{
+	enum { 
+		INVALID_FD = -1,
+	};
+	// variables
+	int fd;
+	bool auto_close;
+	// private constructors
+	FdKeeper(const FdKeeper &rhs);
+	FdKeeper& operator= (const FdKeeper &rhs);
+
+public:
+	FdKeeper(int n): fd(n), auto_close(true) {};
+	~FdKeeper() {
+		if (auto_close && fd != INVALID_FD)
+			close(fd);
+	}
+	operator int() const {
+		return fd;
+	}
+	void autoClose(bool b) {
+		auto_close = b;
+	}
+};
+
+static void setNonBlock(int fd, bool non_block)
+{
+	int f = fcntl(fd, F_GETFL);
+	if (non_block) {
+		// non-block
+		if (f & O_NONBLOCK)
+			return;
+		else
+			f |= O_NONBLOCK;
+	} else {
+		// block
+		if (f & O_NONBLOCK)
+			f &= ~O_NONBLOCK;
+		else
+			return;
+	}
+	if (fcntl(fd, F_SETFL, f) == -1)
+		throw SysError(errno);
+}
+
+static int listenOnPort(unsigned short port)
+{
+	// socket
+	// FIXME
+	FdKeeper fk(socket(AF_INET, SOCK_STREAM, 0));
+	if (fk == -1)
+		throw SysError(errno);
+	//no blocking
+	setNonBlock(fk, true);
+	// reuse addr
+	int on = 1;
+	if (setsockopt(fk, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == -1)
+		throw SysError(errno);
+	// bind
+	sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+	addr.sin_port = htons(port);
+	if (bind(fk, (sockaddr *)&addr, sizeof(addr)) == -1)
+		throw SysError(errno);
+	// listen
+	if (listen(fk, 5) == -1)
+		throw SysError(errno);
+	// return
+	fk.autoClose(false);
+	return fk;
+}
+
+PWRD::PWRD()
+{
+	_listen_fd = -1;
+	_session_id_stub = 0;
+	_prev_heartbeat = 0;
+	memset(_pollfd, 0, sizeof(_pollfd));
+	_pollfd_count = 0;
+}
+
+void PWRD::Start(unsigned short port)
+{
+	_listen_fd = listenOnPort(port);
+	GLog::log(LOG_INFO, "gmadapterd::PWRD::Start, _listen_fd=%d", _listen_fd);
+}
+
+void PWRD::Update()
+{
+	PreparePollFD();
+
+	int n = poll(_pollfd, _pollfd_count, 1);
+	if(n < 0)
+	{
+		if(errno!=EINTR) throw SysError(errno);
+	}
+	else if(n > 0)
+	{
+		//GLog::log(LOG_INFO, "gmadapterd::PWRD::Update, poll, n=%d", n);
+		assert(n<=_pollfd_count);
+		for(int i=0; i<_pollfd_count; i++)
+		{
+			if(_pollfd[i].revents==0) continue;
+
+			//GLog::log(LOG_INFO, "gmadapterd::PWRD::Update, poll, fd=%d, revents=%d", _pollfd[i].fd, _pollfd[i].revents);
+			if(_pollfd[i].fd == _listen_fd)
+			{
+				//new session arrived
+				if(_pollfd[i].revents & POLLIN)
+				{
+					int fd = accept(_listen_fd, 0, 0);
+					if(fd < 0)
+					{
+						if (errno!=EAGAIN && errno!=EWOULDBLOCK) throw NetError(errno);
+					}
+					else
+					{
+						GLog::log(LOG_INFO, "gmadapterd::PWRD::Update, new session arrived, fd=%d", fd);
+						setNonBlock(fd, true);
+						Session *s = new Session();
+						_session_id_stub++;
+						s->_id = _session_id_stub;
+						s->_fd = fd;
+						s->_status = SESSION_STATUS_READING_GM_CMD;
+						s->_timeout = time(0)+SESSION_STATUS_READING_GM_CMD_TO;
+						_session_map[s->_id] = s;
+						_fd_session_map[s->_fd] = s;
+					}
+				}
+				else if(_pollfd[i].revents & POLLOUT)
+				{
+					throw NetError(errno);
+				}
+				else if(_pollfd[i].revents & (POLLERR|POLLHUP|POLLNVAL))
+				{
+					throw NetError(errno);
+				}
+			}
+			else
+			{
+				auto it = _fd_session_map.find(_pollfd[i].fd);
+				if(it != _fd_session_map.end())
+				{
+					//GLog::log(LOG_INFO, "gmadapterd::PWRD::Update, session found");
+					Session *s = it->second;
+					if(!s->IsError())
+					{
+						if(_pollfd[i].revents & POLLIN)
+						{
+							s->OnRead();
+						}
+						else if(_pollfd[i].revents & POLLOUT)
+						{
+							s->OnWrite();
+						}
+						else if(_pollfd[i].revents & (POLLERR|POLLHUP|POLLNVAL))
+						{
+							s->OnError(1);
+						}
+					}
+				}
+			}
+		}
+	}
+	//do heartbeat
+	time_t now = time(0);
+	if(now != _prev_heartbeat)
+	{
+		_prev_heartbeat = now;
+		for(auto it=_session_map.begin(); it!=_session_map.end(); ++it)
+		{
+			Session *s = it->second;
+			if(!s->IsError()) s->OnHeartbeat(now);
+		}
+	}
+	//do delete
+	std::set<int> err_set;
+	for(auto it=_session_map.begin(); it!=_session_map.end(); ++it)
+	{
+		Session *s = it->second;
+		if(s->IsError()) err_set.insert(s->_id);
+	}
+	for(auto it=err_set.begin(); it!=err_set.end(); ++it)
+	{
+		auto it2 = _session_map.find(*it);
+		Session *s = it2->second;
+		_session_map.erase(it2);
+		_fd_session_map.erase(s->_fd);
+		close(s->_fd);
+		delete s;
+	}
+}
+
+void PWRD::PreparePollFD()
+{
+	memset(_pollfd, 0, sizeof(_pollfd));
+	//for _listen_fd
+	_pollfd[0].fd = _listen_fd;
+	_pollfd[0].events = POLLIN;
+	//for sessions
+	_pollfd_count= 1;
+	for(auto it=_session_map.begin(); it!=_session_map.end(); ++it)
+	{
+		if(_pollfd_count>=PWRD_CONST_POLLFD_COUNT_MAX) break;
+
+		Session *s = it->second;
+		if(s->NeedRead())
+		{
+			_pollfd[_pollfd_count].fd = s->_fd;
+			_pollfd[_pollfd_count].events = POLLIN;
+			_pollfd_count++;
+		}
+		else if(s->NeedWrite())
+		{
+			_pollfd[_pollfd_count].fd = s->_fd;
+			_pollfd[_pollfd_count].events = POLLOUT;
+			_pollfd_count++;
+		}
+	}
+}
+
+PWRD::Session::Session()
+{
+	_id = 0;
+	_fd = -1; //fd
+	_status = SESSION_STATUS_READING_GM_CMD;
+	_timeout = 0;
+	memset(_cmd_buff, 0, sizeof(_cmd_buff));
+	_cmd_buff_index = 0;
+	memset(_resp_buff, 0, sizeof(_resp_buff));
+	_resp_buff_index = 0;
+	_resp_buff_count = 0;
+	_no_more_data = false;
+}
+
+bool PWRD::Session::HaveWholeCmd() const
+{
+	if(_cmd_buff_index > 4)
+	{
+		//TODO: 长度校验
+		char *e = strstr((char*)_cmd_buff+4, "/>"); //前4byte为长度字段
+		if(e) return true;
+	}
+	return false;
+}
+
+std::string PWRD::Session::Pop1Cmd()
+{
+	assert(_cmd_buff_index>4);
+	char *e = strstr(_cmd_buff+4, "/>");
+	assert(e);
+	std::string r(_cmd_buff+4, e+2);
+
+	memmove(_cmd_buff, e+2, (_cmd_buff+_cmd_buff_index)-(e+2));
+	_cmd_buff_index -= e+2-_cmd_buff;
+	_cmd_buff[_cmd_buff_index] = '\0';
+	return r;
+}
+
+void PWRD::Session::TryProcessCmd()
+{
+	//GLog::log(LOG_INFO, "gmadapterd::PWRD::Session::TryProcessCmd, _id=%d", _id);
+	//有_cmd_buff size不足以放下一个完整cmd的可能，这种情况就让它timeout吧
+	if(HaveWholeCmd())
+	{
+		std::string cmd = Pop1Cmd();
+		GLog::log(LOG_INFO, "gmadapterd::PWRD::Session::TryProcessCmd, _id=%d, cmd=%s", _id, cmd.c_str());
+
+		//解析cmd(xml)
+		TiXmlDocument *xml = new TiXmlDocument();
+		xml->Parse(cmd.c_str());
+		TiXmlElement* cmd_command = xml->FirstChildElement("cmd_command");
+		TiXmlAttribute* attribute = cmd_command->FirstAttribute();
+
+		if(string(attribute->Value())=="GetAccCharList")
+		{
+			attribute = attribute->Next();
+
+			GMCmd_GetAccCharList prot;
+			prot.accid = Octets(attribute->Value(), string(attribute->Value()).size());
+			string accid = attribute->Value();
+
+			prot.session_id = _id;
+			GMAdapterClient::GetInstance()->SendProtocol(prot);
+
+			_resp_4_timeout = "<cmd_command cmd_data=\"GetAccCharList\" accid=\""+accid+"\" return=\"false\" desc=\"timeout\"/>";
+
+			_status = SESSION_STATUS_WAITING_GAMED_RESP;
+			_timeout = time(0)+SESSION_STATUS_WAITING_GAMED_RESP_TO;
+
+		}
+		else if(string(attribute->Value())=="GetChar")
+		{
+			attribute = attribute->Next();
+
+			GMCmd_GetChar prot;
+			std::string charid = string(attribute->Value());
+			std::istringstream iss(charid);
+			int64_t num;
+			iss >> num;
+			prot.charid = num;
+
+			attribute = attribute->Next();
+			prot.charname =  Octets(attribute->Value(), string(attribute->Value()).size());
+
+			prot.session_id = _id;
+			GMAdapterClient::GetInstance()->SendProtocol(prot);
+			_resp_4_timeout = "<cmd_command cmd_data=\"GetChar\" return=\"false\" desc=\"timeout\"/>";
+
+			_status = SESSION_STATUS_WAITING_GAMED_RESP;
+			_timeout = time(0)+SESSION_STATUS_WAITING_GAMED_RESP_TO;
+		}
+
+
+		/*GMCmd_GetAccCharList prot;
+		prot.accid = Octets("dupc", 4);
+		prot.session_id = _id;
+		GMAdapterClient::GetInstance()->SendProtocol(prot);
+
+		_resp_4_timeout = "<cmd_command cmd_data=\"GetAccCharList\" accid=\"dupc\" return=\"false\" desc=\"timeout\"/>";
+
+		_status = SESSION_STATUS_WAITING_GAMED_RESP;
+		_timeout = time(0)+SESSION_STATUS_WAITING_GAMED_RESP_TO;*/
+	}
+	else if(_no_more_data)
+	{
+		OnError(6);
+	}
+}
+
+void PWRD::Session::OnRead()
+{
+	//GLog::log(LOG_INFO, "gmadapterd::PWRD::Session::OnRead, _id=%d", _id);
+	assert(_status==SESSION_STATUS_READING_GM_CMD);
+
+	while(PWRD_CONST_CMD_BUFF_SIZE > _cmd_buff_index)
+	{
+		int n = read(_fd, _cmd_buff+_cmd_buff_index, PWRD_CONST_CMD_BUFF_SIZE-_cmd_buff_index);
+		if(n < 0)
+		{
+			if(errno==EAGAIN) break;
+			OnError(2);
+			return;
+		}
+		else if(n == 0)
+		{
+			_no_more_data = true;
+			break;
+		}
+		else
+		{
+			_cmd_buff_index += n;
+		}
+	}
+	_cmd_buff[_cmd_buff_index] = '\0';
+
+	TryProcessCmd();
+}
+
+void PWRD::Session::OnWrite()
+{
+	//GLog::log(LOG_INFO, "gmadapterd::PWRD::Session::OnWrite, _id=%d", _id);
+	assert(_status==SESSION_STATUS_SENDING_GM_RESP);
+
+	while(_resp_buff_count > _resp_buff_index)
+	{
+		int n = write(_fd, _resp_buff+_resp_buff_index, _resp_buff_count-_resp_buff_index);
+		if(n < 0)
+		{
+			if(errno==EAGAIN) return;
+			OnError(3);
+			return;
+		}
+		else if(n == 0)
+		{
+			return;
+		}
+		else
+		{
+			_resp_buff_index += n;
+		}
+	}
+
+	//发送完成
+	_status = SESSION_STATUS_READING_GM_CMD;
+	_timeout = time(0)+SESSION_STATUS_READING_GM_CMD_TO;
+
+	TryProcessCmd(); //防止缓冲区中有多个cmd
+}
+
+void PWRD::Session::OnError(int err)
+{
+	GLog::log(LOG_INFO, "gmadapterd::PWRD::Session::OnError, _id=%d, err=%d", _id, err);
+	_status = SESSION_STATUS_ERROR;
+}
+
+void PWRD::OnRecvResp(int sess_id, const char *resp)
+{
+	auto it = _session_map.find(sess_id);
+	if(it==_session_map.end()) return;
+	Session *s = it->second;
+	if(!s->IsError()) s->OnRecvResp(resp);
+}
+
+void PWRD::Session::OnRecvResp(const char *resp)
+{
+	GLog::log(LOG_INFO, "gmadapterd::PWRD::Session::OnRecvResp, _id=%d, resp=%s", _id, resp);
+	if(_status!=SESSION_STATUS_WAITING_GAMED_RESP) return;
+	int n = (int)strlen(resp);
+	if(n+4>PWRD_CONST_RESP_BUFF_SIZE) return;
+
+	unsigned int nn = htonl(n);
+	memcpy(_resp_buff, &nn, 4);
+	
+	strcpy(_resp_buff+4, resp);
+	_resp_buff_index = 0;
+	_resp_buff_count = n+4;
+
+	_status = SESSION_STATUS_SENDING_GM_RESP;
+	_timeout = time(0)+SESSION_STATUS_SENDING_GM_RESP_TO;
+
+	OnWrite(); //直接写，成功率高
+}
+
+void PWRD::Session::OnHeartbeat(time_t now)
+{
+	if(now > _timeout)
+	{
+		if(_status == SESSION_STATUS_READING_GM_CMD)
+		{
+			//gm命令迟迟不发过来
+			OnError(4);
+			return;
+		}
+		else if(_status == SESSION_STATUS_WAITING_GAMED_RESP)
+		{
+			//游戏服务器迟迟不给反馈，通知gm timeout
+			OnRecvResp(_resp_4_timeout.c_str());
+			return;
+		}
+		else if(_status == SESSION_STATUS_SENDING_GM_RESP)
+		{
+			//给gm的反馈发不出去
+			OnError(5);
+			return;
+		}
+	}
+}
+

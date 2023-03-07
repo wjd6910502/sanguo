@@ -1,0 +1,151 @@
+function OnCommand_SweepInstance(player, role, arg, others)
+	player:Log("OnCommand_SweepInstance, "..DumpTable(arg))
+
+	local resp = NewCommand("SweepInstance_Re")
+	resp.info = {}
+
+	local instance = role._roledata._status._instances
+	local i = instance:Find(arg.instance)
+	if i ~= nil then
+		if i._star < 3 then
+			--没有达到可以扫荡的星级
+			resp.retcode = G_ERRCODE["NO_TONGGUAN"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		
+		local ed = DataPool_Find("elementdata")
+		local stage = ed:FindBy("stage_id", arg.instance)
+		if stage == nil then
+			resp.retcode = G_ERRCODE["NO_STAGE"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		local vp = role._roledata._status._vp
+		--查看体力是否足够
+		local need_vp = (stage.enter_tili + stage.finish_tili)*arg.count
+		if need_vp > vp then
+			resp.retcode = G_ERRCODE["NO_ENOUGHVP"]
+			player:SendToClient(SerializeCommand(resp))
+			player:Log("OnCommand_SweepInstance, NO_ENOUGHVP")
+			return
+		end
+		--查看当前的次数是否不小于扫荡的次数
+		if stage.limittimes ~= 0 then
+			if LIMIT_TestUseLimit(role, stage.limittimes, arg.count) == false then
+				resp.retcode = G_ERRCODE["NO_COUNT"]
+				player:SendToClient(SerializeCommand(resp))
+				return
+			end
+		end
+		----查看扫荡需要的令是否足够
+		--if BACKPACK_HaveItem(role, 1967, arg.count) == false then
+		--	resp.retcode = G_ERRCODE["NO_SWEEPITEM"]
+		--	player:SendToClient(SerializeCommand(resp))
+		--	return
+		--end
+
+		----都满足条件了，开始扣除物品，并且给副本的奖励
+		----扣除体力，扣除扫荡令，扣除副本次数(这个有情况区别)
+		if ROLE_Subvp(role, need_vp) == false then
+			resp.retcode = G_ERRCODE["NO_ENOUGHVP"]--玩家的体力不足
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		if stage.limittimes ~= 0 then
+			LIMIT_AddUseLimit(role, stage.limittimes, arg.count)
+		end
+		--BACKPACK_DelItem(role, 1967, arg.count)
+
+		--给客户端发过去
+		local allexp = 0
+		local count = arg.count
+		local instance_info2 = {}
+		instance_info2.item = {}
+		while count > 0 do
+			local Item = DROPITEM_DropItem(role, stage.dropid)
+			local Reward = DROPITEM_Reward(role, stage.rewardmouldid)
+			local SweepReward = DROPITEM_Reward(role, stage.sweepextradropid)
+			
+			count = count - 1
+			local instance_info = {}
+
+			instance_info.exp = Reward.exp
+			allexp = allexp + Reward.exp
+			instance_info.item = {}
+			local item_count = table.getn(Item)
+			for i = 1, item_count do
+				local instance_item = {}
+				local have_flag = 1
+				for j = 1, #instance_info.item do
+					if instance_info.item[j].id == Item[i].id then
+						instance_info.item[j].count = instance_info.item[j].count + Item[i].count
+						have_flag = 0
+						break
+					end
+				end
+				instance_item.id = Item[i].id
+				instance_item.count = Item[i].count
+				if have_flag == 1 then
+					instance_info.item[#instance_info.item+1] = instance_item
+				end
+				BACKPACK_AddItem(role, instance_item.id, instance_item.count)
+			end
+			item_count = table.getn(Reward.item)
+			for i = 1, item_count do
+				local instance_item = {}
+				local have_flag = 1
+				for j = 1, #instance_info.item do
+					if instance_info.item[j].id == Reward.item[i].itemid then
+						instance_info.item[j].count = instance_info.item[j].count + Reward.item[i].itemnum
+						have_flag = 0
+						break
+					end
+				end
+				instance_item.id = Reward.item[i].itemid
+				instance_item.count = Reward.item[i].itemnum
+				if have_flag == 1 then
+					instance_info.item[#instance_info.item+1] = instance_item
+				end
+				BACKPACK_AddItem(role, instance_item.id, instance_item.count)
+			end
+			item_count = table.getn(SweepReward.item)
+			for i = 1, item_count do
+				local instance_item = {}
+				local have_flag = 1
+				for j = 1, #instance_info2.item do
+					if instance_info2.item[j].id == SweepReward.item[i].itemid then
+						instance_info2.item[j].count = instance_info2.item[j].count + SweepReward.item[i].itemnum
+						have_flag = 0
+						break
+					end
+				end
+				instance_item.id = SweepReward.item[i].itemid
+				instance_item.count = SweepReward.item[i].itemnum
+				if have_flag == 1 then
+					instance_info2.item[#instance_info2.item+1] = instance_item
+				end
+				BACKPACK_AddItem(role, instance_item.id, instance_item.count)
+			end
+			resp.info[#resp.info+1] = instance_info
+		end
+
+		resp.info2 = instance_info2
+		
+		ROLE_AddExp(role, allexp)
+
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		player:SendToClient(SerializeCommand(resp))
+		
+		--修改成就
+		if stage.isifstage == 0 then
+			TASK_ChangeCondition(role, G_ACH_TYPE["STAGE_COUNT"], 0 , arg.count)
+		elseif stage.isifstage == 1 then
+			TASK_ChangeCondition(role, G_ACH_TYPE["STAGE_JINGYING_COUNT"], 0 ,arg.count)
+		end
+	else
+		resp.retcode = G_ERRCODE["NO_TONGGUAN"]	
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+end

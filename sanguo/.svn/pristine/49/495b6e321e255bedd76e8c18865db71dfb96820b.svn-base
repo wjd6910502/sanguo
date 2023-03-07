@@ -1,0 +1,66 @@
+function OnCommand_TowerGetInfo(player, role, arg, others)
+	player:Log("OnCommand_TowerGetInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("TowerGetInfo_Re")
+	resp.difficulty = role._roledata._tower_data._difficulty
+	resp.cur_layer = role._roledata._tower_data._cur_layer
+	resp.all_star = role._roledata._tower_data._all_star
+    resp.cur_star = role._roledata._tower_data._cur_star
+    --这里可以扫荡到几层不是直接保存的，需要一次索引的
+	if role._roledata._tower_data._history_layer > 0 then	
+		local ed = DataPool_Find("elementdata")
+		local layer = role._roledata._tower_data._history_layer
+		if role._roledata._tower_data._difficulty == 2 then
+			layer = layer + 100
+		end
+		local towerstage = ed:FindBy("tower_stage", layer)   
+		if towerstage ~= nil then
+			resp.sweep_layer = towerstage.can_skipped_level
+		end 
+	end
+
+	local buff_it = role._roledata._tower_data._buff:SeekToBegin()
+	local buff = buff_it:GetValue()
+	resp.buff = {}
+	while buff ~= nil do
+		resp.buff[#resp.buff + 1] = buff._value
+		buff_it:Next()
+		buff = buff_it:GetValue()
+	end
+
+	local dead_it = role._roledata._tower_data._dead_hero:SeekToBegin()
+	local dead = dead_it:GetValue()
+	resp.dead_hero = {}
+	while dead ~= nil do
+		resp.dead_hero[#resp.dead_hero + 1] = dead._value
+		dead_it:Next()
+		dead = dead_it:GetValue()
+	end	
+
+	local injured_it = role._roledata._tower_data._injured_hero:SeekToBegin()
+	local injured = injured_it:GetValue()
+	resp.injured_hero = {}
+	while injured ~= nil do
+		local data = {}
+		data.id = injured._id
+		data.hp = injured._hp
+		data.anger = injured._anger
+		resp.injured_hero[#resp.injured_hero + 1] = data
+		injured_it:Next()
+		injured = injured_it:GetValue()
+	end
+
+	resp.yestaday_difficulty = role._roledata._tower_data._yestaday_difficulty
+	resp.yestaday_rank = role._roledata._tower_data._yestaday_rank
+	if role._roledata._tower_data._all_star > 0 then
+		if role._roledata._tower_data._difficulty == 1 then
+			resp.rank =	TOP_ALL_Role_GetRoleRank(others.toplist_all_role._data._data, 2, 
+				role._roledata._base._id, role._roledata._tower_data._all_star)
+		elseif role._roledata._tower_data._difficulty == 2 then
+			resp.rank = TOP_ALL_Role_GetRoleRank(others.toplist_all_role._data._data, 3,
+				role._roledata._base._id, role._roledata._tower_data._all_star)
+		end
+	end
+	
+	player:SendToClient(SerializeCommand(resp))
+end

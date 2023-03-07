@@ -1,0 +1,15 @@
+
+listen_port = 19231
+
+to_svr_ip = 127.0.0.1
+to_svr_port = 19237
+
+#to_svr_delay_ms = 150
+#to_cli_delay_ms = 150
+#to_svr_delay_ms = 80
+#to_cli_delay_ms = 80
+to_svr_delay_ms = 40
+to_cli_delay_ms = 40
+
+close_period_ms = 60000
+

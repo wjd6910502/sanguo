@@ -1,0 +1,3 @@
+function OnMessage_TongQueTaiFail(player, role, arg, others)
+	--player:Log("OnMessage_TongQueTaiFail, "..DumpTable(arg).." "..DumpTable(others))
+end

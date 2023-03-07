@@ -1,0 +1,271 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include "objectmanager.h"
+#include "base64.h"
+#include <curl/curl.h>
+
+static std::mutex tokenlock;
+static time_t g_refreshTokenTime = 0;
+static std::string g_token = "";
+
+/*   定制的字符串分割 */
+static std::string parsestr(const char* raw_str, const char *reqir, const char* delim = ",", const char* reqdelim = ":")
+{	
+	if(raw_str == NULL || reqir == NULL)
+	{
+		printf("parsestr args wrong\n");
+		return "";
+	}
+
+	char* p = strtok((char*)raw_str, delim);
+	while(p)
+	{
+		printf("%s\n",p);
+		if( strstr(p,reqir) == NULL)
+		{
+			p = strtok(NULL,delim);
+			continue;
+		}
+
+		std::string tmp = strtok(p,reqdelim);
+		printf("key = %s ",(char*)tmp.c_str());
+		tmp = strtok(NULL,reqdelim);
+		printf("value = %s\n",(char*)tmp.c_str());
+		if(tmp.empty())
+		{
+			return "";
+		}
+
+		return std::string(tmp.substr(1,tmp.size()-2));
+	}
+	return "";
+}
+
+static size_t getcharCode(void *ptr, size_t size, size_t nmemb, void *userdata)
+{
+	std::string *version = (std::string*)userdata;
+	version->append((char*)ptr, size * nmemb);
+
+	//printf("version = %u\n",size * nmemb);
+	return (size * nmemb);
+}
+
+//获取token 这个不要随意修改 只要修改appid就行 
+std::string http_get_token()
+{
+	std::string result = "";
+	//这个地方需要枷锁
+	CURL *handle =  curl_easy_init();
+	if ( ! handle)
+	{
+		printf(" czan not init curl \n");
+		return "";
+	}
+	
+	curl_easy_setopt(handle, CURLOPT_HEADER,0);
+	curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
+
+	//传入头部的参数 11base64 编码参数
+	Octets oxpar;
+	struct curl_slist *slist = NULL;	
+	std::string xpar = "imei=1111&imsi=1111&mac=1111&appid=57847211";
+	Base64Encoder::Convert(oxpar,Octets((char*)xpar.c_str(), xpar.size()));
+	std::string head = "X-Par:" + std::string((char*)oxpar.begin(),oxpar.size()); 
+	slist = curl_slist_append(slist, head.c_str());
+	//printf("head: %s\n", head.c_str());
+
+	curl_easy_setopt(handle, CURLOPT_HTTPHEADER,slist);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, getcharCode);
+	curl_easy_setopt(handle, CURLOPT_URL, "openapi.openspeech.cn/index.htm?svc=token");
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &result);
+	CURLcode res = curl_easy_perform(handle);
+	
+	Octets rlt;
+	Base64Decoder::Convert(rlt, Octets((char*)result.c_str(), result.size()));
+	
+	printf("result = %s\n", result.c_str());
+	printf("base64 result = %.*s\n",(int)rlt.size(),(char*)rlt.begin());
+	
+	if (res == CURLE_OK)
+	{
+		printf("result = %s \n", result.c_str());	
+	}
+	else
+	{
+		printf("curl res = %d \n", (int)res);
+	}
+	
+	curl_easy_cleanup(handle);
+
+	return parsestr((char*)rlt.begin(),"token"); 
+}
+
+//获取语音返回的文字
+std::string http_post_get_text(std::string content)
+{	
+	string result = "";
+	CURL *handle =  curl_easy_init();
+	if ( ! handle)
+	{
+		printf(" czan not init curl \n");
+		return "";
+	}
+	
+	//组合字符串	
+	//std::string url = "openapi.openspeech.cn/index.htm?svc=iat&token=" + g_token + "&auf=audio/L16;rate=16000&aue=raw&ent=sms16k&";	
+	//url = rtl + content; 
+
+	curl_easy_setopt(handle, CURLOPT_URL, "openapi.openspeech.cn/index.htm?svc=iat&token=6e6a1dee5107c69b551034f9d8559560&auf=audio/L16;rate=16000&aue=raw&ent=sms16k&aaaaaa11111111111");
+	curl_easy_setopt(handle, CURLOPT_POSTFIELDS,"svc=iat&token=6e6a1dee5107c69b551034f9d8559560&auf=audio/L16;rate=16000&aue=raw&ent=sms16k&aaaaaa11111111111");
+	curl_easy_setopt(handle, CURLOPT_NOSIGNAL, 1L);
+
+	//传入头部的参数 11base64 编码参数
+	Octets oxpar;
+	struct curl_slist *slist = NULL;	
+	std::string xpar = "imei=1111&imsi=1111&mac=1111&appid=57847211";
+	Base64Encoder::Convert(oxpar,Octets((char*)xpar.c_str(), xpar.size()));
+	std::string head = "X-Par:" + std::string((char*)oxpar.begin(),oxpar.size()); 
+	slist = curl_slist_append(slist, head.c_str());
+	
+	curl_easy_setopt(handle, CURLOPT_HTTPHEADER,slist);
+	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, getcharCode);
+	curl_easy_setopt(handle, CURLOPT_WRITEDATA, &result);
+	
+	curl_easy_setopt(handle, CURLOPT_POST,1);
+	curl_easy_setopt(handle, CURLOPT_VERBOSE,1);
+	curl_easy_setopt(handle, CURLOPT_HEADER,0);
+
+	//curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION,1);
+	CURLcode res = curl_easy_perform(handle);
+	
+	Octets rlt;
+	Base64Decoder::Convert(rlt, Octets((char*)result.c_str(), result.size()));
+	
+	printf("result = %s\n", result.c_str());
+	printf("base64 result = %.*s\n",(int)rlt.size(),(char*)rlt.begin());
+
+	if (res == CURLE_OK)
+	{
+		printf("result = %s \n", result.c_str());
+	}
+	
+	curl_easy_cleanup(handle);
+
+	return std::string((char*)rlt.begin(),rlt.size());
+
+}
+
+void GetSpeechTextwithWeb(int sid, SpeechMsg* msg)
+{
+	//获取token 支持多线程接口
+	time_t now = time(NULL);
+	if( g_refreshTokenTime == 0 || now - g_refreshTokenTime > 7200 )
+	{
+		tokenlock.lock();
+		g_refreshTokenTime = 	now;
+		g_token = http_get_token();
+		tokenlock.unlock();	
+	}
+	
+	/* *******************************************************************************
+		 *
+		 *	解压缩的接口 由周提供
+		 *
+		 * *******************************************************************************/
+	//解压缩的接口	
+	Octets base64_content;	
+	unsigned char* speech = msg->GetSpeech();
+	float pbufferOut[MAX_SPEECH_SIZE*10];
+	memset(pbufferOut,'\0',MAX_SPEECH_SIZE*10);
+	unsigned int spSize = msg->_speech_size;
+		
+	std::string result = "";
+	unsigned int realLength =0;
+	unsigned int decompressnum = AudioCode_CalcDecompressSize(speech,spSize);
+	float* pf = (float*)malloc(sizeof(float)*(decompressnum));
+	if ( AudioCode_Decompress(speech,spSize,pf,decompressnum) )
+	{
+		unsigned char* puc = (unsigned char *)malloc(sizeof(float)*decompressnum / 2);
+		for (unsigned int i = 0; i < decompressnum; ++i)
+		{
+			short tmp = (short)(*(pf + i) * 32767);
+			memcpy(puc + i*2, &tmp, sizeof(short));
+		}											
+		realLength = sizeof(float)*decompressnum / 2;
+			
+		//把 puc 转化成 base64编码		
+		Base64Encoder::Convert(base64_content,Octets((char*)puc,realLength));
+	
+	}
+		
+	//get text from kedaxunfei web
+	result = http_post_get_text(std::string((char*)base64_content.begin(),base64_content.size()));
+							
+	if(result == "")
+	{
+		result = "Cannot Recognized";
+	}
+
+	//发送结果给服务器
+	GetIATextInSpeechRe res;
+	res.src_id = msg->_srcid;
+	res.dest_id =Octets(msg->_destid,strlen(msg->_destid));
+	res.zone_id = msg->_zoneid;
+	res.time = msg->_time;
+	res.chat_type = msg->_chatype;
+	//做base64编码
+		
+	Octets speech_content;			
+	Base64Encoder::Convert(speech_content,Octets((char*)msg->_speech,msg->_speech_size));
+
+	res.speech_content = speech_content;	
+	res.text_content = Octets(result.c_str(),result.size());
+	STTServer::GetInstance()->DispatchProtocol(res.zone_id,&res);	
+}
+
+//做分发用的
+void GetAndSendTextToGamedBwith(int type, int sid , SpeechMsg* pmsg)
+{
+	if(pmsg == NULL)
+		return;
+
+	switch(type)
+	{
+		case 1:
+			//GetAndSendTextToGamed(sid,pmsg);	
+			break;
+	    case 2:
+			
+			break;
+		case 3:
+			
+			break;
+		
+		default:
+			break;
+	}
+
+}
+
+void testSplit()
+{
+	Octets oct; 
+	std::string wwoct = "{\"expires\":7200,\"ret\":0,\"token\":\"d5e463622e2e4d5af880f0d798141cea\",\"sid\":\"wbs1d4ca8ff@ch01110b1257503d7f01\"}";
+	oct =Octets(wwoct.c_str(),wwoct.size());
+	std::string result = parsestr((char*)oct.begin(),"token");
+	printf("test result = %s\n",result.c_str());
+	
+	wwoct =  "{\"ret\":-1,\"result\":\"wwwwwwwww \",\"sid\":\"wbs1d4c28ff@ch01200b1257503d7f01\"}";
+	oct =Octets(wwoct.c_str(),wwoct.size());
+
+	 result = parsestr((char*)oct.begin(),"result");
+	printf("test result = %s\n",result.c_str());
+
+
+}
+
+
+

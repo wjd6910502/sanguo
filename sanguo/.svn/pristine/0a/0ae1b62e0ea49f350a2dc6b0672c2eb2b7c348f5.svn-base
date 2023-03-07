@@ -1,0 +1,34 @@
+function OnCommand_MafiaSeeInfo(player, role, arg, others)
+	player:Log("OnCommand_MafiaSeeInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("MafiaSeeInfo_Re")
+
+	local mafia_info = others.mafia_info
+	local mafia_level_info_it = mafia_info._data._mafia_info:SeekToBegin()
+	local mafia_level_info = mafia_level_info_it:GetValue()
+	while mafia_level_info ~= nil do
+		local mafia_data = mafia_level_info._info:Find(CACHE.Int64(arg.mafia_id))
+		if mafia_data ~= nil then
+			local tmp_mafia_info = {}
+			tmp_mafia_info.id = mafia_data._id:ToStr()
+			tmp_mafia_info.name = mafia_data._name
+			tmp_mafia_info.announce = mafia_data._announce
+			tmp_mafia_info.level = mafia_data._level
+			tmp_mafia_info.boss_id = mafia_data._boss_id:ToStr()
+			tmp_mafia_info.boss_name = mafia_data._boss_name
+			tmp_mafia_info.level_limit = mafia_data._level_limit
+			tmp_mafia_info.num = mafia_data._num
+
+			resp.mafia_info = tmp_mafia_info
+			resp.retcode = G_ERRCODE["SUCCESS"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+
+		mafia_level_info_it:Next()
+		mafia_level_info = mafia_level_info_it:GetValue()
+	end
+
+	resp.retcode = G_ERRCODE["MAFIA_NOT_EXIST"]
+	player:SendToClient(SerializeCommand(resp))
+end

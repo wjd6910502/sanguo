@@ -1,0 +1,18 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+
+#ldd ./gamed
+
+./gamed gamesys.duxg.conf
+#gdb -args ./gamed gamesys.duxg.conf
+#valgrind ./gamed gamesys.duxg.conf
+
+
+
+#./gamed.orig gamesys.duxg.conf
+#./gamed.notrans gamesys.duxg.conf
+
+

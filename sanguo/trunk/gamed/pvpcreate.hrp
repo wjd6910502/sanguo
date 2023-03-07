@@ -1,0 +1,52 @@
+
+#ifndef __GNET_PVPCREATE_HPP
+#define __GNET_PVPCREATE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "pvpcreatearg"
+#include "pvpcreateres"
+
+namespace GNET
+{
+
+class PVPCreate : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "pvpcreate"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// PVPCreateArg *arg = (PVPCreateArg *)argument;
+		// PVPCreateRes *res = (PVPCreateRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		PVPCreateArg *arg = (PVPCreateArg *)argument;
+		PVPCreateRes *res = (PVPCreateRes *)result;
+
+		GLog::log(LOG_INFO, "GAMED::PVPCreate::Client, retcode=%d, id=%d, mode=%d, fighter1=%ld, fighter2=%ld, start_time=%d, sid=%u",
+		          res->retcode, arg->id, arg->mode, arg->fighter1, arg->fighter2, arg->start_time, sid);
+
+		std::vector<int64_t> extra_roles;
+		extra_roles.push_back(arg->fighter1);
+		extra_roles.push_back(arg->fighter2);
+
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10008:%d:", res->retcode); //PVPCreateResult
+		MessageManager::GetInstance().Put(arg->id, arg->id, msg, 0, &extra_roles);
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		//pvp有自己的超时机制, 这里不用管了
+	}
+
+};
+
+};
+#endif

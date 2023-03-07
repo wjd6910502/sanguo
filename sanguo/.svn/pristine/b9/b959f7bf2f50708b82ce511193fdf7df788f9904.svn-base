@@ -1,0 +1,60 @@
+#!/bin/sh
+
+stop_run()
+{
+        killall telnet
+        exit 0
+}
+
+trap "stop_run" SIGINT
+
+
+
+
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+#./client gamesys.stress.conf 1 TestPing &
+#./client gamesys.stress.conf 1 TestPublicChat &
+
+#for i in `seq 10000`
+#do
+#	#if [ $i -gt 100 -a $i -le 120 ]
+#	if [ $i -gt 100 -a $i -le 102 ]
+#	then
+#		./client gamesys.stress.conf $i TestPublicChat >&/dev/null &
+#	fi
+#done
+
+#prefix=`date +%s`
+#./client gamesys.stress.conf 1_${prefix} TestStress
+
+for i in `seq 10000`
+do
+	if [ $i -gt 100 -a $i -le 200 ]
+	then
+		echo "--------------------------------------------------------------------------------------", ${i}
+		#echo "\n" | telnet 10.68.8.41 9239
+		(nohup setsid telnet 10.68.8.41 9239 &)
+	fi
+done
+
+
+
+
+
+
+
+
+
+
+
+
+
+while true
+do
+        sleep 1
+done
+
+
+

@@ -1,0 +1,85 @@
+function OnCommand_PveArenaJoinBattle(player, role, arg, others)
+	player:Log("OnCommand_PveArenaJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("PveArenaJoinBattle_Re")
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	
+	if LIMIT_TestUseLimit(role, quanju.arena_free_times, 1) == false then
+		resp.retcode = G_ERRCODE["JJC_ATTACK_COUNT_LESS"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local now = API_GetTime()
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	if now - role._roledata._pve_arena_info._last_attack_time < quanju.arena_pk_cd then
+		resp.retcode = G_ERRCODE["JJC_ATTACK_CD"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	role._roledata._pve_arena_info._last_attack_time = API_GetTime()
+	LIMIT_AddUseLimit(role, quanju.arena_free_times, 1)
+	
+	resp.last_attack_time = role._roledata._pve_arena_info._last_attack_time
+	
+	resp.role_info = {}
+	local fight_info = PVEARENA_GetRoleInfoByRank(others.misc._miscdata._pve_arena_map._pve_arena_data_map_data, arg.rank)
+
+	if fight_info.role_id ~= "0" then
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.role_info.id = fight_info.role_id
+		resp.role_info.name = fight_info.name
+		resp.role_info.level = fight_info.level
+		resp.role_info.score = fight_info.score
+		resp.role_info.hero_score = 100
+		resp.role_info.mafia_name = fight_info.mafia_name
+		resp.role_info.rank = arg.rank
+		resp.role_info.hero_info = {}
+		resp.role_info.hero_info.heroinfo = {}
+		for i = 1, table.getn(fight_info.hero_info) do
+			resp.role_info.hero_info.heroinfo[#resp.role_info.hero_info.heroinfo+1] = fight_info.hero_info[i]
+			
+			local insert_hero = CACHE.PveArenaHeroInfo()
+			
+			insert_hero._heroid = fight_info.hero_info[i].id
+			insert_hero._level = fight_info.hero_info[i].level
+			insert_hero._star = fight_info.hero_info[i].star
+			insert_hero._grade = fight_info.hero_info[i].grade
+			
+			local skills = fight_info.hero_info[i].skill
+			for j = 1, table.getn(skills) do
+				local h3_skill = CACHE.HeroSkill()
+				h3_skill._skill_id = skills[j].skill_id
+				h3_skill._skill_level = skills[j].skill_level
+				insert_hero._skill:PushBack(h3_skill)
+			end
+			
+			local common_skills = fight_info.hero_info[i].common_skill
+			for j = 1, table.getn(common_skills) do
+				local h3_skill = CACHE.HeroSkill()
+				h3_skill._skill_id = common_skills[j].skill_id
+				h3_skill._skill_level = common_skills[j].skill_level
+				insert_hero._common_skill:PushBack(h3_skill)
+			end
+			
+			local select_skills = fight_info.hero_info[i].select_skill
+			for j = 1, table.getn(select_skills) do
+				local h3_skill = CACHE.Int()
+				h3_skill._value = select_skills[j]
+				insert_hero._select_skill:PushBack(h3_skill)
+			end
+
+			role._roledata._pve_arena_info._cur_attack_player._hero_info:PushBack(insert_hero)
+		end
+		
+		role._roledata._pve_arena_info._cur_attack_player._id = resp.role_info.id
+		role._roledata._pve_arena_info._cur_attack_player._name = resp.role_info.name
+	else
+		resp.retcode = G_ERRCODE["JJC_RANK_ERR"]
+	end
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

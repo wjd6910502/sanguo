@@ -1,0 +1,10 @@
+function OnCommand_PveArenaEndBattle(player, role, arg, others)
+	player:Log("OnCommand_PveArenaEndBattle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PveArenaEndBattle_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.score_change = 0
+
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

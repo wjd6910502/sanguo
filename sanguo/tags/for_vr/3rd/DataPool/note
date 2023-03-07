@@ -1,0 +1,10 @@
+
+
+注意：这个代码在4.4.7下是不能编译的!!!
+
+
+因为cl的datapool代码使用了一些c++新技术，比如lambda表达式等，为了编译通过使用了高版本g++(4.8)
+而为了让g++ 4.8编译出来的libdatapool.so能和4.4.7编译的server主程序一块使用，做了两个调整:
+1, memcpy在glibc-2.14之前都是memmove的别名，2.14起有了自己的实现，为了和老库兼容，还是define成memmove方式。 
+2, std::list在glibc++.3.4.15中修改了实现，为了兼容，我将list.o单独拿了出来，运行时不再使用libstdc++.so中的list实现。 
+

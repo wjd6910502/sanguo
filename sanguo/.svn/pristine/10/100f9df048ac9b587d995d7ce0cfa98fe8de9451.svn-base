@@ -1,0 +1,7 @@
+1e2366fdbb945534976a8e89d91b6bb4  verification
+0e270f964e7ceaef295b87fb292718b2  verificationclient.o
+3a541ac8cc32b04ed0e951367a801b3b  state.o
+d0f4d1d1a5e73f9f16e419e49bcb6852  stubs.o
+d2889bd4d38586446edbd65d9214a707  verification.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

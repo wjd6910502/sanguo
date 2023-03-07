@@ -1,0 +1,61 @@
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
+namespace NS_TEST
+{
+
+struct TestObject
+{
+	int arg;
+
+	TestObject(): arg(0)
+	{
+		printf("TestObject::TestObject()\n");
+	}
+	~TestObject()
+	{
+		printf("TestObject::~TestObject()\n");
+	}
+};
+
+class TestClass
+{
+public:
+	int var1;
+	TestObject *var2;
+
+	static int static_var1;
+
+public:
+	TestClass(): var1(0), var2(0) {}
+
+	TestObject* func1(int arg1, TestObject *arg2)
+	{
+		printf("TestClass::func1, arg1=%d, arg2=%p, arg2->arg=%d\n", arg1, arg2, arg2->arg);
+		printf("                  var1=%d, var2=%p, var2->arg=%d\n", var1, var2, (var2?var2->arg:0));
+
+		TestObject *bak = var2;
+		var1 = arg1;
+		var2 = arg2;
+
+		return bak;
+	}
+
+	static int static_func1(int arg1)
+	{
+		printf("TestClass::static_func1, arg1=%d\n", arg1);
+		printf("                         static_var1=%d\n", static_var1);
+
+		int bak = static_var1;
+		static_var1 = arg1;
+
+		return bak;
+	}
+};
+
+TestClass* g_func1(int arg1);
+TestClass g_func2(int arg1);
+
+}
+

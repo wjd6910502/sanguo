@@ -1,0 +1,57 @@
+#!/bin/sh
+
+stop_run()
+{
+        killall client
+        exit 0
+}
+
+trap "stop_run" SIGINT
+
+
+
+
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+#./client gamesys.stress.conf 1 TestPing &
+
+for i in `seq 10000`
+do
+	#if [ $i -gt 100 -a $i -le 200 ]
+	if [ $i -gt 100 ]
+	then
+		./client gamesys.stress.conf $i TestPing >&/dev/null &
+	fi
+done
+
+#prefix=`date +%s`
+#
+##./client gamesys.stress.conf 1_${prefix} TestStress
+#
+#for i in `seq 10000`
+#do
+#	#echo ${i}
+#	./client gamesys.stress.conf ${i}_${prefix} TestStress &
+#	sleep 0.2
+#done
+
+
+
+
+
+
+
+
+
+
+
+
+
+while true
+do
+        sleep 1
+done
+
+
+

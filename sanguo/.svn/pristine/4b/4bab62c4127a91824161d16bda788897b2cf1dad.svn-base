@@ -1,0 +1,7 @@
+5601f22526fe7e31f8bc26ace2b0e957  customer
+73f9990aa4507f6518a9ddf83c8f8bff  customerserviceclient.o
+3df2b1ef41090daab9122220595f2ff0  state.o
+bdf3741e8f45bee1d14e86494d423558  stubs.o
+a69b2c73fa414b58dbf7d04a60e420af  customer.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

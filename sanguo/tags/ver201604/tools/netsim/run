@@ -1,0 +1,15 @@
+#!/bin/sh
+
+./netsim.py >out
+
+#grep "1, Waiting," out >1
+#grep "2, Waiting," out >2
+
+grep "1, Waiting," out | sort -u | wc -l
+grep "2, Waiting," out | sort -u | wc -l
+
+#grep "1, Waiting," out | uniq -c >1
+#grep "2, Waiting," out | uniq -c >2
+
+
+

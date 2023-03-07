@@ -1,0 +1,88 @@
+function DataPool_Alloc(name, path)
+	local dp_ptr = API_DataPool_Alloc(name, path)
+	if dp_ptr==nil then return nil end
+	dp = {}
+	dp.__ptr__ = dp_ptr 
+	dp.AddNewIndex = function(dp, index_name, array_name, key_name) API_DataPool_Sort(dp.__ptr__, index_name, array_name, key_name) end
+	return dp
+end
+
+function DataPool_MakeVar(v_ptr)
+	if type(v_ptr)~="userdata" then return v_ptr end
+	--for struct
+	local var = {}
+	var.__ptr__ = v_ptr
+	local mt = {}
+	mt.__index = function(var, key)
+		local v_ptr = API_DataPool_VarIndex(var.__ptr__, key)
+		if v_ptr==nil then return nil end 
+		return DataPool_MakeVar(v_ptr)
+	end
+	setmetatable(var, mt)
+	return var
+end
+
+function DataPool_Find(name)
+	local dp_ptr = API_DataPool_Find(name)
+	if dp_ptr==nil then return nil end
+	dp = {}
+	dp.__ptr__ = dp_ptr
+	dp.FindBy = function(dp, key_name, key)
+		local v_ptr = API_DataPool_FindBy(dp.__ptr__, key_name, key)
+		if v_ptr==nil then return nil end 
+		return DataPool_MakeVar(v_ptr)
+	end
+	local mt = {}
+	mt.__index = function(dp, key)
+		local v_ptr = API_DataPool_LocateVar(dp.__ptr__, key)
+		if v_ptr==nil then return nil end 
+		return DataPool_MakeVar(v_ptr)
+	end
+	setmetatable(dp, mt)
+	return dp
+end
+
+function DataPool_Array(array)
+	local idx = 1 
+	return function()
+		local v_ptr = API_DataPool_VarIndex(array.__ptr__, idx)
+		if v_ptr==nil then return nil end 
+		idx = idx+1
+		return DataPool_MakeVar(v_ptr)
+	end
+end
+
+function InitInMainThread()
+	API_DataPool_Clear()
+	local dp = DataPool_Alloc("elementdata", "./elementdata.dpc")
+	if dp~=nil then
+		dp:AddNewIndex("id", "role", "id")
+		dp:AddNewIndex("stage_id", "stage", "stageid")
+		dp:AddNewIndex("limit_id", "limittimes", "id")
+		dp:AddNewIndex("randplan_id", "randplan", "id")
+		dp:AddNewIndex("droparray_id", "droparray", "id")
+		dp:AddNewIndex("itemgroup_id", "itemgroup", "id")
+		dp:AddNewIndex("item_id", "item", "id")
+		dp:AddNewIndex("reward_id", "rewards", "id")
+		dp:AddNewIndex("level_id", "levelexp", "level")
+		dp:AddNewIndex("task_id", "achievement", "id")
+		dp:AddNewIndex("quanju_id", "gamedefine", "id")
+		dp:AddNewIndex("hero_id", "role", "id")
+		dp:AddNewIndex("herograde_id", "rolegrade", "role_id")
+		dp:AddNewIndex("requisite_role", "dialogrequisiterole", "stageid")
+	end
+end
+
+dofile "scripts/role.lua"
+dofile "scripts/mafia.lua"
+dofile "scripts/backpack.lua"
+dofile "scripts/common_use_limit.lua"
+dofile "scripts/dropitem.lua"
+dofile "scripts/vp.lua"
+dofile "scripts/prizemanager.lua"
+dofile "scripts/hero.lua"
+
+API_Log("util END")
+
+
+

@@ -1,0 +1,85 @@
+function OnCommand_CompleteInstance(player, role, arg, others)
+	player:Log("OnCommand_CompleteInstance"..DumpTable(arg))
+	
+	local resp = NewCommand("CompleteInstance_Re")
+	if role._status._instance_id ~= arg.inst_tid then
+		resp.retcode = G_ERRCODE["NO_STAGE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	local ed = DataPool_Find("elementdata")
+	local stage = ed:FindBy("stage_id", arg.inst_tid)
+	if stage == nil then
+		resp.retcode = G_ERRCODE["NO_STAGE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	local vp = role._status._vp
+	--查看体力是否足够
+	local need_vp = stage.finish_tili
+	if need_vp > vp then
+		resp.retcode = G_ERRCODE["NO_ENOUGHVP"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	if stage.limittimes ~= 0 then
+		if LIMIT_TestUseLimit(role, stage.limittimes, 1) == false then
+			resp.retcode = G_ERRCODE["NO_COUNT"]--这个副本没有了次数
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+
+	if ROLE_Subvp(role, stage.finish_tili) == false then
+		resp.retcode = G_ERRCODE["NO_ENOUGHVP"]--玩家的体力不足
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	if stage.limittimes ~= 0 then
+		LIMIT_AddUseLimit(role, stage.limittimes, 1)
+	end
+	
+	local instance = role._status._instances
+	local i = instance:Find(arg.inst_tid)
+	if i == nil then
+		local value = CACHE.RoleInstance:new()
+		value._tid = arg.inst_tid
+		value._score = arg.score
+		value._star = 3
+		instance:Insert(arg.inst_tid, value)
+	end
+
+	resp.retcode = 0
+	resp.inst_tid = arg.inst_tid
+	resp.score = arg.score
+	local Item = DROPITEM_DropItem(role, stage.dropid)
+	local Reward = DROPITEM_Reward(role, stage.rewardmouldid)
+	
+	local instance_info = {}
+	instance_info.exp = Reward.exp
+	instance_info.money = Reward.money
+	instance_info.item = {}
+	local item_count = table.getn(Item)
+	for i = 1, item_count do
+		local instance_item = {}
+		instance_item.id = Item[i].id
+		instance_item.count = Item[i].count
+		instance_info.item[#instance_info.item+1] = instance_item
+		BACKPACK_AddItem(role, instance_item.id, instance_item.count)
+	end
+	item_count = table.getn(Reward.item)
+	for i = 1, item_count do
+		local instance_item = {}
+		instance_item.id = Reward.item[i].itemid
+		instance_item.count = Reward.item[i].itemnum
+		instance_info.item[#instance_info.item+1] = instance_item
+		BACKPACK_AddItem(role, instance_item.id, instance_item.count)
+	end
+	resp.rewards = instance_info
+	player:SendToClient(SerializeCommand(resp))
+	role._status._instance_id = 0
+	ROLE_AddExp(role, instance_info.exp)
+	ROLE_AddMoney(role, instance_info.money)
+end

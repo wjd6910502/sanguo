@@ -1,0 +1,3 @@
+function OnCommand_GetRefreshTime(player, role, arg, others)
+	--player:Log("OnCommand_GetRefreshTime, "..DumpTable(arg).." "..DumpTable(others))
+end

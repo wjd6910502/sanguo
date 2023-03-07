@@ -1,0 +1,142 @@
+#ifndef _TONGQUETAI_H_
+#define _TONGQUETAI_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+#include "forlua.h"
+#include "message.h"
+#include <list>
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_TongQueTai: public Singleton, TransactionBase
+{
+	bool _in_transaction;
+	int _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	TongQueTaiData _data;
+
+private:
+	SGT_TongQueTai();
+
+public:
+	static SGT_TongQueTai& GetInstance()
+	{
+		static SGT_TongQueTai _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "TongQueTai"; }
+	virtual int GetID() const { return 5; }
+	virtual const char* GetLockName() const { return "tongquetai"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int transaction_id);
+	void restore(int transaction_id);
+	void cleanup();
+	void OnTimer(int tick, int now);
+};
+
+}
+
+inline CACHE::SGT_TongQueTai* API_GetLuaTongQueTai(void *r) { return (CACHE::SGT_TongQueTai*)r; }
+inline CACHE::SGT_TongQueTai* API_GetLuaTongQueTai() { return (InBigLock() ? &CACHE::SGT_TongQueTai::GetInstance() : 0); }
+inline void API_SendMessage(const CACHE::Int64& target, const std::string& v, const CACHE::Int64List& extra_roles, 
+		const CACHE::Int64List& extra_mafias, const CACHE::IntList& extra_pvps)
+{
+	//TODO: transaction
+	std::vector<int64_t> vec;
+	{
+	const CACHE::Int64List& er = extra_roles;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec.push_back(*id);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	std::vector<int64_t> vec2;
+	{
+	const CACHE::Int64List& er = extra_mafias;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec2.push_back(*id);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	std::vector<int> vec3;
+	{
+	const CACHE::IntList& er = extra_pvps;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec3.push_back(id->_value);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	Message msg(target, target, v, 0, &vec, &vec2, &vec3);
+	
+	MessageManager::GetInstance().Put(msg);
+}
+
+inline void API_SendMessageToAllRole(const std::string& v, const CACHE::Int64List& extra_roles, 
+		const CACHE::Int64List& extra_mafias, const CACHE::IntList& extra_pvps)
+{
+	std::vector<int64_t> vec;
+	{
+	const CACHE::Int64List& er = extra_roles;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec.push_back(*id);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	std::vector<int64_t> vec2;
+	{
+	const CACHE::Int64List& er = extra_mafias;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec2.push_back(*id);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	std::vector<int> vec3;
+	{
+	const CACHE::IntList& er = extra_pvps;
+	auto it = er.SeekToBegin();
+	auto id = it.GetValue();
+	while(id)
+	{
+		vec3.push_back(id->_value);
+		it.Next();
+		id = it.GetValue();
+	}
+	}
+	Message msg(SERVER_CONST_MESSAGE_TARGET_ACTIVE_ROLES, SERVER_CONST_MESSAGE_TARGET_ACTIVE_ROLES, v, 0, &vec, &vec2, &vec3);
+	
+	MessageManager::GetInstance().Put(msg);
+}
+
+#endif //_TONGQUETAI_H_
+

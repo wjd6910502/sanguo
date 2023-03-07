@@ -1,0 +1,78 @@
+
+#ifndef __GNET_GMCMD_GETACCID_HPP
+#define __GNET_GMCMD_GETACCID_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class GMCmd_GetAccID : public GNET::Protocol
+{
+	#include "gmcmd_getaccid"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetAccId::Process, charid=%ld, charname=%.*s, session_id=%d", 
+				charid, (int)charname.size(), (char*)charname.begin(), session_id);
+
+		GMCmd_GetAccID_Re resp;
+
+		const Player *player = PlayerManager::GetInstance().FindByRoleId(charid);
+		if(player)
+		{
+			resp.retcode = 0;
+			resp.accid = player->GetAccount();
+			resp.charid = charid;
+			resp.charname = Octets(player->_role._roledata._base._name.c_str(), player->_role._roledata._base._name.size());
+			resp.session_id = session_id;
+			manager->Send(sid, resp);
+			return;
+		}
+
+		if(charname.size() > 0)
+		{
+			//TODO: ×Ö·û±àÂë
+			string rolename = std::string((char*)charname.begin(), charname.size());;
+			RoleNameQueryResults *rets = SGT_RoleNameCache::GetInstance().Query(rolename);
+			RoleNameQueryResultsIter iter = rets->SeekToBegin();
+			RoleBrief *role = iter.GetValue();
+			while(role != NULL)
+			{
+				if(role->_name == rolename)
+				{
+					player = PlayerManager::GetInstance().FindByRoleId(role->_id);
+					if(player)
+					{
+						resp.retcode = 0;
+						resp.accid = player->GetAccount();
+						resp.charid = player->_role._roledata._base._id;
+						resp.charname = charname;
+						resp.session_id = session_id;
+						manager->Send(sid, resp);
+						return;
+					}
+					break;
+				}
+				iter.Next();
+				role = iter.GetValue();
+			}
+		}
+
+		GLog::log(LOG_INFO, "gamed::GMCmd_GetAccId::Process, Failure, charid=%ld, charname=%.*s, session_id=%d, not found", 
+				charid, (int)charname.size(), (char*)charname.begin(), session_id);
+
+		resp.retcode = -1;
+		resp.session_id = session_id;
+		const char *desc = "not found";
+		resp.desc = Octets(desc, strlen(desc));
+		manager->Send(sid, resp);
+	}
+};
+
+};
+
+#endif

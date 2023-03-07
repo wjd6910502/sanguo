@@ -1,0 +1,10 @@
+02bf07c834f2b0188fd29ddc410b0d6a  gcenterd
+53f52098d3ccf72b4abc49654b2702c6  gmserver.o
+89849add37ecd17424d50fca9113507d  state.o
+d502d2280abc4ac85c67939852b41b01  stubs.o
+1805ad03dc56930207392d66a31c7cda  gcenterd.o
+1822fcb9f7a86163e100286bd4ea2350  gcenterserver.o
+c62e403aac8908dd192b900db54eb3b1  pvpmatch.o
+4c55efee24936b8ffefc23238e3dfca2  pvpgameserver.o
+82dc37de5d5644225aa91cef4ea256aa  ../xlib/libio32.so
+763672d53a3ca9cdfa4c6eeac7d05b58  ../xlib/liblog32.so

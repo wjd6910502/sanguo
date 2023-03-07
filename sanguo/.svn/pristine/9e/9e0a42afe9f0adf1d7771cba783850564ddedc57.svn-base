@@ -1,0 +1,170 @@
+function OnMessage_TopListHeartBeat(arg, others)
+	--API_Log("OnMessage_TopListHeartBeat, "..DumpTable(arg).." "..DumpTable(others))
+
+	local now = API_GetTime()
+	local top = others.toplist._data._top_data
+	local tit = top:SeekToBegin()
+	local tmp_toplist = tit:GetValue()
+	while tmp_toplist ~= nil do
+		if tmp_toplist._top_list_type == 2 then
+			if tmp_toplist._openserver_reward == 1 then
+				API_Log("######zhanli_openserver_reward have send to roles")
+			end
+			if tmp_toplist._openserver_reward == 0 then
+				local ed = DataPool_Find("elementdata")
+				local rankactivity = ed.rankactivity[1]
+				local quanju = ed.gamedefine[1]
+
+				local now_time = os.date("*t", now)
+				local cur_time = (now_time.year*10000 + now_time.month*100 + now_time.day)*10000+now_time.hour*100
+				
+				local mist = API_GetLuaMisc()
+				local reward_date = os.date("*t", mist._miscdata._open_server_time+rankactivity.rewards_date*3600*24)
+				local reward_time = reward_date.year*100000000 + reward_date.month*1000000 + reward_date.day*10000 + rankactivity.rewards_time*100
+				
+				if cur_time >= reward_time then
+					local toplist_data = tmp_toplist._new_top_list_by_data._data
+					local rit = toplist_data:SeekToBegin()
+					local r = rit:GetValue()
+					local members = {}
+					while r~=nil do
+						local rit_list = r:SeekToBegin()
+						local r_list = rit_list:GetValue()
+						while r_list~=nil do
+							local info = {}
+							info.id = r_list._id
+							info.level = r_list._level
+							info.data = r_list.data
+							members[#members+1] = info
+							rit_list:Next()
+							r_list = rit_list:GetValue()
+						end
+						rit:Next()
+						r = rit:GetValue()
+					end
+						
+					local max_num = 0
+					if table.getn(members) > quanju.rank_max_number then
+						max_num = quanju.rank_max_number
+					else
+						max_num = table.getn(members)
+					end
+
+					local rank = 0
+					for index = 1, max_num do
+						local info = members[table.getn(members) - index + 1]
+						if info.level >= rankactivity.level_limit and tonumber(info.data:ToStr()) >= rankactivity.score_limit then
+							rank = rank + 1
+							local mail_id = rankactivity.rank_rewards[rank].reward_id
+							local msg = NewMessage("SendMail")
+							msg.mail_id = mail_id
+							msg.arg1 = tostring(rank)
+							API_SendMessage(info.id, SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+						end
+						if rank == 10 or tonumber(info.data:ToStr()) < rankactivity.score_limit then
+							break
+						end
+					end
+
+					tmp_toplist._openserver_reward = 1
+				end
+			end
+		end
+
+		if now >= tmp_toplist._new_top_list_by_data._timestamp then
+			local ed = DataPool_Find("elementdata")
+			local quanju = ed.gamedefine[1]
+			if tmp_toplist._top_list_type ~= 7 and tmp_toplist._top_list_type ~= 8 and tmp_toplist._top_list_type ~= 9 then
+				tmp_toplist._old_top_list = tmp_toplist._new_top_list_by_data._data
+			end
+			if quanju.global_reset_time >= 0 and quanju.global_reset_time <= 23 then
+				tmp_toplist._new_top_list_by_data._timestamp = API_MakeTodayTime(quanju.global_reset_time, 0, 0) + 3600*24
+			else
+				tmp_toplist._new_top_list_by_data._timestamp = API_MakeTodayTime(5, 0, 0) + 3600*24
+			end
+			--PVP排行榜奖励
+			if tmp_toplist._top_list_type == 3 then
+				--在这里给排行榜上面的人发每日的奖励
+				local toplist_data = tmp_toplist._old_top_list
+				local rit = toplist_data:SeekToBegin()
+				local r = rit:GetValue()
+				local members = {}
+				while r~=nil do
+					local rit_list = r:SeekToBegin()
+					local r_list = rit_list:GetValue()
+					while r_list~=nil do
+						members[#members+1] = r_list._id
+						rit_list:Next()
+						r_list = rit_list:GetValue()
+					end
+					rit:Next()
+					r = rit:GetValue()
+				end
+				
+				local mailid = 0
+				local all_number = table.getn(members)
+				
+				--发一个系统邮件，用来给全服的玩家发送PVP每日奖励
+				local msg = NewMessage("SendServerEvent")
+				msg.event_type = G_EVENT_TYPE["MAIL_PVP_DAILY"]
+				msg.end_time = 1
+				API_SendMsg("0", SerializeMessage(msg), 0)
+			end
+
+			--鲜花榜成就发奖
+			if tmp_toplist._top_list_type == 9 then
+				local now_time = os.date("*t", now)
+				--每周一发奖,发奖的同时需要把实时榜的信息更新到历史榜，然后清空实时榜
+				tmp_toplist._old_top_list = tmp_toplist._new_top_list_by_data._data
+				tmp_toplist._new_top_list_by_data._data:Clear()
+				--处理鲜花榜奖励信息
+				tmp_toplist._reward_info._old_data1 = tmp_toplist._reward_info._new_data1
+				tmp_toplist._reward_info._new_data1 = math.random(1, 3)
+				tmp_toplist._reward_info._old_data2 = tmp_toplist._reward_info._new_data2
+				tmp_toplist._reward_info._new_data2 = math.random(1, 3)
+					
+				local toplist_data = tmp_toplist._old_top_list
+				local rit = toplist_data:SeekToBegin()
+				local r = rit:GetValue()
+				local members = {}
+				while r~=nil do
+					local rit_list = r:SeekToBegin()
+					local r_list = rit_list:GetValue()
+					while r_list~=nil do
+						members[#members+1] = r_list._id
+						rit_list:Next()
+						r_list = rit_list:GetValue()
+					end
+					rit:Next()
+					r = rit:GetValue()
+				end
+					
+				local max_num = 0
+				if table.getn(members) > quanju.rank_max_number then
+					max_num = quanju.rank_max_number
+				else
+					max_num = table.getn(members)
+				end
+
+				local index = 1
+				local flowerrankinginfos = ed.flowerrankinglist
+				for info in DataPool_Array(flowerrankinginfos) do
+					while index <= info.lower_limit_rank and index <= max_num do
+						local msg = NewMessage("SendMail")
+						msg.mail_id = info.weekly_personal_reward_mail_id[tmp_toplist._reward_info._old_data1]
+						if index == 1 then
+							msg.mafia_mail_id = info.weekly_mafia_reward_mail_id[tmp_toplist._reward_info._old_data2]
+						end
+						msg.arg1 = tostring(index)
+						API_SendMessage(members[max_num - index + 1], SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+						index = index + 1
+					end
+				end
+			end
+		end
+		
+				
+		tit:Next()
+		tmp_toplist = tit:GetValue()
+	end
+end

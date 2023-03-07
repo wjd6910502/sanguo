@@ -1,0 +1,34 @@
+[LogUDPClient]
+type                    =       udp
+port                    =       11101
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       32768
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[LogTCPClient]
+type                    =       tcp
+port                    =       11101
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       32768
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[LaohuInformClient]
+type                    =       tcp
+port                    =       8890
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+
+

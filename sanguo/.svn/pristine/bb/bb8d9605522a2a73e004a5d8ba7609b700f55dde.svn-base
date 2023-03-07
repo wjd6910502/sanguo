@@ -1,0 +1,32 @@
+
+#ifndef __GNET_PVPCENTERCREATE_HPP
+#define __GNET_PVPCENTERCREATE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class PvpCenterCreate : public GNET::Protocol
+{
+	#include "pvpcentercreate"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "GAMED::PvpCenterCreate, roleid=%ld, port=%d", roleid, port);
+
+		Octets tmp_out;
+		Base64Encoder::Convert(tmp_out, ip);
+
+		char msg[256];
+		snprintf(msg, sizeof(msg), "10013:%d:%s:%d:", start_time, (char*)tmp_out.begin(), port); //PvpBegin
+		MessageManager::GetInstance().Put(roleid, roleid, msg);
+	}
+};
+
+};
+
+#endif

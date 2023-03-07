@@ -1,0 +1,7 @@
+d34092068f57e1a0d9a868a1500f870e  gm
+3f3a39c9aac2006f8f3145aba1271ab8  gmclient.o
+a4aea38bbe87e9faa8c5371efe70d635  state.o
+8685174cd0e4a4c623125356027ea3db  stubs.o
+602f9e7553dd5f00cb6351c4062b9824  gm.o
+82dc37de5d5644225aa91cef4ea256aa  ../xlib/libio32.so
+763672d53a3ca9cdfa4c6eeac7d05b58  ../xlib/liblog32.so

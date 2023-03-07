@@ -1,0 +1,527 @@
+#!/usr/bin/env python
+#coding=GBK
+
+import sys, os
+from xml.dom import minidom
+
+SIMPLE_TYPES = ( "int", "std::string", "Int64", "char" )
+dbversion_cur = 0
+
+DEFAULTS = {}
+DEFAULTS["int"] = "0"
+
+g_structs = {}
+
+class ParseError():
+	pass
+
+def abort(desc):
+	print u"FATAL ERROR: "+desc
+	raise ParseError
+
+def warning(desc):
+	print u"WARNING: "+desc
+
+def makeStruct(struct_node, header_fp, pkg_fp):
+	name = ""
+	variables = []
+
+	for (k,v) in struct_node.attributes.items():
+		if k == "name":
+			name = v
+	if len(name) == 0:
+		abort(u"structure缺少name")
+	if g_structs.has_key(name):
+		abort(u"structure(%s) name重复"%name)
+	
+
+	for nd in struct_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "variable":
+			var_name = ""
+			var_type = ""
+			dbversion = 0
+			comments = ""
+			for (k,v) in nd.attributes.items():
+				if k == "name":
+					var_name = v
+				elif k == "type":
+					for t in SIMPLE_TYPES:
+						if t == v:
+							var_type = v
+							break
+					if g_structs.has_key(v):
+						var_type = v
+					if var_type == "":
+						abort(u"command(%s)包含错误的type(%s)"%(name,v))
+				elif k == "dbversion":
+					dbversion = int(v)
+				elif k == "comments":
+					comments = v
+			if len(var_name) == 0:
+				abort(u"structure(%s)变量缺少name"%name)
+			if len(var_type) == 0:
+				abort(u"structure(%s)变量(%s)缺少type"%(name,var_name))
+			if dbversion < 0:
+				abort(u"structure(%s)变量(%s) dbversion有错(%d)"%(name,var_name,dbversion))
+			elif dbversion > dbversion_cur:
+				abort(u"structure(%s)变量(%s) dbversion有错(%d), 太大了"%(name,var_name,dbversion))
+			variables.append((var_name, var_type, dbversion, comments))
+	if len(variables) == 0:
+		abort(u"structure(%s)缺少变量"%name)
+	g_structs[name] = True
+
+	declare = ""
+	default = ": "
+	for (n,t,v,c) in variables:
+		if len(c) != 0:
+			declare += "\t%s %s;//%s\n" % (t,n,c)
+		else:
+			declare += "\t%s %s;\n" % (t,n)
+		if DEFAULTS.has_key(t):
+			default += "%s(%s), " % (n, DEFAULTS[t])
+	#marshal
+	marshal = "\t\tif(os._for_transaction)\n"
+	marshal += "\t\t{\n"
+	for (n,t,v,c) in variables:
+		marshal += "\t\t\tos << %s;\n" % n
+	marshal += "\t\t}\n"
+	marshal += "\t\telse\n"
+	marshal += "\t\t{\n"
+	for (n,t,v,c) in variables:
+		if v>0:
+			marshal += "\t\t\tos << %s;\n" % n
+	marshal += "\t\t}"
+	#unmarshal
+	unmarshal = "\t\tif(os._for_transaction)\n"
+	unmarshal += "\t\t{\n"
+	for (n,t,v,c) in variables:
+		unmarshal += "\t\t\tos >> %s;\n" % n
+	unmarshal += "\t\t}\n"
+	for i in range(1, dbversion_cur+1):
+		unmarshal += "\t\telse if(os._dbversion == %d)\n"%i
+		unmarshal += "\t\t{\n"
+		for (n,t,v,c) in variables:
+			if v>0 and v<=i:
+				unmarshal += "\t\t\tos >> %s;\n" % n
+		unmarshal += "\t\t}\n"
+	#backup
+	backup = ""
+	for (n,t,v,c) in variables:
+		backup += "\t\telse if(strcmp(name, \"%s\") == 0)\n" % n
+		backup += "\t\t{\n"
+		if t in SIMPLE_TYPES:
+			backup += "\t\t\tOctetsStream os;\n"
+			backup += "\t\t\tos._for_transaction = true;\n"
+			backup += "\t\t\tos << %s;\n" % n
+			backup += "\t\t\t_transaction_data[\"%s\"] = os;\n" % n
+		else:
+			backup += "\t\t\t%s.restore(transaction_id);\n\n" % n
+			backup += "\t\t\tOctetsStream os;\n"
+			backup += "\t\t\tos._for_transaction = true;\n"
+			backup += "\t\t\tos << %s;\n" % n
+			backup += "\t\t\t_transaction_data[\"%s\"] = os;\n" % n
+		backup += "\t\t}\n"
+	#restore1
+	restore1 = ""
+	for (n,t,v,c) in variables:
+		restore1 += "\t\t\tit = _transaction_data.find(\"%s\");\n" % n
+		restore1 += "\t\t\tif(it != _transaction_data.end())\n"
+		restore1 += "\t\t\t{\n"
+		restore1 += "\t\t\t\tOctetsStream os(it->second);\n"
+		restore1 += "\t\t\t\tos._for_transaction = true;\n"
+		restore1 += "\t\t\t\tos >> %s;\n" % n
+		if t in SIMPLE_TYPES:
+			restore1 += "\t\t\t}\n"
+		else:
+			restore1 += "\t\t\t\t%s.cleanup();\n" % n
+			restore1 += "\t\t\t}\n"
+			restore1 += "\t\t\telse\n"
+			restore1 += "\t\t\t{\n"
+			restore1 += "\t\t\t\t%s.restore(transaction_id);\n" % n
+			restore1 += "\t\t\t}\n"
+	#restore2
+	restore2 = ""
+	for (n,t,v,c) in variables:
+		if t not in SIMPLE_TYPES:
+			restore2 += "\t\t\t%s.restore(transaction_id);\n" % n
+	#cleanup
+	cleanup = ""
+	for (n,t,v,c) in variables:
+		if t not in SIMPLE_TYPES:
+			cleanup += "\t\t%s.cleanup();\n" % n
+
+	d = {}
+	d["name"] = name
+	d["declare"] = declare.rstrip()
+	d["default"] = default.rstrip(" ,:")
+	d["marshal"] = marshal.rstrip()
+	d["unmarshal"] = unmarshal.rstrip()
+	d["backup"] = backup.rstrip()
+	d["restore1"] = restore1.rstrip()
+	d["restore2"] = restore2.rstrip()
+	d["cleanup"] = cleanup.rstrip()
+
+	header = """
+class %(name)s: public GNET::Marshal
+{
+public:
+%(declare)s
+
+private:
+	int _transaction_id;
+	std::map<std::string, GNET::Octets> _transaction_data;
+
+public:
+	%(name)s()%(default)s { _transaction_id=0; }
+	virtual ~%(name)s() {}
+
+	virtual OctetsStream& marshal(OctetsStream &os) const
+	{
+%(marshal)s
+		return os;
+	}
+	virtual const OctetsStream& unmarshal(const OctetsStream &os)
+	{
+%(unmarshal)s
+		return os;
+	}
+
+	void backup(const char *name, int transaction_id)
+	{
+		if(transaction_id != _transaction_id)
+		{
+			_transaction_id = transaction_id;
+			_transaction_data.clear();
+		}
+		else if(_transaction_data.find(name) != _transaction_data.end())
+		{
+			return;
+		}
+
+		if(false)
+		{
+		}
+%(backup)s
+		else
+		{
+			abort();
+		}
+	}
+	void restore(int transaction_id)
+	{
+		if(transaction_id == _transaction_id)
+		{
+			auto it = _transaction_data.end();
+%(restore1)s
+		}
+		else
+		{
+%(restore2)s
+		}
+		_transaction_id = 0;
+		_transaction_data.clear();
+	}
+	void cleanup()
+	{
+		_transaction_id = 0;
+		_transaction_data.clear();
+
+%(cleanup)s
+	}
+
+};"""%d
+	#print header 
+	header_fp.write(header.encode('utf-8','ignore'))
+
+	pkg = """
+class %(name)s
+{
+public:
+%(declare)s
+
+	%(name)s(): %(default)s {}
+};"""%d
+	#print pkg
+	pkg_fp.write(pkg.encode('utf-8'))
+
+def makeList(list_node, header_fp, pkg_fp):
+	name = ""
+	value_type = ""
+
+	for (k,v) in list_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "value_type":
+			value_type = v
+	if len(name) == 0:
+		abort(u"list缺少name")
+	elif len(value_type) == 0:
+		abort(u"list(%s)缺少value_type"%name)
+	if g_structs.has_key(name):
+		abort(u"list(%s) name重复"%name)
+
+	g_structs[name] = True
+
+	d = {}
+	d["name"] = name
+	d["value_type"] = value_type
+
+	header = """
+class %(name)s;
+class %(name)sIter
+{
+	ListIter<%(value_type)s, std::list<%(value_type)s>::iterator, %(name)s> _rep;
+
+public:
+	%(name)sIter(std::list<%(value_type)s>::iterator it, void *list, int tag): _rep(it, list, tag) {}
+
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+
+	void Pop() { _rep.Pop(); }
+	void PushBefore(const %(value_type)s& v) { _rep.PushBefore(v); }
+	void PushAfter(const %(value_type)s& v) { _rep.PushAfter(v); }
+};
+class %(name)s: public GNET::Marshal
+{
+	List<%(value_type)s, std::list<%(value_type)s>::iterator, %(name)sIter> _rep;
+
+public:
+	%(name)s(): _rep(this) {}
+	%(name)s(const %(name)s& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+	virtual ~%(name)s() {}
+
+	%(name)s& operator= (const %(name)s& rhs)
+	{
+		_rep = rhs._rep;
+		_rep.SetShell(this);
+		return *this;
+	}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::list<%(value_type)s>::iterator End() { return _rep.End(); }
+	void Erase(std::list<%(value_type)s>::iterator it, int index) { _rep.Erase(it, index); }
+	void Insert(std::list<%(value_type)s>::iterator it, const %(value_type)s& v, int index) { _rep.Insert(it, v, index); }
+
+	int Size() const { return _rep.Size(); }
+
+	void PopFront() { _rep.PopFront(); }
+	void PushFront(const %(value_type)s& v) { _rep.PushFront(v); }
+	void PopBack() { _rep.PopBack(); }
+	void PushBack(const %(value_type)s& v) { _rep.PushBack(v); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+
+	void restore(int transaction_id) { _rep.restore(transaction_id); }
+	void cleanup() { _rep.cleanup(); }
+};""" % d
+	#print header 
+	header_fp.write(header)
+
+	pkg = """
+class %(name)sIter
+{
+public:
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+
+	void Pop() { _rep.Pop(); }
+	void PushBefore(const %(value_type)s& v) { _rep.PushBefore(v); }
+	void PushAfter(const %(value_type)s& v) { _rep.PushAfter(v); }
+};
+class %(name)s
+{
+public:
+	%(name)s(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	void PopFront() { _rep.PopFront(); }
+	void PushFront(const %(value_type)s& v) { _rep.PushFront(v); }
+	void PopBack() { _rep.PopBack(); }
+	void PushBack(const %(value_type)s& v) { _rep.PushBack(v); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+};"""%d
+	#print pkg 
+	pkg_fp.write(pkg)
+
+def makeMap(map_node, header_fp, pkg_fp):
+	name = ""
+	key_type = ""
+	value_type = ""
+
+	for (k,v) in map_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "key_type":
+			key_type = v
+		elif k == "value_type":
+			value_type = v
+	if len(name) == 0:
+		abort(u"list缺少name")
+	elif len(key_type) == 0:
+		abort(u"list(%s)缺少key_type"%name)
+	elif len(value_type) == 0:
+		abort(u"list(%s)缺少value_type"%name)
+	if g_structs.has_key(name):
+		abort(u"map(%s) name重复"%name)
+
+	g_structs[name] = True
+
+	d = {}
+	d["name"] = name
+	d["key_type"] = key_type 
+	d["value_type"] = value_type
+
+	header = """
+class %(name)s;
+class %(name)sIter
+{
+	MapIter<%(key_type)s, %(value_type)s, std::map<%(key_type)s, %(value_type)s>::iterator, %(name)s> _rep;
+
+public:
+	%(name)sIter(std::map<%(key_type)s, %(value_type)s>::iterator it, void *map, int tag): _rep(it, map, tag) {}
+
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+};
+class %(name)s: public GNET::Marshal
+{
+	Map<%(key_type)s, %(value_type)s, std::map<%(key_type)s, %(value_type)s>::iterator, %(name)sIter> _rep;
+
+public:
+	%(name)s(): _rep(this) {}
+	%(name)s(const %(name)s& rhs): _rep(rhs._rep) { _rep.SetShell(this); }
+	virtual ~%(name)s() {}
+
+	%(name)s& operator= (const %(name)s& rhs)
+	{
+		_rep = rhs._rep;
+		_rep.SetShell(this);
+		return *this;
+	}
+
+	void OnChanged() { _rep.OnChanged(); }
+	int Tag() const { return _rep.Tag(); }
+	std::map<%(key_type)s, %(value_type)s>::iterator End() { return _rep.End(); }
+
+	int Size() const { return _rep.Size(); }
+
+	%(value_type)s* Find(const %(key_type)s& k) { return _rep.Find(k); }
+	void Insert(const %(key_type)s& k, const %(value_type)s& v) { _rep.Insert(k, v); }
+	void Delete(const %(key_type)s& k) { _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	%(name)sIter Seek(const %(key_type)s& k) const { return _rep.Seek(k); }
+	%(name)sIter SeekToLast() const { return _rep.SeekToLast(); }
+
+	virtual GNET::Marshal::OctetsStream& marshal(GNET::Marshal::OctetsStream &os) const { return _rep.marshal(os); }
+	virtual const GNET::Marshal::OctetsStream& unmarshal(const GNET::Marshal::OctetsStream &os) { return _rep.unmarshal(os); }
+
+	void restore(int transaction_id) { _rep.restore(transaction_id); }
+	void cleanup() { _rep.cleanup(); }
+};"""%d
+	#print header 
+	header_fp.write(header)
+
+	pkg = """
+class %(name)sIter
+{
+public:
+	void Next() { _rep.Next(); }
+	%(value_type)s* GetValue() { return _rep.GetValue(); }
+};
+class %(name)s
+{
+public:
+	%(name)s(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	%(value_type)s* Find(const %(key_type)s& k) { return _rep.Find(k); }
+	void Insert(const %(key_type)s& k, const %(value_type)s& v) { _rep.Insert(k, v); }
+	void Delete(const %(key_type)s& k) { _rep.Delete(k); }
+	void Clear() { _rep.Clear(); }
+
+	%(name)sIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	%(name)sIter Seek(const %(key_type)s& k) const { return _rep.Seek(k); }
+	%(name)sIter SeekToLast() const { return _rep.SeekToLast(); }
+};"""%d
+	#print pkg 
+	pkg_fp.write(pkg)
+
+def main():
+	global dbversion_cur
+
+	xmldoc = minidom.parse("./structs.xml")
+	if xmldoc.firstChild.tagName != "structures":
+		abort(u"structs.xml文件格式有错误")
+
+	header_fp = open("./structs.h", "w")
+	header_begin = """
+#ifndef _STRUCTS_H_
+#define _STRUCTS_H_
+
+#include <string>
+#include <map>
+#include <list>
+
+#include "marshal.h"
+#include "forlua.h"
+
+namespace CACHE
+{
+
+"""
+	header_fp.write(header_begin)
+
+	src_pkg_fp = open("./forlua.pkg", "r")
+	pkg_fp = open("./structs.pkg", "w")
+	#前半部分来自于forlua.pkg
+	ln = src_pkg_fp.readline()
+	while ln!="":
+		if ln.find("$$$REPLACE ME!$$$")!=-1:
+			break
+		pkg_fp.write(ln)
+		ln = src_pkg_fp.readline()
+
+	root_node = xmldoc.firstChild
+	for (k,v) in root_node.attributes.items():
+		if k == "dbversion":
+			dbversion_cur = int(v)
+	if dbversion_cur<=0:
+		abort(u"structs.xml文件dbversion有错误")
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "structure":
+			makeStruct(nd, header_fp, pkg_fp)
+		elif nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "list":
+			makeList(nd, header_fp, pkg_fp)
+		elif nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "map":
+			makeMap(nd, header_fp, pkg_fp)
+
+	header_end = """
+};
+
+#endif //_STRUCTS_H_
+"""
+	header_fp.write(header_end)
+	header_fp.close()
+
+	#后半部分
+	ln = src_pkg_fp.readline()
+	while ln!="":
+		pkg_fp.write(ln)
+		ln = src_pkg_fp.readline()
+	pkg_fp.close()
+
+if __name__ == "__main__":
+	main()
+

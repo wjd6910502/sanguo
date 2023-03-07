@@ -1,0 +1,3 @@
+function OnCommand_MaShuGetBuff(player, role, arg, others)
+	--player:Log("OnCommand_MaShuGetBuff, "..DumpTable(arg).." "..DumpTable(others))
+end

@@ -1,0 +1,48 @@
+function OnCommand_YueZhanCancel(player, role, arg, others)
+	player:Log("OnCommand_YueZhanCancel, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("YueZhanCancel_Re")
+	resp.room_id = arg.room_id
+
+	local yuezhan_info = others.yuezhan_info._data
+
+	local yuezhan_data = yuezhan_info._yuezhan_info:Find(arg.room_id)
+	if yuezhan_data == nil then
+		resp.retcode = G_ERRCODE["YUEZHAN_ROOM_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--查看房间是否已经有人应战了
+	if not yuezhan_data._join_id:Equal(0) then
+		resp.retcode = G_ERRCODE["YUEZHAN_CANCLE_ROLE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--查看是否是你发起的约战
+	if yuezhan_data._create_id == role._roledata._base._id then
+		resp.retcode = G_ERRCODE["YUEZHAN_CANCLE_NOT_CREATE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--广播出去把这个约战的信息
+	local msg = NewMessage("YueZhanInfo")
+	msg.id = yuezhan_info._id
+	msg.channel = yuezhan_data._channel
+	msg.typ = 0
+
+	player:SendMessageToAllRole(SerializeMessage(msg))
+
+	yuezhan_info._yuezhan_info:Delete(arg.room_id)
+
+	resp.retcode = 0
+	player:SendToClient(SerializeCommand(resp))
+
+	--删除这个房间，重新设置玩家的状态
+	role._roledata._pvp._state = 0
+	role._roledata._pvp._typ = 0
+	role._roledata._status._time_line = G_ROLE_STATE["FREE"]
+
+end

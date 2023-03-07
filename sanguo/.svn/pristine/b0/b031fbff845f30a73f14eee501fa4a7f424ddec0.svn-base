@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<messages>
+	<message name="UpdateRoleInfo" type="1" receiver="gamed" receiver2="player">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+	</message>
+
+	<message name="PublicChat" type="2" receiver="gamed" receiver2="player">
+		<variable name="src" type="RoleBrief"/>
+		<variable name="content" type="string"/>
+	</message>
+
+	<message name="MafiaAddMember" type="3" receiver="gamed" receiver2="player">
+		<variable name="member" type="RoleBrief"/>
+	</message>
+
+
+
+
+
+
+
+
+	<!--10001¿ªÊ¼µÄÏûÏ¢id¶¼ÊÇÌØ¶¨ÓÃÍ¾µÄ£¬²»Òª¸Ä-->
+	<message name="CreateRoleResult" type="10001" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="Heartbeat" type="10002" receiver="gamed" receiver2="player">
+		<variable name="now" type="number"/>
+	</message>
+
+	<message name="CreateMafiaResult" type="10003" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="PVPHeartbeat" type="10004" receiver="gamed" receiver2="pvp">
+		<variable name="now" type="number"/>
+	</message>
+
+	<message name="PVPTriggerSend" type="10005" receiver="gamed" receiver2="pvp"/>
+	
+	<message name="DBHeartbeat" type="10006" receiver="gamed" receiver2="big">
+	</message>
+
+
+
+
+	<!--90001¿ªÊ¼µÄÇø¶ÎÁô¸ø²âÊÔÓÃ-->
+	<message name="TestMessage1" type="90001" receiver="gamed" receiver2="player" lock="toplist">
+	</message>
+
+	<message name="TestMessage2" type="90002" receiver="gamed" receiver2="mafia">
+	</message>
+
+	<message name="TestMessage3" type="90003" receiver="gamed" receiver2="toplist">
+	</message>
+
+	<message name="TestMessage4" type="90004" receiver="gamed" receiver2="big">
+	</message>
+</messages>
+

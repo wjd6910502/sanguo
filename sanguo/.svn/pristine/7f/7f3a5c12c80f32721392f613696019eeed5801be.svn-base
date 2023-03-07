@@ -1,0 +1,46 @@
+function OnMessage_YueZhanUpdateState(arg, others)
+	API_Log("OnMessage_YueZhanUpdateState, "..DumpTable(arg))
+	
+	local yuezhan_info = others.yuezhan_info._data
+	local yuezhan_data = yuezhan_info._yuezhan_info:Find(arg.room_id)
+
+	if yuezhan_data ~= nil then
+		if arg.typ > yuezhan_data._typ then
+			if arg.typ == 3 or arg.typ == 5 then
+				yuezhan_data._center_id = arg.room_id
+			end
+			yuezhan_data._typ = arg.typ
+			--就可以在这里广播观看信息了
+			local msg = NewMessage("YueZhanInfo")
+			msg.id = arg.room_id
+			msg.channel = yuezhan_data._channel
+			msg.typ = arg.typ
+			msg.info_id = arg.info
+			msg.creater = {}
+			msg.joiner = {}
+			msg.creater.id = yuezhan_data._create_id:ToStr()
+			msg.creater.name = yuezhan_data._create_name
+			msg.joiner.id = yuezhan_data._join_id:ToStr()
+			msg.joiner.name = yuezhan_data._join_name
+			
+			if yuezhan_data._channel == 2 then
+				API_SendMessageToAllRole(SerializeMessage(msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+			elseif yuezhan_data._channel == 3 then
+				local mafia_msg = NewMessage("MafiaYueZhan")
+				mafia_msg.id = msg.id
+				mafia_msg.channel = msg.channel
+				mafia_msg.typ = msg.typ
+				mafia_msg.announce = msg.announce
+				mafia_msg.info_id = msg.info_id
+				mafia_msg.creater = msg.creater
+				mafia_msg.joiner = msg.joiner
+				mafia_msg.time = msg.time
+				API_SendMessage(yuezhan_data._mafia_id, SerializeMessage(mafia_msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+			end
+
+			if arg.typ == 5 or arg.typ == 6 then
+				yuezhan_info._yuezhan_info:Delete(arg.room_id)
+			end
+		end
+	end
+end

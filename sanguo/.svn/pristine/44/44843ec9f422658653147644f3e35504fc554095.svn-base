@@ -1,0 +1,3 @@
+function OnCommand_DaTiGetInfo(player, role, arg, others)
+	--player:Log("OnCommand_DaTiGetInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

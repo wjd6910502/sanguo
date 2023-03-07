@@ -1,0 +1,171 @@
+function OnCommand_TowerGetLayerInfo(player, role, arg, others)
+	player:Log("OnCommand_TowerGetLayerInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("TowerGetLayerInfo_Re")
+	if arg.layer ~= role._roledata._tower_data._cur_layer then --算是数据一致性校验
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	resp.layer = role._roledata._tower_data._cur_layer
+	local ed = DataPool_Find("elementdata")
+	local layer = resp.layer
+	if role._roledata._tower_data._difficulty == 2 then
+		layer = layer + 100 
+	end
+	local towerstage = ed:FindBy("tower_stage", layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return 
+	end
+	
+	if towerstage.stage_category == 1 then --打怪
+		--客户端进入战斗层之后，要显示三个难度对手的战力信息，随机怪物的代码调整到这处理
+		local army_info = role._roledata._tower_data._cur_attack_all_army_info
+		if army_info:Size() == 0 then
+			local dif = 0 --怪物难度
+			for enemy in DataPool_Array(towerstage.enemy_team) do
+				--随机敌人组 需要确认
+				local size = 0
+				for id in DataPool_Array(enemy.team_ids) do
+					size = size + 1
+				end
+				local max = 0
+				for i = 1, size do
+					max = max + enemy.team_odds[i]
+				end
+				local randd = math.random(1, max)
+				local add = 0
+				for i = 1, size do
+					add = add + enemy.team_odds[i]
+					if randd <= add then
+						--保存玩家抽取到的敌人信息
+						local towerenemy = ed:FindBy("tower_enemy", enemy.team_ids[i])
+						if towerenemy ~= nil then
+							local tmp = CACHE.TowerAttackInfoMap()
+							for monster in DataPool_Array(towerenemy.monster_ids) do
+								if monster ~= 0 then
+									local tmp1 = CACHE.TowerAttackInfo()
+									tmp1._id = monster
+									tmp1._alive_flag = 1
+									tmp:Insert(monster, tmp1)	
+								end
+							end
+							dif = dif + 1
+							army_info:Insert(dif, tmp)
+						end
+						break
+					end
+				end
+			end
+		end
+		-- 多维数组，要发送三个难度的怪物信息，它现在是三组武将，协议是vector套vector
+		resp.cur_army = {}
+		local lit = army_info:SeekToBegin() --这是个引用，能直接这么用
+		local l = lit:GetValue()
+		while l ~= nil do
+			local army = {}
+			local army_list = {}
+			local lita = l:SeekToBegin()
+			local la = lita:GetValue()
+			while la ~= nil do
+				army.id =  la._id
+				army.hp =  la._hp
+				army.anger = la._anger
+				army.alive = la._alive_flag
+				army_list[#army_list + 1] = army
+				lita:Next()
+				la = lita:GetValue()
+			end
+			resp.cur_army[#resp.cur_army+1] = {}
+			resp.cur_army[#resp.cur_army].armyinfo = army_list
+			lit:Next()
+			l = lit:GetValue()
+		end 
+		resp.army_difficulty = role._roledata._tower_data._select_layer_difficulty
+	elseif towerstage.stage_category == 3 then
+		local buffs = role._roledata._tower_data._buff_info:Find(arg.layer)
+		if buffs == nil then
+			local buff_ids = {}
+			local size = 0
+			for buff in DataPool_Array(towerstage.buffs3) do
+				size = size + 1
+			end
+			local max = 0 
+			for i = 1, size do
+				max = max + towerstage.buffs3_odds[i]
+			end
+			local randd = math.random(1, max)
+			local add = 0
+			for i = 1, size do
+				add = add + towerstage.buffs3_odds[i]
+				if randd <= add then
+					buff_ids[1] = towerstage.buffs3[i]
+					break
+				end
+			end
+			
+			size = 0
+			for buff in DataPool_Array(towerstage.buffs15) do
+				size = size + 1
+			end
+			max = 0
+			for i = 1, size do
+				max = max + towerstage.buffs15_odds[i]
+			end
+			randd = math.random(1, max)
+			add = 0
+			for i = 1, size do
+				add = add + towerstage.buffs15_odds[i]
+				if randd <= add then
+					buff_ids[2] = towerstage.buffs15[i]
+					break
+				end
+			end 
+			
+			size = 0
+			for buff in DataPool_Array(towerstage.buffs30) do
+				size = size + 1
+			end
+
+			max = 0 
+			for i = 1, size do
+				max = max + towerstage.buffs30_odds[i]
+			end 
+			randd = math.random(1, max)
+			add = 0 
+			for i = 1, size do
+				add = add + towerstage.buffs30_odds[i]
+				if randd <= add then
+					buff_ids[3] = towerstage.buffs30[i]
+					break
+				end 
+			end
+
+			local tmp = CACHE.TowerBuyBuffInfo()
+			tmp._layer = role._roledata._tower_data._cur_layer
+			size  = table.getn(buff_ids)
+			for i = 1, size do
+				local tmp1 = CACHE.TowerBuffInfo()
+				tmp1._id = buff_ids[i]
+				tmp._buff:PushBack(tmp1)
+			end
+			role._roledata._tower_data._buff_info:Insert(tmp._layer, tmp)
+		end
+		if buffs ~= nil then
+			local lit = buffs:SeekToBegin() --list遍历
+			local l = lit:GetValue()
+			while l~= nil do
+				resp.buff_list[#resp.buff_list + 1] = l._id
+				lit:Next()
+				l = lit:GetValue()
+			end
+		end
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.typ = towerstage.stage_category
+	player:SendToClient(SerializeCommand(resp))
+end

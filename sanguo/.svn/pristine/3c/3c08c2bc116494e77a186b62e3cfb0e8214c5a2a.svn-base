@@ -1,0 +1,65 @@
+
+#ifndef __GNET_UDPSTUNREQUEST_HPP
+#define __GNET_UDPSTUNREQUEST_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "forwardudpstunrequest.hpp"
+#include "udpstunresponse.hpp"
+#include "stundeafserver.hpp"
+#include "stungameclient.hpp"
+
+namespace GNET
+{
+
+class UDPSTUNRequest : public GNET::Protocol
+{
+	#include "udpstunrequest"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "GAMED::UDPSTUNRequest::Process, xxx=%d, change_ip=%d, change_port=%d, sid=%u, thread=%u",
+		          xxx, change_ip, change_port, sid, (unsigned int)pthread_self());
+
+		//StatisticManager::GetInstance().IncUDPCmdCount();
+
+		const SockAddr *client_addr = UDPTransServer::GetInstance()->GetSockAddrBySid(sid);
+		if(!client_addr) return;
+
+		const struct sockaddr_in *si = (const struct sockaddr_in*)*client_addr;
+
+		char client_ip[128];
+		inet_ntop(AF_INET, &si->sin_addr, client_ip, sizeof(client_ip));
+
+		if(change_ip)
+		{
+			ForwardUDPSTUNRequest prot;
+			prot.xxx = xxx;
+			prot.client_ip = Octets(client_ip, strlen(client_ip));
+			prot.client_port = ntohs(si->sin_port);
+
+			STUNGameClient::GetInstance()->SendProtocol(prot);
+		}
+		else
+		{
+			UDPSTUNResponse prot;
+			prot.xxx = xxx;
+			prot.client_ip = Octets(client_ip, strlen(client_ip));
+			prot.client_port = ntohs(si->sin_port);
+		
+			if(change_port)
+			{
+				STUNDeafServer::GetInstance()->SendTo(*client_addr, prot);
+			}
+			else
+			{
+				manager->Send(sid, prot);
+			}
+		}
+	}
+};
+
+};
+
+#endif

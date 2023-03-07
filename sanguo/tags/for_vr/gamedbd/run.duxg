@@ -1,0 +1,9 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=.:../xlib/
+
+/usr/bin/killall gamedbd
+
+(nohup setsid ./gamedbd gamesys.duxg.conf > db.log 2>&1 &)
+
+

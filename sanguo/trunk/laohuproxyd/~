@@ -1,0 +1,155 @@
+#include "laohuproxyserver.hpp"
+#include "conf.h"
+#include "log.h"
+#include "thread.h"
+#include <iostream>
+#include <unistd.h>
+#include "multi.h"
+#include "curldef.h" 
+
+CURLM* g_cm = NULL;
+std::string url ="https://www.laohu.com";
+std::map<std::string, CURL_OBJ > g_mapobj;
+
+void CurlM_Init()
+{
+	curl_global_init(CURL_GLOBAL_ALL);
+	g_cm = curl_multi_init();
+	curl_multi_setopt(g_cm, CURLMOPT_MAXCONNECTS, (long)MAX);
+}
+
+
+void CurlM_Cleanup()
+{
+	if(g_cm != NULL )
+	{
+		curl_multi_cleanup(g_cm);
+		curl_global_cleanup();	
+		g_cm = NULL;
+	}
+}
+
+
+using namespace GNET;
+
+int CURLM_Process()
+{
+	CURLMsg *msg;
+    long L;
+    int M, Q, U = -1;
+    fd_set R, W, E;
+    struct timeval T;
+
+    while(U)
+	{
+		 //这个只支持很短的返回结果 如果很长需要循环
+		curl_multi_perform(g_cm, &U);
+     	if(U)
+	 	{	 	    
+			FD_ZERO(&R);
+			FD_ZERO(&W);
+	 	   	FD_ZERO(&E);
+	 	   	if(curl_multi_fdset(g_cm, &R, &W, &E, &M)) 
+	 	   	{
+	 	       fprintf(stderr, "E: curl_multi_fdset\n");
+	 	       return -1;
+	 	   	}
+
+     	   	if(curl_multi_timeout(g_cm, &L))
+	 	   	{
+	 	       fprintf(stderr, "E: curl_multi_timeout\n");
+     	       return -1;
+     	   	}
+     	   
+	 	   	if(L == -1)
+	 	   	   L = 100;
+	 	   	if(M == -1) 
+	 	   	{
+     	     	sleep((unsigned int)L / 1000);
+     	   	}
+     	   	else 
+	 	   	{
+     	     	T.tv_sec = L/1000;
+     	     	T.tv_usec = (L%1000)*1000;
+
+     	     	if(0 > select(M+1, &R, &W, &E, &T))
+	 	     	{
+     	       		fprintf(stderr, "E: select(%i,,,,%li): %i: %s\n", M+1, L, errno, strerror(errno));
+     	       		return -1;
+     	     	}
+     	   	}   
+     	 }
+		 
+     	 while((msg = curl_multi_info_read(g_cm, &Q))) 
+	 	 {
+			if(msg->msg == CURLMSG_DONE) 
+	 	   	{
+				char account[256];
+				memset(account,'\0',256);
+     	     	CURL *e = msg->easy_handle;
+     	     	curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &account);
+			 
+			 	//互斥变量
+				auto it = g_mapobj.find(std::string(account));
+			 	if ( it != g_mapobj.end() )
+			 	{
+				 	LaohuProxyServer::GetInstance()->SendContent( it->second.content );
+					
+					//TODO: 
+					curl_easy_cleanup(it->second.eh); 
+					g_mapobj.erase(it++);
+				 	//保证析构
+			 	}
+			 	else
+			 	{
+					std::cout<<"not find account "<<account<<std::endl;	 
+			 	}
+     	     	 	
+			 	//fprintf(stderr, "R: %d - %s <%s>\n",msg->data.result, curl_easy_strerror(msg->data.result), url);
+     	     
+			 	curl_multi_remove_handle(g_cm, e);
+     	   	}
+			else 
+	 	   	{
+     	     	fprintf(stderr, "E: CURLMsg (%d)\n", msg->msg);
+     	    }
+     	 }
+    }
+
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	if (argc != 2 || access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Usage: " << argv[0] << " configurefile" << std::endl;
+		exit(-1);
+	}
+
+	Conf *conf = Conf::GetInstance(argv[1]);
+	Log::setprogname("laohuproxyd");
+	{
+		LaohuProxyServer *manager = LaohuProxyServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	
+	//全局curlm初始化	
+	CurlM_Init();
+	
+	while(1)
+	{
+		GNET::PollIO::Poll(100);
+		GNET::Thread::Pool::_pool.TryProcessAllTask();
+		
+		//处理请求事件
+		CURLM_Process();
+	}
+	
+	//全局curlm释放
+	CurlM_Cleanup();
+	
+	return 0;
+}
+

@@ -1,0 +1,70 @@
+#!/bin/sh
+
+stop_run()
+{
+        killall client
+        exit 0
+}
+
+trap "stop_run" SIGINT
+
+
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+ulimit -c unlimited
+
+
+
+./client gamesys.stress.conf 16a TestPing 500 &
+./client gamesys.stress.conf 16b TestPing 500 &
+./client gamesys.stress.conf 16c TestPing 500 &
+./client gamesys.stress.conf 16d TestPing 500 &
+./client gamesys.stress.conf 16e TestPing 500 &
+#./client gamesys.stress.conf 1 TestPublicChat &
+
+#for i in `seq 10000`
+#do
+#	#if [ $i -gt 100 -a $i -le 120 ]
+#	if [ $i -gt 100 -a $i -le 102 ]
+#	then
+#		./client gamesys.stress.conf $i TestPublicChat >&/dev/null &
+#	fi
+#done
+
+#prefix=`date +%s`
+#./client gamesys.stress.conf 1_${prefix} TestStress
+
+#base=10000
+#
+#for i in `seq 10000`
+#do
+#	if [ $i -gt 100 -a $i -le 10000 ]
+#	then
+#		#echo "--------------------------------------------------------------------------------------"
+#		i=`echo "${base}+${i}" | bc`
+#		#echo ${i}
+#		./client gamesys.stress.conf ${i} TestStress >&/dev/null
+#	fi
+#done
+
+
+
+
+
+
+
+
+
+
+
+
+
+while true
+do
+        sleep 1
+done
+
+
+

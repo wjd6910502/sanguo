@@ -1,0 +1,7 @@
+275dca48d751c375642cf2062f50bd79  customer
+7648200fec1482d9eab8061275878963  customerserviceclient.o
+3df2b1ef41090daab9122220595f2ff0  state.o
+c944fd720dc5ee1c287ef375c9552b06  stubs.o
+a69b2c73fa414b58dbf7d04a60e420af  customer.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

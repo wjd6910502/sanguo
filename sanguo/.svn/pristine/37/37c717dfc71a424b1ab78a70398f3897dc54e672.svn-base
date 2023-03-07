@@ -1,0 +1,28 @@
+function OnMessage_GMCmd_GetChar(player, role, arg, others)
+	player:Log("OnMessage_GmCmd_GetChar, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = CACHE.GMCmdGetCharRe()
+	resp.charid = role._roledata._base._id
+	resp.name = role._roledata._base._name
+	resp.lineid = API_GetZoneId()
+	resp.level = role._roledata._status._level
+	resp.sex = role._roledata._base._sex
+	resp.registertime = os.date("%Y-%m-%d %H:%M:%S", role._roledata._base._create_time)
+	if role._roledata._status._login_time == 0 then
+		resp.lastlogintime = 0
+	else
+		resp.lastlogintime = os.date("%Y-%m-%d %H:%M:%S", role._roledata._status._login_time)
+	end
+	resp.ip = role._roledata._device_info._public_ip
+	resp.exp = role._roledata._status._exp
+	resp.familyname = role._roledata._mafia._name
+	resp.gold = role._roledata._status._yuanbao
+	resp.money = role._roledata._status._money
+	resp.bdyuanbao = role._roledata._status._chongzhi
+	resp.vip = ROLE_GetVIP(role) 
+	resp.totalcash = 0	--上线前修改
+	ROLE_UpdateZhanli(role)
+	resp.pingfen = role._roledata._status._zhanli
+
+	player:GMCmdGetCharReply(resp, arg.session_id, arg.sid)
+end

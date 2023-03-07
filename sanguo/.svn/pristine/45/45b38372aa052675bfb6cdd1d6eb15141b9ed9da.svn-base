@@ -1,0 +1,278 @@
+--DONT CHANGE ME!
+
+function SerializeCommand(cmd)
+	local os = ""
+
+	if false then
+		--never to here
+	elseif cmd.__type__ == "MafiaQuit" then
+		os = os..Serialize(10112)
+	elseif cmd.__type__ == "GetVersion" then
+		os = os..Serialize(1)
+	elseif cmd.__type__ == "GetVersion_Re" then
+		os = os..Serialize(2)
+		os = os..Serialize(cmd.version)
+		os = os..Serialize(cmd.cmd_version)
+		os = os..Serialize(cmd.data_version)
+	elseif cmd.__type__ == "GetRoleInfo" then
+		os = os..Serialize(3)
+	elseif cmd.__type__ == "GetRoleInfo_Re" then
+		os = os..Serialize(4)
+		os = os..Serialize(cmd.retcode)
+		os = os..SerializeStruct("RoleInfo", cmd.info)
+	elseif cmd.__type__ == "CreateRole" then
+		os = os..Serialize(5)
+		os = os..Serialize(cmd.name)
+		os = os..Serialize(cmd.photo)
+	elseif cmd.__type__ == "CreateRole_Re" then
+		os = os..Serialize(6)
+		os = os..Serialize(cmd.retcode)
+		os = os..SerializeStruct("RoleInfo", cmd.info)
+	elseif cmd.__type__ == "EnterInstance" then
+		os = os..Serialize(7)
+		os = os..Serialize(cmd.inst_tid)
+	elseif cmd.__type__ == "EnterInstance_Re" then
+		os = os..Serialize(8)
+		os = os..Serialize(cmd.retcode)
+		os = os..Serialize(cmd.inst_tid)
+		os = os..Serialize(cmd.seed)
+	elseif cmd.__type__ == "CompleteInstance" then
+		os = os..Serialize(9)
+		os = os..Serialize(cmd.inst_tid)
+		os = os..Serialize(cmd.score)
+		if cmd.heros==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.heros)
+			for i = 1, #cmd.heros do
+				os = os..Serialize(cmd.heros[i])
+			end
+		end
+		os = os..Serialize(cmd.operations)
+	elseif cmd.__type__ == "CompleteInstance_Re" then
+		os = os..Serialize(10)
+		os = os..Serialize(cmd.retcode)
+		os = os..Serialize(cmd.inst_tid)
+		os = os..Serialize(cmd.score)
+		os = os..SerializeStruct("SweepInstanceData", cmd.rewards)
+	elseif cmd.__type__ == "SyncRoleInfo" then
+		os = os..Serialize(11)
+	elseif cmd.__type__ == "MafiaDestory" then
+		os = os..Serialize(10114)
+	elseif cmd.__type__ == "MafiaDestory_Re" then
+		os = os..Serialize(10115)
+		os = os..Serialize(cmd.retcode)
+	elseif cmd.__type__ == "PublicChat" then
+		os = os..Serialize(10004)
+		os = os..SerializeStruct("RoleBrief", cmd.src)
+		os = os..Serialize(cmd.content)
+	elseif cmd.__type__ == "ListFriends" then
+		os = os..Serialize(10006)
+	elseif cmd.__type__ == "ListFriends_Re" then
+		os = os..Serialize(10007)
+		if cmd.friends==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.friends)
+			for i = 1, #cmd.friends do
+				os = os..SerializeStruct("Friend", cmd.friends[i])
+			end
+		end
+		if cmd.requests==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.requests)
+			for i = 1, #cmd.requests do
+				os = os..SerializeStruct("Friend", cmd.requests[i])
+			end
+		end
+	elseif cmd.__type__ == "FriendRequest" then
+		os = os..Serialize(10008)
+		os = os..Serialize(cmd.dest_id)
+		os = os..SerializeStruct("Friend", cmd.src)
+	elseif cmd.__type__ == "FriendReply" then
+		os = os..Serialize(10009)
+		os = os..Serialize(cmd.src_id)
+		os = os..Serialize(cmd.accept)
+	elseif cmd.__type__ == "NewFriend" then
+		os = os..Serialize(10010)
+		os = os..SerializeStruct("Friend", cmd.friend)
+	elseif cmd.__type__ == "MafiaAnnounce_Re" then
+		os = os..Serialize(10117)
+		os = os..Serialize(cmd.retcode)
+		os = os..Serialize(cmd.announce)
+	elseif cmd.__type__ == "TopListGet" then
+		os = os..Serialize(20000)
+		os = os..Serialize(cmd.top_type)
+	elseif cmd.__type__ == "TopListGet_Re" then
+		os = os..Serialize(20001)
+		os = os..Serialize(cmd.retcode)
+		if cmd.members==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.members)
+			for i = 1, #cmd.members do
+				os = os..SerializeStruct("TopListData", cmd.members[i])
+			end
+		end
+	elseif cmd.__type__ == "TaskFinish" then
+		os = os..Serialize(20010)
+		os = os..Serialize(cmd.task_id)
+	elseif cmd.__type__ == "TaskFinish_Re" then
+		os = os..Serialize(20011)
+		os = os..Serialize(cmd.retcode)
+		os = os..Serialize(cmd.task_id)
+	elseif cmd.__type__ == "TaskEvent_Re" then
+		os = os..Serialize(20012)
+		os = os..Serialize(cmd.retcode)
+		os = os..Serialize(cmd.event)
+		os = os..Serialize(cmd.id)
+		os = os..Serialize(cmd.task_id)
+		os = os..Serialize(cmd.num)
+		os = os..Serialize(cmd.max_num)
+	elseif cmd.__type__ == "MafiaAnnounce" then
+		os = os..Serialize(10116)
+		os = os..Serialize(cmd.announce)
+	elseif cmd.__type__ == "DebugCommand" then
+		os = os..Serialize(99999)
+		os = os..Serialize(cmd.typ)
+	elseif cmd.__type__ == "PVPInvite" then
+		os = os..Serialize(10301)
+		os = os..Serialize(cmd.dest_id)
+		os = os..SerializeStruct("RoleBrief", cmd.src)
+		os = os..Serialize(cmd.mode)
+	elseif cmd.__type__ == "PVPReply" then
+		os = os..Serialize(10302)
+		os = os..Serialize(cmd.src_id)
+		os = os..Serialize(cmd.accept)
+	elseif cmd.__type__ == "PVPPrepare" then
+		os = os..Serialize(10303)
+		os = os..Serialize(cmd.id)
+		os = os..SerializeStruct("RoleBrief", cmd.player1)
+		os = os..SerializeStruct("RoleBrief", cmd.player2)
+		os = os..Serialize(cmd.N)
+		os = os..Serialize(cmd.mode)
+	elseif cmd.__type__ == "PVPReady" then
+		os = os..Serialize(10304)
+	elseif cmd.__type__ == "PVPBegin" then
+		os = os..Serialize(10305)
+		os = os..Serialize(cmd.fight_start_time)
+	elseif cmd.__type__ == "PVPOperation" then
+		os = os..Serialize(10306)
+		os = os..Serialize(cmd.client_tick)
+		os = os..Serialize(cmd.op)
+		os = os..Serialize(cmd.crc)
+	elseif cmd.__type__ == "PVPOperationSet" then
+		os = os..Serialize(10307)
+		os = os..Serialize(cmd.client_tick)
+		os = os..Serialize(cmd.player1_op)
+		os = os..Serialize(cmd.player2_op)
+	elseif cmd.__type__ == "PVPEnd" then
+		os = os..Serialize(10308)
+		os = os..Serialize(cmd.result)
+	elseif cmd.__type__ == "Ping" then
+		os = os..Serialize(10201)
+		os = os..Serialize(cmd.client_send_time)
+	elseif cmd.__type__ == "Ping_Re" then
+		os = os..Serialize(10202)
+		os = os..Serialize(cmd.client_send_time)
+	elseif cmd.__type__ == "UDPPing" then
+		os = os..Serialize(10203)
+		os = os..Serialize(cmd.client_send_time)
+	elseif cmd.__type__ == "UDPPing_Re" then
+		os = os..Serialize(10204)
+		os = os..Serialize(cmd.client_send_time)
+	elseif cmd.__type__ == "MafiaQuit_Re" then
+		os = os..Serialize(10113)
+		os = os..Serialize(cmd.retcode)
+	elseif cmd.__type__ == "SweepInstance" then
+		os = os..Serialize(100)
+		os = os..Serialize(cmd.instance)
+		os = os..Serialize(cmd.count)
+	elseif cmd.__type__ == "SweepInstance_Re" then
+		os = os..Serialize(101)
+		os = os..Serialize(cmd.retcode)
+		if cmd.info==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.info)
+			for i = 1, #cmd.info do
+				os = os..SerializeStruct("SweepInstanceData", cmd.info[i])
+			end
+		end
+	elseif cmd.__type__ == "GetBackPack" then
+		os = os..Serialize(102)
+	elseif cmd.__type__ == "GetBackPack_Re" then
+		os = os..Serialize(103)
+		os = os..Serialize(cmd.retcode)
+		if cmd.info==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.info)
+			for i = 1, #cmd.info do
+				os = os..SerializeStruct("Item", cmd.info[i])
+			end
+		end
+	elseif cmd.__type__ == "GetInstance" then
+		os = os..Serialize(104)
+	elseif cmd.__type__ == "GetInstance_Re" then
+		os = os..Serialize(105)
+		os = os..Serialize(cmd.retcode)
+		if cmd.info==nil then
+			os = os..Serialize(0)
+		else
+			os = os..Serialize(#cmd.info)
+			for i = 1, #cmd.info do
+				os = os..SerializeStruct("InstanceInfo", cmd.info[i])
+			end
+		end
+	elseif cmd.__type__ == "Role_Mon_Exp" then
+		os = os..Serialize(106)
+		os = os..Serialize(cmd.level)
+		os = os..Serialize(cmd.exp)
+		os = os..Serialize(cmd.money)
+		os = os..Serialize(cmd.yuanbao)
+	elseif cmd.__type__ == "MafiaGet" then
+		os = os..Serialize(10101)
+	elseif cmd.__type__ == "MafiaGet_Re" then
+		os = os..Serialize(10102)
+		os = os..Serialize(cmd.retcode)
+		os = os..SerializeStruct("Mafia", cmd.mafia)
+	elseif cmd.__type__ == "MafiaCreate" then
+		os = os..Serialize(10103)
+		os = os..Serialize(cmd.name)
+		os = os..Serialize(cmd.flag)
+	elseif cmd.__type__ == "MafiaCreate_Re" then
+		os = os..Serialize(10104)
+		os = os..Serialize(cmd.retcode)
+		os = os..SerializeStruct("Mafia", cmd.mafia)
+	elseif cmd.__type__ == "MafiaInvite" then
+		os = os..Serialize(10105)
+		os = os..Serialize(cmd.dest_id)
+		os = os..SerializeStruct("RoleBrief", cmd.src)
+	elseif cmd.__type__ == "MafiaReply" then
+		os = os..Serialize(10106)
+		os = os..Serialize(cmd.src_id)
+		os = os..Serialize(cmd.accept)
+	elseif cmd.__type__ == "MafiaAddMember" then
+		os = os..Serialize(10107)
+		os = os..SerializeStruct("RoleBrief", cmd.member)
+	elseif cmd.__type__ == "MafiaUpdate" then
+		os = os..Serialize(10108)
+		os = os..SerializeStruct("Mafia", cmd.mafia)
+	elseif cmd.__type__ == "MafiaKickout" then
+		os = os..Serialize(10109)
+		os = os..Serialize(cmd.dest_id)
+	elseif cmd.__type__ == "MafiaKickout_Re" then
+		os = os..Serialize(10110)
+		os = os..Serialize(cmd.retcode)
+		os = os..Serialize(cmd.dest_id)
+	elseif cmd.__type__ == "MafiaLoseMember" then
+		os = os..Serialize(10111)
+		os = os..SerializeStruct("RoleBrief", cmd.member)
+
+	end
+
+	return os
+end
+

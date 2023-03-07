@@ -1,0 +1,58 @@
+#ifndef _ROLE_H_
+#define _ROLE_H_
+
+#include <string>
+#include <map>
+#include <list>
+
+#include "octets.h"
+#include "forlua.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class Player;
+class Role: public GNET::Marshal
+{
+public:
+	RoleData _roledata;
+
+	Role(Player *player): _player(player) {}
+
+	virtual OctetsStream& marshal(OctetsStream &os) const
+	{
+		os << _roledata;
+		return os;
+	}
+	virtual const OctetsStream& unmarshal(const OctetsStream &os)
+	{
+		os >> _roledata;
+		return os;
+	}
+
+public:
+	Player *_player;
+
+	void SendToClient(const std::string& v);
+	void SendUDPToClient(const std::string& v);
+	void FastSess_Reset();
+	void FastSess_Send(const std::string& v);
+	void FastSess_OnAck(int index_ack);
+	bool FastSess_IsReceived(int index) const;
+	void FastSess_SetReceived(int index);
+	void FastSess_SendAck();
+	void FastSess_TriggerSend();
+	void SendPVPJoin();
+	void SendPVPEnter(int flag);
+	void SendPVPReady();
+	void SendPVPLeave(int reason, int typ);
+	void SendPVPCancle();
+};
+
+};
+
+#endif //_ROLE_H_
+

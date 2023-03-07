@@ -1,0 +1,3 @@
+function OnMessage_TongQueTaiHeartBeat(arg, others)
+	--API_Log("OnMessage_TongQueTaiHeartBeat, "..DumpTable(arg))
+end

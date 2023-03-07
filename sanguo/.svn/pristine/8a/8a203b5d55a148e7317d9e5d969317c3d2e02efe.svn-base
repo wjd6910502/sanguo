@@ -1,0 +1,3 @@
+function OnCommand_ReWriteHeroComments(player, role, arg, others)
+	--player:Log("OnCommand_ReWriteHeroComments, "..DumpTable(arg).." "..DumpTable(others))
+end

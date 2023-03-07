@@ -1,0 +1,24 @@
+function OnCommand_PveArenaJoinBattle(player, role, arg, others)
+	player:Log("OnCommand_PveArenaJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local dest_role = others.roles[arg.roleid]
+
+	if role._roledata._base._id:ToStr() == dest_role._roledata._base._id:ToStr() then
+		return 
+	end
+
+	local resp = NewCommand("PveArenaJoinBattle_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.hero_info = {}
+
+	local heroid_it = dest_role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+	local heroid = heroid_it:GetValue()
+	while heroid ~= nil do
+		resp.hero_info[#resp.hero_info+1] = heroid._value
+		heroid_it:Next()
+		heroid = heroid_it:GetValue()
+	end
+
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

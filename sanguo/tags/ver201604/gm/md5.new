@@ -1,0 +1,7 @@
+6eeffa6db30248e67730d98023f8d716  gm
+297b6e63097cfe658129dafef70ddc76  gmclient.o
+a4aea38bbe87e9faa8c5371efe70d635  state.o
+3c905b76690665a77748ede443f4dd36  stubs.o
+602f9e7553dd5f00cb6351c4062b9824  gm.o
+82dc37de5d5644225aa91cef4ea256aa  ../xlib/libio32.so
+763672d53a3ca9cdfa4c6eeac7d05b58  ../xlib/liblog32.so

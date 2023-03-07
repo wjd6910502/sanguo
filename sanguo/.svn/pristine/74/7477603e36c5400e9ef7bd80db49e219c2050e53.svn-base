@@ -1,0 +1,871 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<structures>
+
+	<!-- Í·ÏñµÄÐÅÏ¢ -->
+	<structure name="PhotoInfo">
+		<variable name="id" type="number"/> 
+		<variable name="typ" type="number"/>	
+	</structure>
+
+	<structure name="RoleBase">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="sex" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+	</structure>
+
+	<structure name="RoleInstance">
+		<variable name="tid" type="number"/>
+		<variable name="score" type="number"/>
+	</structure>
+
+	<structure name="CommonUseLimit">
+		<variable name="tid" type="number"/>
+		<variable name="count" type="number"/>
+	</structure>
+
+	<structure name="RoleStatus">
+		<variable name="level" type="number"/>
+		<variable name="exp" type="string"/>
+		<variable name="vp" type="number"/>
+		<variable name="instances" type="RoleInstance" vector="true"/>
+		<variable name="money" type="number"/>
+		<variable name="yuanbao" type="number"/>
+		<variable name="common_use_limit" type="CommonUseLimit" vector="true"/>
+		<variable name="chongzhi" type="number"/>
+		<variable name="hero_skill_point" type="number"/>
+		<variable name="lottery_one_flag" type="number"/>
+		<variable name="lottery_ten_flag" type="number"/>
+	</structure>
+
+	<structure name="HeroSkill">
+		<variable name="skill_id" type="number"/>
+		<variable name="skill_level" type="number"/>
+	</structure>
+
+	<structure name="HeroPvpInfoData">
+		<variable name="id" type="number"/>
+		<variable name="join_count" type="number"/>
+		<variable name="win_count" type="number"/>
+	</structure>
+
+	<structure name="EquipmentPosInfo">
+		<variable name="pos" type="number"/>
+		<variable name="equipment_id" type="number"/>
+	</structure>
+	
+	<structure name="RoleHero">
+		<variable name="tid" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="order" type="number"/>
+		<variable name="exp" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="skillpoint" type="number"/>
+		<variable name="skill" type="HeroSkill" vector="true"/>
+		<variable name="common_skill" type="HeroSkill" vector="true"/>
+		<variable name="hero_pvp_info" type="HeroPvpInfoData"/>
+		<variable name="select_skill" type="number" vector="true"/>
+		<variable name="weapon_id" type="number"/>
+		<variable name="equipment" type="EquipmentPosInfo" vector="true"/>
+	</structure>
+
+	<structure name="RoleHeroHall">
+		<variable name="heros" type="RoleHero" vector="true"/>
+	</structure>
+
+	<structure name="Item">
+		<variable name="tid" type="number"/>
+		<variable name="count" type="number"/>
+	</structure>
+
+	<structure name="WeaponSkill">
+		<variable name="skill_id" type="number"/>
+		<variable name="skill_level" type="number"/>
+	</structure>
+
+	<structure name="WeaponInfo">
+		<variable name="tid" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="quality" type="number"/>
+		<variable name="prop" type="number"/>
+		<variable name="attack" type="number"/>
+		<variable name="strength" type="number"/>
+		<variable name="level_up" type="number"/>
+		<variable name="weapon_skill" type="number"/>
+		<variable name="strength_prob" type="number"/>
+		<variable name="skill_pro" type="WeaponSkill" vector="true"/>
+	</structure>
+
+	<structure name="WeaponItem">
+		<variable name="base_item" type="Item"/>
+		<variable name="weapon_info" type="WeaponInfo"/>
+	</structure>
+
+	<structure name="RefinableData">
+		<variable name="typ" type="number"/>
+		<variable name="data" type="number"/>
+	</structure>
+
+	<structure name="EquipmentInfo">
+		<variable name="tid" type="number"/>
+		<variable name="hero_id" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="order" type="number"/>
+		<variable name="refinable_pro" type="RefinableData" vector="true"/>
+		<variable name="tmp_refinable_pro" type="RefinableData" vector="true"/>
+	</structure>
+
+	<structure name="EquipmentItem">
+		<variable name="base_item" type="Item"/>
+		<variable name="equipment_info" type="EquipmentInfo"/>
+	</structure>
+
+	<structure name="RoleBackPack">
+		<variable name="capacity" type="number"/>
+		<variable name="items" type="Item" vector="true"/>
+		<variable name="weaponitems" type="WeaponItem" vector="true"/>
+		<variable name="equipmentitems" type="EquipmentItem" vector="true"/>
+	</structure>
+
+	<structure name="RoleMafia">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+	</structure>
+
+	<structure name="RoleTaskCondition">
+		<variable name="current_num" type="number"/>
+		<variable name="max_num" type="number"/>
+	</structure>
+
+	<structure name="RoleCurrentTask">
+		<variable name="id" type="number"/>
+		<variable name="condition" type="RoleTaskCondition" vector="true"/>
+	</structure>
+
+	<structure name="RoleTask">
+		<variable name="finish" type="number" vector="true"/>
+		<variable name="current" type="RoleCurrentTask" vector="true"/>
+	</structure>
+	
+	<structure name="RoleUserDefineData">
+		<variable name="id" type="number"/>
+		<variable name="value_define" type="string"/>
+	</structure>
+	
+	<structure name="RoleUserDefine">
+		<variable name="role_define" type="RoleUserDefineData" vector="true"/>
+	</structure>
+
+	<structure name="RoleHorse">
+		<variable name="tid" type="number"/>
+	</structure>
+
+	<structure name="RoleHorseHall">
+		<variable name="horses" type="RoleHorse" vector="true"/>
+	</structure>
+	
+	<structure name="RoleLastHero">
+		<variable name="info" type="number" vector="true"/>
+	</structure>
+	
+	<structure name="Role_PvpInfo">
+		<variable name="star" type="number"/>
+		<variable name="join_count" type="number"/>
+		<variable name="win_count" type="number"/>
+		<variable name="end_time" type="number"/>
+	</structure>
+	
+	<structure name="MailInfo">
+		<variable name="mail_id" type="number" />
+		<variable name="msg_id" type="number" />
+		<variable name="subject" type="string" />
+		<variable name="context" type="string" />
+		<variable name="time" type="number" />
+		<variable name="from_id" type="string" />
+		<variable name="from_name" type="string" />
+		<variable name="item" type="Item" vector="true"/>
+		<variable name="mail_arg" type="string" vector="true"/>
+		<variable name="read_flag" type="number" />
+	</structure>
+
+	<structure name="RolePVPHeroEquipment">
+		<variable name="pos" type="number"/>
+		<variable name="item_id" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="order" type="number"/>
+		<variable name="refinable_pro" type="RefinableData" vector="true"/>
+	</structure>
+
+	<structure name="RolePVPHero">
+		<variable name="tid" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="order" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="skill" type="HeroSkill" vector="true"/>
+		<variable name="common_skill" type="HeroSkill" vector="true"/>
+		<variable name="select_skill" type="number" vector="true"/>
+		<variable name="relations" type="number" vector="true"/>
+		<variable name="weapon" type="WeaponItem"/>
+		<variable name="equipment" type="RolePVPHeroEquipment" vector="true"/>
+	</structure>
+
+	<structure name="RoleBrief">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+		<variable name="sex" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="mafia_id" type="string"/>
+		<variable name="mafia_name" type="string"/>
+	</structure>
+	
+	<structure name="RoleClientPVPInfo">
+		<variable name="brief" type="RoleBrief"/>
+		<variable name="hero_hall" type="RolePVPHero" vector="true"/>
+		<variable name="pvp_score" type="number"/>
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+		<variable name="role_id1" type="string"/>
+		<variable name="role_id2" type="string"/>
+	</structure>
+
+	<structure name="PvpVideoData">
+		<variable name="video" type="string"/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="time" type="number"/>
+	</structure>
+
+	<structure name="RepInfo">
+		<variable name="rep_id" type="number"/>
+		<variable name="rep_num" type="number"/>
+	</structure>
+
+	<structure name="HeroSoul">
+		<variable name="soul_id" type="number"/>
+		<variable name="soul_num" type="number"/>
+	</structure>
+	
+	<structure name="MysteryShopItem">
+		<variable name="item_id" type="number"/>
+		<variable name="buy_count" type="number"/>
+		<variable name="max_count" type="number"/>
+	</structure>
+	
+	<structure name="MysteryShopInfo">
+		<variable name="shop_id" type="number"/>
+		<variable name="shop_item" type="MysteryShopItem" vector="true"/>
+	</structure>
+	
+	<structure name="InstanceHero">
+		<variable name="typ" type="number"/>
+		<variable name="battle_id" type="number"/>
+		<variable name="heroinfo" type="RoleLastHero"/>
+		<variable name="horse" type="number"/>
+	</structure>
+
+	<structure name="PveArenaInfo">
+		<variable name="video_flag" type="number"/>
+	</structure>
+	
+	<structure name="RoleInfo">
+		<variable name="base" type="RoleBase"/>
+		<variable name="status" type="RoleStatus"/>
+		<variable name="hero_hall" type="RoleHeroHall"/>
+		<variable name="backpack" type="RoleBackPack"/>
+		<variable name="mafia" type="RoleMafia"/>
+		<variable name="task" type="RoleTask"/>
+		<variable name="user_define" type="RoleUserDefine"/>
+		<variable name="horse_hall" type="RoleHorseHall"/>
+		<variable name="last_hero" type="RoleLastHero"/>
+		<variable name="pvp_last_hero" type="RoleLastHero"/>
+		<variable name="pvp_info" type="Role_PvpInfo"/>
+		<variable name="pvp_video" type="PvpVideoData" vector="true"/>
+		<variable name="mail_list" type="MailInfo" vector="true"/>
+		<variable name="rep_list" type="RepInfo" vector="true"/>
+		<variable name="mysteryshop_list" type="MysteryShopInfo" vector="true"/>
+		<variable name="instancehero_info" type="InstanceHero" vector="true"/>
+		<variable name="pve_arena" type="PveArenaInfo"/>
+		<variable name="photo_info" type="PhotoInfo" vector="true"/>
+		<variable name="photoframe_info" type="PhotoInfo" vector="true"/>
+		<variable name="pvp_ver" type="number"/>
+	</structure>
+
+	<structure name="Chat">
+		<variable name="src_id" type="string"/>
+		<variable name="src_name" type="string"/>
+		<variable name="time" type="number"/>
+		<variable name="content" type="string"/>
+	</structure>
+
+	<structure name="Friend">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+		<variable name="sex" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="zhanli" type="number"/>
+		<variable name="faction" type="number" comments="ÓÑºÃ¶È"/>
+		<variable name="online" type="number" comments="ÊÇ·ñÔÚÏß,1ÔÚÏß£¬0²»ÔÚÏß"/>
+		<variable name="mashu_score" type="number" comments="Íæ¼ÒµÄÂíÊõ»ý·Ö"/>
+	</structure>
+
+	<structure name="MafiaMember">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+		<variable name="sex" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="zhanli" type="number"/>
+		<variable name="activity" type="number"/>
+		<variable name="position" type="number"/>
+		<variable name="logout_time" type="number"/>
+		<variable name="online" type="number"/>
+		<variable name="contrabution" type="number" vector="true"/>
+	</structure>
+
+	<!--°ï»áÉêÇëÁÐ±íµÄ³ÉÔ±ÐÅÏ¢-->
+	<structure name="MafiaApplyRoleInfo">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+		<variable name="sex" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="zhanli" type="number"/>
+	</structure>
+
+	<!--°ï»áÊÂ¼þÍæ¼ÒÐÅÏ¢-->
+	<structure name="MafiaNoticeRoleInfo">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+	</structure>
+
+	<!--°ï»áÊÂ¼þÐÅÏ¢-->
+	<structure name="MafiaNoticeInfo">
+		<variable name="typ" type="number"/>
+		<variable name="id" type="number"/>
+		<variable name="time" type="number"/>
+		<variable name="num_info" type="number" vector="true"/>
+		<variable name="role_info" type="MafiaNoticeRoleInfo" vector="true"/>
+	</structure>
+
+	<structure name="Mafia">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="flag" type="number"/>
+		<variable name="announce" type="string"/>
+		<variable name="xuanyan" type="string" commonet="°ï»áÐûÑÔ"/>
+		<variable name="level" type="number"/>
+		<variable name="activity" type="number"/>
+		<variable name="boss_id" type="string"/>
+		<variable name="boss_name" type="string"/>
+		<variable name="exp" type="number"/>
+		<variable name="jisi" type="number"/>
+		<variable name="mashu_toplist_id" type="number"/>
+		<variable name="level_limit" type="number"/>
+		<variable name="need_approval" type="number"/>
+		<variable name="declaration" type="string"/>
+		<variable name="members" type="MafiaMember" vector="true"/>
+		<variable name="apply_list" type="MafiaApplyRoleInfo" vector="true"/>
+		<variable name="notice" type="MafiaNoticeInfo" vector="true"/>
+	</structure>
+
+	<structure name="MafiaBrief">
+		<variable name="id" type="string" commonet="°ï»áid"/>
+		<variable name="name" type="string" commonet="°ï»áÃû×Ö"/>
+		<variable name="flag" type="number"/>
+		<variable name="announce" type="string" commonet="°ï»á¹«¸æ"/>
+		<variable name="level" type="number"/>
+		<variable name="activity" type="number"/>
+		<variable name="boss_id" type="string"/>
+		<variable name="boss_name" type="string" commonet="°ïÖ÷Ãû×Ö"/>
+		<variable name="level_limit" type="number" commonet="µÈ¼¶ÏÞÖÆ£¬0´ú±íÃ»ÓÐµÈ¼¶ÏÞÖÆ"/>
+		<variable name="num" type="number" commonet="°ï»áÈËÊý"/>
+		<variable name="xuanyan" type="string" commonet="°ï»áÐûÑÔ"/>
+	</structure>
+
+	<structure name="TopListItem">
+		<variable name="item_id" type="number"/>
+		<variable name="tid" type="number"/>
+		<variable name="typ" type="number"/>
+	</structure>
+
+	<structure name="TopListData">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="data" type="string"/>
+		<variable name="level" type="number"/>
+		<variable name="item" type="TopListItem"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+	</structure>
+
+	<structure name="PVPFighter">
+		<variable name="id" type="string"/>
+		<variable name="ops" type="number" vector="true"/>
+	</structure>
+	
+	<structure name="DropItem">
+		<variable name="id" type="number"/>
+		<variable name="count" type="number"/>
+	</structure>
+
+	<structure name="SweepInstanceData">
+		<variable name="exp" type="number"/>
+		<variable name="heroexp" type="number"/>
+		<variable name="item" type="DropItem" vector="true"/>
+	</structure>
+	
+	<structure name="InstanceInfo">
+		<variable name="id" type="number"/>
+		<variable name="star" type="number"/>
+	</structure>
+
+	<structure name="Instance_Star_Condition">
+		<variable name="tid" type="number"/>
+		<variable name="flag" type="number"/>
+	</structure>
+	
+	<structure name="Condition">
+		<variable name="current" type="number"/>
+		<variable name="max" type="number"/>
+	</structure>
+	
+	<structure name="PVEOperation">
+		<variable name="client_tick" type="number"/>
+		<variable name="op" type="string"/>
+	</structure>
+
+	<structure name="RolePVPInfo">
+		<variable name="brief" type="RoleBrief"/>
+		<variable name="hero_hall" type="RolePVPHero" vector="true"/>
+		<variable name="p2p_magic" type="number"/>
+		<variable name="p2p_net_typ" type="number"/>
+		<variable name="p2p_public_ip" type="string"/>
+		<variable name="p2p_public_port" type="number"/>
+		<variable name="p2p_local_ip" type="string"/>
+		<variable name="p2p_local_port" type="number"/>
+		<variable name="pvp_score" type="number"/>
+	</structure>
+
+	<structure name="HeroComment">
+		<variable name="role_id" type="string"/>
+		<variable name="role_name" type="string"/>
+		<variable name="comment" type="string"/>
+		<variable name="agree_count" type="number"/>
+		<variable name="agree_flag" type="number"/>
+		<variable name="time_stamp" type="number"/>
+	</structure>
+	
+	<structure name="PvpOperation">
+		<variable name="tick" type="number"/>
+		<variable name="first_operation" type="string"/>
+		<variable name="second_operation" type="string"/>
+	</structure>
+
+	<structure name="PvpVideo">
+		<variable name="video" type="PvpOperation" vector="true"/>
+	</structure>
+	
+	<structure name="ChatInfo">
+		<variable name="src" type="RoleBrief"/>
+		<variable name="dest" type="RoleBrief"/>
+		<variable name="content" type="string"/>
+		<variable name="sp_content" type="string"/>
+		<variable name="time" type="number"/>
+	</structure>
+	
+	<structure name="AnotherRoleData">
+		<variable name="brief" type="RoleBrief"/>
+		<variable name="zhanli" type="number"/>
+		<variable name="mafia_position" type="number"/>
+		<variable name="time" type="number"/>
+	</structure>
+
+	<structure name="BattleHeroInfo">
+		<variable name="hero_id" type="number"/>
+		<variable name="hp" type="number"/>
+	</structure>
+
+	<structure name="BattleNPCInfo">
+		<variable name="id" type="number"/>
+		<variable name="camp" type="number"/>
+		<variable name="armyid" type="number"/>
+		<variable name="alive" type="number"/>
+		<variable name="event_flag" type="number"/>
+		<variable name="army_buff" type="number"/>
+	</structure>
+
+	<structure name="BattlePositionInfo">
+		<variable name="id" type="number"/>
+		<variable name="position" type="number"/>
+		<variable name="flag" type="number"/>
+		<variable name="event_flag" type="number"/>
+		<variable name="pos_buff" type="number"/>
+		<variable name="npc_info" type="BattleNPCInfo" vector="true"/>
+	</structure>
+
+	<structure name="BattleHorseHero">
+		<variable name="hero" type="number" vector="true"/>
+		<variable name="horse" type="number"/>
+	</structure>
+	
+	<structure name="BattleInfo">
+		<variable name="battle_id" type="number"/>
+		<variable name="cur_pos" type="number"/>
+		<variable name="state" type="number"/>
+		<variable name="hero_info" type="BattleHeroInfo" vector="true"/>
+		<variable name="cur_hero" type="number" vector="true"/>
+		<variable name="cur_horse_hero" type="BattleHorseHero" vector="true"/>
+		<variable name="position_data" type="BattlePositionInfo" vector="true"/>
+		<variable name="round_num" type="number"/>
+		<variable name="round_flag" type="number"/>
+		<variable name="round_state" type="number"/>
+		<variable name="cur_morale" type="number"/>
+	</structure>
+
+	<structure name="LotteryRewardInfo">
+		<variable name="id" type="number"/>
+		<variable name="num" type="number"/>
+		<variable name="firstget" type="number"/>
+		<variable name="bproorhero" type="number"/>
+	</structure>
+
+	<structure name="BattleDelArmyInfo">
+		<variable name="id" type="number"/>
+		<variable name="pos" type="number"/>
+		<variable name="npc_id" type="number"/>
+		<variable name="army_id" type="number"/>
+	</structure>
+
+	<structure name="BattleAddArmyInfo">
+		<variable name="id" type="number"/>
+		<variable name="pos" type="number"/>
+		<variable name="npc_id" type="number"/>
+		<variable name="npc_camp" type="number"/>
+		<variable name="army_id" type="number"/>
+		<variable name="army_buff" type="number"/>
+	</structure>
+
+	<structure name="BattlePositionBuff">
+		<variable name="id" type="number"/>
+		<variable name="pos" type="number"/>
+		<variable name="buff_id" type="number"/>
+	</structure>
+
+	<structure name="BattleArmyBuff">
+		<variable name="id" type="number"/>
+		<variable name="pos" type="number"/>
+		<variable name="army" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="buff_id" type="number"/>
+	</structure>
+
+	<structure name="BattlePosBuff">
+		<variable name="pos" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="num" type="number"/>
+	</structure>
+
+	<structure name="BattleEventInfo">
+		<variable name="event_id" type="number"/>
+		<variable name="plot_dia_id" type="number"/>
+		<variable name="del_army_id" type="BattleDelArmyInfo" vector="true"/>
+		<variable name="add_army_info" type="BattleAddArmyInfo" vector="true"/>
+		<variable name="item" type="Item" vector="true"/>
+		<variable name="position_buff" type="BattlePositionBuff" vector="true"/>
+		<variable name="army_buff" type="BattleArmyBuff" vector="true"/>
+		<variable name="del_pos_buff" type="number" vector="true"/>
+		<variable name="pos_army_buff" type="BattlePosBuff" vector="true"/>
+		<variable name="remove_round_limit" type="number" commoents="½Ó´¥»ØºÏÏÞÖÆ£¬1´ú±í½â³ý"/>
+		<variable name="self_morale_change_typ" type="number" commoents="×Ô¼ºÊ¿ÆøµÄ±ä»¯ÀàÐÍ"/>
+		<variable name="self_morale_change_num" type="number" commoents="×Ô¼ºÊ¿ÆøµÄ±ä»¯ÊýÖµ"/>
+		<variable name="trigger_results" type="number" commoents="ÊÇ·ñ´¥·¢ÁËÊ¤Àû»òÕßÊ§°Ü"/>
+	</structure>
+
+	<structure name="BattleFieldNpcMoveInfo">
+		<variable name="npc_id" type="number"/>
+		<variable name="source_pos" type="number"/>
+		<variable name="move_pos" type="number"/>
+		<variable name="battle_flag" type="number" commoents="0ÊÇÊ¤Àû£¬1´ú±íÊ§°Ü, 2´ú±íµÄÊÇÃ»ÓÐÕ½¶·"/>
+		<variable name="move_event" type="BattleEventInfo" vector="true"/>
+		<variable name="capture_event" type="BattleEventInfo" vector="true"/>
+	</structure>
+	
+	<structure name="RolePveArenaHeroEquipment">
+		<variable name="pos" type="number"/>
+		<variable name="item_id" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="order" type="number"/>
+		<variable name="refinable_pro" type="RefinableData" vector="true"/>
+	</structure>
+	
+	<structure name="RolePveArenaHero">
+		<variable name="id" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="grade" type="number"/>
+		<variable name="skill" type="HeroSkill" vector="true"/>
+		<variable name="common_skill" type="HeroSkill" vector="true"/>
+		<variable name="select_skill" type="number" vector="true"/>
+		<variable name="relations" type="number" vector="true"/>
+		<variable name="weapon" type="WeaponItem"/>
+		<variable name="equipment" type="RolePveArenaHeroEquipment" vector="true"/>
+	</structure>
+	
+	<structure name="RolePveArenaInfo">
+		<variable name="heroinfo" type="RolePveArenaHero" vector="true"/>
+	</structure>
+
+	<structure name="PveArenaFighterInfo">
+		<variable name="name" type="string" comments="Íæ¼ÒµÄ½ÇÉ«Ãû×Ö"/>
+		<variable name="id" type="string" comments="Íæ¼ÒµÄ½ÇÉ«ID"/>
+		<variable name="level" type="number" comments="Íæ¼ÒµÄµÈ¼¶"/>
+		<variable name="rank" type="number" comments="Ãû´Î"/>
+		<variable name="score" type="number" comments="»ý·Ö"/>
+		<variable name="hero_score" type="number" comments="Íæ¼ÒµÄ·ÀÊØÎä½«ÆÀ·Ö"/>
+		<variable name="mafia_name" type="string" comments="Íæ¼ÒµÄ°ï»áÃû×Ö"/>
+		<variable name="hero_info" type="RolePveArenaInfo" comments="Íæ¼ÒµÄ·ÀÊØÎä½«"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+	</structure>
+	
+	<structure name="RolePveArenaHistoryData">
+		<variable name="level" type="number"/>
+		<variable name="mafia" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+	</structure>
+	
+	<structure name="RolePveArenaHistoryInfo">
+		<variable name="match_id" type="number" comments="±ÈÈüµÄ±àºÅ"/>
+		<variable name="id" type="string" comments="¶ÔÊÖµÄÐÅÏ¢"/>
+		<variable name="name" type="string"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="attack_flag" type="number"/>
+		<variable name="time" type="number"/>
+		<variable name="reply_flag" type="number"/>
+		<variable name="self_info" type="RolePveArenaHistoryData"/>
+		<variable name="oppo_info" type="RolePveArenaHistoryData"/>
+	</structure>
+	
+	<structure name="PveArenaOperation">
+		<variable name="operation" type="PVEOperation" vector="true" comments="±ÈÈüµÄ±àºÅ"/>
+	</structure>
+	
+	<structure name="UpgradeSkillInfo">
+		<variable name="skill_id" type="number"/>
+		<variable name="level" type="number"/>
+	</structure>
+	
+	<structure name="DifficultyInfo">
+		<variable name="difficulty" type="number"/>
+		<variable name="camp" type="number"/>
+	</structure>
+	
+	<structure name="OpponentInfo">
+		<variable name="id" type="number"/>
+		<variable name="alive" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="stage" type="number"/>
+		<variable name="hp" type="number"/>
+		<variable name="anger" type="number"/>
+		<variable name="rewardflag" type="number"/>
+	</structure>
+	
+	<structure name="InjuredHeroInfo">
+		<variable name="id" type="number"/>
+		<variable name="hp" type="number"/>
+		<variable name="anger" type="number"/>
+	</structure>
+	
+	<structure name="ShiLianHeroInfo">
+		<variable name="id" type="number"/>
+		<variable name="hp" type="number"/>
+		<variable name="anger" type="number"/>
+	</structure>
+	
+	<structure name="TongQueTaiHeroInfo">
+		<variable name="id" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="star" type="number"/>
+		<variable name="grade" type="number"/>
+		<variable name="skill" type="HeroSkill" vector="true"/>
+		<variable name="common_skill" type="HeroSkill" vector="true"/>
+		<variable name="select_skill" type="number" vector="true"/>
+		<variable name="relations" type="number" vector="true"/>
+		<variable name="weapon" type="WeaponItem"/>
+		<variable name="equipment" type="RolePveArenaHeroEquipment" vector="true"/>
+		<variable name="cur_hp" type="number"/>
+		<variable name="cur_anger" type="number"/>
+		<variable name="alive_flag" type="number"/>
+	</structure>
+	
+	<structure name="TongQueTaiPlayerInfo">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+		<variable name="level" type="number"/>
+		<variable name="fight_num" type="number"/>
+		<variable name="auto_flag" type="number"/>
+		<variable name="hero_info" type="TongQueTaiHeroInfo" vector="true"/>
+	</structure>
+	
+	<structure name="TongQueTaiMonsterInfo">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="photo_frame" type="number"/>
+		<variable name="badge_info" type="PhotoInfo" vector="true"/>
+		<variable name="level" type="number"/>
+		<variable name="fight_num" type="number"/>
+		<variable name="npc_flag" type="number"/>
+		<variable name="hero_info" type="TongQueTaiHeroInfo" vector="true"/>
+	</structure>
+	
+	<!--¼ÇÂ¼´òÍêÒ»³¡ÒÔºó£¬µ±Ç°¹ÖÎïµÄÑªÁ¿ÐÅÏ¢-->
+	<structure name="TongQueTaiMonsterState">
+		<variable name="id" type="number"/>
+		<variable name="hp" type="number"/>
+		<variable name="anger" type="number"/>
+		<variable name="alive_flag" type="number"/>
+	</structure>
+	
+	<!--¼ÇÂ¼´òÍêÒ»³¡ÒÔºó£¬µ±Ç°¹ÖÎïµÄÑªÁ¿ÐÅÏ¢-->
+	<structure name="TongQueTaiOperation">
+		<variable name="client_tick" type="number"/>
+		<variable name="op" type="string"/>
+	</structure>
+	
+	<!--¾üÑ§¹ÝµÄÐÅÏ¢-->
+	<structure name="LegionJunXueGuanData">
+		<variable name="id" type="number" comments="Ä£°åID"/>
+		<variable name="level" type="number"/>
+		<variable name="learned" type="number" vector="true" comments="ÒÑ¾­Ñ§Ï°µÄ¾üÑ§ÏîÄ¿"/>
+	</structure>
+
+	<!--ÁÙÊ±±³°üµÄÐÅÏ¢-->
+	<structure name="TemporaryBackPackData">
+		<variable name="id" type="number" comments="Î¨Ò»µÄID£¬ÁìÈ¡µÄÊ±ºòÊÇ·¢µÄÕâ¸öID ÐÅÏ¢µÄ"/>
+		<variable name="typ" type="number" comments="ÕâÐ©ÎïÆ·µÄÀ´Ô´£¬Õâ¸öÊÇÎªÁËÈÃ¿Í»§¶Ë¸üºÃµÄÏÔÊ¾"/>
+		<variable name="items" type="Item" vector="true" comments="ÁÙÊ±±³°üÖÐµÄ¾ßÌåÎïÆ·"/>
+	</structure>
+
+	<!--MaShuHeroInfo-->
+	<structure name="MaShuHeroInfo">
+		<variable name="hero_id" type="number" comments="Ó¢ÐÛµÄID"/>
+		<variable name="horse_id" type="number" comments="ÂíµÄID"/>
+	</structure>
+
+	<!--MaShuFriendInfo-->
+	<structure name="MaShuFriendInfo">
+		<variable name="role_id" type="string" comments="³öÕ½µÄºÃÓÑID"/>
+		<variable name="count" type="number" comments="³öÕ½µÄ´ÎÊý"/>
+	</structure>
+
+	<!--MaShuBuffInfo-->
+	<structure name="MaShuBuffInfo">
+		<variable name="id" type="number"/>
+		<variable name="buffer_id" type="number"/>
+		<variable name="typ" type="number"/>
+	</structure>
+
+	<!--MaShuFightFriendInfo-->
+	<structure name="MaShuFightFriendInfo">
+		<variable name="role_id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="zhanli" type="number"/>
+	</structure>
+
+	<!--×Ô¼ºÉíÉÏµÄ°ï»áÐÅÏ¢-->
+	<structure name="MafiaSelfInfo">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="position" type="number"/>
+		<variable name="apply_mafia" type="string" vector="true"/>
+	</structure>
+
+	<!--°ï»á½çÃæµÄÏÔÊ¾ÐÅÏ¢,µ«ÊÇÃ»ÓÐ¾­ÑéºÍ¼Àìë½ø¶È£¬ÒòÎªÕâÁ½¸öÐÅÏ¢±ä»¯±È½Ï¿ì£¬ËùÒÔÓÃµ¥¶ÀµÄÐÅÏ¢-->
+	<structure name="MafiaInterfaceInfo">
+		<variable name="id" type="string" commonet="°ï»áid"/>
+		<variable name="name" type="string" commonet="°ï»áÃû×Ö"/>
+		<variable name="flag" type="number"/>
+		<variable name="announce" type="string" commonet="°ï»á¹«¸æ"/>
+		<variable name="activity" type="number"/>
+		<variable name="boss_id" type="string"/>
+		<variable name="boss_name" type="string" commonet="°ïÖ÷Ãû×Ö"/>
+		<variable name="level_limit" type="number" commonet="µÈ¼¶ÏÞÖÆ£¬0´ú±íÃ»ÓÐµÈ¼¶ÏÞÖÆ"/>
+		<variable name="need_approval" type="number"/>
+		<variable name="declaration" type="string" commonet="°ï»áÐûÑÔ"/>
+	</structure>
+
+	<!-- jieyiinfo -->
+	<structure name="JieYiInfo">
+		<variable name="id" type="string" comments="Íæ¼ÒµÄID"/>	
+		<variable name="name" type="string" comments="Íæ¼ÒµÄÃû×Ö"/> 
+		<variable name="level" type="number" comments="Íæ¼ÒµÄµÈ¼¶"/> 
+		<variable name="photo" type="number" comments="Íæ¼ÒµÄÍ·Ïñ"/>
+		<variable name="accept" type="number" comments="½ÓÊÜÑûÇë"/>
+		<variable name="ready" type="number" comments="×¼±¸¾ÍÐ÷"/>
+		<variable name="time" type="number" comments="Ê±¼ä"/>
+	</structure>
+
+	<!-- ¹ÛÖÚ²é¿´µ±Ç°µÄÕ½¶·ÁÐ±íµÄÕ½¶·Íæ¼ÒÐÅÏ¢ -->
+	<structure name="FightInfo">
+		<variable name="room_id" type="number" comments="·¿¼äµÄID"/> 
+		<variable name="fight1_id" type="string" comments="Íæ¼Ò1µÄID"/>	
+		<variable name="fight2_id" type="string" comments="Íæ¼Ò2µÄID"/> 
+		<variable name="fight1_name" type="string" comments="Íæ¼Ò1µÄÃû×Ö"/>	
+		<variable name="fight2_name" type="string" comments="Íæ¼Ò2µÄÃû×Ö"/> 
+		<variable name="fight1_hero_hall" type="RolePVPHero" vector="true" comments="Íæ¼Ò1µÄÎä½«ÐÅÏ¢"/>
+		<variable name="fight2_hero_hall" type="RolePVPHero" vector="true" comments="Íæ¼Ò2µÄÎä½«ÐÅÏ¢"/>
+	</structure>
+
+	<!-- ¹ÛÖÚ²é¿´µ±Ç°µÄÕ½¶·ÁÐ±íµÄÕ½¶·Íæ¼ÒÐÅÏ¢ -->
+	<structure name="CenterFightInfoData">
+		<variable name="room_id" type="number" comments="·¿¼äµÄÐÅÏ¢"/> 
+		<variable name="fight1_info" type="RolePVPInfo" comments="Íæ¼Ò1µÄÐÅÏ¢"/>	
+		<variable name="fight2_info" type="RolePVPInfo" comments="Íæ¼Ò2µÄÐÅÏ¢"/> 
+	</structure>
+	<structure name="CenterFightInfo">
+		<variable name="info" type="CenterFightInfoData" vector="true"/> 
+	</structure>
+	
+	<structure name="NoticeParaInfo">
+		<variable name="typ" type="number" comments="²ÎÊýµÄÀàÐÍ"/>
+		<variable name="id" type="string" comments="ID "/>
+		<variable name="name" type="string" comments="Ãû×Ö"/>
+		<variable name="num" type="number" comments="ÊýÁ¿"/>
+	</structure>
+	
+	<structure name="DanMuData">
+		<variable name="role_id" type="string" comments="½ÇÉ«ID"/>
+		<variable name="role_name" type="string" comments="½ÇÉ«Ãû×Ö"/>
+		<variable name="tick" type="number" comments="tick"/>
+		<variable name="danmu_info" type="string" comments="µ¯Ä»ÐÅÏ¢"/>
+	</structure>
+	
+	<structure name="DanMuDataVector">
+		<variable name="info" type="DanMuData" vector="true"/>
+	</structure>
+
+</structures>

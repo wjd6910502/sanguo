@@ -1,0 +1,275 @@
+#include "gateclient.hpp"
+#include "transclient.hpp"
+#include "conf.h"
+#include "log.h"
+#include "thread.h"
+#include <iostream>
+#include <unistd.h>
+#include "gnet_init.h"
+#include "connection.h"
+#include "script_wrapper.h"
+#include <lua.hpp>
+
+using namespace GNET;
+
+lua_State *g_L = 0;
+
+static int script_Log(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	const char *log = lua_tostring(l, 1);
+
+	//fprintf(stderr, "===LUA LOG===: %s\n", log);
+	printf("===LUA LOG(%d)===: %s\n", getpid(), log);
+
+	return 0;
+}
+
+static int script_GetTime(lua_State *l)
+{
+	lua_pushinteger(l, (int)time(0));
+
+	return 1;
+}
+
+static int script_GetTime2(lua_State *l)
+{
+	//static time_t first_t = 0;
+	//timeval tv;
+	//gettimeofday(&tv, 0);
+	//if(first_t==0) first_t=tv.tv_sec;
+	//tv.tv_sec -= first_t;
+	//lua_pushinteger(l, (int)(tv.tv_sec*1000+tv.tv_usec/1000));
+
+	timeval tv;
+	gettimeofday(&tv, 0);
+	lua_pushnumber(l, (tv.tv_sec*1000+tv.tv_usec/1000));
+
+	return 1;
+}
+
+static int script_IsNULL(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	void *p = lua_touserdata(l, 1);
+
+	lua_pushboolean(l, !p);
+	return 1;
+}
+
+static int _SendGameProtocol(lua_State *l, int type)
+{
+	int n = lua_gettop(l);
+	if(n < 1) return 0;
+
+	const char *cmd = lua_tostring(l, 1);
+
+	std::vector<int64_t> extra_roles;
+	std::vector<int64_t> extra_mafias;
+	std::vector<int> extra_pvps;
+	for(auto i=2; i<=n; i++)
+	{
+		const char *s = lua_tostring(l, i);
+		if(*s == 'R')
+		{
+			//extra_role
+			int64_t id = strtoll(s+1, 0, 10);
+			if(id > 0) extra_roles.push_back(id);
+		}
+		else if(*s == 'M')
+		{
+			//extra_mafia
+			int64_t id = strtoll(s+1, 0, 10);
+			if(id > 0) extra_mafias.push_back(id);
+		}
+		else if(*s == 'P')
+		{
+			//extra_pvp
+			int id = strtoll(s+1, 0, 10);
+			if(id > 0) extra_pvps.push_back(id);
+		}
+		else
+		{
+			abort();
+		}
+	}
+
+	Octets data(cmd, strlen(cmd));
+	if(type == 1)
+	{
+		Connection::GetInstance().SendGameProtocol(data, extra_roles, extra_mafias, extra_pvps);
+	}
+	else if(type == 2)
+	{
+		Connection::GetInstance().SendUDPGameProtocol(data, extra_roles, extra_mafias, extra_pvps);
+	}
+	else
+	{
+		Connection::GetInstance().FastSess_Send(data, extra_roles, extra_mafias, extra_pvps);
+	}
+
+	return 0;
+}
+
+static int script_SendGameProtocol(lua_State *l)
+{
+	return _SendGameProtocol(l, 1);
+}
+
+static int script_SendUDPGameProtocol(lua_State *l)
+{
+	return _SendGameProtocol(l, 2);
+}
+
+static int script_FastSess_Send(lua_State *l)
+{
+	return _SendGameProtocol(l, 3);
+}
+
+static int script_FastSess_Reset(lua_State *l)
+{
+	Connection::GetInstance().FastSess_Reset();
+	return 0;
+}
+
+/*static*/ int script_GetServerTime(int orignatetime, int64_t rtt, int64_t diffs2c )
+{
+	//timeval tval;
+	//gettimeofday(&tval,NULL);
+	//// 这里做差值是就算客户端与服务器的时间差
+	////int servertime = (tval.tv_sec*1000000 + tval.tv_usec - diffs2c)/1000000;
+	////防止作弊的获取服务器时间
+	//int servertime = (orignatetime + rtt - diffs2c)/1000000;	
+
+	//fprintf(stderr,"-----------------rtt = %ld, diffs2c = %ld, servertime64 = %ld, servertime64 = %d\n", rtt, diffs2c, (tval.tv_sec*1000000 + tval.tv_usec - diffs2c), servertime);
+	//return servertime;
+	return 0;
+}
+
+class GC: public GameClient
+{
+	int _index;
+	std::string _policy;
+
+public:
+	GC(int index, const char *policy): _index(index), _policy(policy) {}
+
+	virtual void OnServerMaintaining(const Octets& info)
+	{
+		fprintf(stderr, "OnServerMaintaining\n");
+	}
+	virtual void OnAuthFailed()
+	{
+		fprintf(stderr, "OnAuthFailed\n");
+	}
+	virtual void OnKickout(int reason)
+	{
+		fprintf(stderr, "OnKickout\n");
+	}
+	virtual void DoReload()
+	{
+		fprintf(stderr, "DoReload\n");
+
+		if(!g_L)
+		{
+			g_L = luaL_newstate();
+			if(g_L)
+			{
+				luaL_openlibs(g_L);
+				lua_register(g_L, "API_Log", script_Log);
+				lua_register(g_L, "API_GetTime", script_GetTime);
+				lua_register(g_L, "API_GetTime2", script_GetTime2);
+				lua_register(g_L, "API_IsNULL", script_IsNULL);
+				lua_register(g_L, "API_SendGameProtocol", script_SendGameProtocol);
+				lua_register(g_L, "API_SendUDPGameProtocol", script_SendUDPGameProtocol);
+				lua_register(g_L, "API_FastSess_Send", script_FastSess_Send);
+				lua_register(g_L, "API_FastSess_Reset", script_FastSess_Reset);
+				if(luaL_dofile(g_L, "./scripts/init_command.lua"))
+				{
+					fprintf(stderr, "GC::DoReload, luaL_dofile(init.lua) error\n");
+					lua_close(g_L);
+					g_L = 0;
+				}
+			}
+		}
+		if(g_L)
+		{
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("CreateThread", LuaParameter(_index, _policy.c_str())))
+			{
+				fprintf(stderr, "GC::DoReload, gExec error, CreateThread\n");
+			}
+		}
+	}
+};
+
+int main(int argc, char *argv[])
+{
+	if (argc != 4 || access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Usage: " << argv[0] << " configurefile index policy" << std::endl;
+		exit(-1);
+	}
+
+	//Conf *conf = Conf::GetInstance(argv[1]);
+	Conf::GetInstance(argv[1]);
+	Log::setprogname("client");
+
+	GNET::InitStaticObjects();
+	GNET::IOMan::_man.SetDelayThreshold(50, 500);
+	GNET::PollIO::Init(true);
+	GNET::Thread::Pool::_pool.Init(new ThreadPolicySingle());
+	GNET::IntervalTimer::StartTimer(50000, true);
+	GLog::Init("client");
+
+	Log::setconsole(LOG_DEBUG, true);
+
+	int index = atoi(argv[2]);
+	std::string account = "Account";
+	account += argv[2];
+
+	Connection::GetInstance().Initialize();
+	GC gc(index, argv[3]);
+	Connection::GetInstance().Open(&gc, "10.68.8.16", 39228, account.c_str(), "123456", "127.0.0.1", 39229);
+	//Connection::GetInstance().Open(&gc, "10.68.8.39", 33228, account.c_str(), "123456", "10.68.8.39", 33229);
+	//Connection::GetInstance().Open(&gc, "10.68.8.16", 19228, account.c_str(), "123456", "127.0.0.1", 19229);
+	//Connection::GetInstance().Open(&gc, "182.92.84.13", 19228, account.c_str(), "123456", "182.92.84.13", 19229);
+
+	int64_t t2 = 0;
+	while(1)
+	{
+		//prof_stat::Instance().before_poll();
+		PollIO::Poll(10);
+		//prof_stat::Instance().after_poll();
+		Timer::Update();
+		IntervalTimer::UpdateTimer();
+		//prof_stat::Instance().before_task();
+		Thread::Pool::_pool.TryProcessAllTask();
+		//prof_stat::Instance().after_task();
+		STAT_MIN5("Poll",1);
+
+		timeval tv;
+		gettimeofday(&tv, 0);
+		int64_t now = tv.tv_sec*1000000+tv.tv_usec;
+		if(now-t2 > 33*1000) //33ms
+		{
+			t2 = now;
+
+			if(g_L)
+			{
+				LuaWrapper lw(g_L);
+				if(!lw.gExec("Heartbeat"))
+				{
+					fprintf(stderr, "main, gExec error, Heartbeat\n");
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+

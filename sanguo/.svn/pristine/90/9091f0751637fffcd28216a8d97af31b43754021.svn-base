@@ -1,0 +1,32 @@
+	public:
+		int reason;
+		enum { PROTOCOL_TYPE = PROTOCOL_KICKOUT };
+	public:
+		Kickout() { type = PROTOCOL_KICKOUT; }
+		Kickout(void*) : Protocol(PROTOCOL_KICKOUT) { }
+		Kickout (int l_reason)
+			 : reason(l_reason)
+		{
+			type = PROTOCOL_KICKOUT;
+		}
+
+		Kickout(const Kickout &rhs)
+			: Protocol(rhs),reason(rhs.reason) { }
+
+		GNET::Protocol *Clone() const { return new Kickout(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reason;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reason;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

@@ -1,0 +1,23 @@
+
+#include "gmadapterserver.hpp"
+#include "state.hxx"
+
+namespace GNET
+{
+
+GMAdapterServer GMAdapterServer::instance;
+
+const Protocol::Manager::Session::State* GMAdapterServer::GetInitState() const
+{
+	return &state_GMAdapterServer;
+}
+
+void GMAdapterServer::OnAddSession(Session::ID sid)
+{
+}
+
+void GMAdapterServer::OnDelSession(Session::ID sid)
+{
+}
+
+};

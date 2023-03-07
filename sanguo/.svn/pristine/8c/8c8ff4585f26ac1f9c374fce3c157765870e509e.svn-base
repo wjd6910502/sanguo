@@ -1,0 +1,20 @@
+function OnMessage_RoleUpdateFriendInfo(player, role, arg, others)
+	player:Log("OnMessage_RoleUpdateFriendInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	--设置好友的信息，并且发给客户端
+
+	local friend_info = role._roledata._friend._friends:Find(CACHE.Int64(arg.roleid))
+	if friend_info ~= nil then
+		friend_info._online = arg.online
+		friend_info._zhanli = arg.zhanli
+		friend_info._brief._level = arg.level
+
+		local resp = NewCommand("FriendUpdateInfo")
+		resp.role_id = arg.roleid
+		resp.level = arg.level
+		resp.zhanli = arg.zhanli
+		resp.online = arg.online
+	
+		player:SendToClient(SerializeCommand(resp))
+	end
+end

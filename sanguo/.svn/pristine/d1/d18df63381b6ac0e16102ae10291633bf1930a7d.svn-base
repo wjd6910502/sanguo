@@ -1,0 +1,5 @@
+function OnCommand_PvpEnter(player, role, arg, others)
+	player:Log("OnCommand_PvpEnter, "..DumpTable(arg).." "..DumpTable(others))
+
+	role:SendPVPEnter(arg.flag)
+end

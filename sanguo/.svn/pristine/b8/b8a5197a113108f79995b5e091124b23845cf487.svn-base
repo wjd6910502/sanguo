@@ -1,0 +1,238 @@
+#ifndef _CONNECTION_H_
+#define _CONNECTION_H_
+
+#include "udpc2sgameprotocols.hpp"
+
+using namespace GNET;
+
+class GameClient
+{
+public:
+	virtual ~GameClient() {}
+
+	virtual void OnServerMaintaining(const Octets& info) = 0;
+	virtual void OnAuthFailed() = 0;
+	virtual void OnKickout(int reason) = 0;
+	virtual void DoReload() = 0;
+};
+
+class P2PHelper
+{
+public:
+	enum P2P_NET_TYPE
+	{
+		P2P_NET_TYPE_UNKNOWN = 0,
+		P2P_NET_TYPE_UDP_BLOCKED, //udp blocked
+		P2P_NET_TYPE_FULL_CONE, //opened/full cone nat
+		P2P_NET_TYPE_RESTRICTED_CONE, //restricted cone nat
+		P2P_NET_TYPE_PORT_RESTRICTED_CONE, //port restricted cone nat
+		P2P_NET_TYPE_SYMMETRIC, //symmetric nat
+	};
+
+	enum P2P_GET_NET_TYPE_STATUS
+	{
+		P2P_GET_NET_TYPE_STATUS_NONE = 0,
+		P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_1,
+		P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_2,
+		P2P_GET_NET_TYPE_STATUS_WAIT_STUND_1,
+		P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_3,
+	};
+
+private:
+	P2P_NET_TYPE _net_type;
+	P2P_GET_NET_TYPE_STATUS _get_net_type_status;
+	int _xxx;
+	time_t _status_change_time;
+	time_t _prev_update_time;
+	std::string _ip_returned_by_gamed;
+	unsigned short _port_returned_by_gamed;
+
+public:
+	P2PHelper(): _net_type(P2P_NET_TYPE_UNKNOWN), _get_net_type_status(P2P_GET_NET_TYPE_STATUS_NONE), _xxx(0),
+	             _status_change_time(0), _prev_update_time(0), _port_returned_by_gamed(0)
+	{
+	}
+
+	P2P_NET_TYPE GetNetType() const { return _net_type; }
+	bool IsGettingNetType() const { return (_get_net_type_status!=0); }
+	void TryGetNetType();
+	bool Update();
+	void OnReceivedUDPSTUNResponse(int xxx, const char *client_ip, unsigned short client_port);
+
+private:
+	void SendTest1ToGamed();
+	void SendTest2ToGamed();
+	void SendTest3ToGamed();
+	void SendTest1ToStund();
+	void ChangeStatus(P2P_GET_NET_TYPE_STATUS status);
+};
+
+class FastUDPSession
+{
+	int _index_stub;
+	std::map<int,C2SGameProtocol> _data_map;
+	int _received_index; //s2c方向已经收到的最大index
+	bool _need_send_ack;
+
+public:
+	//std::string _account;
+	int64_t _role_id;
+
+public:
+	FastUDPSession(): _index_stub(0), _received_index(0), _need_send_ack(false), _role_id(0) {}
+
+	void Reset();
+	void Send(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias, const std::vector<int>& extra_pvps);
+	void OnAck(int index_ack);
+	bool IsReceived(int index) const;
+	void SetReceived(int index);
+	void SendAck();
+	void TriggerSend();
+};
+
+class Connection: public IntervalTimer::Observer
+{
+	enum CONN_STATUS
+	{
+		CONN_STATUS_NONE				=	0,
+		//正常状态
+		CONN_STATUS_WAIT_CHALLENGE,
+		CONN_STATUS_WAIT_AUTH_RESULT,
+		CONN_STATUS_WAIT_TRANS_CHALLENGE,
+		CONN_STATUS_WAIT_TRANS_AUTH_RESULT,
+		CONN_STATUS_ESTABLISHED,
+		//异常状态
+		CONN_STATUS_WAIT_SERVER_STATUS,
+
+		CONN_STATUS_COUNT,
+	};
+
+	enum CONN_STATUS_TIMEOUT
+	{
+		CONN_STATUS_TIMEOUT_NONE			=	0,
+		CONN_STATUS_TIMEOUT_WAIT_CHALLENGE		=	10,
+		CONN_STATUS_TIMEOUT_WAIT_AUTH_RESULT		=	10,
+		CONN_STATUS_TIMEOUT_WAIT_TRANS_CHALLENGE	=	10,
+		CONN_STATUS_TIMEOUT_WAIT_TRANS_AUTH_RESULT	=	3,
+		CONN_STATUS_TIMEOUT_ESTABLISHED			=	0,
+		CONN_STATUS_TIMEOUT_WAIT_SERVER_STATUS		=	10,
+	};
+
+	CONN_STATUS _status;
+	bool _can_send_game_protocol;
+	int _timeout;
+
+	GameClient *_callback;
+
+	std::string _gate_ip;
+	unsigned short _gate_port;
+	std::string _account;
+	int64_t _role_id;
+	std::string _password;
+	std::string _status_ip;
+	unsigned short _status_port;
+
+	Octets _key1;
+	Security *_enc_sec1;
+	Security *_dec_sec1;
+	std::string _trans_ip;
+	unsigned short _trans_port;
+	std::string _udp_trans_ip;
+	unsigned short _udp_trans_port;
+	Octets _trans_token;
+	Octets _enc_key2;
+	Octets _dec_key2;
+	int _wait_trans_challenge_timeout_count;
+
+	int _first_game_protocol_id;
+	std::list<Octets> _game_protocol_history;
+
+	int _client_received_game_protocol_count;
+	int _server_received_game_protocol_count;
+
+	time_t _prev_update_time;
+	time_t _prev_keepalive_send_time;
+
+	FastUDPSession _udp_session;
+	//FastUDPSession _udp_p2p_session;
+
+	P2PHelper _p2p_helper;
+
+	static int _status_timeout[CONN_STATUS_COUNT];
+
+public:
+	Connection(): _status(CONN_STATUS_NONE), _can_send_game_protocol(false), _timeout(0), _callback(0), _gate_port(0), _role_id(0), _status_port(0),
+	              _enc_sec1(0), _dec_sec1(0), _trans_port(0), _udp_trans_port(0), _wait_trans_challenge_timeout_count(0), _first_game_protocol_id(1),
+	              _client_received_game_protocol_count(0), _server_received_game_protocol_count(0), _prev_update_time(0), _prev_keepalive_send_time(0)
+	{
+	}
+	~Connection() {}
+
+	static Connection& GetInstance()
+	{
+		static Connection _instance;
+		return _instance;
+	}
+
+	void Initialize();
+
+	void Open(GameClient *callback, const char *gate_ip, unsigned short gate_port, const char *account, const char *password,
+	          const char *status_ip, unsigned short status_port);
+	bool IsEstablished() const { return (_status==CONN_STATUS_ESTABLISHED); }
+	void Close();
+
+	void SendGameProtocol(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias,
+	                      const std::vector<int>& extra_pvps);
+	void SendUDPGameProtocol(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias,
+	                         const std::vector<int>& extra_pvps);
+	void OnReceivedGameProtocol() { _client_received_game_protocol_count++; }
+
+	void OnChallenge(Protocol::Manager *manager, int sid, const Octets& server_rand1);
+	void OnAuthResult(Protocol::Manager *manager, int sid, int retcode, const Octets& trans_ip, unsigned short trans_port,
+	                  const Octets& udp_trans_ip, unsigned short udp_trans_port, const Octets& trans_token);
+	void OnTransChallenge(Protocol::Manager *manager, int sid, const Octets& server_rand2);
+	void OnTransAuthResult(Protocol::Manager *manager, int sid, int retcode, int server_received_count, bool do_reset);
+	void OnContinue(Protocol::Manager *manager, int sid, bool reset);
+	void OnTransLostConnection(Protocol::Manager *manager, int sid);
+	void OnKickout(Protocol::Manager *manager, int sid, int reason);
+	void OnServerStatus(Protocol::Manager *manager, int sid, const Octets& info);
+	bool Update();
+
+	void UDPRedirect(const char *ip, unsigned short port);
+
+	//for udp session
+	void FastSess_Reset();
+	void FastSess_Send(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias, const std::vector<int>& extra_pvps);
+	void FastSess_OnAck(int index_ack);
+	bool FastSess_IsReceived(int index) const;
+	void FastSess_SetReceived(int index);
+	void FastSess_SendAck();
+
+	//p2p helper
+	int GetNetType() const { return (int)_p2p_helper.GetNetType(); }
+	bool IsGettingNetType() const { return _p2p_helper.IsGettingNetType(); }
+	void TryGetNetType() { _p2p_helper.TryGetNetType(); }
+	void OnReceivedUDPSTUNResponse(int xxx, const char *client_ip, unsigned short client_port) { _p2p_helper.OnReceivedUDPSTUNResponse(xxx, client_ip, client_port); }
+
+public:
+	const char* GetAccount() const { return _account.c_str(); }
+	int64_t GetRoleId() const { return _role_id; }
+	void SetRoleId(int64_t roleid) { _role_id=roleid; _udp_session._role_id=roleid; }
+	const char* GetGateIP() const { return _gate_ip.c_str(); }
+	unsigned short GetGatePort() const { return _gate_port; }
+	const char* GetStatusIP() const { return _status_ip.c_str(); }
+	unsigned short GetStatusPort() const { return _status_port; }
+	const char* GetTransIP() const { return _trans_ip.c_str(); }
+	unsigned short GetTransPort() const { return _trans_port; }
+	const char* GetUDPTransIP() const { return _udp_trans_ip.c_str(); }
+	unsigned short GetUDPTransPort() const { return _udp_trans_port; }
+	const char* GetStundIP() const { return "10.68.8.39"; }
+	unsigned short GetStundPort() const { return 9235; }
+
+private:
+	void ChangeStatus(CONN_STATUS status);
+	void AddHistory(const Octets& data);
+};
+
+#endif //_CONNECTION_H_
+

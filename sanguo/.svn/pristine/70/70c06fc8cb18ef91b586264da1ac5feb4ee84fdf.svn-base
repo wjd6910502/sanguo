@@ -1,0 +1,3 @@
+function OnCommand_JieYiExitCurrentJieYi(player, role, arg, others)
+	--player:Log("OnCommand_JieYiExitCurrentJieYi, "..DumpTable(arg).." "..DumpTable(others))
+end

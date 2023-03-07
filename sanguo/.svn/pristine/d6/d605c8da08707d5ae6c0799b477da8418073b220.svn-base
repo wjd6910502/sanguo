@@ -1,0 +1,34 @@
+function OnCommand_ResetBattleField(player, role, arg, others)
+	player:Log("OnCommand_ResetBattleField, "..DumpTable(arg).." "..DumpTable(others))
+
+	--老规矩，判断限次模板
+	local resp = NewCommand("ResetBattleField_Re")
+	resp.battle_id = arg.battle_id
+
+	local ed = DataPool_Find("elementdata")
+	local battle_info = ed:FindBy("battle_id", arg.battle_id)
+	local reset_flag = 0
+	if battle_info.limitid == 0 then
+		reset_flag = ROLE_ResetBattleInfo(role, arg.battle_id)
+	else
+		if LIMIT_TestUseLimit(role, battle_info.limitid, 1) == true then
+			LIMIT_AddUseLimit(role, battle_info.limitid, 1)
+			reset_flag = ROLE_ResetBattleInfo(role, arg.battle_id)
+		else
+			resp.retcode = G_ERRCODE["BATTLE_LIMIT_NO_COUNT"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+
+	if reset_flag == 0 then
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		resp.battle_info = ROLE_MakeBattleInfo(role, arg.battle_id)
+		player:SendToClient(SerializeCommand(resp))
+		return
+	else
+		resp.retcode = G_ERRCODE["BATTLE_DATA_ERROR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+end

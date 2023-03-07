@@ -1,0 +1,103 @@
+#include "laohuinformclient.hpp"
+#include "conf.h"
+#include "log.h"
+#include "thread.h"
+#include <iostream>
+#include <unistd.h>
+#include "pollio.h"
+#include "threadpolicy.h"
+#include "gnet_init.h"
+
+
+using namespace GNET;
+
+/* 直接启动这个一次程序 发送消息11*/
+void ParseString(const char* src, std::map<std::string,std::string>& _query_map)
+{
+	const char *p = src;
+	
+	while (p)
+	{
+		if(*p == '&')
+			p++;
+		const char *q = strchr(p, '=');
+		if (!q) return; //Err
+		const char *r = strchr(p, '&');
+		if (r && r<q) return; //Err
+		std::string n(p, q-p);
+		q++;
+		std::string v(q, r ? (r-q) : strlen(q));
+		//这里没考虑n，v编码问题  _query_map[HttpProtocol::UrlDecode(n)] = HttpProtocol::UrlDecode(v);
+		_query_map[n] = v;
+		p = r;
+	}        
+	
+}
+
+void test()
+{
+	const char* env_param = getenv("QUERY_STRING"); 	
+	//std::string env_param = std::string(param,strlen(param));
+    env_param = "account=111&order=11100022&amount=1000&ext=199&zoneid=13";
+	std::map<std::string,std::string> query_map;
+	ParseString(env_param,query_map);
+
+	//TODO: 加一条log日志
+
+	//Laohu_Pay command;
+	//std::string& act = query_map["account"];
+	//command.account = Octets(act.c_str(),act.size());
+
+	//std::string& order =query_map["order"];
+	//command.order = Octets(order.c_str(),order.size());
+
+	//command.amount = atoi((query_map["amount"]).c_str());
+	
+	//std::string& ext = query_map["ext"]; 
+	//command.ext = Octets(ext.c_str(),ext.size());
+
+	//command.zoneid = atoi(query_map["zoneid"].c_str());
+	
+	std::cout<<"account ="<<query_map["account"]<<" order ="<<query_map["order"]<<" ext="<<query_map["ext"]<<" zoneid = "<<query_map["zoneid"]<<std::endl;
+	
+}
+
+int main(int argc, char *argv[])
+{
+	//if (argc != 2 || access(argv[1], R_OK) == -1)
+	//{
+	//	std::cerr << "Usage: " << argv[0] << " configurefile" << std::endl;
+	//	exit(-1);
+	//}
+	
+	GNET::InitStaticObjects();
+	GNET::IOMan::_man.SetDelayThreshold(50, 500);
+	GNET::PollIO::Init(true);
+	GNET::Thread::Pool::_pool.Init( new ThreadPolicySingle());
+	GNET::IntervalTimer::StartTimer(50000, true);
+	//Conf *conf = Conf::GetInstance(argv[1]);
+	Conf *conf = Conf::GetInstance("gamesys.conf");
+
+	Log::setprogname("laohuinform");
+	{
+		LaohuInformClient *manager = LaohuInformClient::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Client(manager);
+	}
+	
+   //test();
+
+	int time = Timer::GetTime();
+	while(1)
+	{
+		GNET::PollIO::Poll(100);
+		GNET::Timer::Update();
+		GNET::IntervalTimer::UpdateTimer();
+		GNET::Thread::Pool::_pool.TryProcessAllTask();
+		if(Timer::GetTime() - time > 5)
+			break;
+	}	
+
+	return 0;
+}
+

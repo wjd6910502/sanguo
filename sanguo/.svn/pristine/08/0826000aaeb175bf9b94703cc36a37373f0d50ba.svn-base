@@ -1,0 +1,32 @@
+	public:
+		char reset;
+		enum { PROTOCOL_TYPE = PROTOCOL_CONTINUE };
+	public:
+		Continue() { type = PROTOCOL_CONTINUE; }
+		Continue(void*) : Protocol(PROTOCOL_CONTINUE) { }
+		Continue (char l_reset)
+			 : reset(l_reset)
+		{
+			type = PROTOCOL_CONTINUE;
+		}
+
+		Continue(const Continue &rhs)
+			: Protocol(rhs),reset(rhs.reset) { }
+
+		GNET::Protocol *Clone() const { return new Continue(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << reset;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> reset;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

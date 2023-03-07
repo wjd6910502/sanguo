@@ -1,0 +1,47 @@
+function OnMessage_BroadCastPublicChat(player, role, arg, others)
+	player:Log("OnMessage_BroadCastPublicChat, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local chat_info = others.chat_info._data._chat_info
+	
+	local msg = NewMessage("PublicChatnew")
+	msg.src = ROLE_MakeRoleBrief(role)  
+	
+	msg.text_content = arg.text_content
+	msg.speech_content = arg.speech_content
+	msg.time = arg.time
+	msg.chat_typ = arg.chat_typ
+	msg.channel = arg.channel
+	if arg.channel == 2 then
+		--player:SendMessageToAllRole(SerializeMessage(msg))
+		chat_info._chat_index = chat_info._chat_index + 1
+		local index = chat_info._chat_index
+		local chat_data = CHCHE.ChatData()
+		chat_data._src._id = role._roledata._base._id
+		chat_data._src._name = role._roledata._base._name
+		chat_data._src._photo = role._roledata._base._photo
+		chat_data._src._level = role._roledata._status._level
+		chat_data._src._mafia_id = role._roledata._mafia._id
+		chat_data._src._mafia_name = role._roledata._mafia._name
+		chat_data._src._photo_frame = role._roledata._base._photo_frame
+		chat_data._src._badge_map = role._roledata._base._badge_map
+		
+		chat_data._time = arg.time
+		chat_data._text_content = arg.text_content
+		chat_data._speech_content = arg.speech_content
+		chat_data._channel = arg.channel
+		chat_data._chat_typ = arg.chat_typ
+
+		chat_info._chat_data:Insert(index, chat_data)
+	elseif arg.channel == 3 then
+		if role._roledata._mafia._id:ToStr() ~= "0" or role._roledata._mafia._name ~= "" then
+			local mafia_msg = NewMessage("MafiaChat")
+			mafia_msg.src = msg.src
+			mafia_msg.text_content = msg.text_content
+			mafia_msg.channel = msg.channel
+			mafia_msg.speech_content = msg.speech_content
+			mafia_msg.time = msg.time
+			mafia_msg.chat_typ = msg.chat_typ
+			API_SendMessage(role._roledata._mafia._id, SerializeMessage(mafia_msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+		end
+	end
+end

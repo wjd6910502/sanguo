@@ -1,0 +1,56 @@
+function OnCommand_GetBackPack(player, role, arg, others)
+	player:Log("OnCommand_GetBackPack, "..DumpTable(arg))
+	
+	local resp = NewCommand("GetBackPack_Re")
+	resp.info = {}
+	resp.weaponitems = {}
+	local backpack = role._roledata._backpack._items
+	local iit = backpack:SeekToBegin()
+	local i = iit:GetValue()
+	while i ~= nil do
+		local item = {}
+		item.tid = i._tid
+		item.count = i._count
+		resp.info[#resp.info+1] = item
+		iit:Next()
+		i = iit:GetValue()
+	end
+	
+	local weaponitems = role._roledata._backpack._weapon_items._weapon_items
+	local iit = weaponitems:SeekToBegin() --从头开始遍历
+	local i = iit:GetValue()
+	while i~=nil do
+		local i2 = {}
+		i2.base_item = {}
+		i2.weapon_info = {}
+		i2.base_item.tid = i._base_item._tid
+		i2.base_item.count = i._base_item._count
+
+		i2.weapon_info.tid = i._weapon_pro._tid
+		i2.weapon_info.level = i._weapon_pro._level
+		i2.weapon_info.star = i._weapon_pro._star
+		i2.weapon_info.quality = i._weapon_pro._quality
+		i2.weapon_info.prop = i._weapon_pro._prop
+		i2.weapon_info.attack = i._weapon_pro._attack
+		i2.weapon_info.weapon_skill = i._weapon_pro._weapon_skill
+		i2.weapon_info.strength = i._weapon_pro._strengthen
+		i2.weapon_info.level_up = i._weapon_pro._level_up
+		i2.weapon_info.strength_prob = i._weapon_pro._strengthen_prob
+		i2.weapon_info.skill_pro = {}
+		local skill_pro_it = i._weapon_pro._skill_pro:SeekToBegin()
+		local skill_pro = skill_pro_it:GetValue()
+		while skill_pro ~= nil do
+			local tmp_skill_pro = {}
+			tmp_skill_pro.skill_id = skill_pro._skill_id
+			tmp_skill_pro.skill_level = skill_pro._skill_level
+			i2.weapon_info.skill_pro[#i2.weapon_info.skill_pro+1] = tmp_skill_pro
+			skill_pro_it:Next()
+			skill_pro = skill_pro_it:GetValue()
+		end
+		resp.weaponitems[#resp.weaponitems+1] = i2
+		iit:Next()
+		i = iit:GetValue()
+	end
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+end

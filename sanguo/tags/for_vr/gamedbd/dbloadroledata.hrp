@@ -1,0 +1,63 @@
+
+#ifndef __GNET_DBLOADROLEDATA_HPP
+#define __GNET_DBLOADROLEDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "glog.h"
+
+#include "dbloadroledataarg"
+#include "dbloadroledatares"
+
+#include "leveldb.h"
+#include "write_batch.h"
+
+extern leveldb::DB* g_db;
+
+namespace GNET
+{
+
+class DBLoadRoleData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloadroledata"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+		DBLoadRoleDataRes *res = (DBLoadRoleDataRes *)result;
+		
+		GLog::log(LOG_INFO, "DBLoadRoleData ... ... %.*s", (int)arg->key.size(), (char*)arg->key.begin());
+
+		string role_key = std::string((char*)arg->key.begin(), arg->key.size());
+		string role_value;
+
+		leveldb::Status status = g_db->Get(leveldb::ReadOptions(), role_key, &role_value);
+
+		if(!status.ok())
+		{
+			res->retcode = -1;
+		}
+		else
+		{
+			res->retcode = 0;
+			res->value = Octets(role_value.c_str(), role_value.size());
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadRoleDataArg *arg = (DBLoadRoleDataArg *)argument;
+		// DBLoadRoleDataRes *res = (DBLoadRoleDataRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

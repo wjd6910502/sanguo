@@ -1,0 +1,103 @@
+function OnCommand_GetFlowerInfo(player, role, arg, others)
+	player:Log("OnCommand_GetFlowerInfo, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local cmd = NewCommand("GetFlowerInfo_Re")
+	cmd.info={}
+	
+	if arg.id == role._roledata._base._id:ToStr() then
+		cmd.info=ROLE_MakeRoleBrief(role)
+		cmd.money = role._roledata._status._money
+		cmd.coin = role._roledata._status._yuanbao
+		cmd.vp = role._roledata._status._vp
+		cmd.cur_title = role._roledata._flower_info._cur_title		
+		-- 10 代表余香  11 代表鲜花 
+		local rep = role._roledata._rep_info:Find(10)
+		if rep == nil then
+			cmd.lingering = 0
+		else
+			cmd.lingering = rep._rep_num
+		end
+		
+		local rep = role._roledata._rep_info:Find(11)
+		if rep == nil then
+			cmd.flower_count = 0
+		else
+			cmd.flower_count = rep._rep_num
+		end	
+
+		local fit = role._roledata._flower_info._record:SeekToBegin()
+	    local f = fit:GetValue()
+
+		cmd.flowergiftinfo={}
+		while f ~= nil do
+			local giftinfo={}
+			giftinfo.info={}
+			giftinfo.info.id = f._info._id:ToStr()
+			giftinfo.info.name = f._info._name
+			giftinfo.info.photo = f._info._photo
+ 			giftinfo.info.level = f._info._level
+			giftinfo.info.mafia_id = f._info._mafia_id:ToStr()
+			giftinfo.info.mafia_name = f._info._mafia_name
+			giftinfo.info.photo_frame = f._info._photo_frame
+			giftinfo.count= f._count
+			giftinfo.time = f._time
+			giftinfo.mask = f._mask
+			cmd.flowergiftinfo[#cmd.flowergiftinfo+1]=giftinfo
+			
+			fit:Next()
+			f = fit:GetValue()
+		end
+		role:SendToClient(serialize(cmd))
+
+	else
+		local dest_role = others.roles[arg.id]
+		cmd.info = ROLE_MakeRoleBrief(dest_role)
+		cmd.money = dest_role._roledata._status._money
+		cmd.coin = dest_role._roledata._status._yuanbao
+		cmd.vp = dest_role._roledata._status._vp
+		cmd.cur_title = dest_role._roledata._flower_info._cur_title	
+		-- 10 代表余香  11 代表鲜花 
+		local rep = role._roledata._rep_info:Find(10)
+		if rep == nil then
+			cmd.lingering = 0
+		else
+			cmd.lingering = rep._rep_num
+		end
+		
+		local rep = role._roledata._rep_info:Find(11)
+		if rep == nil then
+			cmd.flower_count = 0
+		else
+			cmd.flower_count = rep._rep_num
+		end	
+
+
+		local fit = dest_role._roledata._flower_info._record:SeekToBegin()
+	    local f = fit:GetValue()
+
+		cmd.flowergiftinfo={}
+		while f ~= nil do
+			local giftinfo={}
+			giftinfo.info={}
+			giftinfo.info.id = f._info._id:ToStr()
+			giftinfo.info.name = f._info._name
+			giftinfo.info.photo = f._info._photo
+ 			giftinfo.info.level = f._info._level
+			giftinfo.info.mafia_id = f._info._mafia_id:ToStr()
+			giftinfo.info.mafia_name = f._info._mafia_name
+			giftinfo.info.photo_frame = f._info._photo_frame
+
+			giftinfo.count= f._count
+			giftinfo.time = f._time
+			giftinfo.mask = f._mask
+
+			cmd.flowergiftinfo[#cmd.flowergiftinfo+1]=giftinfo
+			
+			fit:Next()
+			f = fit:GetValue()
+		end
+		dest_role:SendToClient(SerializeCommand(cmd))
+	end	
+	
+	
+end

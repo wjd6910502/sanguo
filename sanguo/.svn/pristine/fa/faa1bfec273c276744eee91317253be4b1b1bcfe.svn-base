@@ -1,0 +1,96 @@
+function OnCommand_WeaponDecompose(player, role, arg, others)
+	player:Log("OnCommand_WeaponDecompose, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("WeaponDecompose_Re")
+	--查看这个武器是否存在吧。
+	local weapon_items = role._roledata._backpack._weapon_items
+
+	local weapon_item_it = weapon_items._weapon_items:SeekToBegin()
+	local weapon_item = weapon_item_it:GetValue()
+	while weapon_item ~= nil do
+		if weapon_item._weapon_pro._tid == arg.weapon_id then
+			
+			local ed = DataPool_Find("elementdata")
+			local item = ed:FindBy("item_id", weapon_item._base_item._tid)
+			if item == nil or item.item_type ~= 7 or item.type_data1 == 0 then
+				resp.retcode = G_ERRCODE["WEAPON_EQUIP_SYS_ERR"]
+				player:SendToClient(SerializeCommand(resp))
+				player:Log("OnCommand_WeaponDecompose, error=WEAPON_EQUIP_SYS_ERR")                    
+				return
+			end
+
+			local weapon_info = ed:FindBy("weapon_id", item.type_data1)
+			
+			if weapon_info == nil then
+				resp.retcode = G_ERRCODE["WEAPON_EQUIP_SYS_ERR"]
+				player:SendToClient(SerializeCommand(resp))
+				player:Log("OnCommand_WeaponDecompose, error=WEAPON_EQUIP_SYS_ERR")                    
+				return
+			end
+
+			--查找武将是否佩戴这个武器。
+			local hero_info = role._roledata._hero_hall._heros:Find(weapon_info.ownerid)
+
+			if hero_info ~= nil and hero_info._weapon_id == arg.weapon_id then
+				resp.retcode = G_ERRCODE["WEAPON_DECOMPOSE_EQUIP"]
+				player:SendToClient(SerializeCommand(resp))
+				player:Log("OnCommand_WeaponDecompose, error=WEAPON_DECOMPOSE_EQUIP")                    
+				return
+			end
+
+			local quanju = ed.gamedefine[1]
+			
+			--开始分解给相应的钱，强化物品，以及分解物品
+			
+			resp.money = math.floor((quanju.weaponlvupreturn*1.0/10000)* weapon_item._weapon_pro._level_up_money)
+			resp.item_info = {}
+			if weapon_item._weapon_pro._strengthen_cost > 0 then
+				local count = math.floor((quanju.weaponintensifyreturn*1.0/10000)*weapon_item._weapon_pro._strengthen_cost)
+				if count > 0 then
+					local tmp_item = {}
+					tmp_item.tid = quanju.weaponintensifycostlow
+					tmp_item.count = count
+					resp.item_info[#resp.item_info+1] = tmp_item
+				end
+			end
+			if weapon_item._weapon_pro._strengthen_high_cost > 0 then
+				local count = math.floor((quanju.weaponintensifyreturn*1.0/10000)*weapon_item._weapon_pro._strengthen_high_cost)
+				if count > 0 then
+					local tmp_item = {}
+					tmp_item.tid = quanju.weaponintensifycosthigh
+					tmp_item.count = count
+					resp.item_info[#resp.item_info+1] = tmp_item
+				end
+			end
+			
+			local reward = DROPITEM_Reward(role, weapon_info.decomposerewards)
+			for i = 1, table.getn(reward) do
+				local tmp_item = {}
+				tmp_item.tid = reward[i].itemid
+				tmp_item.count = reward[i].itemnum
+				resp.item_info[#resp.item_info+1] = tmp_item
+			end
+
+			--把物品添加到背包里面去
+			if resp.money > 0 then
+				ROLE_AddMoney(role, resp.money)
+			end
+
+			for i = 1, table.gent(resp.item_info) do
+				BACKPACK_AddItem(role, resp.item_info[i].tid, resp.item_info[i].count)
+			end
+
+			resp.retcode = G_ERRCODE["SUCCESS"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+		weapon_item_it:Next()
+		weapon_item = weapon_item_it:GetValue()
+	end
+
+	resp.retcode = G_ERRCODE["WEAPON_EQUIP_NOT_EXIST"]
+	player:SendToClient(SerializeCommand(resp))
+	player:Log("OnCommand_WeaponDecompose, error=WEAPON_EQUIP_NOT_EXIST")                    
+	return
+
+end

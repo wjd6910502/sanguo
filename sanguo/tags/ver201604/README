@@ -1,0 +1,10 @@
+
+HOWTO setup:
+	./configure
+	./rpcgen
+	./cmdgen
+	./msggen
+	cd gamed; make clean; make
+
+
+

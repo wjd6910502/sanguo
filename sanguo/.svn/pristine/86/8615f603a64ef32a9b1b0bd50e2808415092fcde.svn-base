@@ -1,0 +1,56 @@
+function OnCommand_WriteHeroComments(player, role, arg, others)
+	player:Log("OnCommand_WriteHeroComments, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("WriteHeroComments_Re")
+	resp.hero_id = arg.hero_id
+
+	--首先查看是否今天已经评论过这个武将了，以及这个武将是否可以评论
+	local ed = DataPool_Find("elementdata")
+	local heroinfo = ed:FindBy("hero_id", arg.hero_id)
+	
+	if heroinfo.comment_limit == 0 then
+		resp.retcode = G_ERRCODE["HERO_COMMENTS_CAN_NOT_WRITE"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_WriteHeroComments, error=HERO_COMMENTS_CAN_NOT_WRITE")                    
+		return
+	else
+		if LIMIT_TestUseLimit(role, heroinfo.comment_limit, 1) == false then
+			resp.retcode = G_ERRCODE["HERO_COMMENTS_MAX"]
+			player:SendToClient(SerializeCommand(resp))
+			player:Log("OnCommand_WriteHeroComments, error=HERO_COMMENTS_MAX")                    
+			return
+		end
+	end
+
+	local mist = others.misc
+	local comments = mist._miscdata._hero_comments
+
+	local com = comments:Find(arg.hero_id)
+	if com == nil then
+		--说明这个玩家是第一个评价这个武将的
+		local com_list = CACHE.HeroCommentsList()
+		local role_com = CACHE.HeroComments()
+		role_com._roleid:Set(role._roledata._base._id)
+		role_com._rolename = role._roledata._base._name
+		role_com._comments = arg.comments
+		role_com._agree = CACHE.Int64intMap()
+		role_com._time_stamp = API_GetTime()
+
+		com_list:PushFront(role_com)
+		comments:Insert(arg.hero_id, com_list)
+	else
+		local role_com = CACHE.HeroComments()
+		role_com._roleid:Set(role._roledata._base._id)
+		role_com._rolename = role._roledata._base._name
+		role_com._comments = arg.comments
+		role_com._agree = CACHE.Int64intMap()
+		role_com._time_stamp = API_GetTime()
+
+		com:PushFront(role_com)
+	end
+	
+	LIMIT_AddUseLimit(role, heroinfo.comment_limit, 1)
+	resp.retcode = 0
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

@@ -1,0 +1,65 @@
+
+#ifndef __GNET_CHANGEROLENAME_HPP
+#define __GNET_CHANGEROLENAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "changerolenamearg"
+#include "changerolenameres"
+
+namespace GNET
+{
+
+class ChangeRoleName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "changerolename"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		ChangeRoleNameArg *arg = (ChangeRoleNameArg *)argument;
+		ChangeRoleNameRes *res = (ChangeRoleNameRes *)result;
+
+                Marshal::OctetsStream key,value;
+                string find_key = std::string((char*)arg->name.begin(), arg->name.size());
+                CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+                LOCK_TABLE(role_name)
+                START_TRANSACTION
+                {
+                        key << find_key;
+                        if(prole_name->find(key, value, txnobj))
+                        {
+                                res->retcode = 1;
+                        }
+                        else
+                        {
+                                prole_name->insert(key,Marshal::OctetsStream()<< 1,txnobj);
+                                res->retcode = 0;
+                        }
+                }
+                END_TRANSACTION
+
+                if(txnerr)
+                {
+                        //Log::log(LOG_ERR, "ChangeRoleName: name=%.*s", arg->name.size(), (char*)arg->name.begin());
+                        res->retcode = -1;
+                }
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// ChangeRoleNameArg *arg = (ChangeRoleNameArg *)argument;
+		// ChangeRoleNameRes *res = (ChangeRoleNameRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

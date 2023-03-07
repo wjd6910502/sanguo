@@ -1,0 +1,128 @@
+function OnCommand_HeroUpgradeSkill(player, role, arg, others)
+	player:Log("OnCommand_HeroUpgradeSkill, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("HeroUpgradeSkill_Re")
+
+--	resp.retcode = HERO_UpgradeSkill(role, arg.hero_id, arg.skill_id)
+--	player:SendToClient(SerializeCommand(resp))
+--	if resp.retcode == 0 then
+--		HERO_UpdateHeroInfo(role, arg.hero_id)
+--	end
+	
+	--new add
+	local resp = NewCommand("HeroUpgradeSkill_Re")
+	resp.retcode = UpGradeSkill(role, arg.hero_id, arg.skill_infos) 
+	player:SendToClient(SerializeCommand(resp))
+	
+	if resp.retcode == 0 then
+		HERO_UpdateHeroInfo(role, arg.hero_id)	
+	end
+			
+end
+
+function UpGradeSkill(role, hero_id, skill_infos)
+
+	local heros = role._roledata._hero_hall._heros
+	local hero = heros:Find(arg.heroid)
+	local ed = DataPool_Find("elementdata")
+	if hero == nil then
+		return G_ERRCODE["NO_HERO"]
+	end
+
+	--检查相关的物品技能等是否满足条件
+	local skillpoints = 0
+	local needmoney = 0
+	for i=1,#skill_infos do
+		local skill_curr_level = skill_infos[i].level
+		local skill_id = skill_infos[i].skill_id
+
+		local skillpackage = ed:FindBy("skillpackage_id", skillid)
+		if skillpackage.functionname == "" then
+			return G_ERRCODE["HERO_SKILL_NOT_LEVELUP"]
+		end
+
+		--判断这个武将是否有这个技能
+		local skill_level = 0
+		local skills = hero._skill
+		local common_skills = hero._common_skill
+		local skill = skills:Find(skillid)
+		local common_skill = common_skills:Find(skillid)
+	
+		if skill ~= nil then
+			skill_level = skill._skill_level
+		elseif common_skill ~= nil then
+			skill_level = common_skill._skill_level
+		else
+			return G_ERRCODE["HERO_NO_SKILLID"]   
+		end
+	
+		if skill_curr_level >= hero._level then
+			return G_ERRCODE["HERO_SKILLLV_MAX"]
+		end
+		
+		--技能点计算
+		skillpoints = skillpoints + skill_curr_level - skill_level	
+		
+		--金钱的计算 是否可以这么用？
+		for i = skill_level,skill_curr_level do
+			local ed = DataPool_Find("elementdata")
+			local hero_skilllevelup = ed.skilllvup
+			local price = hero_skilllevelup.skilllvupprice[i] 
+			if price ~= nil then
+				needmoney = needmoney + price
+			end
+		end
+		
+		--金钱的计算 效率太低 
+		for i = skill_level,skill_curr_level do
+			local ed = DataPool_Find("elementdata")
+			local hero_skilllevelup = ed.skilllvup
+			
+			local flag = 1
+			for tmp_money in DataPool_Array(hero_skilllevelup.skilllvupprice) do 
+				if flag == i then
+					needmoney = needmoney + tmp_money
+					break
+				end
+				flag = flag + 1
+			end
+		end
+
+	end
+
+	-- 技能点够不够
+	if hero._cur_skill_point <= 0 or  hero._cur_skill_point	< skillpoints then 	
+		return G_ERRCODE["HERO_SKILL_POINT_LESS"] 
+	end
+	
+	-- 钱够不够
+	if role._roledata._status._money < needmoney then
+		return G_ERRCODE["HERO_SKILLLV_MONEY_LESS"]
+	end
+
+ 	--扣钱 和 技能点
+	ROLE_SubMoney(role, needmoney)
+
+	hero._cur_skill_point = hero._cur_skill_point - skillpoints
+
+	--给技能升级
+	for i=1,#skill_infos do
+		local skill_curr_level = skill_infos[i].level
+		local skill_id = skill_infos[i].skill_id
+		
+		local skills = hero._skill
+		local common_skills = hero._common_skill
+		local skill = skills:Find(skillid)
+		local common_skill = common_skills:Find(skillid)
+	
+		if skill ~= nil then
+			skill._skill_level = skill_infos[i].level
+		elseif common_skill ~= nil then
+			common_skill._skill_level = skill_infos[i].level
+		else
+			return G_ERRCODE["HERO_NO_SKILLID"]   
+		end
+	end
+	
+	return G_ERRCODE["SUCCESS"]
+end

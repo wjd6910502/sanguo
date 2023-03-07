@@ -1,0 +1,46 @@
+
+#ifndef __GNET_SYNCNETIME_HPP
+#define __GNET_SYNCNETIME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include <sstream>
+#include <string>
+
+#include "syncnetimere.hpp"
+
+int script_GetServerTime(int64_t rtt, int64_t diffs2c );
+namespace GNET
+{
+
+class SyncNetime : public GNET::Protocol
+{
+	#include "syncnetime"
+	
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		
+		timeval r_time,t_time;
+		gettimeofday(&r_time, NULL);
+		gettimeofday(&t_time, NULL);
+		
+		SyncNetimeRe prot;
+		//计算的精度单位为微妙
+		prot.receivetime  = r_time.tv_sec*1000000 + r_time.tv_usec; 
+		prot.transmitime = t_time.tv_sec*1000000 + t_time.tv_usec;
+		prot.orignatetime = orignatetime;
+		
+		//这里客户端可以根据需要随时获取数据 或者每次调用这个接口保存为本地数据,或者放在前端自己的心跳中	
+		//if(index == 1)
+		{
+			script_GetServerTime(rtt, diffs2c );
+		}
+		//测试调用这个接口会消耗5-10微秒的时间
+		manager->Send(sid, &prot); 
+	}
+};
+
+};
+
+#endif

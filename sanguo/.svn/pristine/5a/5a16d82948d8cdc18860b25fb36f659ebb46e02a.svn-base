@@ -1,0 +1,83 @@
+#include "mafiamanager.h"
+#include "gamedbclient.hpp"
+
+extern std::map<Octets, Octets> g_save_data_map;
+namespace CACHE
+{
+
+void Mafia::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+	_transaction_data.clear();
+	OctetsStream os;
+	os._for_transaction = true;
+	//TODO: try catch
+	marshal(os);
+	_transaction_data.swap(os);
+}
+
+void Mafia::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void Mafia::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+	//TODO: try catch
+	OctetsStream os(_transaction_data);
+	os._for_transaction = true;
+	unmarshal(os);
+}
+
+Mafia* MafiaManager::Find(const Int64& k)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	return _map.Find(k);
+}
+
+void MafiaManager::Insert(const Int64& k, const Mafia& v)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	_map.Insert(k, v);
+}
+
+void MafiaManager::Delete(const Int64& k)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+	_map.Delete(k);
+}
+
+void MafiaManager::Load(Octets &key, Octets &value)
+{
+	Mafia mafia;
+	Marshal::OctetsStream os(value);
+	int db_version = 0;
+	os >> db_version;
+	os._dbversion = db_version;
+	mafia.unmarshal(os);
+	_map.Insert(mafia._id, mafia);
+}
+
+void MafiaManager::Save()
+{
+	GNET::Marshal::OctetsStream value;
+	Mafia *mafia;
+	for(MafiaMapIter it_manager = _map.SeekToBegin(); (mafia = it_manager.GetValue()); it_manager.Next())
+	{
+		std::string key_str = "mafia_";
+		key_str = key_str + mafia->_id.ToStr();
+		value.clear();
+		int db_version = GameDBClient::GetInstance()->GetDBVersion();
+		value << db_version;
+		mafia->marshal(value);
+		g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+	}
+}
+
+
+};
+

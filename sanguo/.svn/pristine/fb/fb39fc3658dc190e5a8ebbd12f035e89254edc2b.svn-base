@@ -1,0 +1,35 @@
+	public:
+		unsigned short client_send_time;
+		unsigned short server_send_time;
+		enum { PROTOCOL_TYPE = PROTOCOL_KEEPALIVE };
+	public:
+		KeepAlive() { type = PROTOCOL_KEEPALIVE; }
+		KeepAlive(void*) : Protocol(PROTOCOL_KEEPALIVE) { }
+		KeepAlive (unsigned short l_client_send_time,unsigned short l_server_send_time)
+			 : client_send_time(l_client_send_time),server_send_time(l_server_send_time)
+		{
+			type = PROTOCOL_KEEPALIVE;
+		}
+
+		KeepAlive(const KeepAlive &rhs)
+			: Protocol(rhs),client_send_time(rhs.client_send_time),server_send_time(rhs.server_send_time) { }
+
+		GNET::Protocol *Clone() const { return new KeepAlive(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << client_send_time;
+			os << server_send_time;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> client_send_time;
+			os >> server_send_time;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

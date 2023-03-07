@@ -1,0 +1,5 @@
+function OnCommand_PvpEnd(player, role, arg, others)
+	player:Log("OnCommand_PvpEnd, "..DumpTable(arg).." "..DumpTable(others))
+
+	API_PVP_Leave(role._roledata._base._id:ToStr(), arg.index, arg.reason)
+end

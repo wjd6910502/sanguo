@@ -1,0 +1,74 @@
+function DataPool_Alloc(name, path)
+	local dp_ptr = API_DataPool_Alloc(name, path)
+	if dp_ptr==nil then return nil end
+	dp = {}
+	dp.__ptr__ = dp_ptr 
+	dp.Sort = function(dp, key_name, array, key_member) API_DataPool_Sort(dp.__ptr__, key_name, array, key_member) end
+	return dp
+end
+
+function DataPool_MakeVar(v_ptr)
+	if type(v_ptr)~="userdata" then return v_ptr end
+	--for struct
+	local var = {}
+	var.__ptr__ = v_ptr
+	local mt = {}
+	mt.__index = function(var, key)
+		local v_ptr = API_DataPool_VarIndex(var.__ptr__, key)
+		if v_ptr==nil then return nil end 
+		return DataPool_MakeVar(v_ptr)
+	end
+	setmetatable(var, mt)
+	return var
+end
+
+function DataPool_Find(name)
+	local dp_ptr = API_DataPool_Find(name)
+	if dp_ptr==nil then return nil end
+	dp = {}
+	dp.__ptr__ = dp_ptr
+	dp.FindBy = function(dp, key_name, key)
+		local v_ptr = API_DataPool_FindBy(dp.__ptr__, key_name, key)
+		if v_ptr==nil then return nil end 
+		return DataPool_MakeVar(v_ptr)
+	end
+	local mt = {}
+	mt.__index = function(dp, key)
+		local v_ptr = API_DataPool_LocateVar(dp.__ptr__, key)
+		if v_ptr==nil then return nil end 
+		return DataPool_MakeVar(v_ptr)
+	end
+	setmetatable(dp, mt)
+	return dp
+end
+
+function DataPool_Array(array)
+	local idx = 1 
+	return function()
+		local v_ptr = API_DataPool_VarIndex(array.__ptr__, idx)
+		if v_ptr==nil then return nil end 
+		idx = idx+1
+		return DataPool_MakeVar(v_ptr)
+	end
+end
+
+local dp = DataPool_Alloc("elementdata", "./elementdata.dpc")
+if dp~=nil then dp:Sort("id", "role", "id") end
+if dp~=nil then dp:Sort("stage_id", "stage", "stageid") end
+if dp~=nil then dp:Sort("limit_id", "limittimes", "id") end
+if dp~=nil then dp:Sort("randplan_id", "randplan", "id") end
+if dp~=nil then dp:Sort("droparray_id", "droparray", "id") end
+if dp~=nil then dp:Sort("itemgroup_id", "itemgroup", "id") end
+if dp~=nil then dp:Sort("item_id", "item", "id") end
+if dp~=nil then dp:Sort("reward_id", "rewards", "id") end
+if dp~=nil then dp:Sort("level_id", "levelexp", "level") end
+if dp~=nil then dp:Sort("task_id", "achievement", "achievementid") end
+API_Log("util END")
+
+dofile "scripts/role.lua"
+dofile "scripts/mafia.lua"
+dofile "scripts/backpack.lua"
+dofile "scripts/common_use_limit.lua"
+dofile "scripts/dropitem.lua"
+dofile "scripts/vp.lua"
+dofile "scripts/prizemanager.lua"

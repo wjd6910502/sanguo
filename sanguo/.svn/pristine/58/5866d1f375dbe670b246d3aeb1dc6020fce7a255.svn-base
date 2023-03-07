@@ -1,0 +1,35 @@
+	public:
+		int64_t roleid;
+		int retcode;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPRESETRE };
+	public:
+		PvpResetRe() { type = PROTOCOL_PVPRESETRE; }
+		PvpResetRe(void*) : Protocol(PROTOCOL_PVPRESETRE) { }
+		PvpResetRe (const int64_t& l_roleid,int l_retcode)
+			 : roleid(l_roleid),retcode(l_retcode)
+		{
+			type = PROTOCOL_PVPRESETRE;
+		}
+
+		PvpResetRe(const PvpResetRe &rhs)
+			: Protocol(rhs),roleid(rhs.roleid),retcode(rhs.retcode) { }
+
+		GNET::Protocol *Clone() const { return new PvpResetRe(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << roleid;
+			os << retcode;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> roleid;
+			os >> retcode;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 4096; }

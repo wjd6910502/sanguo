@@ -1,0 +1,136 @@
+function OnCommand_WuZheShiLianGetDifficultyInfo(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianGetDifficultyInfo, "..DumpTable(arg).." "..DumpTable(others))
+		
+	local resp = NewCommand("WuZheShiLianGetDifficultyInfo_Re") 
+	local hero_trial = role._roledata._wuzhe_shilian
+	
+	--加一个读取活动开启表 需要检查是否活动开启
+	--local ed = DataPool_Find("elementdata")
+	--local activity = ed.wanfahuodong
+	--for act in DataPool_Array(activity) do
+	--	if act.start_level1 > role._roledata._status._level then
+	--		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_LEVEL_NOT_ENOUGH"]
+	--		player:SendToClient(SerializeCommand(resp))
+	--		return
+	--	end			
+	--end
+	
+	--第一次登陆 难度定义 1-低  2-中 3-高  4-极高 5-暴怒 
+	resp.cur_difficulty = hero_trial._cur_difficulty
+	resp.high_difficulty = hero_trial._high_difficulty
+	resp.difficulty_info = {}
+	local fit = hero_trial._attack_info:SeekToBegin()
+	local f = fit:GetValue()	
+	while f~=nil do
+		local dif_info = {}
+		dif_info.camp = f._camp
+		dif_info.difficulty = f._difficulty	
+		resp.difficulty_info[#resp.difficulty_info+1] = dif_info
+		fit:Next()
+		f = fit:GetValue()			
+	end
+	
+	player:SendToClient(SerializeCommand(resp))
+
+end
+
+--[[
+function RandomArray()
+	--定制的随即生成难度
+	local sortarray = {{1,2,3,4},{1,2,4,3},{1,3,2,4},{1,3,4,2},{1,4,2,3},{1,4,3,2},
+					   {2,1,3,4},{2,1,4,3},{2,3,1,4},{2,3,4,1},{2,4,1,3},{2,4,3,1},
+					   {3,1,2,4},{3,1,4,2},{3,2,1,4},{3,2,4,1},{3,4,1,2},{3,4,2,1},
+					   {4,1,2,3},{4,1,3,2},{4,2,1,3},{4,2,3,1},{4,3,1,2},{4,3,2,1} }
+
+	local index = math.random(1,24)
+	if index < 1 or index >24 then
+		throw()
+	end
+	
+	--lua中是否可以返回一个数组 ？？？？？
+	return sortarray[index]; 	
+end111111111111111111111111111111
+
+function UpdateTrialInfo(role)
+	
+	local hero_trial = role._roledata._wuzhe_shilian 
+	hero_trial._cur_difficulty = 1
+	hero_trial._high_difficulty = 1
+	hero_trial._stage = 1	
+	local sortArray = RandomArray()
+	--这个数组长度到底和排序有没有关系
+	--首先随机阵营1代表魏国，2是蜀国，3是吴国，4是群雄
+	for i = 1,#sortArray do
+		local dif_info = Cache.ShiLianDifficultyAttackInfo()
+		dif_info._camp = i
+		dif_info._difficulty = sortArray[i]
+			
+		--需要生成相对应的武将id,找到八个武将id 然后插入
+		local ed = DataPool_Find("elementdata")
+		local boss_infos = ed.shilianboss
+		local quanju = ed.gamedefine[1]
+		local all_num = 0
+		local num_id = {}
+		for boss in DataPool_Array(boss_infos) do
+			all_num = all_num + 1
+			num_id[#num_id+1] = boss.id
+		end
+	
+		if all_num < quanju.shilian_stage_num_max then
+			throw()
+		end
+			
+		local cur_stage = 1
+		--用并集随机数生成数字 这里可能会因为底层随机函数产生的一定的未知问题??? 
+		while dif_info._difficulty_attackinfo:Size() < quanju.shilian_stage_num_max do
+			local num = math.random(all_num)
+			local boss_info = ed:FindBy("boss_id", num_id[num])
+			if boss_info.kingdom == difficulty_info._camp then
+				if dif_info._difficulty_attackinfo:Find(boss_info.id) == nil then
+					local insert_attack_info = CACHE.ShiLianAttackInfo()
+					insert_attack_info._id = boss_info.id
+					insert_attack_info._stage = cur_stage
+					cur_stage = cur_stage + 1
+					
+					--这样处理这种特殊
+					if dif_info._difficulty == 1 and insert_attack_info._stage == 1 then
+					    insert_attack_info._alive_flag = 0			
+					else
+					-- 0 代表开启  1 代表锁着 2 代表通关
+						insert_attack_info._alive_flag = 1 
+					end
+
+					insert_attack_info._hp = 0
+					insert_attack_info._anger = 0
+					--这里根据需要修改key值
+					dif_info._difficulty_attackinfo:Insert(boss_info.id, insert_attack_info) 
+					
+				end
+			end
+		end
+	
+		hero_trial._attack_info:Insert(dif_info._difficulty,dif_info)
+	end
+
+	--这里是集结状态5
+	local difficulty_info = CACHE.ShiLianDifficultyAttackInfo()
+	difficulty_info._difficulty = 5
+	difficulty_info._camp = 5
+	local cur_stage = 1
+	while difficulty_info._difficulty_attackinfo:Size() < quanju.shilian_stage_num_max do
+		local num = math.random(all_num)
+		local boss_info = ed:FindBy("boss_id", num_id[num])
+		if difficulty_info._difficulty_attackinfo:Find(boss_info.id) == nil then
+			local insert_attack_info = CACHE.ShiLianAttackInfo()
+			insert_attack_info._id = boss_info.id
+			insert_attack_info._stage = cur_stage
+			cur_stage = cur_stage + 1
+			insert_attack_info._alive_flag = 1
+			insert_attack_info._hp = 0
+			insert_attack_info._anger = 0
+			difficulty_info._difficulty_attackinfo:Insert(boss_info.id, insert_attack_info)
+		end
+	end
+	role._roledata._wuzhe_shilian._attack_info:Insert(difficulty_info._difficulty, difficulty_info)
+end
+--]]

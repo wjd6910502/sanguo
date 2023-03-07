@@ -1,0 +1,317 @@
+
+#ifndef __GNET_GAMEPROTOCOL_HPP
+#define __GNET_GAMEPROTOCOL_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "commonmacro.h"
+#include "playermanager.h"
+#include "script_wrapper.h"
+#include "mafiamanager.h"
+#include "pvpmanager.h"
+#include "topmanager.h"
+
+#include <lua.hpp>
+#include "glog.h"
+#include <set>
+#include "statistic_manager.h"
+#include "transaction.h"
+
+using namespace CACHE;
+
+extern __thread lua_State *g_L;
+extern int g_reload_lua;
+extern __thread int g_reload_lua_local;
+extern lua_State* InitLuaEnv();
+
+extern std::map<int, int> g_cmd_extra_roles_max_map; //cmd=>extra_roles_max
+extern std::map<int, int> g_cmd_extra_mafias_max_map; //cmd=>extra_mafias_max
+extern std::map<int, int> g_cmd_extra_pvps_max_map; //cmd=>extra_pvps_max
+extern std::set<int> g_cmd_lock_toplist_map; //cmd=>lock_toplist
+
+namespace GNET
+{
+
+class CommandTask: public GNET::Runnable
+{
+	Player *_player;
+	Octets _data;
+	std::vector<int64_t> _extra_roles;
+	std::vector<int64_t> _extra_mafias;
+	std::vector<int> _extra_pvps;
+
+public:
+	CommandTask(Player *player, const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias,
+	            const std::vector<int>& extra_pvps)
+	           : _player(player), _data(data), _extra_roles(extra_roles), _extra_mafias(extra_mafias), _extra_pvps(extra_pvps)
+	{
+	}
+
+	virtual void Run()
+	{
+		//GLog::log(LOG_INFO, "CommandTask::Run, _data=%.*s, thread=%u",
+		//          (int)_data.size(), (char*)_data.begin(), (unsigned int)pthread_self());
+
+		//data来自于客户端，必须严格检查
+		//check data and get game protocol type
+		if(_data.size() < 2)
+		{
+			GLog::log(LOG_ERR, "CommandTask::Run, wrong data length\n");
+			delete this;
+			return;
+		}
+		for(size_t i=0; i<_data.size(); ++i)
+		{
+			int c = ((char*)_data.begin())[i];
+			if(!isupper(c) && !islower(c) && !isdigit(c) && c!='-' && c!='_' && c!='=' && c!=':') //并不标准的base64
+			{
+				GLog::log(LOG_ERR, "CommandTask::Run, wrong char(%d)\n", c);
+				delete this;
+				return;
+			}
+		}
+		std::string s((const char*)_data.begin(), _data.size());
+		int cmd = atoi(s.c_str());
+		if(cmd <= 0)
+		{
+			GLog::log(LOG_ERR, "CommandTask::Run, wrong cmd(%d)\n", cmd);
+			delete this;
+			return;
+		}
+		//check extra_roles
+		int max = 0;
+		{
+			auto it = g_cmd_extra_roles_max_map.find(cmd);
+			if(it != g_cmd_extra_roles_max_map.end()) max = it->second;
+		}
+		if(max > 0)
+		{
+			if(_extra_roles.size() > (size_t)max)
+			{
+				GLog::log(LOG_ERR, "CommandTask::Run, too much _extra_roles(%lu>%d)\n", _extra_roles.size(), max);
+				delete this;
+				return;
+			}
+		}
+		else
+		{
+			_extra_roles.clear();
+		}
+		//check extra_mafias
+		max = 0;
+		{
+			auto it = g_cmd_extra_mafias_max_map.find(cmd);
+			if(it != g_cmd_extra_mafias_max_map.end()) max = it->second;
+		}
+		if(max > 0)
+		{
+			if(_extra_mafias.size() > (size_t)max)
+			{
+				GLog::log(LOG_ERR, "CommandTask::Run, too much _extra_mafias(%lu>%d)\n", _extra_mafias.size(), max);
+				delete this;
+				return;
+			}
+		}
+		else
+		{
+			_extra_mafias.clear();
+		}
+		//check extra_pvps
+		max = 0;
+		{
+			auto it = g_cmd_extra_pvps_max_map.find(cmd);
+			if(it != g_cmd_extra_pvps_max_map.end()) max = it->second;
+		}
+		if(max > 0)
+		{
+			if(_extra_pvps.size() > (size_t)max)
+			{
+				GLog::log(LOG_ERR, "CommandTask::Run, too much _extra_pvps(%lu>%d)\n", _extra_pvps.size(), max);
+				delete this;
+				return;
+			}
+		}
+		else
+		{
+			_extra_pvps.clear();
+		}
+
+		LuaParameter lp(_player, std::string((char*)_data.begin(), _data.size()));
+
+		std::set<Player*> player_set;
+		std::set<Mafia*> mafia_set;
+		std::set<PVP*> pvp_set;
+		//extra_roles
+		for(auto it=_extra_roles.begin(); it!=_extra_roles.end(); ++it)
+		{
+			Player *p = PlayerManager::GetInstance().FindByRoleId(*it);
+			if(p) player_set.insert(p);
+		}
+		lp.AddParameter((int)player_set.size()); //extra_roles size
+		for(auto it=player_set.begin(); it!=player_set.end(); ++it)
+		{
+			lp.AddParameter(*it);
+		}
+		player_set.insert(_player); //最后把自己放进去
+		//extra_mafias
+		for(auto it=_extra_mafias.begin(); it!=_extra_mafias.end(); ++it)
+		{
+			Mafia *p = MafiaManager::GetInstance().Find(*it);
+			if(p) mafia_set.insert(p);
+		}
+		lp.AddParameter((int)mafia_set.size()); //extra_mafias size
+		for(auto it=mafia_set.begin(); it!=mafia_set.end(); ++it)
+		{
+			lp.AddParameter(*it);
+		}
+		//extra_pvps
+		for(auto it=_extra_pvps.begin(); it!=_extra_pvps.end(); ++it)
+		{
+			PVP *p = PVPManager::GetInstance().Find(*it);
+			if(p) pvp_set.insert(p);
+		}
+		lp.AddParameter((int)pvp_set.size()); //extra_pvps size
+		for(auto it=pvp_set.begin(); it!=pvp_set.end(); ++it)
+		{
+			lp.AddParameter(*it);
+		}
+		//TODO: toplist
+		bool flag_toplist =  false;
+		{
+			auto it = g_cmd_lock_toplist_map.find(cmd);
+			if(it != g_cmd_lock_toplist_map.end()) 
+			{
+				flag_toplist = true;
+				//lp.AddParameter(1);
+				lp.AddParameter(TopManager::GetInstance());
+			}
+			else
+			{
+				lp.AddParameter((void*)0);
+				//lp.AddParameter(0);
+			}
+		}
+		//if(flag_toplist)
+		//{
+		//	lp.AddParameter(TopManager::GetInstance());
+		//}
+		//else
+		//{
+		//	lp.AddParameter(0);
+		//}
+
+		//顺序多锁
+		std::list<MyScoped> keeper_list;
+		for(auto it=player_set.begin(); it!=player_set.end(); ++it)
+		{
+			Player *p = *it;
+			keeper_list.push_back(MyScoped(p->_lock));
+		}
+		for(auto it=mafia_set.begin(); it!=mafia_set.end(); ++it)
+		{
+			Mafia *p = *it;
+			keeper_list.push_back(MyScoped(p->_lock));
+		}
+		for(auto it=pvp_set.begin(); it!=pvp_set.end(); ++it)
+		{
+			PVP *p = *it;
+			keeper_list.push_back(MyScoped(p->_lock));
+		}
+		//TODO: toplist
+		if(flag_toplist)
+		{
+			keeper_list.push_back(MyScoped(TopManager::GetInstance()->_lock));
+		}
+
+		//transaction
+		std::list<TransactionKeeper> transaction_list;
+		for(auto it=player_set.begin(); it!=player_set.end(); ++it)
+		{
+			Player *p = *it;
+			transaction_list.push_back(TransactionKeeper(p));
+		}
+		for(auto it=mafia_set.begin(); it!=mafia_set.end(); ++it)
+		{
+			Mafia *p = *it;
+			transaction_list.push_back(TransactionKeeper(p));
+		}
+		for(auto it=pvp_set.begin(); it!=pvp_set.end(); ++it)
+		{
+			PVP *p = *it;
+			transaction_list.push_back(TransactionKeeper(p));
+		}
+		if(flag_toplist)
+		{
+			transaction_list.push_back(TransactionKeeper(TopManager::GetInstance()));
+		}
+
+		if(!g_L)
+		{
+			g_L = InitLuaEnv();
+			g_reload_lua_local = g_reload_lua;
+		}
+		else if(g_reload_lua > g_reload_lua_local) //需要热更新lua
+		{
+			//需要考虑热加载失败
+			lua_State *g_L_new = InitLuaEnv();
+			if(g_L_new)
+			{
+				lua_close(g_L);
+				g_L = g_L_new;
+				g_reload_lua_local = g_reload_lua;
+				GLog::log(LOG_INFO, "CommandTask::Run, lua reload ok, g_reload_lua=%d, thread=%u\n", g_reload_lua, (unsigned int)pthread_self());
+			}
+			else
+			{
+				GLog::log(LOG_ERR, "CommandTask::Run, gExec, error, reload lua");
+			}
+		}
+		if(g_L)
+		{
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("DeserializeAndProcessCommand", lp))
+			{
+				fprintf(stderr, "\033[31mCommandTask::Run, gExec, error, DeserializeAndProcessCommand, %.*s\033[0m\n", (int)_data.size(), (char*)_data.begin());
+				GLog::log(LOG_ERR, "CommandTask::Run, gExec, error, DeserializeAndProcessCommand, %.*s", (int)_data.size(), (char*)_data.begin());
+
+				//cancel
+				for(auto it=transaction_list.begin(); it!=transaction_list.end(); ++it)
+				{
+					it->SetCancel();
+				}
+			}
+		}
+
+		//keeper_list具体解锁顺序是无关紧要的
+		delete this;
+	}
+};
+
+class GameProtocol : public GNET::Protocol
+{
+	#include "gameprotocol"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//GLog::log(LOG_INFO, "GameProtocol::Process, data=%.*s, extra_roles.size()=%lu, extra_mafias.size()=%lu, extra_pvps.size()=%lu, sid=%u, thread=%u",
+		//          (int)data.size(), (char*)data.begin(), extra_roles.size(), extra_mafias.size(), extra_pvps.size(), sid, (unsigned int)pthread_self());
+
+		StatisticManager::GetInstance().IncCmdCount();
+
+		Player *player = PlayerManager::GetInstance().FindByTransSid(sid, true);
+		if(!player) return;
+
+		Thread::Mutex::Scoped keeper(player->_lock);
+
+		player->UpdateActiveTime();
+		player->OnReceivedGameProtocol(); //这步必须收到就做
+
+		GNET::Thread::Pool::_pool.AddSeqTask(player->GetHash()%100, new CommandTask(player, data, extra_roles, extra_mafias, extra_pvps));
+	}
+};
+
+};
+
+#endif

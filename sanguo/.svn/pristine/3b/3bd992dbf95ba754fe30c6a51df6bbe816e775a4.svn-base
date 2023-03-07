@@ -1,0 +1,64 @@
+function OnMessage_PVPHeartbeat(pvp, arg, others)
+	--API_Log("OnMessage_PVPHeartbeat, "..DumpTable(arg).." "..DumpTable(others))
+
+	if pvp._status==0 then
+		if pvp._fighter1._status~=1 or pvp._fighter2._status~=1 then return end
+
+		--准备就绪，开始
+		pvp._status = 1
+		pvp._fighter1._ops:Clear()
+		pvp._fighter2._ops:Clear()
+		pvp._fight_start_time = API_GetTime()+5
+		pvp._next_client_tick = 1
+		pvp._latency = 0
+		pvp._going_to_end = 0
+
+		local cmd = NewCommand("PVPBegin")
+		cmd.fight_start_time = pvp._fight_start_time 
+
+		local role1 = others.roles[pvp._fighter1._id:ToStr()]
+		if role1==nil then ThrowExecption() end --FIXME: $_$
+		role1:SendToClient(SerializeCommand(cmd))
+		role1:FastSess_Reset()
+
+		local role2 = others.roles[pvp._fighter2._id:ToStr()]
+		if role2==nil then ThrowExecption() end
+		role2:SendToClient(SerializeCommand(cmd))
+		role2:FastSess_Reset()
+	elseif pvp._status==1 then
+		--API_Log("OnMessage_PVPHeartbeat, _latency="..pvp._latency.." _fighter1._accumulate_latency="..pvp._fighter1._accumulate_latency.." _fighter1._delay_count="..pvp._fighter1._delay_count.." _fighter2._accumulate_latency="..pvp._fighter2._accumulate_latency.." _fighter2._delay_count="..pvp._fighter2._delay_count)
+
+		if pvp._fighter1._status==2 or pvp._fighter2._status==2 then
+			--已经有人提交结果了
+			if pvp._fighter1._status==2 and pvp._fighter2._status==2 then
+				pvp._status = 2
+			elseif pvp._going_to_end>=5 then
+				pvp._status = 2
+			else
+				pvp._going_to_end = pvp._going_to_end+1
+			end
+			return
+		end
+
+		--断线检查
+		if pvp._fighter1._ops:Find(pvp._next_client_tick)==nil then pvp._fighter1._wait_seconds=pvp._fighter1._wait_seconds+1 end
+		if pvp._fighter1._wait_seconds>5 then
+			API_Log("OnMessage_PVPHeartbeat, _fighter1 lost connection")
+			pvp._status = 2
+		end
+
+		if pvp._fighter2._ops:Find(pvp._next_client_tick)==nil then pvp._fighter2._wait_seconds=pvp._fighter2._wait_seconds+1 end
+		if pvp._fighter2._wait_seconds>5 then
+			API_Log("OnMessage_PVPHeartbeat, _fighter2 lost connection")
+			pvp._status = 2
+		end
+	elseif pvp._status==2 then
+		local role1 = others.roles[pvp._fighter1._id:ToStr()]
+		if role1~=nil then role1._pvp._id = 0 end
+
+		local role2 = others.roles[pvp._fighter2._id:ToStr()]
+		if role2~=nil then role2._pvp._id = 0 end
+
+		API_PVP_Delete(pvp._id)
+	end
+end

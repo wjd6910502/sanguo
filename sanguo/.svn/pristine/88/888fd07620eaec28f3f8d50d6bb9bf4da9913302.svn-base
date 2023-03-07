@@ -1,0 +1,4 @@
+function OnCommand_WeaponDecompose(player, role, arg, others)
+	--player:Log("OnCommand_WeaponDecompose, "..DumpTable(arg).." "..DumpTable(others))
+	--注意这个武器肯定不可以再武将身上，否则的话不可以分解，被装备的武器不可以分解
+end

@@ -1,0 +1,25 @@
+function OnCommand_PvpJoin(player, role, arg, others)
+	player:Log("OnCommand_PvpJoin, "..DumpTable(arg).." "..DumpTable(others))
+	
+	--在这里不进行任何的验证。直接就把消息发给中心服务器去
+	
+	local rolebrief = ROLE_MakeRoleBrief(role)
+	local pvpinfo ={}
+	pvpinfo.brief = {}
+	pvpinfo.brief = rolebrief
+	pvpinfo.hero_hall = {}
+
+	for i = 1, table.getn(arg.heroinfo) do
+		local hero = {}
+		hero.tid = arg.heroinfo[i]
+		hero.level = 1
+		hero.order = 1
+		pvpinfo.hero_hall[i] = hero
+	end
+
+	--typ等于1的时候代表的是跨服战斗
+	role._roledata._pvp._pvpcenterinfo = SerializeStruct("RolePVPInfo", pvpinfo)
+	role._roledata._pvp._typ = arg.typ
+
+	role:SendPVPJoin()
+end

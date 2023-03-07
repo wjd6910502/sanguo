@@ -1,0 +1,106 @@
+
+#ifndef __GNET_GUSEACTIVECODE_HPP
+#define __GNET_GUSEACTIVECODE_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "guseactivecodearg"
+#include "guseactivecoderes"
+#include "active_code_manager.h"
+#include "dbmgrdef.h"
+
+namespace GNET
+{
+
+class GUseActiveCode : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "guseactivecode"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		GUseActiveCodeArg *arg = (GUseActiveCodeArg *)argument;
+		GUseActiveCodeRes *res = (GUseActiveCodeRes *)result;
+		
+		if( arg->code.size() != KEY_LEN )
+		{
+			LOG_TRACE("CN::GUseActiveCode: code wrong length");
+			return;
+		}
+		
+		arg->type = ActiveCodeManager::GetInstance().ParseType((const char*)arg->code.begin(),4);
+		
+		LOG_TRACE("CN::GUseActiveCode: code=%.*s, type=%d, roleid=%lld, zoneid=%d",
+		          arg->code.size(), (char*)arg->code.begin(), arg->type, arg->roleid, arg->zoneid);
+
+		CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+		LOCK_TABLE(codes)
+		START_TRANSACTION
+		{
+			Octets o;
+			const char * tmp1 = "wmsyjnh";
+			if(memcmp((char*)arg->code.begin(),tmp1,strlen(tmp1)) == 0)
+			{
+				for (unsigned int i=0; i<strlen(tmp1); i++)
+				{
+					char c = tmp1[i];
+					o.insert(o.end(), &c, sizeof(c));
+				}
+			}
+			else
+			{
+				//去掉非法字符
+				for (unsigned int i=0; i<arg->code.size(); i++)
+				{
+					char c = ActiveCodeManager::GetInstance().ConvertChar(((char*)arg->code.begin())[i]);
+					if (c) o.insert(o.end(), &c, sizeof(c));
+				}
+			}
+			
+			unsigned short use_count = 0; 
+			Marshal::OctetsStream(codes->find(o, txnobj)) >> use_count;
+			//if (ac.type != arg->type) throw GamedbException(ERROR_INVALID_ACTIVE_CODE);
+			if (use_count == 0) 
+				throw GamedbException(ERROR_USED_ACTIVE_CODE);
+			else
+			{
+				use_count--;
+				codes->insert(o, Marshal::OctetsStream()<<use_count, txnobj);
+			}
+
+			Log::formatlog("use_active_code", "code=%.*s:o=%.*s:type=%d:roleid=%lld:zoneid=%d,use_count=%d", arg->code.size(),
+			               (char*)arg->code.begin(), o.size(), (char*)o.begin(), arg->type,  arg->roleid, arg->zoneid,use_count);
+
+			res->retcode = 0;
+		}
+		END_TRANSACTION
+		
+		if(txnerr)
+		{
+			Log::log(txnlog, "CN::GSUseActiveCode: code=%.*s, type=%d, roleid=%lld, zoneid=%d, (%d) %s",
+			         arg->code.size(), (char*)arg->code.begin(), arg->type, arg->roleid, arg->zoneid,
+			         txnerr, GamedbException::GetError(txnerr));
+			if(txnerr == ERROR_USED_ACTIVE_CODE)
+				res->retcode = txnerr;
+			else
+				res->retcode = ERROR_INVALID_ACTIVE_CODE; //无效的激活码
+		}
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// GUseActiveCodeArg *arg = (GUseActiveCodeArg *)argument;
+		// GUseActiveCodeRes *res = (GUseActiveCodeRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

@@ -1,0 +1,10 @@
+function OnCommand_Hero_Up_Grade(player, role, arg, others)
+	player:Log("OnCommand_Hero_Up_Grade, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("Hero_Up_Grade_Re")
+
+	resp.retcode = HERO_UpGrade(role, arg.hero_id)
+	player:SendToClient(SerializeCommand(resp))
+	return
+
+end

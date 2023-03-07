@@ -1,0 +1,107 @@
+
+#include "pvpmanager.h"
+
+namespace CACHE
+{
+
+void PVP::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+	_transaction_data.clear();
+	OctetsStream os;
+	os._for_transaction = true;
+	//TODO: try catch
+	marshal(os);
+	_transaction_data.swap(os);
+}
+
+void PVP::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void PVP::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+	//TODO: try catch
+	OctetsStream os(_transaction_data);
+	os._for_transaction = true;
+	unmarshal(os);
+}
+
+void PVP::OnTimer(int tick, int now)
+{
+	//NO LOCK
+	if(_data._status != 1) return;
+
+	if(tick%5 == 0) //TODO
+	{
+		std::vector<int64_t> extra_roles;
+		extra_roles.push_back((int64_t)_data._fighter1._id);
+		extra_roles.push_back((int64_t)_data._fighter2._id);
+
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10005:"); //PVPTriggerSend
+		MessageManager::GetInstance().Put(_data._id, _data._id, msg, &extra_roles);
+	}
+}
+
+void PVP::OnTimer1s(time_t now)
+{
+	//NO LOCK
+	std::vector<int64_t> extra_roles;
+	extra_roles.push_back((int64_t)_data._fighter1._id);
+	extra_roles.push_back((int64_t)_data._fighter2._id);
+
+	char msg[100];
+	snprintf(msg, sizeof(msg), "10004:%lu:", now); //PVPHeartbeat
+	MessageManager::GetInstance().Put(_data._id, _data._id, msg, &extra_roles);
+}
+
+void PVPManager::OnTimer(int tick, int now)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	for(auto it=_map.begin(); it!=_map.end(); ++it)
+	{
+		if(_will_delete_list.find(it->first)!=_will_delete_list.end()) continue;
+
+		PVP *pvp = it->second;
+		pvp->OnTimer(tick, now);
+		if(tick%SERVER_CONST_TICK_PER_SECOND == pvp->_data._id%SERVER_CONST_TICK_PER_SECOND) pvp->OnTimer1s(now);
+	}
+}
+
+PVP* PVPManager::Find(int id)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	if(_will_delete_list.find(id)!=_will_delete_list.end()) return 0;
+
+	auto it = _map.find(id);
+	if(it == _map.end()) return 0;
+	return it->second;
+}
+
+int PVPManager::LUA_Create(int mode, const Int64& fighter1, const Int64& fighter2)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	_id_stub++;
+	PVP *pvp = new PVP(_id_stub, mode, fighter1, fighter2);
+	_map[_id_stub] = pvp;
+	return _id_stub;
+}
+
+void PVPManager::LUA_Delete(int id)
+{
+	Thread::Mutex::Scoped keeper(_lock);
+
+	_will_delete_list.insert(id);
+}
+
+};
+

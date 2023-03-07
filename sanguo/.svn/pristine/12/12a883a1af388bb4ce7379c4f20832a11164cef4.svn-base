@@ -1,0 +1,3 @@
+function OnMessage_UpdateRoleMaShuScoreTop(player, role, arg, others)
+	--player:Log("OnMessage_UpdateRoleMaShuScoreTop, "..DumpTable(arg).." "..DumpTable(others))
+end

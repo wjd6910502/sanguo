@@ -1,0 +1,3 @@
+function OnCommand_SkinTimeOut(player, role, arg, others)
+	--player:Log("OnCommand_SkinTimeOut, "..DumpTable(arg).." "..DumpTable(others))
+end

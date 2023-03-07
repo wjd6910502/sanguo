@@ -1,0 +1,168 @@
+#include "callid.hxx"
+
+#ifdef WIN32
+#include <winsock2.h>
+#include "gnproto.h"
+#include "gncompress.h"
+#else
+#include "protocol.h"
+//#include "binder.h"
+#endif
+
+namespace GNET
+{
+
+static GNET::Protocol::Type _state_GateServer[] = 
+{
+	PROTOCOL_RESPONSE,
+};
+
+GNET::Protocol::Manager::Session::State state_GateServer(_state_GateServer,
+						sizeof(_state_GateServer)/sizeof(GNET::Protocol::Type), 10);
+
+static GNET::Protocol::Type _state_TransServer[] = 
+{
+	PROTOCOL_TRANSRESPONSE,
+	PROTOCOL_CONTINUE,
+	PROTOCOL_GAMEPROTOCOL,
+	PROTOCOL_KEEPALIVE,
+	PROTOCOL_SYNCNETIMERE,
+	PROTOCOL_REPORTUDPINFO,
+	PROTOCOL_SERVERLOG,
+};
+
+GNET::Protocol::Manager::Session::State state_TransServer(_state_TransServer,
+						sizeof(_state_TransServer)/sizeof(GNET::Protocol::Type), 10);
+
+static GNET::Protocol::Type _state_UDPTransServer[] = 
+{
+	PROTOCOL_UDPGAMEPROTOCOL,
+	PROTOCOL_UDPKEEPALIVE,
+	PROTOCOL_UDPSTUNREQUEST,
+};
+
+GNET::Protocol::Manager::Session::State state_UDPTransServer(_state_UDPTransServer,
+						sizeof(_state_UDPTransServer)/sizeof(GNET::Protocol::Type), 10);
+
+static GNET::Protocol::Type _state_GameDBClient[] = 
+{
+	RPC_DBLOADDATA,
+	RPC_DBLOADROLEDATA,
+	RPC_DBSAVEDATA,
+	PROTOCOL_CENTERCOMMAND,
+	PROTOCOL_CENTERCOMMANDRE,
+};
+
+GNET::Protocol::Manager::Session::State state_GameDBClient(_state_GameDBClient,
+						sizeof(_state_GameDBClient)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_GCenterClient[] = 
+{
+	PROTOCOL_CENTERCOMMAND,
+	PROTOCOL_CENTERCOMMANDRE,
+	PROTOCOL_KUAFUZONEREGISTER,
+	PROTOCOL_PVPMATCHSUCCESS,
+	PROTOCOL_PVPENTER,
+	PROTOCOL_PVPENTERRE,
+	PROTOCOL_SENDPVPVIDEOID,
+	PROTOCOL_PVPCENTERCREATE,
+	PROTOCOL_PVPLEAVE,
+	PROTOCOL_PVPLEAVERE,
+	RPC_PVPJOIN,
+	PROTOCOL_PVPREADY,
+	PROTOCOL_PVPSPEED,
+	PROTOCOL_PVPSPEEDRE,
+	PROTOCOL_PVPRESET,
+	PROTOCOL_PVPRESETRE,
+	PROTOCOL_GETPVPVIDEO,
+	PROTOCOL_GETPVPVIDEORE,
+	PROTOCOL_AUDIENCEGETLIST,
+	PROTOCOL_AUDIENCEGETLISTRE,
+	PROTOCOL_AUDIENCEGETOPERATION,
+	PROTOCOL_AUDIENCEGETOPERATIONRE,
+	PROTOCOL_AUDIENCEUPDATENUM,
+	PROTOCOL_AUDIENCESENDOPERATION,
+	PROTOCOL_AUDIENCELEAVEROOM,
+	PROTOCOL_AUDIENCEFINISHROOM,
+	PROTOCOL_UPDATEDANMUINFO,
+	PROTOCOL_YUEZHANEND,
+	PROTOCOL_YUEZHANBEGIN,
+	PROTOCOL_PVPDANMU,
+	PROTOCOL_DELPVPVIDEO,
+	PROTOCOL_PVPPAUSE,
+	PROTOCOL_PVPCONTINUE,
+	RPC_PVPCANCLE,
+};
+
+GNET::Protocol::Manager::Session::State state_GCenterClient(_state_GCenterClient,
+						sizeof(_state_GCenterClient)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_PVPGameServer[] = 
+{
+	PROTOCOL_PVPSERVERREGISTER,
+	PROTOCOL_PVPSERVERUPDATESTATUS,
+	PROTOCOL_PVPEND,
+	PROTOCOL_PVPOPERATION,
+	PROTOCOL_AUDIENCEOPERATION,
+	RPC_PVPCREATE,
+	PROTOCOL_PVPPAUSE,
+	PROTOCOL_PVPCONTINUE,
+};
+
+GNET::Protocol::Manager::Session::State state_PVPGameServer(_state_PVPGameServer,
+						sizeof(_state_PVPGameServer)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_STUNGameClient[] = 
+{
+	RPC_STUNGETSERVERINFO,
+};
+
+GNET::Protocol::Manager::Session::State state_STUNGameClient(_state_STUNGameClient,
+						sizeof(_state_STUNGameClient)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_STUNDeafServer[] = 
+{
+};
+
+GNET::Protocol::Manager::Session::State state_STUNDeafServer(_state_STUNDeafServer,
+						sizeof(_state_STUNDeafServer)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_UniqueNameClient[] = 
+{
+	RPC_CREATEROLENAME,
+	RPC_CREATEMAFIANAME,
+	RPC_CHANGEMAFIANAME,
+};
+
+GNET::Protocol::Manager::Session::State state_UniqueNameClient(_state_UniqueNameClient,
+						sizeof(_state_UniqueNameClient)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_STTClient[] = 
+{
+	RPC_GETTEXTINSPEECH,
+	PROTOCOL_STTZONEREGISTER,
+	PROTOCOL_GETIATEXTINSPEECHRE,
+};
+
+GNET::Protocol::Manager::Session::State state_STTClient(_state_STTClient,
+						sizeof(_state_STTClient)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_CustomerServiveServer[] = 
+{
+	PROTOCOL_CUSTOMERREQUEST,
+	PROTOCOL_CUSTOMERREQUEST_RE,
+};
+
+GNET::Protocol::Manager::Session::State state_CustomerServiveServer(_state_CustomerServiveServer,
+						sizeof(_state_CustomerServiveServer)/sizeof(GNET::Protocol::Type), 86400);
+
+static GNET::Protocol::Type _state_Null[] = 
+{
+};
+
+GNET::Protocol::Manager::Session::State state_Null(_state_Null,
+						sizeof(_state_Null)/sizeof(GNET::Protocol::Type), 5);
+
+
+};
+

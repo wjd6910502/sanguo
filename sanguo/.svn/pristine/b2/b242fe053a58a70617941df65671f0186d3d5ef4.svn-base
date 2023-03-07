@@ -1,0 +1,29 @@
+function OnCommand_WuZheShiLianGetOpponentInfo(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianGetOpponentInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("WuZheShiLianGetOpponentInfo_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]	
+	
+	resp.opponent_info = {}
+	local f = hero_trial._attack_info:Find(arg.difficulty)	
+	if f ~= nil then
+		local sit = f._difficulty_attackinfo:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local opp_info ={}
+			opp_info.id = s._id
+			opp_info.level = s._level
+			opp_info.alive = s._alive_flag		
+			opp_info.stage = s._stage
+			opp_info.hp = s._hp
+			opp_info.anger = s._anger
+			resp.opponent_info[#resp.opponent_info+1] = opp_info 
+			sit:Next()
+			s = sit:GetValue()		
+		end
+	else
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_PARAM_DIFFICULTY_WRONG"] 
+	end
+	
+	player:SendToClient(SerializeCommand(resp))	
+end

@@ -1,0 +1,10 @@
+function OnMessage_PVPEnd(pvp, arg, others)
+	API_Log("OnMessage_PVPEnd, "..DumpTable(arg).." "..DumpTable(others))
+
+	--目前仅有超时
+	if pvp._data._status~=2 then return end
+
+	pvp._data._status = 99
+	pvp._data._status_change_time = API_GetTime()
+	pvp._data._end_reason = 5 --战斗中有人掉线
+end

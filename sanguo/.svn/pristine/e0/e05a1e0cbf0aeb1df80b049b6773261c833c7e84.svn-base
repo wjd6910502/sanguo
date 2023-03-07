@@ -1,0 +1,3 @@
+function OnCommand_GetOtherPveArenaInfo(player, role, arg, others)
+	--player:Log("OnCommand_GetOtherPveArenaInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

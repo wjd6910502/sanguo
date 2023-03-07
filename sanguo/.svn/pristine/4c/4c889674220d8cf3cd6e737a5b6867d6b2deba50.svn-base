@@ -1,0 +1,3 @@
+function OnCommand_PVPOperation(player, role, arg, others)
+	API_Log("OnCommand_PVPOperation, "..DumpTable(arg))
+end

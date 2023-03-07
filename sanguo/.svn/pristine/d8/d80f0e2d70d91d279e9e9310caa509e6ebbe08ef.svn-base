@@ -1,0 +1,16 @@
+function OnCommand_JieYiGetRoleInfo(player, role, arg, others)
+	player:Log("OnCommand_JieYiGetRoleInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("JieYiGetRoleInfo_Re")
+
+	--已经结义的id和结义名字
+	resp.id = role._roledata._jieyi_info._jieyi_id:ToStr() 
+	resp.name = role._roledata._jieyi_info._jieyi_name
+	
+	--准备结义的id
+	resp.cur_operate_id = role._roledata._jieyi_info._cur_operate_id
+	--代表什么类型 已经结义 还是准备结义
+	resp.cur_operate_typ = role._roledata._jieyi_info._cur_operate_typ
+
+	player:SendToClient(SerializeCommand(resp)) 
+end

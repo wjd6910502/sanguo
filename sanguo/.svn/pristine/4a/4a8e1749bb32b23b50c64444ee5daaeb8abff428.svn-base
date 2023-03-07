@@ -1,0 +1,192 @@
+#include "miscmanager.h"
+#include "gamedbclient.hpp"
+#include "message.h"
+
+
+extern std::map<Octets, Octets> g_save_data_map;
+namespace CACHE
+{
+
+void MiscManager::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void MiscManager::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void MiscManager::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+void MiscManager::Load(Octets &key, Octets &value)
+{
+	std::string str_key  = std::string((char*)key.begin(),key.size());
+
+	Marshal::OctetsStream os(value);
+	int db_version = 0;
+	os >> db_version;
+	os._dbversion = db_version;
+
+	if(str_key == "mistmanager_hero_comments")
+	{
+		_hero_comments.unmarshal(os);
+	}
+	else if(str_key == "mistmanager_server_event")
+	{
+		_server_event.unmarshal(os);
+	}
+	else if(str_key == "mistmanager_open_server_time")
+	{
+		os >> _open_server_time;
+	}
+	else if(str_key == "mistmanager_pvp_season_end_time")
+	{
+		os >> _pvp_season_end_time;
+	}
+}
+
+void MiscManager::Save()
+{
+	GNET::Marshal::OctetsStream value;
+	std::string key_str = "mistmanager_hero_comments";
+
+	int db_version = DB_VERSION;
+	value << db_version;
+	_hero_comments.marshal(value);
+	g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+	
+	key_str = "mistmanager_server_event";
+	value.clear();
+
+	value << db_version;
+	_server_event.marshal(value);
+	g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+
+	key_str = "mistmanager_open_server_time";
+	value.clear();
+
+	value << db_version;
+	value << _open_server_time;
+	g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+	
+	key_str = "mistmanager_pvp_season_end_time";
+	value.clear();
+
+	value << db_version;
+	value << _pvp_season_end_time;
+	g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+}
+
+void MiscManager::OnTimer(int tick, int now)
+{
+	if(tick%(SERVER_CONST_TICK_PER_SECOND*10) == 0)
+	{
+		char msg[100];
+		snprintf(msg, sizeof(msg), "10028:");
+		MessageManager::GetInstance().Put(0, 0, msg, 0);
+	}
+}
+
+void MiscManager::SendMessage(const std::string& msg, int delay)
+{
+	MessageManager::GetInstance().Put(0, 0, msg.c_str(), delay);
+}
+
+void MiscManager::backup(const char *name, int transaction_id)
+{
+	if(transaction_id != _transaction_id)
+	{
+		_transaction_id = transaction_id;
+		_transaction_data.clear();
+	}
+	else if(_transaction_data.find(name) != _transaction_data.end())
+	{
+		return;
+	}
+
+	if(false)
+	{
+	}
+	else if(strcmp(name, "_hero_comments") == 0)
+	{
+		_hero_comments.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _hero_comments;
+		_transaction_data["_hero_comments"] = os;
+	}
+	else if(strcmp(name, "_server_event") == 0)
+	{
+		_server_event.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _server_event;
+		_transaction_data["_server_event"] = os;
+	}
+	else
+	{
+		abort();
+	}
+}
+void MiscManager::restore(int transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_hero_comments");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _hero_comments;
+			_hero_comments.cleanup();
+		}
+		else
+		{
+			_hero_comments.restore(transaction_id);
+		}
+		it = _transaction_data.find("_server_event");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _server_event;
+			_server_event.cleanup();
+		}
+		else
+		{
+			_server_event.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_hero_comments.restore(transaction_id);
+		_server_event.restore(transaction_id);
+	}
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+void MiscManager::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_hero_comments.cleanup();
+	_server_event.cleanup();
+}
+
+};

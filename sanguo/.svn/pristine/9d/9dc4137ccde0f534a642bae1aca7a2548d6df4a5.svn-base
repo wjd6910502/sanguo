@@ -1,0 +1,3 @@
+function OnCommand_WeaponEquip(player, role, arg, others)
+	--player:Log("OnCommand_WeaponEquip, "..DumpTable(arg).." "..DumpTable(others))
+end

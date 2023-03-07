@@ -1,0 +1,84 @@
+#include "stunserver.hpp"
+#include "stungameserver.hpp"
+#include "conf.h"
+#include "log.h"
+#include "thread.h"
+#include <iostream>
+#include <unistd.h>
+#include "gnet_init.h"
+#include "stundeafserver.hpp"
+
+using namespace GNET;
+
+int main(int argc, char *argv[])
+{
+	if (argc != 2 || access(argv[1], R_OK) == -1)
+	{
+		std::cerr << "Usage: " << argv[0] << " configurefile" << std::endl;
+		exit(-1);
+	}
+
+	Conf *conf = Conf::GetInstance(argv[1]);
+	Log::setprogname("stund");
+
+	GNET::InitStaticObjects();
+	//GNET::IOMan::_man.SetDelayThreshold(50, 500);
+	GNET::PollIO::Init(true);
+	GNET::Thread::Pool::_pool.Init(new ThreadPolicySingle());
+	GNET::IntervalTimer::StartTimer(1000, true);
+	GLog::Init("stund");
+
+	{
+		STUNServer *manager = STUNServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+
+		//get public address/port
+		std::string pa = conf->find(manager->Identification(), "public_address");
+		if(!pa.empty())
+		{
+			manager->SetPublicAddress(pa.c_str());
+		}
+		else
+		{
+			manager->SetPublicAddress(conf->find(manager->Identification(), "address").c_str());
+		}
+		unsigned short pp = atoi(conf->find(manager->Identification(), "public_port").c_str());
+		if(pp)
+		{
+			manager->SetPublicPort(pp);
+		}
+		else
+		{
+			manager->SetPublicPort(atoi(conf->find(manager->Identification(), "port").c_str()));
+		}
+
+		Protocol::Server(manager);
+	}
+	{
+		STUNDeafServer *manager = STUNDeafServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+	{
+		STUNGameServer *manager = STUNGameServer::GetInstance();
+		manager->SetAccumulate(atoi(conf->find(manager->Identification(), "accumulate").c_str()));
+		Protocol::Server(manager);
+	}
+
+	Log::setconsole(LOG_DEBUG, true);
+
+	while(1)
+	{
+		//prof_stat::Instance().before_poll();
+		PollIO::Poll(1);
+		//prof_stat::Instance().after_poll();
+		Timer::Update();
+		IntervalTimer::UpdateTimer();
+		//prof_stat::Instance().before_task();
+		Thread::Pool::_pool.TryProcessAllTask();
+		//prof_stat::Instance().after_task();
+		STAT_MIN5("Poll",1);
+	}
+	return 0;
+}
+

@@ -1,0 +1,69 @@
+
+LUA_REGISTRYINDEX:
+	.tolua_opened = true
+	.tolua_ubox = {}
+		weak value table
+		
+	.tolua_super = {}
+	.tolua_gc = {}
+	.tolua_gc_event = class_gc_event
+		upvalue: LUA_REGISTRYINDEX["tolua_gc"], LUA_REGISTRYINDEX["tolua_super"]
+
+	.tolua_commonclass = {}
+		__index = class_index_event
+		__newindex = class_newindex_event
+		__add = class_add_event
+		...
+		__gc = LUA_REGISTRYINDEX["tolua_gc_event"]
+	{} = "tolua_commonclass"
+		LUA_REGISTRYINDEX[LUA_REGISTRYINDEX["tolua_commonclass"]] = "tolua_commonclass"
+
+LUA_GLOBALSINDEX:
+	.tolua = {}
+	.tolua.type = tolua_bnd_type
+	.tolua.takeownership = tolua_bnd_takeownership
+	...
+	.tolua.getpeer = tolua_bnd_getpeer
+
+LUA_REGISTRYINDEX:
+	.NS_TEST::TestClass = {}
+	{} = "..."
+	.const NS_TEST::TestClass = {}
+	{} = "..."
+
+	.tolua_super[LUA_REGISTRYINDEX["NS_TEST::TestClass"]] = { "const NS_TEST::TestClass"=true }
+	
+
+
+
+
+
+
+
+
+
+
+
+tolua_module:
+	upper[name] = {}
+tolua_beginmodule:
+	push(upper[name])
+tolua_endmodule:
+	pop
+
+
+
+
+
+
+
+
+
+
+mapsuper还是没看懂
+
+mapinheritance又是什么？
+
+ubox?
+
+

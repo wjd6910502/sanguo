@@ -1,0 +1,48 @@
+
+#ifndef __GNET_STUNGETSERVERINFO_HPP
+#define __GNET_STUNGETSERVERINFO_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include "glog.h"
+#include "stunserver.hpp"
+
+#include "stungetserverinfoarg"
+#include "stungetserverinfores"
+
+namespace GNET
+{
+
+class STUNGetServerInfo : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "stungetserverinfo"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		STUNGetServerInfoArg *arg = (STUNGetServerInfoArg *)argument;
+		STUNGetServerInfoRes *res = (STUNGetServerInfoRes *)result;
+
+		GLog::log(LOG_INFO, "STUND::STUNGetServerInfo::Server, zoneid=%d", arg->zoneid);
+
+		res->retcode = 0;
+		res->public_ip = STUNServer::GetInstance()->GetPublicAddress();
+		res->public_port = STUNServer::GetInstance()->GetPublicPort();
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// STUNGetServerInfoArg *arg = (STUNGetServerInfoArg *)argument;
+		// STUNGetServerInfoRes *res = (STUNGetServerInfoRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

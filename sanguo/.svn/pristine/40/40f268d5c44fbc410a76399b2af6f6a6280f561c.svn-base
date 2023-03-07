@@ -1,0 +1,186 @@
+#include "TopList_All_Role.h"
+#include "gamedbclient.hpp"
+#include "message.h"
+
+extern std::map<Octets, Octets> g_save_data_map;
+
+namespace CACHE
+{
+
+SGT_TopList_All_Role::SGT_TopList_All_Role()
+{
+	_in_transaction = false;
+	_transaction_id = 0;
+
+	SingletonManager::GetInstance().Register(6, this);
+}
+
+void SGT_TopList_All_Role::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_TopList_All_Role::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void SGT_TopList_All_Role::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+void SGT_TopList_All_Role::backup(const char *name, int transaction_id)
+{
+	if(transaction_id != _transaction_id)
+	{
+		_transaction_id = transaction_id;
+		_transaction_data.clear();
+	}
+	else if(_transaction_data.find(name) != _transaction_data.end())
+	{
+		return;
+	}
+
+	if(false)
+	{
+	}
+	else if(strcmp(name, "_data") == 0)
+	{
+		_data.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _data;
+		_transaction_data["_data"] = os;
+	}
+	else
+	{
+		abort();
+	}
+}
+
+void SGT_TopList_All_Role::restore(int transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_data");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _data;
+			_data.cleanup();
+		}
+		else
+		{
+			_data.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_data.restore(transaction_id);
+	}
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_TopList_All_Role::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_data.cleanup();
+}
+
+//手动增加的代码
+void SGT_TopList_All_Role::OnTimer(int tick, int now)
+{
+	if(tick%(SERVER_CONST_TICK_PER_SECOND*5) == 0)
+	{
+		char msg[100];
+		snprintf(msg, sizeof(msg), "30:");
+		MessageManager::GetInstance().Put(0, 0, msg, 0);
+	}
+}
+
+//for DB
+void SGT_TopList_All_Role::Load(Octets &key, Octets &value)
+{
+	std::string str_key  = std::string((char*)key.begin(),key.size());
+
+	TopListAllRoleDataMapData top_value;
+
+	Marshal::OctetsStream os(value);
+	int db_version = 0;
+	os >> db_version;
+	os._dbversion = db_version;
+	top_value.unmarshal(os);
+
+	if(str_key == "toplistallrole_mashu")
+	{
+		_data._data.Insert(TOPLIST_ALL_ROLE_MASHU, top_value);
+	}
+	else if(str_key == "toplistallrole_tower")
+	{
+		_data._data.Insert(TOPLIST_ALL_ROLE_TOWER, top_value);	
+	}
+	else if(str_key == "toplistallrole_tower_big")
+	{
+		_data._data.Insert(TOPLIST_ALL_ROLE_TOWER_BIG, top_value);
+	}
+}
+
+void SGT_TopList_All_Role::Save()
+{
+	TopListAllRoleDataMapData * toplist = NULL;
+	TopListAllRoleDataMapDataMapIter it_manager = _data._data.SeekToBegin();
+	GNET::Marshal::OctetsStream value;
+
+	for(it_manager = _data._data.SeekToBegin(); (toplist = it_manager.GetValue()); it_manager.Next())
+	{
+		value.clear();
+		if(toplist->_typ == TOPLIST_ALL_ROLE_MASHU)
+		{
+			std::string key_str = "toplistallrole_mashu";
+			
+			//先把version版本号放进去
+			int db_version = DB_VERSION;
+			value << db_version;
+			toplist->marshal(value);
+			g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+		}
+		else if(toplist->_typ == TOPLIST_ALL_ROLE_TOWER)
+		{
+			std::string key_str = "toplistallrole_tower";
+			
+			//先把version版本号放进去
+			int db_version = DB_VERSION;
+			value << db_version;
+			toplist->marshal(value);
+			g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+		}
+		else if(toplist->_typ == TOPLIST_ALL_ROLE_TOWER_BIG)
+		{
+			std::string key_str = "toplistallrole_tower_big";
+			
+			//先把version版本号放进去
+			int db_version = DB_VERSION;
+			value << db_version;
+			toplist->marshal(value);
+			g_save_data_map[Octets(key_str.c_str(), key_str.size())] = value;
+		}
+	}
+}
+
+}
+

@@ -1,0 +1,149 @@
+function OnCommand_MafiaJiSi(player, role, arg, others)
+	player:Log("OnCommand_MafiaJiSi, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local mafia_data = others.mafias[role._roledata._mafia._id:ToStr()]
+
+	local resp = NewCommand("MafiaJiSi_Re")
+	resp.jisi_typ = arg.jisi_typ
+	--查看是否还有次数。没有次数的话，给客户端返回去
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+
+	local jisi_info = ed:FindBy("leaguebuild_typ", arg.jisi_typ)
+
+	if jisi_info == nil then
+		resp.retcode = G_ERRCODE["MAFIA_JISI_TYP_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MafiaJiSi, error=MAFIA_JISI_TYP_ERR")
+		return
+	end
+
+	if mafia_data == nil then
+		resp.retcode = G_ERRCODE["NO_MAFIA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MafiaJiSi, error=NO_MAFIA")
+		return
+	end
+	
+	if LIMIT_TestUseLimit(role, quanju.league_build_maxtimes, 1) == false then
+		resp.retcode = G_ERRCODE["MAFIA_JISI_MAX_NUM"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MafiaJiSi, error=MAFIA_JISI_MAX_NUM")
+		return
+	end
+
+	--查看祭祀费用是否足够
+	if jisi_info.cost_coin_type == 1 then
+		if role._roledata._status._money < jisi_info.cost_coin_num then
+			resp.retcode = G_ERRCODE["MAFIA_JISI_MONEY_ERR"]
+			player:SendToClient(SerializeCommand(resp))
+			player:Log("OnCommand_MafiaJiSi, error=MAFIA_JISI_MONEY_ERR")
+			return
+		end
+		ROLE_SubMoney(role, jisi_info.cost_coin_num)
+	elseif jisi_info.cost_coin_type == 2 then
+		if role._roledata._status._yuanbao < jisi_info.cost_coin_num then
+			resp.retcode = G_ERRCODE["MAFIA_JISI_YUANBAO_ERR"]
+			player:SendToClient(SerializeCommand(resp))
+			player:Log("OnCommand_MafiaJiSi, error=MAFIA_JISI_YUANBAO_ERR")
+			return
+		end
+		ROLE_SubYuanBao(role, jisi_info.cost_coin_num)
+	else
+		resp.retcode = G_ERRCODE["MAFIA_JISI_TYP_ERR"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MafiaJiSi, error=MAFIA_JISI_TYP_ERR")
+		return
+	end
+
+	local reward = DROPITEM_Reward(role, jisi_info.reward_get)
+	ROLE_AddReward(role, reward)
+
+	local mafia_info = mafia_data._data
+
+	local find_member = mafia_info._member_map:Find(role._roledata._base._id)
+	if find_member == nil then
+		return
+	end
+	--在这里开始进行祭祀，根据祭祀类型修改祭祀进度和帮会经验
+	LIMIT_AddUseLimit(role, quanju.league_build_maxtimes, 1)
+	
+	local notice_flag = false
+	mafia_info._jisi = mafia_info._jisi + jisi_info.daily_rate_get
+	notice_flag = true
+
+	local league_level_info = ed:FindBy("league_level", mafia_info._level)
+	if league_level_info.exp ~= 0 then
+		mafia_info._exp = mafia_info._exp + jisi_info.exp_get
+		notice_flag = true
+
+		if mafia_info._exp >= league_level_info.exp then
+			mafia_info._level = mafia_info._level + 1
+
+			local second_league_level_info = ed:FindBy("league_level", mafia_info._level)
+			if second_league_level_info.exp ~= 0 then
+				mafia_info._exp = mafia_info._exp - league_level_info.exp
+			else
+				mafia_info._exp = 0
+			end
+			--更新帮会的信息到简易帮会表中去
+			MAFIA_MafiaUpdateInfoTop(mafia_info, 1)
+		end
+	end
+
+	--广播变化
+	if notice_flag == true then
+		MAFIA_MafiaUpdateExp(mafia_info)
+	end
+
+	MAFIA_MafiaUpdateJiSi(mafia_info, mafia_info._jisi)
+
+	--更新这个玩家的信息给所有的帮众
+	local contrabution_it = find_member._week_contribution:SeekToBegin()
+	local contrabution = contrabution_it:GetValue()
+	if contrabution == nil then
+		local insert_contrabution = CACHE.Int()
+		insert_contrabution._value = jisi_info.exp_get
+		find_member._week_contribution:PushFront(insert_contrabution)
+	else
+		contrabution._value = contrabution._value + jisi_info.exp_get
+	end
+	MAFIA_MafiaUpdateMember(mafia_info, find_member)
+
+	--添加新的日志信息，并且把这个东西广播给所有的帮众
+	mafia_info._notice_id = mafia_info._notice_id + 1
+	local tmp_insert_notice_info = CACHE.MafiaNoticeData()
+	tmp_insert_notice_info._id = mafia_info._notice_id
+	tmp_insert_notice_info._time = API_GetTime()
+	
+	local tmp_insert_int = CACHE.Int()
+	tmp_insert_int._value = jisi_info.exp_get
+	tmp_insert_notice_info._num_info:PushBack(tmp_insert_int)
+	tmp_insert_int._value = jisi_info.daily_rate_get
+	tmp_insert_notice_info._num_info:PushBack(tmp_insert_int)
+
+	local tmp_insert_role = CACHE.MafiaNoticeRoleData()
+	tmp_insert_role._id = role._roledata._base._id
+	tmp_insert_role._name = role._roledata._base._name
+	tmp_insert_notice_info._role_info:PushBack(tmp_insert_role)
+	if jisi_info.cost_coin_type == 1 then
+		tmp_insert_notice_info._typ = 7
+	else
+		tmp_insert_notice_info._typ = 6
+	end
+
+	mafia_info._notice:PushBack(tmp_insert_notice_info)
+	
+	MAFIA_MafiaUpdateNotice(mafia_info, tmp_insert_notice_info)
+
+	resp.retcode = 0
+	player:SendToClient(SerializeCommand(resp))
+	
+	TASK_ChangeCondition(role, G_ACH_TYPE["YONGJIU"], G_ACH_TWENTY_TYPE["MAFIAJISI"], 1)
+	TASK_ChangeCondition(role, G_ACH_TYPE["STAGE_COUNT"], G_ACH_EIGHT_TYPE["MAFIAJISI"], 1)
+
+	if jisi_info.typ == 2 then
+		TASK_ChangeCondition(role, G_ACH_TYPE["YONGJIU"], G_ACH_TWENTY_TYPE["MAFIAJITIAN"], 1)
+	end
+	return
+end

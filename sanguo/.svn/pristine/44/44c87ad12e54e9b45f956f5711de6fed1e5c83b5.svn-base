@@ -1,0 +1,14 @@
+function OnCommand_WeaponForge(player, role, arg, others)
+	player:Log("OnCommand_WeaponForge, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("WeaponForge_Re")
+	
+	if arg.typ == 1 then
+	elseif arg.typ == 2 then
+	elseif arg.typ == 3 then
+	else
+		resp.retcode = G_ERRCODE["WEAPON_FORGE_ARG_ERROR"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+end

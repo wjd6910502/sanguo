@@ -1,0 +1,3 @@
+function OnCommand_WuZheShiLianGetReward(player, role, arg, others)
+	--player:Log("OnCommand_WuZheShiLianGetReward, "..DumpTable(arg).." "..DumpTable(others))
+end

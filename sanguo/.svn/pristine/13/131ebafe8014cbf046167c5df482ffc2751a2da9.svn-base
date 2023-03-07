@@ -1,0 +1,37 @@
+function OnCommand_ChallengeRoleByItem(player, role, arg, others)
+	player:Log("OnCommand_ChallengeRoleByItem, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("ChallengeRoleByItem_Re")
+	
+	local dest_role = others.roles[arg.roleid]
+
+	--查看你自己的信息没有任何的意义呀
+	if role._roledata._base._id:ToStr() == dest_role._roledata._base._id:ToStr() then
+		return 
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.role_info = {}
+	
+	resp.role_info.id = dest_role._roledata._base._id:ToStr()
+	resp.role_info.name = dest_role._roledata._base._name
+	resp.role_info.level = dest_role._roledata._status._level
+	resp.role_info.score = dest_role._roledata._pve_arena_info._score
+	resp.role_info.hero_score = 100
+	resp.role_info.mafia_name = dest_role._roledata._mafia._name
+	resp.role_info.rank = 0
+	resp.role_info.hero_info = {}
+	resp.role_info.hero_info.heroinfo = ds_hero_info.heroinfo
+	
+	local heroid_it = dest_role._roledata._pve_arena_info._defence_hero_info:SeekToBegin()
+	local heroid = heroid_it:GetValue()
+	while heroid ~= nil do
+		local tmp_hero = {}
+		tmp_hero.id = heroid._value
+		resp.role_info.hero_info.heroinfo[#resp.role_info.hero_info.heroinfo + 1] = tmp_hero
+		heroid_it:Next()
+		heroid = heroid_it:GetValue()
+	end
+
+	role:SendToClient(SerializeCommand(resp))
+end

@@ -1,0 +1,339 @@
+$#include "playermanager.h"
+$#include "mafiamanager.h"
+$#include "pvpmanager.h"
+$#include "dbsavemanager.h"
+$#include "TopList.h"
+$#include "Misc.h"
+$#include "PveArena.h"
+$#include "NoLoadPlayer.h"
+$#include "TongQueTai.h"
+$#include "TopList_All_Role.h"
+$#include "Mafia_Info.h"
+$#include "JieYi_Info.h"
+$#include "YueZhan_Info.h"
+$#include "Version_Info.h"
+$#include "Chat_Info.h"
+$#include "RoleNameCache.h"
+
+$#include "forlua.h"
+$#include "structs.h"
+
+$using namespace CACHE;
+
+namespace CACHE
+{
+
+class Int64
+{
+	Int64(): _v(0), _s("0") {}
+	Int64(const char *s);
+
+	const char* ToStr() const { return _s.c_str(); }
+
+	void Set(const char *s);
+	void Set(const int &s);
+	void Set(const Int64 &s);
+	
+	void Add(const char *s);
+	void Add(const int &s);
+	void Add(const Int64 &s);
+	
+	void Sub(const char *s);
+	void Sub(const int &s);
+	void Sub(const Int64 &s);
+	
+	void Mul(const char *s);
+	void Mul(const int &s);
+	void Mul(const Int64 &s);
+	
+	void Div(const char *s);
+	void Div(const int &s);
+	void Div(const Int64 &s);
+
+	void Mod(const char *s) const;
+	void Mod(const int &s) const;
+	void Mod(const Int64 &s) const;
+	
+	bool Less(const char *s) const;
+	bool Less(const int &s) const;
+	bool Less(const Int64 &s) const;
+	
+	bool Great(const char *s) const;
+	bool Great(const int &s) const;
+	bool Great(const Int64 &s) const;
+	
+	bool Equal(const char *s) const;
+	bool Equal(const int &s) const;
+	bool Equal(const Int64 &s) const;
+};
+
+$$$REPLACE ME!$$$
+
+class Role
+{
+public:
+	RoleData _roledata;
+
+	bool IsActiveRole() const;
+
+	void SendToClient(const std::string& v);
+	void SendToClientFirst(const std::string& v);
+	void NewSendToClientList();
+	void SendUDPToClient(const std::string& v);
+
+	void SendPVPJoin(int score);
+	void SendOperation(int map_id, std::string operation, std::string role_info, int battle_ver);
+	void SendPVPEnter(int flag);
+	void SendPVPReady();
+	void SendPVPLeave(int reason, int typ);
+	void SendPVPCancle();
+	void SendPVPSpeed(int speed);
+	void SendPVPReset();
+	void GetPVPVideo(const std::string& v);
+	void DelPVPVideo(const std::string& v);
+	void SendSpeechToSTT(std::string dest_id, int chat_type, int channel, std::string speech);
+	void SendRoleInfoToRegister(std::string name, int level, int photo);
+	void AudienceGetAllList();
+	void AudienceGetRoomInfo(int room_id);
+	void AudienceLeave(int room_id);
+	void SendYueZhanBegin(int room_id);
+	void SendPvpDanMu(int pvp_id, std::string video_id, int tick, std::string danmu_info);
+	void SendPVPPauseRe(int pvp_id);
+};
+
+class Player
+{
+public:
+	void Log(const char *v) const;
+	void BILog(const char *v) const;
+	void Err(const char *v) const;
+	void SendToClient(const std::string& v);
+	void SendToClientFirst(const std::string& v);
+	void NewSendToClientList();
+	void SendUDPToClient(const std::string& v);
+	void SendMessage(const Int64& target, const std::string& v) { SendMessage(target, v, 0); }
+	void SendMessage(const Int64& target, const std::string& v, int delay);
+	void SendMessage(const Int64& target, const std::string& v, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps) { SendMessage(target, v, 0, extra_roles, extra_mafias, extra_pvps); }
+	void SendMessage(const Int64& target, const std::string& v, int delay, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps);
+	void SendMessageToAllRole(const std::string& v) { SendMessageToAllRole(v, 0); }
+	void SendMessageToAllRole(const std::string& v, int delay);
+	void SendMessageToAllRole(const std::string& v, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps) { SendMessageToAllRole(v, 0, extra_roles, extra_mafias, extra_pvps); }
+	void SendMessageToAllRole(const std::string& v, int delay, const Int64List& extra_roles, const Int64List& extra_mafias, const IntList& extra_pvps);
+	void KickoutSelf(int reason);
+	const std::string GetStrAccount() const { return std::string((char*)_account.begin(), _account.size()); }
+	//create role
+	bool IsValidRolename(const std::string& role_name);  
+	void AllocRoleName(const char *name, int create_time, const char *errorinfo);
+	void AllocRoleChangeName(const char *name);
+	//create mafia
+	bool IsValidMafianame(const std::string& mafia_name);  
+	void AllocMafiaName(const char *name, int create_time);
+	void AllocMafiaChangeName(const char *name);
+	//for NTP
+	bool NetTime_NeedSync() const { return _network_time.NeedSync(); }
+	void NetTime_Sync2Client();
+	//int GetLatency() { return _latency.Get(); }
+	//for latency
+	int GetLatency();
+	int GetUDPLatency();
+	const std::string GetStrKey1() const { return std::string((char*)_key1.begin(), _key1.size()); }
+};
+
+class RoleIter
+{
+public:
+	void Next();
+	void Prev();
+	Role* GetValue();
+};
+
+class PlayerManager
+{
+public:
+	static PlayerManager& GetInstance();
+
+	int Size() const { return _map_by_role_id.size(); }
+
+	Role* Find(const Int64& k);
+
+	RoleIter SeekToBegin() const { return RoleIter(_map_by_role_id.begin(), this, _tag); }
+	RoleIter Seek(const Int64& k) const { return RoleIter(_map_by_role_id.find(k), this, _tag); }
+	RoleIter SeekToLast() const;
+};
+
+class Mafia
+{
+public:
+	MafiaData _data;
+};
+
+class MafiaMapIter
+{
+public:
+	void Next() { _rep.Next(); }
+	void Prev() { _rep.Prev(); }
+	Mafia* GetValue() { return _rep.GetValue(); }
+};
+class MafiaMap
+{
+public:
+	//MafiaMap(): _rep(this) {}
+
+	int Size() const { return _rep.Size(); }
+
+	Mafia* Find(const Int64& k) { return _rep.Find(k); }
+
+	MafiaMapIter SeekToBegin() const { return _rep.SeekToBegin(); }
+	MafiaMapIter Seek(const Int64& k) const { return _rep.Seek(k); }
+	MafiaMapIter SeekToLast() const { return _rep.SeekToLast(); }
+};
+
+class PVP
+{
+public:
+	PVPData _data;
+
+	void PVPD_Create();
+	void PVPD_Delete();
+};
+
+class SGT_TopList
+{
+public:
+	TopManagerData _data;
+
+	void SendMessageDaily(const Int64& target, const std::string& msgid, const int& mailid, const std::string& arg); //FIXME: will delete
+	void SendMessageServerEvent(const int& event_type, const int& end_time);
+};
+
+class SGT_Misc
+{
+public:
+	MiscData _miscdata;
+
+	void SendMessage(const std::string& msg, int delay); //FIXME: will delete
+};
+
+class SGT_PveArena
+{
+public:
+	PveArenaDataMapData _data;
+};
+
+class SGT_NoLoadPlayer
+{
+public:
+	NoLoadPlayerData _data;
+
+	void GetRoleInfo(const std::string account);
+};
+
+class SGT_TongQueTai
+{
+public:
+	TongQueTaiData _data;
+};
+
+class SGT_TopList_All_Role
+{
+public:
+	TopList_All_RoleData _data;
+};
+
+class SGT_Mafia_Info
+{
+public:
+	Mafia_InfoData _data;
+};
+
+class SGT_JieYi_Info
+{
+public:
+	JieYi_InfoData _data;
+};
+
+class SGT_YueZhan_Info
+{
+public:
+	YueZhan_InfoData _data;
+};
+
+class SGT_Version_Info
+{
+public:
+	Version_InfoData _data;
+};
+
+
+class SGT_Chat_Info
+{
+public:
+	Chat_InfoData _data;
+};
+
+class SGT_RoleNameCache
+{
+public:
+	RoleNameCacheData _data;
+
+	void Insert(const std::string& name, const Role role);
+	RoleNameQueryResults* Query(const std::string& pattern);
+	void ReleaseResult(RoleNameQueryResults *results) { delete results; }
+};
+
+};
+
+inline void API_SendMessage(const CACHE::Int64& target, const std::string& v, const CACHE::Int64List& extra_roles, 
+		const CACHE::Int64List& extra_mafias, const CACHE::IntList& extra_pvps);
+inline void API_SendMessageToAllRole(const std::string& v, const CACHE::Int64List& extra_roles, 
+		const CACHE::Int64List& extra_mafias, const CACHE::IntList& extra_pvps);
+inline void API_LuaSave() {return CACHE::DBSaveManager::GetInstance().Save()}
+
+void API_Mafia_Insert(const CACHE::Int64& id, const CACHE::MafiaData& data);
+CACHE::Int64 API_Mafia_AllocId();
+
+
+
+
+inline CACHE::Player* API_GetLuaPlayer(void *p) { return (CACHE::Player*)p; }
+inline CACHE::Role* API_GetLuaRole(void *p) { return (p ? &(((CACHE::Player*)p)->_role) : 0); }
+
+inline CACHE::Mafia* API_GetLuaMafia(void *r) { return (CACHE::Mafia*)r; }
+inline CACHE::MafiaMap* API_Mafia_GetMap() { return (InBigLock() ? &CACHE::MafiaManager::GetInstance().GetMap() : 0); }
+
+inline int API_PVP_Create(int mode, const CACHE::Int64& fighter1, const CACHE::Int64& fighter2);
+inline void API_PVP_Delete(int id) { CACHE::PVPManager::GetInstance().LUA_Delete(id); }
+inline CACHE::PVP* API_GetLuaPVP(void *r) { return (CACHE::PVP*)r; }
+
+inline CACHE::SGT_TopList* API_GetLuaTopList(void *r) { return (CACHE::SGT_TopList*)r; }
+inline CACHE::SGT_TopList* API_GetLuaTopList() { return (InBigLock() ? &CACHE::SGT_TopList::GetInstance() : 0); }
+inline CACHE::SGT_Misc* API_GetLuaMisc(void *r) { return (CACHE::SGT_Misc*)r; }
+inline CACHE::SGT_Misc* API_GetLuaMisc() { return (InBigLock() ? &CACHE::SGT_Misc::GetInstance() : 0); }
+inline CACHE::SGT_PveArena* API_GetLuaPveArena(void *r) { return (CACHE::SGT_PveArena*)r; }
+inline CACHE::SGT_PveArena* API_GetLuaPveArena() { return (InBigLock() ? &CACHE::SGT_PveArena::GetInstance() : 0); }
+inline CACHE::SGT_NoLoadPlayer* API_GetLuaNoLoadPlayer(void *r) { return (CACHE::SGT_NoLoadPlayer*)r; }
+inline CACHE::SGT_NoLoadPlayer* API_GetLuaNoLoadPlayer() { return (InBigLock() ? &CACHE::SGT_NoLoadPlayer::GetInstance() : 0); }
+inline CACHE::SGT_TongQueTai* API_GetLuaTongQueTai(void *r) { return (CACHE::SGT_TongQueTai*)r; }
+inline CACHE::SGT_TongQueTai* API_GetLuaTongQueTai() { return (InBigLock() ? &CACHE::SGT_TongQueTai::GetInstance() : 0); }
+
+inline CACHE::SGT_TopList_All_Role* API_GetLuaTopList_All_Role(void *r) { return (CACHE::SGT_TopList_All_Role*)r; }
+inline CACHE::SGT_TopList_All_Role* API_GetLuaTopList_All_Role() { return (InBigLock() ? &CACHE::SGT_TopList_All_Role::GetInstance() : 0); }
+
+inline CACHE::SGT_Mafia_Info* API_GetLuaMafia_Info(void *r) { return (CACHE::SGT_Mafia_Info*)r; }
+inline CACHE::SGT_Mafia_Info* API_GetLuaMafia_Info() { return (InBigLock() ? &CACHE::SGT_Mafia_Info::GetInstance() : 0); }
+
+inline CACHE::SGT_JieYi_Info* API_GetLuaJieYi_Info(void *r) { return (CACHE::SGT_JieYi_Info*)r; }
+inline CACHE::SGT_JieYi_Info* API_GetLuaJieYi_Info() { return (InBigLock() ? &CACHE::SGT_JieYi_Info::GetInstance() : 0); }
+
+inline CACHE::SGT_YueZhan_Info* API_GetLuaYueZhan_Info(void *r) { return (CACHE::SGT_YueZhan_Info*)r; }
+inline CACHE::SGT_YueZhan_Info* API_GetLuaYueZhan_Info() { return (InBigLock() ? &CACHE::SGT_YueZhan_Info::GetInstance() : 0); }
+
+inline CACHE::SGT_Version_Info* API_GetLuaVersion_Info(void *r) { return (CACHE::SGT_Version_Info*)r; }
+inline CACHE::SGT_Version_Info* API_GetLuaVersion_Info() { return (InBigLock() ? &CACHE::SGT_Version_Info::GetInstance() : 0); }
+
+inline CACHE::SGT_Chat_Info* API_GetLuaChat_Info(void *r) { return (CACHE::SGT_Chat_Info*)r; }
+inline CACHE::SGT_Chat_Info* API_GetLuaChat_Info() { return (InBigLock() ? &CACHE::SGT_Chat_Info::GetInstance() : 0); }
+
+inline CACHE::SGT_RoleNameCache* API_GetLuaRoleNameCache(void *r) { return (CACHE::SGT_RoleNameCache*)r; }
+inline CACHE::SGT_RoleNameCache* API_GetLuaRoleNameCache() { return (InBigLock() ? &CACHE::SGT_RoleNameCache::GetInstance() : 0); }
+

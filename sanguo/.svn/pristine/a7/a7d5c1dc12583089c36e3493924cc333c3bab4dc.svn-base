@@ -1,0 +1,65 @@
+
+#ifndef __GNET_PVPJOIN_HPP
+#define __GNET_PVPJOIN_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "pvpjoinarg"
+#include "pvpjoinres"
+
+#include "pvpmatch.h"
+
+namespace GNET
+{
+
+class PvpJoin : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "pvpjoin"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		PvpJoinArg *arg = (PvpJoinArg *)argument;
+		PvpJoinRes *res = (PvpJoinRes *)result;
+
+		GLog::log(LOG_INFO, "GCenter::PvpJoin:Server, roleid=%ld, zoneid=%d, score=%d, elo_score=%d, win_count=%d",
+		arg->roleid, arg->zoneid, arg->score, arg->elo_score, arg->win_count);
+		
+		pvp_data_key tmp_key;
+		tmp_key.role_id = arg->roleid;
+		tmp_key.score = arg->elo_score;
+		tmp_key.star = arg->score;
+		pvp_data tmp;
+		tmp.role_id = arg->roleid;
+		tmp.zoneid = arg->zoneid;
+		tmp.pvpinfo = arg->pvpinfo;
+		tmp.begin_time = Now();
+		tmp.exe_ver = arg->exe_version;
+		tmp.data_ver = arg->data_version;
+		tmp.key = arg->key;
+		tmp.pvp_ver = arg->pvp_ver;
+		tmp.win_count = arg->win_count;
+		tmp.wait_time = rand()%10+25;
+
+		res->retcode = PVPMatch::GetInstance().AddPVPData(tmp_key, tmp);
+
+
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// PvpJoinArg *arg = (PvpJoinArg *)argument;
+		// PvpJoinRes *res = (PvpJoinRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

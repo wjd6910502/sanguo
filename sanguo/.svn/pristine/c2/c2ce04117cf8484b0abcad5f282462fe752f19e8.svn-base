@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<messages>
+	<message name="UpdateRoleInfo" type="1" receiver="gamed" receiver2="player">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+	</message>
+
+	<message name="PublicChat" type="2" receiver="gamed" receiver2="player">
+		<variable name="src" type="RoleBrief"/>
+		<variable name="text_content" type="string"/>
+		<variable name="time" type="number"/>
+	</message>
+
+	<message name="MafiaAddMember" type="3" receiver="gamed" receiver2="player">
+		<variable name="member" type="RoleBrief"/>
+	</message>
+
+	<message name="CheckClientVersion" type="4" receiver="gamed" receiver2="player" lock="misc"/>
+
+	<!--¸üÐÂÍæ¼ÒµÄJJCÐÅÏ¢µ½ÅÅÐÐ°ñÉÏ-->
+	<message name="RoleUpdatePveArenaTop" type="5" receiver="gamed" receiver2="player" lock="toplist">
+	</message>
+
+	<!--¸üÐÂÍæ¼ÒµÄJJCÐÅÏ¢µ½miscÉÏ-->
+	<message name="RoleUpdatePveArenaMisc" type="6" receiver="gamed" receiver2="player" lock="pvearena">
+	</message>
+
+	<!--¸üÐÂ±»´òÍæ¼ÒµÄÐÅÏ¢-->
+	<message name="RoleUpdateDefencePlayerPveArenaInfo" type="7" receiver="gamed" receiver2="player" lock="pvearena">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="level" type="number"/>
+		<variable name="mafia_name" type="string"/>
+		<variable name="self_hero_info" type="string"/>
+		<variable name="oppo_hero_info" type="string"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="operation" type="string"/>
+		<variable name="score" type="number"/>
+		<variable name="reply_flag" type="number"/>
+		<variable name="exe_ver" type="string"/>
+		<variable name="data_ver" type="string"/>
+	</message>
+
+	<!--¸üÐÂ×Ô¼ºµÄÎä½«ÐÅÏ¢Êý¾Ýµ½JJC-->
+	<message name="RoleUpdatePveArenaHeroInfo" type="8" receiver="gamed" receiver2="player" lock="pvearena">
+	</message>
+
+	<!--¸üÐÂ×Ô¼ºµÄÊý¾Ýµ½JJC-->
+	<message name="RoleUpdatePveArenaInfo" type="9" receiver="gamed" receiver2="player" lock="pvearena">
+	</message>
+
+	<!--Çå¿ÕÍæ¼ÒµÄJJCÐÅÏ¢µ½ÅÅÐÐ°ñÉÏ-->
+	<message name="ClearPveArenaTop" type="10" receiver="gamed" receiver2="player" lock="toplist">
+	</message>
+
+	<!--Çå¿ÕÍæ¼ÒµÄJJCÐÅÏ¢µ½miscÉÏ-->
+	<message name="ClearPveArenaMisc" type="11" receiver="gamed" receiver2="player" lock="pvearena">
+	</message>
+
+	<!--´òÓ¡Íæ¼ÒµÄJJCÐÅÏ¢µ½miscÉÏ-->
+	<message name="PrintPveArenaMisc" type="12" receiver="gamed" receiver2="player" lock="pvearena">
+	</message>
+	
+	<message name="PveArenaHeartBeat" type="13" receiver="gamed" receiver2="null" lock="pvearena">
+	</message>
+	
+	<message name="PveArenaSendReward" type="14" receiver="gamed" receiver2="null" lock="pvearena">
+	</message>
+
+	<!--¸ø¿Í»§¶Ë·¢ËÍÒ»¸öErrorInfo-->
+	<message name="ErrorInfo" type="15" receiver="gamed" receiver2="player">
+	</message>
+
+	<!--Íæ¼ÒÈ¡Ïû×Ô¼ºÔÚÍ­È¸Ì¨ÖÐµÄÆ¥ÅäÐÅÏ¢£¬Õâ¸öÊÇÔÚÍæ¼ÒÆ¥ÅäÖÐ·¢Éú¶ÏÏßµÄÊ±ºò³öÏÖµÄ-->
+	<message name="TongQueTaiCancle" type="16" receiver="gamed" receiver2="player" lock="tongquetai">
+	</message>
+
+	<!--Í­È¸Ì¨µÄÐÄÌø-->
+	<message name="TongQueTaiHeartBeat" type="17" receiver="gamed" receiver2="null" lock="tongquetai">
+	</message>
+
+	<!--Æ¥Åä³É¹¦¿ÛÇ®¼Ó´ÎÊýµÈ²Ù×÷-->
+	<message name="TongQueTaiMatchSuccess" type="18" receiver="gamed" receiver2="player" lock="tongquetai">
+		<variable name="player_roleid1" type="string"/>
+		<variable name="player_roleid2" type="string"/>
+	</message>
+
+	<!--Í¨ÖªÍæ¼Ò¸ø·þÎñÆ÷·¢ËÍ½øÈëÕ½¶·µÄÐ­Òé-->
+	<message name="TongQueTaiNoticeRoleJoin" type="19" receiver="gamed" receiver2="player">
+	</message>
+
+	<!--Í¨Öª¿Í»§¶ËÔÙ´Î½øÐÐReload-->
+	<message name="TongQueTaiReload" type="20" receiver="gamed" receiver2="player">
+		<variable name="role_index" type="number"/>
+		<variable name="monster_index" type="number"/>
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<!--Í¨ÖªÍæ¼ÒÊ§°ÜÁË£¬ÔÚÕâ¸öÏûÏ¢ÀïÃæ¶ÔÍæ¼ÒµÄÊý¾Ý½øÐÐ´¦Àí-->
+	<message name="TongQueTaiFail" type="21" receiver="gamed" receiver2="player">
+	</message>
+
+	<!--Í¨¹ýµÚ¶þ´Î¼ÓÔØ½øÀ´µÄÍæ¼ÒÊý¾Ý£¬¸ø×Ô¼ºÈÓÒ»¸öÏûÏ¢½øÐÐ³õÊ¼»¯ÐÅÏ¢-->
+	<message name="RoleInfoInit" type="22" receiver="gamed" receiver2="player">
+	</message>
+
+
+
+	
+	
+	<!--10001¿ªÊ¼µÄÏûÏ¢id¶¼ÊÇÌØ¶¨ÓÃÍ¾µÄ£¬²»Òª¸Ä-->
+	<message name="CreateRoleResult" type="10001" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="Heartbeat" type="10002" receiver="gamed" receiver2="player">
+		<variable name="now" type="number"/>
+	</message>
+
+	<message name="CreateMafiaResult" type="10003" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="PVPHeartbeat" type="10004" receiver="gamed" receiver2="pvp">
+		<variable name="now" type="number"/>
+	</message>
+
+	<message name="PVPTriggerSend" type="10005" receiver="gamed" receiver2="pvp"/>
+	
+	<message name="DBHeartbeat" type="10006" receiver="gamed" receiver2="big">
+	</message>
+
+	<message name="ReloadLua" type="10007" receiver="gamed" receiver2="big"/>
+
+	<message name="PVPCreateResult" type="10008" receiver="gamed" receiver2="pvp">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="PVPEnd" type="10009" receiver="gamed" receiver2="pvp">
+		<variable name="reason" type="number"/>
+	</message>
+	
+	<message name="PVPMatchSuccess" type="10010" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+		<variable name="index" type="number"/>
+		<variable name="time" type="number"/>
+	</message>
+	
+	<message name="PVPJoinRe" type="10011" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="PVPEnterRe" type="10012" receiver="gamed" receiver2="player">
+		<variable name="role_pvpinfo" type="string"/>
+		<variable name="fight_pvpinfo" type="string"/>
+		<variable name="robot_flag" type="number"/>
+		<variable name="robot_seed" type="number"/>
+	</message>
+
+	<message name="PvpBegin" type="10013" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+		<variable name="start_time" type="number"/>
+		<variable name="ip" type="string"/>
+		<variable name="port" type="number"/>
+	</message>
+
+	<message name="PvpEnd" type="10014" receiver="gamed" receiver2="player" lock="toplist">
+		<variable name="reason" type="number"/>
+		<variable name="typ" type="number"/>
+		<variable name="score" type="number"/>
+	</message>
+
+	<message name="PvpCancle" type="10015" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+	
+	<message name="PvpError" type="10016" receiver="gamed" receiver2="player">
+		<variable name="result" type="number"/>
+	</message>
+
+	<message name="PvpSpeed" type="10017" receiver="gamed" receiver2="player">
+		<variable name="speed" type="number"/>
+	</message>
+	
+	<message name="PvpReset" type="10018" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+
+	<message name="SendNotice" type="10019" receiver="gamed" receiver2="player">
+		<variable name="notice_id" type="number"/>
+		<variable name="notice_para" type="string" vector="true"/>
+	</message>
+	
+	<message name="TopListHeartBeat" type="10020" receiver="gamed" receiver2="null" lock="toplist">
+	</message>
+	
+	<message name="PvpVideoID" type="10021" receiver="gamed" receiver2="player">
+		<variable name="video_id" type="string"/>
+		<variable name="first_pvpinfo" type="string"/>
+		<variable name="second_pvpinfo" type="string"/>
+		<variable name="win_flag" type="number"/>
+	</message>
+	
+	<message name="PvpGetVideoErr" type="10022" receiver="gamed" receiver2="player">
+		<variable name="retcode" type="number"/>
+	</message>
+	
+	<message name="PvpGetVideo" type="10023" receiver="gamed" receiver2="player">
+		<variable name="first" type="string"/>
+		<variable name="second" type="string"/>
+		<variable name="first_pvpinfo" type="string"/>
+		<variable name="second_pvpinfo" type="string"/>
+		<variable name="operation" type="string"/>
+		<variable name="win_flag" type="number"/>
+		<variable name="robot_flag" type="number"/>
+		<variable name="robot_seed" type="number"/>
+		<variable name="exe_ver" type="string"/>
+		<variable name="data_ver" type="string"/>
+	</message>
+	
+	<message name="SendMail" type="10024" receiver="gamed" receiver2="player">
+		<variable name="mail_id" type="number"/>
+		<variable name="arg1" type="string"/>
+	</message>
+	
+	<message name="SendServerEvent" type="10025" receiver="gamed" receiver2="null" lock="misc">
+		<variable name="event_type" type="number"/>
+		<variable name="end_time" type="number"/>
+	</message>
+	
+	<message name="RoleUpdateServerEvent" type="10026" receiver="gamed" receiver2="player" lock="misc">
+	</message>
+	
+	<!--·þÎñÆ÷ÒÑ¾­¿ªÆôµÄÏûÏ¢,·þÎñÆ÷¿ªÆôÒÔºóÐèÒª´¦ÀíµÄÊÂÇé£¬¿ÉÒÔ·Åµ½Õâ¸öÀïÃæÀ´½øÐÐ´¦Àí-->
+	<message name="OpenServer" type="10027" receiver="gamed" receiver2="big">
+	</message>
+	
+	<message name="MiscHeartBeat" type="10028" receiver="gamed" receiver2="null" lock="misc">
+	</message>
+
+	<message name="PvpSeasonFinish" type="10029" receiver="gamed" receiver2="null" lock="misc,toplist">
+	</message>
+	
+	<message name="RoleUpdatePvpEndTime" type="10030" receiver="gamed" receiver2="player" lock="misc">
+	</message>
+
+	<!--¸üÐÂÈËÎïµÄµÈ¼¶µ½ÅÅÐÐ°ñÉÏÃæÈ¥-->
+	<message name="RoleUpdateLevelTop" type="10031" receiver="gamed" receiver2="player" lock="toplist">
+	</message>
+	
+	<message name="BroadcastPvpVideo" type="10032" receiver="gamed" receiver2="player">
+		<variable name="typ" type="number"/>
+		<variable name="src" type="RoleBrief"/>
+		<variable name="content" type="string"/>
+		<variable name="video_id" type="string"/>
+		<variable name="player1" type="RoleClientPVPInfo"/>
+		<variable name="player2" type="RoleClientPVPInfo"/>
+		<variable name="time" type="number"/>
+		<variable name="win_flag" type="number"/>
+	</message>
+	
+	<message name="RoleUpdateTopList" type="10033" receiver="gamed" receiver2="player" lock="toplist">
+		<variable name="top_type" type="number"/>
+		<variable name="data" type="number"/>
+	</message>
+	
+	<message name="PublicChatnew" type="10100" receiver="gamed" receiver2="player">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="mafia_id" type="string"/>
+		<variable name="mafia_name" type="string"/>
+		<variable name="time" type="number"/>
+		<variable name="text_content" type="string"/>
+		<variable name="speech_content" type="string"/>
+	</message>
+
+	<message name="PrivateChatnew" type="10101" receiver="gamed" receiver2="player">
+		<variable name="id" type="string"/>
+		<variable name="name" type="string"/>
+		<variable name="photo" type="number"/>
+		<variable name="level" type="number"/>
+		<variable name="mafia_id" type="string"/>
+		<variable name="mafia_name" type="string"/>
+		<variable name="time" type="number"/>
+		<variable name="destid" type="string"/> 
+		<variable name="text_content" type="string"/>
+		<variable name="speech_content" type="string"/>
+	</message>
+
+	<!--90001¿ªÊ¼µÄÇø¶ÎÁô¸ø²âÊÔÓÃ-->
+	<message name="TestMessage1" type="90001" receiver="gamed" receiver2="player" lock="toplist">
+	</message>
+
+	<message name="TestMessage2" type="90002" receiver="gamed" receiver2="mafia">
+	</message>
+
+	<message name="TestMessage3" type="90003" receiver="gamed" receiver2="pvp">
+	</message>
+
+	<message name="TestMessage4" type="90004" receiver="gamed" receiver2="big">
+	</message>
+
+</messages>
+

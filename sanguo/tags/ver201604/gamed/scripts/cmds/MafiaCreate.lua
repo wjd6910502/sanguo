@@ -1,0 +1,18 @@
+function OnCommand_MafiaCreate(player, role, arg, others)
+	player:Log("OnCommand_MafiaCreate, "..DumpTable(arg))
+
+	if player:HaveMafia() then
+		player:Err("OnCommand_MafiaCreate, HaveMafia")
+		player:KickoutSelf(1)
+	elseif player:IsCreatingMafia() then
+		local resp = NewCommand("MafiaCreate_Re")
+		resp.retcode = G_ERRCODE["CREATING_MAFIA"]
+		player:SendToClient(SerializeCommand(resp))
+	elseif not CACHE.Player:IsValidMafiaName(arg.name) then
+		local resp = NewCommand("MafiaCreate_Re")
+		resp.retcode = G_ERRCODE["INVALID_NAME"]
+		player:SendToClient(SerializeCommand(resp))
+	else
+		player:CreateMafia(arg.name, arg.flag)
+	end
+end

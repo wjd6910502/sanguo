@@ -1,0 +1,92 @@
+function OnCommand_DebugCommand(player, role, arg, others)
+	player:Log("OnCommand_DebugCommand, "..DumpTable(arg))
+
+	if arg.typ=="levelup" then
+		--level up
+		role._roledata._status._level = role._roledata._status._level+arg.count1
+		--通知好友
+		local friends = role._roledata._friend._friends
+		local fit = friends:SeekToBegin()
+		local f = fit:GetValue()
+		while f~=nil do
+			--同步方式
+			--local d_player = others:FindPlayer(f._brief._id)
+			--if d_player~=nil then 
+			--	local d_friends = d_player._role_friend._friends
+			--	local d_f = d_friends:Find(player._role_base._id)
+			--	if d_f~=nil then
+			--		--d_f._brief._id = arg.id 
+			--		d_f._brief._name = player._role_base._name
+			--		d_f._brief._photo = player._role_base._photo
+			--		d_f._brief._level = player._role_status._level
+			--	end
+			--end
+			--消息方式
+			local msg = NewMessage("UpdateRoleInfo")
+			msg.id = role._roledata._base._id:ToStr()
+			msg.name = role._roledata._base._name
+			msg.photo = role._roledata._base._photo
+			msg.level = role.roledata._status._level
+			player:SendMessageToRole(f._brief._id, SerializeMessage(msg))
+			fit:Next()
+			f = fit:GetValue()
+		end
+		local resp = NewCommand("Role_Mon_Exp")
+		resp.level = role._roledata._status._level
+		resp.exp = role._roledata._status._exp:ToStr()
+		resp.money = role._roledata._status._money
+		resp.yuanbao = role._roledata._status._yuanbao
+		resp.vp = role._roledata._status._vp
+		player:SendToClient(SerializeCommand(resp))
+	elseif arg.typ=="TestMessage4" then
+		local msg = NewMessage("TestMessage4")
+		player:SendMessage(role._roledata._base._id, SerializeMessage(msg))
+	elseif arg.typ=="AddVP" then
+		ROLE_Addvp(role, 120, 1)
+	elseif arg.typ=="AddYuanBao" then
+		ROLE_AddYuanBao(role, arg.count1)
+		ROLE_AddChongZhi(role, arg.count1)
+		TASK_ChangeCondition(role, 2, 0, arg.count1)
+	elseif arg.typ=="ChangeTime" then
+		API_SetSystemTime(arg.count1, arg.count2)
+	elseif arg.typ=="AddInstance" then
+		local ed = DataPool_Find("elementdata")
+		local stage = ed:FindBy("stage_id", arg.count1)
+		if stage == nil then
+			return
+		end
+		local instance = role._roledata._status._instances
+		local i = instance:Find(arg.inst_tid)
+		local first_flag = 0
+		if i == nil then
+			local value = CACHE.RoleInstance:new()
+			value._tid = arg.count1
+			value._score = 1
+			value._star = 3
+			instance:Insert(arg.count1, value)
+			TASK_ChangeCondition(role, G_ACH_TYPE["STAGE_STAR"], stage.chapterid, 3)
+		else
+			TASK_ChangeCondition(role, G_ACH_TYPE["STAGE_STAR"], stage.chapterid, 3 - i._star)
+			i._star = star_count
+		end
+	
+		local resp = NewCommand("GetInstance_Re")
+		resp.info = {}
+
+		local instance = role._roledata._status._instances
+		local iit = instance:SeekToBegin()
+		local i = iit:GetValue()
+		while i ~= nil do
+			local temp = {}
+			temp.id = i._tid
+			temp.star = i._star
+			resp.info[#resp.info+1] = temp
+			iit:Next()
+			i = iit:GetValue()
+		end
+		resp.retcode = G_ERRCODE["SUCCESS"]
+		player:SendToClient(SerializeCommand(resp))
+	elseif arg.typ=="AddItem" then
+		BACKPACK_AddItem(role, arg.count1, arg.count2)	
+	end
+end

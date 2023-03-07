@@ -1,0 +1,207 @@
+
+TODO:
+1, checkd
+2, center=>lua
+	暂时不做了
+	第一需求：pvpd能处理client cmd
+3, player manager
+	no lock								v
+	nolock=>indv lock						v
+4, pvp protocol sig check						v
+	包括大部分UDP协议以及少量TCP协议
+
+5, online?								v
+6, size check								v
+		no size check for all cmd
+		<protocol ref="GameProtocol"/>
+		<protocol ref="ServerLog"/>
+
+7, function transaction
+	first step							v
+8, connect status							v
+	需要连接时长时间连不上，提示
+9, use wdb
+	db								v
+	center
+10, pvp开场前掉线							v
+11, lua version table性能有问题...					v
+	read+write, not load/dump
+	luajit for android/arm
+12, 协议频率限制							v
+13, 切换服务器后不连新服务器？						v
+	ios似乎问题还在
+14, pvp ai过程不一致，表现在帧数不一样					x
+15, ai回放不对								v
+	zhangyang
+16, 玩家行为状态互斥
+	an
+17, 日志
+	an
+18, 多pvpd								v
+19, 观战								v
+20, pvp开战时刻不一致							x
+21, remove lua new							v
+22, 4g/wifi切换，patcher下载						v
+23, pvp流量优化
+24, 多线程编译								v
+25, 封号等功能
+	防止玩家攻击?
+	an								v
+26, kickout reason, c++/lua
+	anyazhou
+27, login state machine							v
+28, int64?
+29, db bug, tgs								x
+30, ui内存bug								v
+31, 机型
+32, 服务器压力测试
+33, pvp开始前对时							v
+34, 有些机器锁屏时本地时间瞎编
+35, 开屏后连接不一定能恢复，mi4
+36, 版本检查								v
+37, hotfix data pool gc内存bug
+38, pvp loading bug
+39, basic auth								v
+40, loading直接100%
+41, guanyu sunce 2 ka							x
+42, base64 test								v
+	liangbowei
+43, 连不上更新服务器时，本地版本号不显示
+	liulikai
+44, 战斗时lua gc策略调整						v
+	已调整为整个pvp过程不gc
+45, 各种降低画质的命令							v
+46, link version
+	an
+47, 电量低，来电话等暂停的处理						v
+	连续丢包100可重现
+
+	pvp暂停功能，新加3条协议:
+	1，PVPPause: s2c
+		收到后弹板，提示玩家进入pause状态
+		进入pause状态后，每次收到确认帧都执行，但不再执行额外的预测部分
+	2，PVPPause_Re: c2s
+		确认帧一直执行到pause_tick，然后给服务器回复PVPPause_Re
+	3, PVPContinue: s2c
+		类似PVPBegin，在fight_continue_time时刻继续战斗
+
+	PVP_Pause_TargetFrame:			PVPPause.pause_tick
+	LastNetBattleTickCount:			已经执行过的确认帧+4*N
+	BattleTickCount:			1...N fixedupdate count
+	LastDumpBattleTickCount:		字面意思 ...
+	BattleTickCount_Rollback:		
+
+48, 系统部总调整udp策略???						x
+49, 版本信息放在哪，策划
+	device info
+50, mashang去继续优化							v
+51, 观战名字不显示							v
+52, 观战跳进度来个板挡挡						v
+	wj
+53, send/receive buffer
+54, 等级上限								x
+55, 29->30 xevs
+56, 空观战
+57, patcher 更新进度:							v
+	liulikai
+58, server add release op						v
+59, tcp=>udp latency							v
+60, new xevs								v
+61, android返回按钮
+62, error code
+63, 约占断线
+64, SYS不进排行榜
+	an
+65, 日志标准化
+	an先设计
+66, loading慢
+67, pve竞技场战斗没有随机性
+68, reload bug
+69, mysql
+70, 客服命令和关服流程
+	an先设计
+71, 30秒网络测定							v
+	an
+72, sdk接入
+73, pvp dispose流程有bug, 包括暂停恢复有几率失败
+74, 2rd操作捣乱								v
+	wangwei
+75, 强化ai
+76, 哪些服务器有账号
+	wjd
+77, 游戏公告
+	wj								?
+78, serialize/des... if=>table?
+	lbw
+79, pvp流量优化
+	n->30								v
+	lzo
+	edge trigger
+		wangwei/liulikai
+	
+
+
+
+
+
+
+1, 版署服务器
+
+
+
+
+
+
+10月版本:
+	匹配PVP:
+		ROBOT AI分难度，至少要降难度			v
+		数值拉平					v
+		网络延迟太大，瞎报的
+			还有不准确的问题，一并处理
+		网络状态差提示
+		格挡操作要改
+
+		OPT:
+			ROBOT特征太明显
+			分辨率？
+
+	邀战:
+
+	版本验证:
+		每分支exe_ver, res_ver
+		服务器能动态指定是否需要强制更新
+		pvp时版本必须更新
+		pvp ver
+
+		多分支
+		为每个分支指定id/exe_ver/res_ver
+		
+
+	服务器准备:
+
+	聊天:
+
+	压力测试:
+
+	武者试炼:
+
+	升星:
+
+	战役:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

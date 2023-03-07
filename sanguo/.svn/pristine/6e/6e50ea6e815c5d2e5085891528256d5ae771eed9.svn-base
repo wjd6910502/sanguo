@@ -1,0 +1,75 @@
+
+#ifndef __GNET_CREATEROLENAME_HPP
+#define __GNET_CREATEROLENAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "createrolenamearg"
+#include "createrolenameres"
+#include "unamedefs.h"
+#include "storage.h"
+
+//#include "leveldb.h"
+//#include "write_batch.h"
+using namespace GNET;
+
+namespace GNET
+{
+
+class CreateRoleName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "createrolename"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		CreateRoleNameArg *arg = (CreateRoleNameArg *)argument;
+		CreateRoleNameRes *res = (CreateRoleNameRes *)result;
+	
+		Log::log(LOG_INFO, "CreateRoleName: name=%.*s, account=%.*s", arg->name.size(), (char*)arg->name.begin(),
+			arg->account.size(), (char*)arg->account.begin());
+		
+		Marshal::OctetsStream key,value;
+		string find_key = std::string((char*)arg->name.begin(), arg->name.size());
+		CREATE_TRANSACTION(txnobj, txnerr, txnlog)
+		LOCK_TABLE(role_name)
+		START_TRANSACTION
+		{
+			key << find_key;
+			if(prole_name->find(key, value, txnobj))
+			{
+				res->retcode = 1;
+			}
+			else
+			{
+				prole_name->insert(key,Marshal::OctetsStream()<< 1,txnobj);
+				res->retcode = 0;
+			}
+		}
+		END_TRANSACTION
+		
+		if(txnerr)
+		{
+		        Log::log(LOG_ERR, "CreateRoleName: name=%.*s", arg->name.size(), (char*)arg->name.begin());
+		        res->retcode = -1;
+		}
+
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// CreateRoleNameArg *arg = (CreateRoleNameArg *)argument;
+		// CreateRoleNameRes *res = (CreateRoleNameRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

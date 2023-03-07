@@ -1,0 +1,100 @@
+function _GetShouldArriveTime(client_tick, pvp)
+	local CLIENT_TICK_TIME = 33 --fps=30
+	local NET_TICK_TIME = 10*CLIENT_TICK_TIME
+	return pvp._data._fight_start_time*1000 + client_tick*CLIENT_TICK_TIME + NET_TICK_TIME/2 + pvp._data._latency
+end
+
+function _Mode1_PVPOperation(player, role, arg, others)
+	local my_pvp = others.pvps[role._pvp._id]
+	if my_pvp==nil then return end
+
+	if arg.client_tick<my_pvp._data._next_client_tick then return end
+
+	local fighter = nil
+	if role._base._id:ToStr()==my_pvp._data._fighter1._id:ToStr() then
+		fighter = my_pvp._data._fighter1
+	elseif role._base._id:ToStr()==my_pvp._data._fighter2._id:ToStr() then
+		fighter = my_pvp._data._fighter2
+	end
+
+	if fighter._ops:Find(arg.client_tick)~=nil then return end --不能修改
+	local op = CACHE.Str:new()
+	op._value = arg.op
+	fighter._ops:Insert(arg.client_tick, op)
+
+	if arg.client_tick==my_pvp._data._next_client_tick then fighter._wait_seconds=0 end
+
+	local now_ms = API_GetTime2()
+	local latency = now_ms-_GetShouldArriveTime(arg.client_tick, my_pvp)
+	if latency>0 then
+		fighter._accumulate_latency = fighter._accumulate_latency+latency
+		fighter._delay_count = fighter._delay_count+1
+	end
+
+	--检查是否收集齐了
+	while true do
+		local op1 = my_pvp._data._fighter1._ops:Find(my_pvp._data._next_client_tick)
+		local op2 = my_pvp._data._fighter2._ops:Find(my_pvp._data._next_client_tick)
+		if op1==nil or op2==nil then break end
+
+		local role1 = others.roles[my_pvp._data._fighter1._id:ToStr()]
+		if role1==nil and my_pvp._data._fighter1._id:ToStr()==role._base._id:ToStr() then role1=role end
+		local role2 = others.roles[my_pvp._data._fighter2._id:ToStr()]
+		if role2==nil and my_pvp._data._fighter2._id:ToStr()==role._base._id:ToStr() then role2=role end
+		if role1==nil or role2==nil then ThrowException() end
+
+		local cmd = NewCommand("PVPOperationSet")
+		cmd.client_tick = my_pvp._data._next_client_tick
+		cmd.player1_op = op1._value
+		cmd.player2_op = op2._value
+		role1:FastSess_Send(SerializeCommand(cmd))
+		role2:FastSess_Send(SerializeCommand(cmd))
+
+		my_pvp._data._fighter1._ops:Delete(my_pvp._data._next_client_tick)
+		my_pvp._data._fighter2._ops:Delete(my_pvp._data._next_client_tick)
+
+		local CLIENT_TICK_TIME = 33 --fps=30
+		local NET_TICK_TIME = 10*CLIENT_TICK_TIME
+		local l = now_ms - (my_pvp._data._fight_start_time*1000 + my_pvp._data._next_client_tick*CLIENT_TICK_TIME + NET_TICK_TIME/2)
+		if l>0 then my_pvp._data._latency = l end
+		
+		my_pvp._data._next_client_tick = my_pvp._data._next_client_tick+1
+	end
+end
+
+function _Mode2_PVPOperation(player, role, arg, others)
+	local my_pvp = others.pvps[role._pvp._id]
+	if my_pvp==nil then return end
+
+	local component = nil
+	if role._base._id:ToStr()==my_pvp._data._fighter1._id:ToStr() then
+		if my_pvp._data._fighter2._status==2 then return end --瞎打模式下，如果对方认为结束则就算结束
+		component = others.roles[my_pvp._data._fighter2._id:ToStr()]
+	elseif role._base._id:ToStr()==my_pvp._data._fighter2._id:ToStr() then
+		if my_pvp._data._fighter1._status==2 then return end
+		component = others.roles[my_pvp._data._fighter1._id:ToStr()]
+	end
+
+	local cmd = NewCommand("PVPOperation")
+	cmd.client_tick = arg.client_tick
+	cmd.op = arg.op
+	cmd.crc = arg.crc
+	component:SendUDPToClient(SerializeCommand(cmd))
+	--component:SendToClient(SerializeCommand(cmd))
+end
+
+function OnCommand_PVPOperation(player, role, arg, others)
+	player:Log("OnCommand_PVPOperation, "..DumpTable(arg).." "..DumpTable(others))
+
+	local my_pvp = others.pvps[role._pvp._id]
+	if my_pvp==nil then return end
+
+	if my_pvp._data._mode==1 then
+		_Mode1_PVPOperation(player, role, arg, others)
+	elseif my_pvp._data._mode==2 then
+		_Mode2_PVPOperation(player, role, arg, others)
+	else
+		ThrowException()
+	end
+end
+

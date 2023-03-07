@@ -1,0 +1,22 @@
+function OnCommand_PhotoSetPhoto(player, role, arg, others)
+	player:Log("OnCommand_PhotoSetPhoto, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PhotoSetPhoto_Re")
+	resp.photo_id = arg.photo_id
+	--查看自己是否有这个头像
+	local photo_info = role._roledata._base._photo_map:Find(arg.photo_id)
+
+	if photo_info == nil then
+		resp.retcode = G_ERRCODE["PHOTO_SET_NO_PHOTO"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	role._roledata._base._photo = arg.photo_id
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+	
+	local msg = NewMessage("TopListUpdateInfo")
+	API_SendMsg(role._roledata._base._id:ToStr(), SerializeMessage(msg), 0)
+end

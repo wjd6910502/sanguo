@@ -1,0 +1,6 @@
+#!/bin/sh
+
+top_client_dir=/home/duxiaogang/SANGUO_ClientSVN
+
+rsync -avzl cmds.xml strus.xml ${top_client_dir}/Doc
+

@@ -1,0 +1,185 @@
+function ROLE_Init(role)
+	role._status._level = 1
+	role._status._vp = 60
+	role._status._vp_refreshtime = 0
+	role._status._money = 0
+	role._status._yuanbao = 0
+	role._status._exp:Set(0)
+end
+
+function ROLE_MakeRoleInfo(role)
+	local roleinfo = {}
+	--base
+	roleinfo.base = {}
+	roleinfo.base.id = role._base._id:ToStr()
+	roleinfo.base.name = role._base._name
+	roleinfo.base.photo = role._base._photo
+	--status
+	roleinfo.status = {}
+	roleinfo.status.level = role._status._level
+	roleinfo.status.exp = role._status._exp:ToStr()
+	roleinfo.status.vp = role._status._vp
+	--status.instances
+	roleinfo.status.instances = {}
+	local instances = role._status._instances
+	local iit = instances:SeekToBegin() --从头开始遍历
+	local i = iit:GetValue()
+	while i~=nil do
+		local i2 = {}
+		i2.tid = i._tid
+		i2.score = i._score
+		roleinfo.status.instances[#roleinfo.status.instances+1] = i2
+		iit:Next()
+		i = iit:GetValue()
+	end
+	roleinfo.status.money = role._status._money
+	roleinfo.status.yuanbao = role._status._yuanbao
+	--status.common_use_limit
+	roleinfo.status.common_use_limit = {}
+	local common_use_limit = role._status._common_use_limit
+	local cit = common_use_limit:SeekToBegin()
+	local c = cit:GetValue()
+	while c ~= nil do
+		local c2 = {}
+		c2.tid = c._tid
+		c2.count = c._count
+		roleinfo.status.common_use_limit[#roleinfo.status.common_use_limit+1] = c2
+		cit:Next()
+		c = cit:GetValue()
+	end
+	--hero_hall
+	roleinfo.hero_hall = {}
+	roleinfo.hero_hall.heros = {}
+	local heros = role._hero_hall._heros
+	local hit = heros:SeekToBegin() --从头开始遍历
+	local h = hit:GetValue()
+	while h~=nil do
+		local h2 = {}
+		h2.tid = h._tid
+		roleinfo.hero_hall.heros[#roleinfo.hero_hall.heros+1] = h2
+		hit:Next()
+		h = hit:GetValue()
+	end
+	--backpack
+	roleinfo.backpack = {}
+	roleinfo.backpack.capacity = role._backpack._capacity
+	roleinfo.backpack.items = {}
+	local items = role._backpack._items
+	local iit = items:SeekToBegin() --从头开始遍历
+	local i = iit:GetValue()
+	while i~=nil do
+		local i2 = {}
+		i2.tid = i._tid
+		i2.count = i._count;
+		roleinfo.backpack.items[#roleinfo.backpack.items+1] = i2
+		iit:Next()
+		i = iit:GetValue()
+	end
+	--mafia
+	roleinfo.mafia = {}
+	roleinfo.mafia.id = role._mafia._id:ToStr()
+	roleinfo.mafia.name = role._mafia._name
+	--TODO: _invites
+	return roleinfo
+end
+
+function ROLE_MakeRoleBrief(role)
+	local rolebrief = {}
+	rolebrief.id = role._base._id:ToStr()
+	rolebrief.name = role._base._name
+	rolebrief.photo = role._base._photo
+	rolebrief.level = role._status._level
+	rolebrief.mafia_id = role._mafia._id:ToStr()
+	rolebrief.mafia_name = role._mafia._name
+	return rolebrief
+end
+
+function ROLE_AddExp(role, exp)
+	--首先判断玩家现在的等级是否已经达到了最高等级
+	if role._status._level <= 100 then
+		--role._status._exp:Set(exp)
+		role._status._exp:AddInt(exp)
+		--在这里判断是否达到了升级的经验
+		--拿到当前等级升级所需要的经验
+		local ed = DataPool_Find("elementdata")
+		local level_exp = ed:FindBy("level_id", role._status._level)
+		while role._status._exp:EquleInt(level_exp.needexp) or role._status._exp:GreatInt(level_exp.needexp) do
+			role._status._level = role._status._level + 1
+			role._status._exp:Sub(level_exp.needexp)
+			level_exp = ed:FindBy("level_id", role._status._level)
+		end
+		--发送经验和等级改变的消息
+		local resp = NewCommand("Role_Mon_Exp")
+		resp.level = role._status._level
+		resp.exp = role._status._exp:ToStr()
+		resp.money = role._status._money
+		resp.yuanbao = role._status._yuanbao
+		resp.vp = role._status._vp
+		role:SendToClient(SerializeCommand(resp))
+	end
+end
+
+function ROLE_AddMoney(role, money)
+	role._status._money = role._status._money + money
+	local resp = NewCommand("Role_Mon_Exp")
+	resp.level = role._status._level
+	resp.exp = role._status._exp:ToStr()
+	resp.money = role._status._money
+	resp.yuanbao = role._status._yuanbao
+	resp.vp = role._status._vp
+	role:SendToClient(SerializeCommand(resp))
+end
+
+function ROLE_SubMoney(role, money)
+	role._status._money = role._status._money - money
+	local resp = NewCommand("Role_Mon_Exp")
+	resp.level = role._status._level
+	resp.exp = role._status._exp:ToStr()
+	resp.money = role._status._money
+	resp.yuanbao = role._status._yuanbao
+	resp.vp = role._status._vp
+	role:SendToClient(SerializeCommand(resp))
+end
+
+--这个flag等于1的时候代表可以超过最大体力值，等于0的时候代表不可以超过
+function ROLE_Addvp(role, num, flag)
+	local vp = role._status._vp
+	role._status._vp = vp + num
+	if role._status._vp > (role._status._level + 60) then
+		--现在满体力了，已经可以不让体力走了
+		if flag == 0 then
+			role._status._vp = role._status._level + 60
+		end
+		local resp = NewCommand("Role_Mon_Exp")
+		resp.level = role._status._level
+		resp.exp = role._status._exp:ToStr()
+		resp.money = role._status._money
+		resp.yuanbao = role._status._yuanbao
+		resp.vp = role._status._vp
+		role:SendToClient(SerializeCommand(resp))
+		role._status._vp_refreshtime = 0
+	end
+end
+
+function ROLE_Subvp(role, num)
+	local vp = role._status._vp
+	if vp >= num then
+		role._status._vp = vp - num
+		if role._status._vp_refreshtime == 0 and role._status._vp < (role._status._level + 60) then
+			role._status._vp_refreshtime = API_GetTime()
+		end
+		local resp = NewCommand("Role_Mon_Exp")
+		resp.level = role._status._level
+		resp.exp = role._status._exp:ToStr()
+		resp.money = role._status._money
+		resp.yuanbao = role._status._yuanbao
+		resp.vp = role._status._vp
+		role:SendToClient(SerializeCommand(resp))
+		return true
+	else
+		return false
+	end
+end
+
+function ROLR_AddRep(role, rep_id, rep_num)
+end

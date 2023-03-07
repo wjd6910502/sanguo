@@ -1,0 +1,47 @@
+	public:
+		Octets device_id;
+		Octets trans_token;
+		Octets client_rand2_encoded;
+		int client_received_count;
+		int signature;
+		enum { PROTOCOL_TYPE = PROTOCOL_TRANSRESPONSE };
+	public:
+		TransResponse() { type = PROTOCOL_TRANSRESPONSE; }
+		TransResponse(void*) : Protocol(PROTOCOL_TRANSRESPONSE) { }
+		TransResponse (const Octets& l_device_id,const Octets& l_trans_token,const Octets& l_client_rand2_encoded,
+			int l_client_received_count,int l_signature)
+			 : device_id(l_device_id),trans_token(l_trans_token),client_rand2_encoded(l_client_rand2_encoded)
+			,client_received_count(l_client_received_count),signature(l_signature)
+		{
+			type = PROTOCOL_TRANSRESPONSE;
+		}
+
+		TransResponse(const TransResponse &rhs)
+			: Protocol(rhs),device_id(rhs.device_id),trans_token(rhs.trans_token),client_rand2_encoded(rhs.client_rand2_encoded)
+			,client_received_count(rhs.client_received_count),signature(rhs.signature) { }
+
+		GNET::Protocol *Clone() const { return new TransResponse(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << device_id;
+			os << trans_token;
+			os << client_rand2_encoded;
+			os << client_received_count;
+			os << signature;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> device_id;
+			os >> trans_token;
+			os >> client_rand2_encoded;
+			os >> client_received_count;
+			os >> signature;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

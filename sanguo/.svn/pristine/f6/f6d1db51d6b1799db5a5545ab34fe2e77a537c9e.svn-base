@@ -1,0 +1,89 @@
+#ifndef _ROLE_H_
+#define _ROLE_H_
+
+#include <string>
+#include <map>
+#include <list>
+
+#include "octets.h"
+#include "forlua.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class Player;
+class Role: public GNET::Marshal
+{
+public:
+	RoleBase _base;
+	RoleStatus _status;
+	RoleHeroHall _hero_hall;
+	RoleBackPack _backpack;
+	RoleFriend _friend;
+	RoleChat _chat;
+	RoleMafia _mafia;
+	RoleTask _task;
+	//ShopMap _shopmap;
+	//PackageList _packagelist;//奖励列表
+	//MailList _maillist;     //邮件列表
+	RolePVP _pvp;
+
+	Role(Player *player): _player(player) {}
+	Role() {}
+	virtual ~Role() {}
+
+	virtual OctetsStream& marshal(OctetsStream &os) const
+	{
+		os << _base;
+		os << _status;
+		os << _hero_hall;
+		os << _backpack;
+		os << _friend;
+		os << _chat;
+		os << _mafia;
+		os << _task;
+		//os << _shopmap;
+		//os << _packagelist;
+		//os << _maillist;
+		os << _pvp;
+		return os;
+	}
+	virtual const OctetsStream& unmarshal(const OctetsStream &os)
+	{
+		//TODO: for each dbversion ...
+		os >> _base;
+		os >> _status;
+		os >> _hero_hall;
+		os >> _backpack;
+		os >> _friend;
+		os >> _chat;
+		os >> _mafia;
+		os >> _task;
+		//os >> _shopmap;
+		//os >> _packagelist;
+		//os >> _maillist;
+		os >> _pvp;
+		return os;
+	}
+
+public:
+	Player *_player;
+
+	void SendToClient(const std::string& v);
+	void SendUDPToClient(const std::string& v);
+	void FastSess_Reset();
+	void FastSess_Send(const std::string& v);
+	void FastSess_OnAck(int index_ack);
+	bool FastSess_IsReceived(int index) const;
+	void FastSess_SetReceived(int index);
+	void FastSess_SendAck();
+	void FastSess_TriggerSend();
+};
+
+};
+
+#endif //_ROLE_H_
+

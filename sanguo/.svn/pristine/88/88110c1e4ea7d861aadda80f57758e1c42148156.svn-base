@@ -1,0 +1,49 @@
+function OnCommand_PveArenaJoinBattle(player, role, arg, others)
+	player:Log("OnCommand_PveArenaJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("PveArenaJoinBattle_Re")
+
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	
+	if LIMIT_TestUseLimit(role, quanju.arena_free_times, 1) == false then
+		resp.retcode = G_ERRCODE["JJC_ATTACK_COUNT_LESS"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	local now = API_GetTime()
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	if now - role._roledata._pve_arena_info._last_attack_time < quanju.arena_pk_cd then
+		resp.retcode = G_ERRCODE["JJC_ATTACK_CD"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	role._roledata._pve_arena_info._last_attack_time = API_GetTime()
+	LIMIT_AddUseLimit(role, quanju.arena_free_times, 1)
+	
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.last_attack_time = role._roledata._pve_arena_info._last_attack_time
+	
+	resp.role_info = {}
+	local fight_info = PVEARENA_GetRoleInfoByRank(others.mist._miscdata._pve_arena_map._pve_arena_data_map_data, arg.rank)
+
+	local is_idx,ds_hero_info = DeserializeStruct(fight_info.hero_info, 1, "RolePveArenaInfo")
+	resp.role_info.id = fight_info.role_id
+	resp.role_info.name = fight_info.name
+	resp.role_info.level = fight_info.level
+	resp.role_info.score = fight_info.score
+	resp.role_info.hero_score = 100
+	resp.role_info.mafia_name = fight_info.mafia_name
+	resp.role_info.rank = arg.rank
+	resp.role_info.hero_info = {}
+	resp.role_info.hero_info.heroinfo = ds_hero_info.heroinfo
+	
+	role._roledata._pve_arena_info._cur_attack_player._id = resp.role_info.id
+	role._roledata._pve_arena_info._cur_attack_player._name = resp.role_info.name
+	role._roledata._pve_arena_info._cur_attack_player._hero_info = fight_info.hero_info
+
+	role:SendToClient(SerializeCommand(resp))
+	return
+end

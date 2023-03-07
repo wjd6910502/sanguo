@@ -1,0 +1,497 @@
+空串的处理
+非法串的处理
+
+CORE=>Cache				V
+prot=>cmd
+
+ListFriends=>ListFriend
+
+容易出错的位置:
+	id没写ToStr()
+	该写':'的地方写成了'.'
+	{}没写特别坑			V
+	pkg不匹配
+
+LOG
+DOC
+
+
+lib:
+gcc -m64 -g -ggdb -O0 -c -I/home/duxiaogang/SANGUO_ServerSVN/lua/include -I../../include *.c
+
+
+
+性能:
+	1, 遍历
+	2, 广播
+
+cache共包含10w玩家
+消息泵还是需要的?不需要
+消息泵似乎还是需要的，用于比较弱的多人交互，例如更新自己信息到好友那
+
+
+一个不做多线程:
+但接口不要限制多线程
+
+
+协议处理分3类:
+1, 影响玩家自身
+2, 影响玩家集合
+	a, 协议指定所需玩家
+	b, 玩家建立集合
+3, 影响很多玩家
+	TODO: 本服务器结构不适合此类需求，对于无法避免的，比如世界聊天，单写实现机制
+
+NOTE:
+	系统功能比如排行榜可以影响很多玩家，不在上列所属
+	TODO: 大多地方的所谓遍历所有玩家，应该只对应一个活动玩家子集, 用于排行榜? 近期活跃玩家
+	TODO: 建立一个不加锁数据缓冲用来查找玩家基本信息? 似乎没用
+	TODO: 存盘
+	TODO: 全服奖励，通知等等
+
+
+	
+
+
+交互场景:
+	只涉及玩家:
+		1, 无交互:
+			lock player
+		2, 多人, 但协议中可确定具体人员:
+			lock player1/player2/...
+		3, 多人, 但协议不确定具体人员:
+			lock manager whole: 简单+事务支持
+			message: 并行好
+		4, 全局(遍历类):
+			lock manager
+			比如排行榜刷新, 但玩家行为不能导致此类操作
+	
+	涉及排行榜:
+		lock topmanager first
+		TODO: 锁定所有玩家可能太夸张了? 近期活跃玩家
+		消息机制还是必须的, 比如不好确认某个cmd是否会触发排行榜操作, 因为很多cmd会导致升级, 进而导致更新排行榜个人信息
+		排行榜分实时榜和定时榜
+	
+	涉及帮会:
+		lock mafia first
+		
+	
+	涉及竞技场:
+		lock arena manager first
+
+	涉及pk:
+
+	lock seqence:
+		top mafia arena player
+
+
+Player一分为二
+
+
+
+在协议头部增加通用字段，表示需要额外lock的对象?
+12:::aGVsbG8sIGFsbCE=:
+p123_p123_
+
+两个想法
+
+
+为什么要两个Continue?
+
+
+
+
+
+datapool的path不支持绝对路径？
+
+datapool TODO:
+	find
+	tointeger tostring tofloat ...
+
+
+
+
+
+datapool读取字符串总是不对，是生成dpc的程序有误, 看起来数据是错的?
+
+
+TODO:
+	version check
+
+
+玩家属性:
+
+
+目前的方式加C++结构非常麻烦
+	必须上模板，研究下tolua的模板支持
+
+
+lua代码库
+
+
+完善:
+	线程结构
+	消息泵
+
+
+
+广播消息, 世界喊话
+
+
+lua代码结构，比如升级了，怎么通知客户端?
+	属性同步???
+
+
+
+Int64比较操作
+
+
+消息和task
+
+
+
+
+
+
+消息:
+	易失性
+	A=>B:	主动推, 保证收到
+	A=>ALL:	被动拉, 有限制(例如时间), 不保证收到
+
+	应用场景:
+		操作无法同步完成
+		操作涉及多个和不确定对象时(不便提前对所有对象加锁)
+		***拆散耗时任务, 提高响应能力***(有这种任务吗???)
+
+		广播
+		系统喊话
+		全服邮件
+		帮派聊天和成员信息
+
+
+
+
+TODO:
+	活跃玩家集合					v
+	JIT
+	8.16 ip/port
+	signal
+	account = zoneid+account
+	死锁检测
+	锁冲突检测
+	机器人多个化
+	性能和压力测试					v
+	获得物品奖励之类放到聊天栏
+	把datapool的warnning去掉
+	试试datapool的多线程访问
+	响应速度测试
+	热更新
+	服务器网页
+	唯一名
+	合法性测试，客户端乱发协议会否导致服务器异常
+	roleid包含zoneid
+	定时器(延迟)
+	帮会宣战，结盟					x
+	指定mafia					v
+	临时单线程化					v TODO:
+	消息再规划
+	协议分用户计数
+	锁顺序描述文档
+	初始化脚本中需要执行函数要注意多线程问题	v
+	把机器人初始选项也弄到配置文件中去
+	服务器性能统计工具				v
+	模板化						x
+	结构定义自动化, 考虑从cmd/msg独立出来		v
+	文档
+	pvp或者说房间服务器
+	策划的lua怎么放
+	如果还区分苹果android服务器，则限制下登录
+	c++版的serialize
+	maxsize
+	encode/sig for udp
+	lua执行出错时能否提供行号信息?应该可以的
+	PVPOperation和pvp脱开
+	重复号出什么问题?
+	connection时间间隔
+	仔细考虑下c++层的udp协议被hack可能, 包括客户端被破解
+	忘了没定义extra时报个错
+	delete pvp/transaction
+	luac
+	服务器改时间测试能力
+	记得配置socket buffer, 包括手机端
+	udp超时
+	do reset
+	延迟执行
+	开关，可以选择某个功能是c++还是lua执行
+	pvp服务器独立出来，否则save会有影响
+	提示对方网络异常
+	p2p
+	pvp:
+		各个状态加个超时检查
+	throw exception
+	
+
+
+
+
+
+线程规划:
+	注意与多进程结构的尽量兼容
+
+
+可能并不需要暴露PlayerManager结构给lua
+
+
+grep OnCommand out | awk '{ print $6 }' | sort | uniq -c | sort -n >1
+grep OnMessage out | awk '{ print $6 }' | sort | uniq -c | sort -n >2
+
+
+
+前提:
+	很多数据结构不会回收
+
+
+文字记录下多锁顺序:
+
+
+
+
+
+
+
+
+sync client:
+	extra_mafias
+
+
+
+
+ttl和压力:
+	gamed初始化有bug				v
+	压力一来, 现有链接会无响应?			v
+	80=>90是个坎
+	broadcast锁冲突有点严重?
+
+	80:
+		800%
+		ttl 500
+
+
+
+
+
+BIG:
+
+worker thread:
+
+normal task:
+	//so something
+
+big task:
+	atomic_inc wait_count
+	
+	{
+		lock big
+
+		add some wait_task
+
+		where(true)
+		{
+			if (wait_count==worker_thread_count) break;
+			add more wait_task
+		}
+	
+		//do something
+
+		atomic_dec wait_count
+	}
+
+wait task:
+	atomic_inc wait_count
+	
+	{
+		lock big
+		atomic_dec wait_count
+	}
+
+
+
+
+other thread(timer,poll):
+
+	same to wait task of worker thread
+
+
+
+事务:
+异常rollback:
+	data:
+		big:
+		other:
+			player:
+				save/load
+			mafia:
+				save/load
+			toplist:
+				save/load
+				但不必每次都save现场
+	protocol:
+		cache
+	msg:
+		cache
+	kickout:
+		???
+	log:
+		不必回滚
+
+
+
+	RoleIter
+
+
+
+loop all role/mafia			v
+transaction(cmd/msg)			v
+
+
+
+
+压力测试(8.39):
+	10.18:
+		支持事务
+		TestPublicChat x 180: 网络是瓶颈，所以关掉了下发
+		cpu: 1700%
+		StatisticManager::Dump, _cmd_count=347295(+900), _msg_put_count=693838(+1800), _msg_run_count=62665235(+162900)
+
+
+cpu达到上限后会无法服务新连接，这算问题吗？
+
+rpc todo:
+	ntp
+	sync cache
+	delta sync
+	c2s udp(+cache ack)
+
+	不要影响热更新?
+	要能lua处理
+
+增量更新结构:
+	可以marshal之后做字符串对比
+	nb之选，可以避免key出现了
+	独立管理
+
+同步设计:
+	SyncManager:
+		CreatePVP
+	
+
+
+
+pvp:
+	1, udp
+	2, diff
+	3, all
+
+
+
+
+
+
+player fastsess
+transaction
+fast ack process
+
+
+
+
+
+client:
+	connection 383                                   v
+	connection 385                                   v
+	connection 495                                   v
+	connection 568					v
+
+
+
+
+
+
+pvpd:
+	因为gamed本质上是个cached, 有定时存盘等影响性能的操作, 无法保证操作总是及时响应
+
+	目标:
+		满足三国类(战斗逻辑在客户端)的游戏pvp即可, 实际功能只是快速同步或转发协议
+
+	计划:
+		1 or N?
+			N
+
+		C++ or Lua?
+			C++
+			lua协议如何处理? 只有1条
+
+		单线程 or 多线程?
+			单线程
+
+		热更新:
+			reload lua or kill/restart?
+			version
+
+
+	协议:
+		注册:
+			RegisterPVPServer
+
+		状态:
+			UpdatePVPServerStatus
+
+		pvp:
+			CreatePVP
+			DeletePVP
+			PVPEnd
+
+		热更新:
+			不考虑, 逻辑很少, 即使真出问题, 也可以关闭功能重启
+
+
+pvp系统:
+
+1, 匹配制:
+	客户端:
+		初始阶段:
+			1, 获取pvpd列表
+			2, 获得延迟数据并发给gamed
+			3, 获取nat类型并发给gamed
+		匹配:
+
+
+2, 邀请制:
+
+
+3, 机器人:
+	确认下AI是否会产生模拟输入?
+
+
+
+
+
+
+
+udp make hole stund不能使用同一端口
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

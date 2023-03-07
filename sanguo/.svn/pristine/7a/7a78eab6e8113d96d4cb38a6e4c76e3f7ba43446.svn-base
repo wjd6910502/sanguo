@@ -1,0 +1,59 @@
+function OnCommand_TowerJoinBattle(player, role, arg, others)
+	player:Log("OnCommand_TowerJoinBattle, "..DumpTable(arg).." "..DumpTable(others))
+	
+	if #arg.hero < 1 then    
+        resp.retcode = G_ERRCODE["TOWER_HERO_NOT_SELECTED"]
+        player:SendToClient(SerializeCommand(resp))
+        return 
+    end
+
+	--判断当前是否是战斗层
+	local ed = DataPool_Find("elementdata")
+	local towerstage = ed:FindBy("tower_stage", role._roledata._tower_data._cur_layer)
+	if towerstage == nil then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	if towerstage.stage_category ~= 1 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_TYPE"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--判断对手信息
+	if role._roledata._tower_data._cur_attack_army_info:Size() == 0 then
+		resp.retcode = G_ERRCODE["TOWER_ERROR_ATTACK_ARMY_INFO"]
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+	
+	--判断我方英雄信息
+	for i = 1, #arg.hero do
+		local hero_id = arg.hero[i]
+		--判断我方英雄是否存在
+		local f = role._roledata._hero_hall._heros:Find(hero_id)
+		if f == nil then
+			resp.restcode = G_ERRCODE["TOWER_PARAM_HERO_NOT_EXIST"]
+			player:SendToClient(SerializeCommand(resp)) 
+			return
+		end
+
+		--判断我方英雄是否死亡
+		local s = role._roledata._tower_data._dead_hero:Find(hero_id)
+		if s ~= nil then
+			resp.retcode = G_ERRCODE["TOWER_PARAM_HERO_DEAD"]
+			player:SendToClient(SerializeCommand(resp))
+			return
+		end
+	end
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.layer = role._roledata._tower_data._cur_layer
+
+--	resp.seed = math.random(1000000) --TODO:
+    role._roledata._status._fight_seed = math.random(1000000)
+    role._roledata._status._time_line = G_ROLE_STATE["TOWER"]
+	player:SendToClient(SerializeCommand(resp))
+end

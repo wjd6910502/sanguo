@@ -1,0 +1,52 @@
+
+#ifndef __GNET_PVPJOIN_HPP
+#define __GNET_PVPJOIN_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "pvpjoinarg"
+#include "pvpjoinres"
+
+#include "pvpmatch.h"
+
+namespace GNET
+{
+
+class PvpJoin : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "pvpjoin"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		PvpJoinArg *arg = (PvpJoinArg *)argument;
+		PvpJoinRes *res = (PvpJoinRes *)result;
+
+		GLog::log(LOG_INFO, "GCenter::PvpJoin:Server ...roleid=%ld ...zoneid=%d",arg->roleid, arg->zoneid);
+		pvp_data tmp;
+		tmp.role_id = arg->roleid;
+		tmp.zoneid = arg->zoneid;
+		tmp.hero = arg->hero_list;
+
+		res->retcode = PVPMatch::GetInstance().AddPVPData(arg->roleid, tmp);
+
+
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// PvpJoinArg *arg = (PvpJoinArg *)argument;
+		// PvpJoinRes *res = (PvpJoinRes *)result;
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

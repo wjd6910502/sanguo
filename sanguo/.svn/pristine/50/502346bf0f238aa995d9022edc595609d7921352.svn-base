@@ -1,0 +1,67 @@
+function OnCommand_TaskFinish(player, role, arg, others)
+	player:Log("OnCommand_TaskFinish, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("TaskFinish_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.task_id = 0
+	local task_id = arg.task_id
+
+	--查看当前的是否有这个任务
+	local current_task = role._task._current_task
+	local it = current_task:SeekToBegin()
+	local inv = it:GetValue()
+	while inv~=nil do
+		if inv._task_id == task_id then
+			--首先判断一下是否真的完成了任务
+			local flag = 1
+			local task_condition = inv._task_condition
+			local it2 = task_condition:SeekToBegin()
+			local inv2 = it2:GetValue()
+			while inv2~=nil do
+				if inv2._num ~= inv2._maxnum then
+					flag = 0
+					break
+				end
+				it2:Next()
+				inv2 = it2:GetValue()
+			end
+			--判断一下时间是否可以完成这个任务，是否已经过期了，或者是任务还没有到开始时间
+			local time	--等后面再进行书写
+			if time < inv._begin then
+				flag = 2
+			elseif time > inv._end then
+				flag = 3
+			end
+			if flag == 1 then
+				--给玩家奖励
+				GiveRolePrizeByID(role, inv._prize_id)
+				--判断是否是玩家的日常任务，如果不是的话就把这个任务放到finish里面
+				--1代表日常任务0代表不是日常任务
+				if inv._daily_task == 0 then
+					role._task._finish_task:PushBack(task_id)
+				end
+				--判断是否有可以领取的任务，如果有的话，直接把这个任务放到当前任务中去
+				if inv._next_task ~= 0 then
+					role._task._current_task:PushBack(inv._next_task)
+					resp.task_id = inv._next_task
+				end
+				--需要把任务从当前任务列表中删除
+				role._task._current_task:Erase(it)
+			elseif flag == 0 then
+				--任务还没有完成
+				resp.retcode = G_ERRCODE["TASK_NOT_FINISH"]
+			elseif flag == 2 then
+				--时间还没有到，无法完成任务
+			elseif flag == 3 then
+				--任务已经过期，不可以再次完成，删掉任务
+				role._task._current_task:Erase(it)
+			end
+			role:SendToClient(SerializeCommand(resp))
+			return
+		end
+		it:Next()
+		inv = it:GetValue()
+	end
+	resp.retcode = G_ERRCODE["TASK_ID_ERROR"]
+	role:SendToClient(SerializeCommand(resp))
+end

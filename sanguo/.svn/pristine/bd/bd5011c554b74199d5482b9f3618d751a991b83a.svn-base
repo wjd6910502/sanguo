@@ -1,0 +1,1107 @@
+--DONT CHANGE ME!
+
+local msg_list = {}
+
+function SerializeMessage(msg)
+	local os = {}
+
+	if msg_list[msg.__type__] ~= nil then
+		msg_list[msg.__type__](os, msg)
+	else
+		error("wrong message type: "..msg.__type__)
+	end
+
+	return table.concat(os)
+end
+
+
+msg_list["UpdateRoleInfo"] = 
+function(os, msg)
+	Serialize(os, 1)
+	Serialize(os, msg.id)
+	Serialize(os, msg.name)
+	Serialize(os, msg.photo)
+	Serialize(os, msg.level)
+
+end
+
+msg_list["PublicChat"] = 
+function(os, msg)
+	Serialize(os, 2)
+	__SerializeStruct(os, "RoleBrief", msg.src)
+	Serialize(os, msg.text_content)
+	Serialize(os, msg.time)
+
+end
+
+msg_list["MafiaAddMember"] = 
+function(os, msg)
+	Serialize(os, 3)
+	__SerializeStruct(os, "MafiaMember", msg.member_info)
+
+end
+
+msg_list["CheckClientVersion"] = 
+function(os, msg)
+	Serialize(os, 4)
+
+end
+
+msg_list["RoleUpdatePveArenaTop"] = 
+function(os, msg)
+	Serialize(os, 5)
+
+end
+
+msg_list["RoleUpdatePveArenaMisc"] = 
+function(os, msg)
+	Serialize(os, 6)
+	Serialize(os, msg.last_rank)
+
+end
+
+msg_list["RoleUpdateDefencePlayerPveArenaInfo"] = 
+function(os, msg)
+	Serialize(os, 7)
+	Serialize(os, msg.id)
+	Serialize(os, msg.name)
+	Serialize(os, msg.level)
+	Serialize(os, msg.photo)
+	Serialize(os, msg.photo_frame)
+	if msg.badge_info==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #msg.badge_info)
+		for i = 1, #msg.badge_info do
+			__SerializeStruct(os, "PhotoInfo", msg.badge_info[i])
+		end
+	end
+	Serialize(os, msg.mafia_name)
+	Serialize(os, msg.self_hero_info)
+	Serialize(os, msg.oppo_hero_info)
+	Serialize(os, msg.win_flag)
+	Serialize(os, msg.operation)
+	Serialize(os, msg.score)
+	Serialize(os, msg.zhanli)
+	Serialize(os, msg.reply_flag)
+	Serialize(os, msg.exe_ver)
+	Serialize(os, msg.data_ver)
+
+end
+
+msg_list["RoleUpdatePveArenaHeroInfo"] = 
+function(os, msg)
+	Serialize(os, 8)
+
+end
+
+msg_list["RoleUpdatePveArenaInfo"] = 
+function(os, msg)
+	Serialize(os, 9)
+
+end
+
+msg_list["ClearPveArenaTop"] = 
+function(os, msg)
+	Serialize(os, 10)
+
+end
+
+msg_list["ClearPveArenaMisc"] = 
+function(os, msg)
+	Serialize(os, 11)
+
+end
+
+msg_list["PrintPveArenaMisc"] = 
+function(os, msg)
+	Serialize(os, 12)
+
+end
+
+msg_list["PveArenaHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 13)
+
+end
+
+msg_list["PveArenaSendReward"] = 
+function(os, msg)
+	Serialize(os, 14)
+
+end
+
+msg_list["ErrorInfo"] = 
+function(os, msg)
+	Serialize(os, 15)
+
+end
+
+msg_list["TongQueTaiCancle"] = 
+function(os, msg)
+	Serialize(os, 16)
+
+end
+
+msg_list["TongQueTaiHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 17)
+
+end
+
+msg_list["TongQueTaiMatchSuccess"] = 
+function(os, msg)
+	Serialize(os, 18)
+	Serialize(os, msg.player_roleid1)
+	Serialize(os, msg.player_roleid2)
+
+end
+
+msg_list["TongQueTaiNoticeRoleJoin"] = 
+function(os, msg)
+	Serialize(os, 19)
+
+end
+
+msg_list["TongQueTaiReload"] = 
+function(os, msg)
+	Serialize(os, 20)
+	Serialize(os, msg.role_index)
+	Serialize(os, msg.monster_index)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["TongQueTaiFail"] = 
+function(os, msg)
+	Serialize(os, 21)
+
+end
+
+msg_list["RoleInfoInit"] = 
+function(os, msg)
+	Serialize(os, 22)
+
+end
+
+msg_list["TestDeleteTop"] = 
+function(os, msg)
+	Serialize(os, 23)
+	Serialize(os, msg.id)
+
+end
+
+msg_list["DelFriend"] = 
+function(os, msg)
+	Serialize(os, 24)
+	Serialize(os, msg.roleid)
+
+end
+
+msg_list["UpdateRoleMaShuScoreTop"] = 
+function(os, msg)
+	Serialize(os, 25)
+
+end
+
+msg_list["UpdateRoleMaShuScoreAllRoleTop"] = 
+function(os, msg)
+	Serialize(os, 26)
+
+end
+
+msg_list["DeleteTopList"] = 
+function(os, msg)
+	Serialize(os, 27)
+	Serialize(os, msg.id)
+
+end
+
+msg_list["MaShuHelpMail"] = 
+function(os, msg)
+	Serialize(os, 28)
+	Serialize(os, msg.role_name)
+
+end
+
+msg_list["MaShuUpdateRoleRank"] = 
+function(os, msg)
+	Serialize(os, 29)
+	Serialize(os, msg.rank)
+
+end
+
+msg_list["TopList_All_Role_HeartBeat"] = 
+function(os, msg)
+	Serialize(os, 30)
+
+end
+
+msg_list["RoleLogout"] = 
+function(os, msg)
+	Serialize(os, 31)
+
+end
+
+msg_list["RoleUpdateFriendInfo"] = 
+function(os, msg)
+	Serialize(os, 32)
+	Serialize(os, msg.roleid)
+	Serialize(os, msg.name)
+	Serialize(os, msg.level)
+	Serialize(os, msg.zhanli)
+	Serialize(os, msg.online)
+	Serialize(os, msg.mashu_score)
+	Serialize(os, msg.photo)
+	Serialize(os, msg.photo_frame)
+	if msg.badge_info==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #msg.badge_info)
+		for i = 1, #msg.badge_info do
+			__SerializeStruct(os, "PhotoInfo", msg.badge_info[i])
+		end
+	end
+
+end
+
+msg_list["RoleUpdateInfoMafiaTop"] = 
+function(os, msg)
+	Serialize(os, 33)
+	Serialize(os, msg.mafia_id)
+	Serialize(os, msg.data)
+	Serialize(os, msg.score)
+
+end
+
+msg_list["UpdateMafiaInfoTop"] = 
+function(os, msg)
+	Serialize(os, 34)
+	Serialize(os, msg.level_flag)
+	Serialize(os, msg.id)
+	Serialize(os, msg.name)
+	Serialize(os, msg.announce)
+	Serialize(os, msg.declaration)
+	Serialize(os, msg.level)
+	Serialize(os, msg.boss_id)
+	Serialize(os, msg.boss_name)
+	Serialize(os, msg.level_limit)
+	Serialize(os, msg.num)
+
+end
+
+msg_list["MafiaAddNewApply"] = 
+function(os, msg)
+	Serialize(os, 35)
+	__SerializeStruct(os, "MafiaApplyRoleInfo", msg.apply_info)
+
+end
+
+msg_list["MafiaDelNewApply"] = 
+function(os, msg)
+	Serialize(os, 36)
+	Serialize(os, msg.id)
+
+end
+
+msg_list["MafiaDelMember"] = 
+function(os, msg)
+	Serialize(os, 37)
+	Serialize(os, msg.id)
+
+end
+
+msg_list["MafiaDeleteTopList"] = 
+function(os, msg)
+	Serialize(os, 38)
+	Serialize(os, msg.id)
+
+end
+
+msg_list["DeleteMafiaInfoTop"] = 
+function(os, msg)
+	Serialize(os, 39)
+	Serialize(os, msg.level)
+	Serialize(os, msg.id)
+
+end
+
+msg_list["MafiaUpdateInterfaceInfo"] = 
+function(os, msg)
+	Serialize(os, 40)
+	__SerializeStruct(os, "MafiaInterfaceInfo", msg.info)
+
+end
+
+msg_list["RoleUpdateMafiaInfoLogin"] = 
+function(os, msg)
+	Serialize(os, 41)
+
+end
+
+msg_list["MafiaUpdateMember"] = 
+function(os, msg)
+	Serialize(os, 42)
+	__SerializeStruct(os, "MafiaMember", msg.member_info)
+
+end
+
+msg_list["MafiaUpdateExp"] = 
+function(os, msg)
+	Serialize(os, 43)
+	Serialize(os, msg.jisi)
+	Serialize(os, msg.exp)
+	Serialize(os, msg.level)
+
+end
+
+msg_list["MafiaHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 44)
+	Serialize(os, msg.now)
+
+end
+
+msg_list["RoleUpdateMafiaInfo"] = 
+function(os, msg)
+	Serialize(os, 45)
+	Serialize(os, msg.roleid)
+	Serialize(os, msg.name)
+	Serialize(os, msg.level)
+	Serialize(os, msg.zhanli)
+	Serialize(os, msg.online)
+	Serialize(os, msg.photo)
+	Serialize(os, msg.photo_frame)
+	if msg.badge_info==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #msg.badge_info)
+		for i = 1, #msg.badge_info do
+			__SerializeStruct(os, "PhotoInfo", msg.badge_info[i])
+		end
+	end
+
+end
+
+msg_list["MafiaUpdateJiSi"] = 
+function(os, msg)
+	Serialize(os, 46)
+	Serialize(os, msg.jisi)
+
+end
+
+msg_list["RoleUpdateMafiaMaShuScore"] = 
+function(os, msg)
+	Serialize(os, 47)
+
+end
+
+msg_list["SendMailToMafia"] = 
+function(os, msg)
+	Serialize(os, 48)
+	Serialize(os, msg.mail_id)
+	Serialize(os, msg.arg1)
+
+end
+
+msg_list["TestSendMailToMafia"] = 
+function(os, msg)
+	Serialize(os, 49)
+
+end
+
+msg_list["ChangeMafiaName"] = 
+function(os, msg)
+	Serialize(os, 50)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.name)
+
+end
+
+msg_list["AudienceGetList"] = 
+function(os, msg)
+	Serialize(os, 51)
+	Serialize(os, msg.fight_info)
+
+end
+
+msg_list["AudienceGetRoomInfo"] = 
+function(os, msg)
+	Serialize(os, 52)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.room_id)
+	Serialize(os, msg.fight_robot)
+	Serialize(os, msg.robot_seed)
+	Serialize(os, msg.robot_type)
+	Serialize(os, msg.fight1_pvpinfo)
+	Serialize(os, msg.fight2_pvpinfo)
+	Serialize(os, msg.operation)
+
+end
+
+msg_list["AudienceSendOperation"] = 
+function(os, msg)
+	Serialize(os, 53)
+	Serialize(os, msg.room_id)
+	Serialize(os, msg.operation)
+
+end
+
+msg_list["AudienceFinishRoom"] = 
+function(os, msg)
+	Serialize(os, 54)
+	Serialize(os, msg.room_id)
+	Serialize(os, msg.win_flag)
+	Serialize(os, msg.reason)
+	Serialize(os, msg.operation)
+
+end
+
+msg_list["TestMafiaLevelUp"] = 
+function(os, msg)
+	Serialize(os, 55)
+
+end
+
+msg_list["MafiaUpdateNoticeInfo"] = 
+function(os, msg)
+	Serialize(os, 56)
+	__SerializeStruct(os, "MafiaNoticeInfo", msg.notice_info)
+
+end
+
+msg_list["MafiaBangZhuSendMail"] = 
+function(os, msg)
+	Serialize(os, 57)
+	Serialize(os, msg.id)
+	Serialize(os, msg.name)
+	Serialize(os, msg.subject)
+	Serialize(os, msg.context)
+
+end
+
+msg_list["TopListUpdateInfo"] = 
+function(os, msg)
+	Serialize(os, 58)
+
+end
+
+msg_list["TopListInsertInfo"] = 
+function(os, msg)
+	Serialize(os, 59)
+	Serialize(os, msg.typ)
+	Serialize(os, msg.data)
+
+end
+
+msg_list["ClientTimeRequest"] = 
+function(os, msg)
+	Serialize(os, 60)
+
+end
+
+msg_list["TestYueZhanCreate"] = 
+function(os, msg)
+	Serialize(os, 61)
+
+end
+
+msg_list["TestYueZhanJoin"] = 
+function(os, msg)
+	Serialize(os, 62)
+	Serialize(os, msg.room_id)
+
+end
+
+msg_list["YueZhanEnd"] = 
+function(os, msg)
+	Serialize(os, 63)
+	Serialize(os, msg.reason)
+	Serialize(os, msg.typ)
+	Serialize(os, msg.room_id)
+	Serialize(os, msg.video_flag)
+
+end
+
+msg_list["UpdateDanMuInfo"] = 
+function(os, msg)
+	Serialize(os, 64)
+	Serialize(os, msg.role_id)
+	Serialize(os, msg.role_name)
+	Serialize(os, msg.tick)
+	Serialize(os, msg.danmu_info)
+
+end
+
+msg_list["YueZhanInfo"] = 
+function(os, msg)
+	Serialize(os, 65)
+	Serialize(os, msg.id)
+	Serialize(os, msg.channel)
+	Serialize(os, msg.typ)
+	__SerializeStruct(os, "RoleBrief", msg.creater)
+	__SerializeStruct(os, "RoleBrief", msg.joiner)
+	Serialize(os, msg.announce)
+	Serialize(os, msg.info_id)
+	Serialize(os, msg.time)
+
+end
+
+msg_list["YueZhanUpdateState"] = 
+function(os, msg)
+	Serialize(os, 66)
+	Serialize(os, msg.typ)
+	Serialize(os, msg.room_id)
+	Serialize(os, msg.info)
+
+end
+
+msg_list["KickOut"] = 
+function(os, msg)
+	Serialize(os, 67)
+	Serialize(os, msg.reason)
+
+end
+
+msg_list["MafiaDeclarationBroadCast"] = 
+function(os, msg)
+	Serialize(os, 68)
+	Serialize(os, msg.mafia_id)
+	Serialize(os, msg.mafia_name)
+	Serialize(os, msg.info)
+
+end
+
+msg_list["ChongZhi"] = 
+function(os, msg)
+	Serialize(os, 69)
+	Serialize(os, msg.money)
+
+end
+
+msg_list["MafiaChat"] = 
+function(os, msg)
+	Serialize(os, 70)
+	__SerializeStruct(os, "RoleBrief", msg.src)
+	Serialize(os, msg.time)
+	Serialize(os, msg.text_content)
+	Serialize(os, msg.speech_content)
+	Serialize(os, msg.channel)
+	Serialize(os, msg.chat_typ)
+
+end
+
+msg_list["MafiaYueZhan"] = 
+function(os, msg)
+	Serialize(os, 71)
+	Serialize(os, msg.id)
+	Serialize(os, msg.channel)
+	Serialize(os, msg.typ)
+	__SerializeStruct(os, "RoleBrief", msg.creater)
+	__SerializeStruct(os, "RoleBrief", msg.joiner)
+	Serialize(os, msg.announce)
+	Serialize(os, msg.info_id)
+	Serialize(os, msg.time)
+
+end
+
+msg_list["AudienceUpdateNum"] = 
+function(os, msg)
+	Serialize(os, 72)
+	Serialize(os, msg.num)
+
+end
+
+msg_list["TowerUpdateRoleRank"] = 
+function(os, msg)
+	Serialize(os, 73)
+	Serialize(os, msg.rank)
+
+end
+
+msg_list["TestFloat"] = 
+function(os, msg)
+	Serialize(os, 81)
+	Serialize(os, msg.seed)
+	Serialize(os, msg.count)
+
+end
+
+msg_list["CheckServerReward"] = 
+function(os, msg)
+	Serialize(os, 82)
+
+end
+
+msg_list["SyncNetTime"] = 
+function(os, msg)
+	Serialize(os, 83)
+
+end
+
+msg_list["GMCmd_GetChar"] = 
+function(os, msg)
+	Serialize(os, 11000)
+	Serialize(os, msg.session_id)
+	Serialize(os, msg.sid)
+
+end
+
+msg_list["GMCmd_MailItemToPlayer"] = 
+function(os, msg)
+	Serialize(os, 11001)
+	if msg.items==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #msg.items)
+		for i = 1, #msg.items do
+			__SerializeStruct(os, "Item", msg.items[i])
+		end
+	end
+	Serialize(os, msg.mailtitle)
+	Serialize(os, msg.mailcontent)
+	Serialize(os, msg.session_id)
+	Serialize(os, msg.sid)
+
+end
+
+msg_list["GMCmd_Bull"] = 
+function(os, msg)
+	Serialize(os, 11002)
+	Serialize(os, msg.text)
+
+end
+
+msg_list["GMCmd_AddForbidLogin"] = 
+function(os, msg)
+	Serialize(os, 11003)
+
+end
+
+msg_list["CreateRoleResult"] = 
+function(os, msg)
+	Serialize(os, 10001)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["Heartbeat"] = 
+function(os, msg)
+	Serialize(os, 10002)
+	Serialize(os, msg.now)
+
+end
+
+msg_list["CreateMafiaResult"] = 
+function(os, msg)
+	Serialize(os, 10003)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.create_time)
+	Serialize(os, msg.name)
+
+end
+
+msg_list["PVPHeartbeat"] = 
+function(os, msg)
+	Serialize(os, 10004)
+	Serialize(os, msg.now)
+
+end
+
+msg_list["PVPTriggerSend"] = 
+function(os, msg)
+	Serialize(os, 10005)
+
+end
+
+msg_list["DBHeartbeat"] = 
+function(os, msg)
+	Serialize(os, 10006)
+
+end
+
+msg_list["ReloadLua"] = 
+function(os, msg)
+	Serialize(os, 10007)
+
+end
+
+msg_list["PVPCreateResult"] = 
+function(os, msg)
+	Serialize(os, 10008)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["PVPEnd"] = 
+function(os, msg)
+	Serialize(os, 10009)
+	Serialize(os, msg.reason)
+
+end
+
+msg_list["PVPMatchSuccess"] = 
+function(os, msg)
+	Serialize(os, 10010)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.index)
+	Serialize(os, msg.time)
+	Serialize(os, msg.room_id)
+
+end
+
+msg_list["PVPJoinRe"] = 
+function(os, msg)
+	Serialize(os, 10011)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["PVPEnterRe"] = 
+function(os, msg)
+	Serialize(os, 10012)
+	Serialize(os, msg.role_pvpinfo)
+	Serialize(os, msg.fight_pvpinfo)
+	Serialize(os, msg.robot_flag)
+	Serialize(os, msg.robot_seed)
+	Serialize(os, msg.robot_type)
+
+end
+
+msg_list["PvpBegin"] = 
+function(os, msg)
+	Serialize(os, 10013)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.start_time)
+	Serialize(os, msg.ip)
+	Serialize(os, msg.port)
+
+end
+
+msg_list["PvpEnd"] = 
+function(os, msg)
+	Serialize(os, 10014)
+	Serialize(os, msg.reason)
+	Serialize(os, msg.typ)
+	Serialize(os, msg.score)
+
+end
+
+msg_list["PvpCancle"] = 
+function(os, msg)
+	Serialize(os, 10015)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["PvpError"] = 
+function(os, msg)
+	Serialize(os, 10016)
+	Serialize(os, msg.result)
+
+end
+
+msg_list["PvpSpeed"] = 
+function(os, msg)
+	Serialize(os, 10017)
+	Serialize(os, msg.speed)
+
+end
+
+msg_list["PvpReset"] = 
+function(os, msg)
+	Serialize(os, 10018)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["SendNotice"] = 
+function(os, msg)
+	Serialize(os, 10019)
+	Serialize(os, msg.notice_id)
+	if msg.notice_para==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #msg.notice_para)
+		for i = 1, #msg.notice_para do
+			__SerializeStruct(os, "NoticeParaInfo", msg.notice_para[i])
+		end
+	end
+
+end
+
+msg_list["TopListHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 10020)
+
+end
+
+msg_list["PvpVideoID"] = 
+function(os, msg)
+	Serialize(os, 10021)
+	Serialize(os, msg.video_id)
+	Serialize(os, msg.first_pvpinfo)
+	Serialize(os, msg.second_pvpinfo)
+	Serialize(os, msg.win_flag)
+	Serialize(os, msg.match_pvp)
+	Serialize(os, msg.score)
+	Serialize(os, msg.duration)
+	Serialize(os, msg.robot_flag)
+
+end
+
+msg_list["PvpGetVideoErr"] = 
+function(os, msg)
+	Serialize(os, 10022)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["PvpGetVideo"] = 
+function(os, msg)
+	Serialize(os, 10023)
+	Serialize(os, msg.first)
+	Serialize(os, msg.second)
+	Serialize(os, msg.first_pvpinfo)
+	Serialize(os, msg.second_pvpinfo)
+	Serialize(os, msg.operation)
+	Serialize(os, msg.win_flag)
+	Serialize(os, msg.robot_flag)
+	Serialize(os, msg.robot_seed)
+	Serialize(os, msg.robot_type)
+	Serialize(os, msg.pvp_ver)
+	Serialize(os, msg.exe_ver)
+	Serialize(os, msg.data_ver)
+	Serialize(os, msg.danmu_info)
+	Serialize(os, msg.video_id)
+
+end
+
+msg_list["SendMail"] = 
+function(os, msg)
+	Serialize(os, 10024)
+	Serialize(os, msg.mail_id)
+	Serialize(os, msg.mafia_mail_id)
+	Serialize(os, msg.arg1)
+
+end
+
+msg_list["SendServerEvent"] = 
+function(os, msg)
+	Serialize(os, 10025)
+	Serialize(os, msg.event_type)
+	Serialize(os, msg.end_time)
+
+end
+
+msg_list["RoleUpdateServerEvent"] = 
+function(os, msg)
+	Serialize(os, 10026)
+
+end
+
+msg_list["OpenServer"] = 
+function(os, msg)
+	Serialize(os, 10027)
+
+end
+
+msg_list["MiscHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 10028)
+
+end
+
+msg_list["PvpSeasonFinish"] = 
+function(os, msg)
+	Serialize(os, 10029)
+
+end
+
+msg_list["RoleUpdatePvpEndTime"] = 
+function(os, msg)
+	Serialize(os, 10030)
+
+end
+
+msg_list["RoleUpdateLevelTop"] = 
+function(os, msg)
+	Serialize(os, 10031)
+
+end
+
+msg_list["BroadcastPvpVideo"] = 
+function(os, msg)
+	Serialize(os, 10032)
+	Serialize(os, msg.typ)
+	__SerializeStruct(os, "RoleBrief", msg.src)
+	Serialize(os, msg.content)
+	Serialize(os, msg.video_id)
+	__SerializeStruct(os, "RoleClientPVPInfo", msg.player1)
+	__SerializeStruct(os, "RoleClientPVPInfo", msg.player2)
+	Serialize(os, msg.time)
+	Serialize(os, msg.win_flag)
+	Serialize(os, msg.channel)
+	Serialize(os, msg.match_pvp)
+
+end
+
+msg_list["RoleUpdateTopList"] = 
+function(os, msg)
+	Serialize(os, 10033)
+	Serialize(os, msg.top_type)
+	Serialize(os, msg.data)
+
+end
+
+msg_list["PVPPause"] = 
+function(os, msg)
+	Serialize(os, 10034)
+	Serialize(os, msg.pause_tick)
+	Serialize(os, msg.role_id)
+	if msg.cmds==nil then
+		Serialize(os, 0)
+	else
+		Serialize(os, #msg.cmds)
+		for i = 1, #msg.cmds do
+			Serialize(os, msg.cmds[i])
+		end
+	end
+
+end
+
+msg_list["PVPContinue"] = 
+function(os, msg)
+	Serialize(os, 10035)
+	Serialize(os, msg.continue_time)
+
+end
+
+msg_list["ChangeRoleName"] = 
+function(os, msg)
+	Serialize(os, 10036)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.name)
+
+end
+
+msg_list["ActiveCodeResult"] = 
+function(os, msg)
+	Serialize(os, 10037)
+	Serialize(os, msg.retcode)
+	Serialize(os, msg.type)
+
+end
+
+msg_list["CloseServer"] = 
+function(os, msg)
+	Serialize(os, 10300)
+	Serialize(os, msg.sid)
+
+end
+
+msg_list["PublicChatnew"] = 
+function(os, msg)
+	Serialize(os, 10100)
+	__SerializeStruct(os, "RoleBrief", msg.src)
+	Serialize(os, msg.time)
+	Serialize(os, msg.text_content)
+	Serialize(os, msg.speech_content)
+	Serialize(os, msg.channel)
+	Serialize(os, msg.chat_typ)
+
+end
+
+msg_list["PrivateChatnew"] = 
+function(os, msg)
+	Serialize(os, 10101)
+	Serialize(os, msg.id)
+	Serialize(os, msg.name)
+	Serialize(os, msg.photo)
+	Serialize(os, msg.level)
+	Serialize(os, msg.mafia_id)
+	Serialize(os, msg.mafia_name)
+	Serialize(os, msg.time)
+	Serialize(os, msg.text_content)
+	Serialize(os, msg.speech_content)
+	Serialize(os, msg.dest_id)
+	__SerializeStruct(os, "int", msg.typ)
+
+end
+
+msg_list["BroadCastPublicChat"] = 
+function(os, msg)
+	Serialize(os, 10102)
+	Serialize(os, msg.time)
+	Serialize(os, msg.text_content)
+	Serialize(os, msg.speech_content)
+	Serialize(os, msg.channel)
+	Serialize(os, msg.chat_typ)
+
+end
+
+msg_list["TestMessage1"] = 
+function(os, msg)
+	Serialize(os, 90001)
+
+end
+
+msg_list["TestMessage2"] = 
+function(os, msg)
+	Serialize(os, 90002)
+
+end
+
+msg_list["TestMessage3"] = 
+function(os, msg)
+	Serialize(os, 90003)
+
+end
+
+msg_list["TestMessage4"] = 
+function(os, msg)
+	Serialize(os, 90004)
+
+end
+
+msg_list["JieYiUpdateReply"] = 
+function(os, msg)
+	Serialize(os, 10200)
+	Serialize(os, msg.id)
+	Serialize(os, msg.typ)
+	Serialize(os, msg.name)
+	Serialize(os, msg.role_id)
+	Serialize(os, msg.agreement)
+
+end
+
+msg_list["JieYiUpdateExit"] = 
+function(os, msg)
+	Serialize(os, 10201)
+	Serialize(os, msg.id)
+	Serialize(os, msg.typ)
+	Serialize(os, msg.name)
+	Serialize(os, msg.brother_id)
+	Serialize(os, msg.retcode)
+
+end
+
+msg_list["FlowerGiftUpdate"] = 
+function(os, msg)
+	Serialize(os, 10220)
+
+end
+
+msg_list["HotPvpVideoHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 10221)
+
+end
+
+msg_list["ServerRewardHeartBeat"] = 
+function(os, msg)
+	Serialize(os, 10222)
+
+end
+
+

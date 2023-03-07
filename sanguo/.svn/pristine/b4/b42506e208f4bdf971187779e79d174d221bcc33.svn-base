@@ -1,0 +1,33 @@
+
+#ifndef __GNET_REPORTUDPINFO_HPP
+#define __GNET_REPORTUDPINFO_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+
+namespace GNET
+{
+
+class ReportUDPInfo : public GNET::Protocol
+{
+	#include "reportudpinfo"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		GLog::log(LOG_INFO, "ReportUDPInfo::Process, net_type=%d, ip=%.*s, port=%d, sid=%u, thread=%u",
+		          net_type, (int)ip.size(), (char*)ip.begin(), port, sid, (unsigned int)pthread_self());
+
+		Player *player = PlayerManager::GetInstance().FindByTransSid(sid, true);
+		if(!player) return;
+
+		Thread::Mutex::Scoped keeper(player->_lock);
+
+		player->UpdateUDPInfo(net_type, ip, port);
+	}
+};
+
+};
+
+#endif

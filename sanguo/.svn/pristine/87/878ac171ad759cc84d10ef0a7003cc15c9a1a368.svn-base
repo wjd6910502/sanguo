@@ -1,0 +1,58 @@
+#ifndef __GNET_DBSAVETASK_H
+#define __GNET_DBSAVETASK_H
+
+#include "thread.h"
+#include "dbsavedata.hrp"
+#include "topmanager.h"
+
+extern std::map<Octets, Octets> g_save_data_map;
+
+using namespace CACHE;
+
+namespace GNET
+{
+	class DelayDBSaveDataTask : public Thread::Runnable
+	{
+	public:
+		static DelayDBSaveDataTask * GetInstance()
+		{
+			static DelayDBSaveDataTask instance;
+			return &instance;
+		}
+		DelayDBSaveDataTask(): Runnable(1){ }
+
+		void Run()
+		{
+			GLog::log(LOG_INFO, "DelayDBSaveDataTask begin ... ...");
+			TopManager *top = TopManager::GetInstance();
+			top->SaveTest();
+			top->Save();
+			DBSaveDataArg new_arg;
+			std::map<Octets, Octets>::iterator it = g_save_data_map.begin();
+			if(it != g_save_data_map.end())
+			{
+				int num = 0;
+				for(; it != g_save_data_map.end(); it++)
+				{
+					if(num == 100)
+					{
+						new_arg.find_key = it->first;;
+						break;
+					}
+					else
+					{
+						new_arg.result_key.push_back(it->first);
+						new_arg.result_value.push_back(it->second);
+					}
+				}
+				DBSaveData *rpc = (DBSaveData *)Rpc::Call(RPC_DBSAVEDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+			
+			Thread::HouseKeeper::AddTimerTask(this, 60);
+		};
+	};
+};
+
+#endif
+

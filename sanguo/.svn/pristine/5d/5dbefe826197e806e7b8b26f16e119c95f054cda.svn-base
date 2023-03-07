@@ -1,0 +1,78 @@
+function OnCommand_JieYiInviteRole(player, role, arg, others)
+	player:Log("OnCommand_JieYiInviteRole, "..DumpTable(arg).." "..DumpTable(others))
+	local resp = NewCommand("JieYiInvite_Re")
+	
+	-- 考虑初次结义 和 已经结义的逻辑
+	local jieyi_info = others.jieyi_info					
+	local dest_role = others.roles[arg.dest_id]
+	if dest_role == nil then
+		--不存在的角色
+		local cmd = NewCommand("ErrorInfo")
+		cmd.error_id = G_ERRCODE["CHAT_NOT_ONLINE"]
+		role:SendToClient(SerializeCommand(cmd))
+		return 
+	end
+
+	--是否在线
+	if dest_role._roledata._status._online == 0 then
+		local cmd = NewCommand("ErrorInfo")
+		cmd.error_id = G_ERRCODE["CHAT_NOT_ONLINE"]
+		role:SendToClient(SerializeCommand(cmd))
+		return 
+	end
+	
+	--对方已经结义
+	if dest_role._roledata._jieyi_info._jieyi_id ~= 0 then
+		local cmd = NewCommand("ErrorInfo") 
+		cmd.error_id = G_ERRCODE["CHAT_NOT_ONLINE"] 
+		role:SendToClient(SerializeCommand(cmd))
+		return
+	end
+
+	--对方不满足结义等级
+	if dest_role._roledata._base._level < 10 then
+		local cmd = NewCommand("ErrorInfo") 
+		cmd.error_id = G_ERRCODE["CHAT_NOT_ONLINE"] 
+		role:SendToClient(SerializeCommand(cmd))
+		return	
+	end
+
+	--对方已经邀请了俩个好友
+	if jieyi_info._compare_jieyi_info:Size() >= 2  then			
+		local cmd = NewCommand("ErrorInfo") 
+		cmd.error_id = G_ERRCODE["CHAT_NOT_ONLINE"]
+		role:SendToClient(SerializeCommand(cmd)) 
+		return
+	end
+	
+	--更新数据库的brother的数据
+	local roleinfo = {}
+	roleinfo._id = dest_role._roledata._base._id
+	roleinfo._level = dest_role._roledata._status._level
+	roleinfo._name = dest_role._roledata._base._name
+	roleinfo._photo = dest_role._roledata._base._photo
+	roleinfo._accept = 0
+	roleinfo._ready = 0
+	roleinfo._time = API_GetTime()
+	
+	--type = 1 代表已经结义 type =2 准备结义
+	resp.typ = role._roledata._jieyi_info._cur_operate_typ
+
+	if resp.typ == 1 then
+		local info = jieyi_info._jieyi_info:Find(role._roledata._jieyi_info._jieyi_id)
+	   	info._brother_info:push_back( roleinfo )
+		resp.id = role._roledata._jieyi_info._jieyi_id:ToStr()
+
+		--这里考虑要不要到底放在俩个列表里面 因为里面状态可以区分这些东西
+	elseif resp.typ == 2 then
+		local info = jieyi_info._compare_jieyi_info:Find(role._roledata._jieyi_info._jieyi_id)  
+		info._brother_info:push_back( roleinfo )	
+		resp.id = role._roledata._jieyi_info._cur_operate_id:ToStr()
+	else
+		return
+	end
+
+	resp.name = role._roledata._jieyi_info._jieyi_name()
+	
+	dest_role:SendToClient(SerializeCommand(resp))
+end

@@ -1,0 +1,10 @@
+--注意pvp_ver是从1开始的，不存在pvp_ver是0的情况
+
+
+G_VERSION_INFO = {}
+--默认渠道
+G_VERSION_INFO["default"] = {{exe_ver = "1", res_ver = "1.002.001", pvp_ver = "2"}, {exe_ver = "2", res_ver = "1.002.001", pvp_ver = "3"}}
+--百度渠道
+G_VERSION_INFO["baidu"] = {{exe_ver = "1", res_ver = "1.002.001", pvp_ver = "2"}, {exe_ver = "1.002.001", res_ver = "1.002.001", pvp_ver = "2"}}
+--360渠道
+G_VERSION_INFO["360"] = {{exe_ver = "2", res_ver = "1.002.001", pvp_ver = "2"}}

@@ -1,0 +1,41 @@
+function OnCommand_BroadcastPvpVideo(player, role, arg, others)
+	player:Log("OnCommand_BroadcastPvpVideo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local find_key = CACHE.Str()
+	find_key._value = arg.video_id
+	local video = 0
+	local video_it = role._roledata._status._pvp_video:SeekToBegin()
+	local video = video_it:GetValue()
+	while video ~= nil do
+		if video._id._value == arg.video_id then
+			local msg = NewMessage("BroadcastPvpVideo")
+			local is_idx,player1 = DeserializeStruct(video._first_pvpinfo._value, 1, "RolePVPInfo")
+			local is_idx,player2 = DeserializeStruct(video._second_pvpinfo._value, 1, "RolePVPInfo")
+			msg.player1 = {}
+			msg.player2 = {}
+			
+			msg.player1.brief = player1.brief
+			msg.player1.hero_hall = player1.hero_hall
+			msg.player1.pvp_score = player1.pvp_score
+			msg.player2.brief = player2.brief
+			msg.player2.hero_hall = player2.hero_hall
+			msg.player2.pvp_score = player2.pvp_score
+			
+			msg.src = ROLE_MakeRoleBrief(role)
+			msg.video_id = arg.video_id
+			msg.time = API_GetTime()
+			msg.typ = arg.typ
+			msg.win_flag = video._win_flag
+			msg.content = arg.content
+			player:SendMessageToAllRole(SerializeMessage(msg))
+			return
+		end
+		video_it:Next()
+		video = video_it:GetValue()
+	end
+
+	--到了这里说明没有这个录像
+	local resp = NewCommand("ErrorInfo")
+	resp.error_id = G_ERRCODE["PVP_VIDEO_NOT_EXIST_SELF"]
+	player:SendToClient(SerializeCommand(resp))
+end

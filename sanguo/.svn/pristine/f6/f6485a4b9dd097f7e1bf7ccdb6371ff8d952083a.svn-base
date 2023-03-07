@@ -1,0 +1,180 @@
+function OnCommand_Lottery(player, role, arg, others)
+	player:Log("OnCommand_Lottery, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("Lottery_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.lottery_id = arg.lottery_id
+	resp.reward_ids = {}	
+	--查找抽奖id
+	local ed = DataPool_Find("elementdata")
+	local lottery = ed:FindBy("lottery_id",arg.lottery_id)
+	
+	if lottery == nil then
+		resp.retcode = G_ERRCODE["NO_LOTTERY"] 
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_Lottery, ".."error ="..G_ERRCODE["NO_LOTTERY"])
+		return
+	end
+	
+	--这里需要加限制模板id
+	local cost_type = arg.cost_type	
+	local price = 0
+	local drop_id = 0
+	local flags = false
+	local lottery_cnt = lottery.lottery_times
+	local reward_id = 0
+	for costdrop in DataPool_Array(lottery.costdrop) do		
+		if costdrop.lottery_cost_type == cost_type then			
+			price = costdrop.lottery_price
+			drop_id = costdrop.drop_id
+			reward_id = costdrop.reward_id
+			flags = true
+			break
+		end		
+	end
+	
+	--防御策划这边的东西
+	if flags ~= true then 
+		local cmd = NewCommand("ErrorInfo")
+		cmd.error_id = G_ERRCODE["LOTTERY_COSTYPE_ERROR"]
+		role:SendToClient(SerializeCommand(cmd))	
+		return
+	end
+	
+	--计算时间 然后获取更新时间 --更新刷新时间	
+	local now = API_GetTime()	
+	local time_map = role._roledata._status._last_lotterytime
+	local find_time = time_map:Find(arg.lottery_id)
+	local last_time = 0
+	if find_time ~= nil then
+		last_time = find_time._value
+	end
+	
+	local now_s = CACHE.Int()
+	now_s._value = now
+	
+	if  now - last_time > lottery.free_cd_loop and lottery.free_cd_loop > 0 then
+		role._roledata._status._last_lotterytime:Insert(arg.lottery_id, now_s)
+		cost_type = -1
+	end
+	 
+	--1代表的是铜币购买，2代表的是元宝购买, 7代表的是
+	if cost_type == 1 then
+		if role._roledata._status._money < price then
+			resp.retcode = G_ERRCODE["LOTTERY_MONEY_NOTENOUGH"] 
+			player:SendToClient(SerializeCommand(resp))
+			player:Log("OnCommand_Lottery, ".."error ="..G_ERRCODE["LOTTERY_MONEY_NOTENOUGH"])
+			return
+		end
+		ROLE_SubMoney(role, price)
+	elseif cost_type == 2 then
+		if role._roledata._status._yuanbao < price then
+			resp.retcode = G_ERRCODE["LOTTERY_YUANBAO_NOTENOUGH"] 
+			player:SendToClient(SerializeCommand(resp))
+			player:Log("OnCommand_Lottery, ".."error ="..G_ERRCODE["LOTTERY_YUANBAO_NOTENOUGH"])
+			return
+		end
+		ROLE_SubYuanBao(role, price)
+	elseif cost_type == 7 then
+		-- 声望id 4
+		if ROLE_CheckRep(role, 4, price) == false then
+			resp.retcode = G_ERRCODE["LOTTERY_REP_NOTENOUGH"]
+			player:SendToClient(SerializeCommand(resp)) 
+			player:Log("OnCommand_Lottery, ".."error ="..G_ERRCODE["LOTTERY_REP_NOTENOUGH"])
+			return
+		end
+		ROLE_SubRep(role, 4, price )
+	elseif cost_type < 0 then
+		player:Log("Lottery free cost_type ")					
+	else
+		resp.retcode = G_ERRCODE["LOTTERY_COSTTYPE_NOTKNOWN"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_Lottery, ".."error ="..G_ERRCODE["LOTTERY_COSTTYPE_NOTKNOWN"])
+		return
+	end
+
+	if lottery_cnt == 10 and cost_type == 2 then
+		if role._roledata._status._lottery_ten_flag == 0 then
+			role._roledata._status._lottery_ten_flag = 1
+			local resp_update = NewCommand("LotteryUpdate")
+			resp_update.typ = 1
+			resp_update.flag = 1
+			player:SendToClient(SerializeCommand(resp_update))
+		end
+	end
+	local lottery_info = {}
+	while lottery_cnt > 0 do	
+		
+		--根据掉落表配置每次只会随即掉落一个物品
+		player:Log("OnCommand_Lottery, ".."drop_id = "..drop_id.."")
+		local ditem = DROPITEM_DropItem(role, drop_id)
+		if ditem == nil then
+			local cmd = NewCommand("ErrorInfo")
+			cmd.error_id = G_ERRCODE["LOTTERY_DROPITEM_ERROR"]
+			role:SendToClient(SerializeCommand(cmd))		
+			return
+		end
+
+		local item_count = table.getn(ditem)	
+		if item_count ~= 1 then
+			local cmd = NewCommand("ErrorInfo")
+			cmd.error_id = G_ERRCODE["LOTTERY_DROPITEM_count_ERROR"]
+			role:SendToClient(SerializeCommand(cmd))		
+			return
+		end
+		
+		local tmp_item = {}
+		tmp_item.id = ditem[1].id
+		tmp_item.num = ditem[1].count
+		
+		player:Log("OnCommand_Lottery, ".."id = "..ditem[1].id.."  cnt ="..ditem[1].count)
+		--找武将 是否首次获取看背包有没有 为空代表是物品
+		local item = ed:FindBy("item_id",tmp_item.id)
+		if item == nil then
+			local cmd = NewCommand("ErrorInfo")
+			cmd.error_id = G_ERRCODE["LOTTERY_ITEM_ERROR"]
+			role:SendToClient(SerializeCommand(cmd))	
+			return
+		end
+
+		if item.item_type == 21 then
+			--找一下是否首次获得
+			local heroid =  item.type_data1 --这个是武将id 不是模板id 
+			local hero_map = role._roledata._hero_hall._heros
+			local h = hero_map:Find(heroid)	
+			if h ~= nil then
+				--转换成武魂物品
+				tmp_item.firstget = 0
+			else
+				--第一次获取
+				tmp_item.firstget = 1 	
+			end
+			tmp_item.bproorhero = 1
+			for i = 1, tmp_item.num do
+				HERO_AddHero(role, item.type_data1, 0)
+			end
+		else	
+			tmp_item.firstget = 0 	
+			tmp_item.bproorhero = 0					
+			BACKPACK_AddItem(role,tmp_item.id,tmp_item.num) 
+		end
+
+		resp.reward_ids[#resp.reward_ids+1]= tmp_item;		
+		lottery_cnt = lottery_cnt - 1		
+	end
+	
+	--加固定奖励
+	lottery_cnt = lottery.lottery_times
+	while lottery_cnt > 0 do		
+		local Reward = DROPITEM_Reward(role, reward_id)
+		ROLE_AddReward(role, Reward)
+		lottery_cnt = lottery_cnt - 1
+	end
+
+	TASK_ChangeCondition(role, G_ACH_TYPE["STAGE_COUNT"], G_ACH_EIGHT_TYPE["LOTTERY"] , lottery.lottery_times)
+
+	--发送物品给客户端
+	player:SendToClient(SerializeCommand(resp)) 		
+end
+
+

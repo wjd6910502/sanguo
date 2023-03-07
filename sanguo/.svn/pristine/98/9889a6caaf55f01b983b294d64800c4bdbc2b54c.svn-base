@@ -1,0 +1,8 @@
+a51523f897814d33f19f36aeb42e6273  gcenterd
+97d3a1565868fb09dfd09e9839ca7b8f  gmserver.o
+6a787f2c08f62bc0cb202abc19c4dc90  state.o
+845476ddc53afb8ed3b98fc49d000ef8  stubs.o
+864978f4259003803baa05071a0ff39d  gcenterd.o
+ae37fddb8c01d87373005a43f4c43e09  gcenterserver.o
+82dc37de5d5644225aa91cef4ea256aa  ../xlib/libio32.so
+763672d53a3ca9cdfa4c6eeac7d05b58  ../xlib/liblog32.so

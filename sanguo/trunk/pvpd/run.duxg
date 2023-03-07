@@ -1,0 +1,10 @@
+#!/bin/sh
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+
+./pvpd gamesys.duxg.conf
+#strace ./pvpd gamesys.duxg.conf 2>stderr
+#gdb -args ./pvpd gamesys.duxg.conf
+

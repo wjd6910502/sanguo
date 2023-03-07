@@ -1,0 +1,30 @@
+function OnCommand_WuZheShiLianReset(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianReset, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("WuZheShiLianReset_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+
+	--首先这个的实现使用限次模板的机制来做。模板的ID，之前在群里面说过，不清楚的话再问一下策划
+	--其次，即使你按照现在的这个逻辑走。那么你看一下现在的流程对吗?当role._roledata._wuzhe_shilian._refresh_time 为0的话，你看看流程是怎么走得。
+
+
+
+	--则可以刷新 否则不可以刷新
+	if role._roledata._wuzhe_shilian._refresh_time == 0 then
+		ROLE_UpdateWuZheShiLianInfo(role)
+		role._roledata._wuzhe_shilian._refresh_time = API_GetTime()
+	end
+	
+	local timeDay = math.floor(API_GetTime()/86400)
+	local lastDay = math.floor(role._roledata._wuzhe_shilian._refresh_time/86400)
+	if API_GetTime() > role._roledata._wuzhe_shilian._refresh_time and timeDay ~= lastDay then
+		ROLE_UpdateWuZheShiLianInfo(role)
+		role._roledata._wuzhe_shilian._count = role._roledata._wuzhe_shilian._count - 1
+		role._roledata._wuzhe_shilian._refresh_time = API_GetTime()
+	else
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_HAS_REFRESH"]
+	end
+
+	player:SendToClient(SerializeCommand(resp))
+	
+end

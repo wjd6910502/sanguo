@@ -1,0 +1,38 @@
+	public:
+		int64_t orignate_time;
+		int64_t offset;
+		int64_t delay;
+		enum { PROTOCOL_TYPE = PROTOCOL_UDPSYNCNETTIME };
+	public:
+		UDPSyncNetTime() { type = PROTOCOL_UDPSYNCNETTIME; }
+		UDPSyncNetTime(void*) : Protocol(PROTOCOL_UDPSYNCNETTIME) { }
+		UDPSyncNetTime (int64_t l_orignate_time,int64_t l_offset,int64_t l_delay)
+			 : orignate_time(l_orignate_time),offset(l_offset),delay(l_delay)
+		{
+			type = PROTOCOL_UDPSYNCNETTIME;
+		}
+
+		UDPSyncNetTime(const UDPSyncNetTime &rhs)
+			: Protocol(rhs),orignate_time(rhs.orignate_time),offset(rhs.offset),delay(rhs.delay) { }
+
+		GNET::Protocol *Clone() const { return new UDPSyncNetTime(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << orignate_time;
+			os << offset;
+			os << delay;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> orignate_time;
+			os >> offset;
+			os >> delay;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

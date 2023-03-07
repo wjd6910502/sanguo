@@ -1,0 +1,1 @@
+link ../../common/deserialize_struct.lua

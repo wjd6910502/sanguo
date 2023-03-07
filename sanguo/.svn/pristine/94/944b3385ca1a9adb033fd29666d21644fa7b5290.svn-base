@@ -1,0 +1,101 @@
+function OnCommand_JieYiGetInfo(player, role, arg, others)
+	player:Log("OnCommand_JieYiGetInfo, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("JieYiGetInfo_Re")
+	--全局的结义信息表 先获取结义信息 如果这个个人有结义信息（1 已经结义的 2 准备结义的信息 ）
+	local jieyi_info = others.jieyi_info	
+	local id = role._roledata._jieyi_info._jieyi_id 
+	
+	--已经结义的
+	local fit = jieyi_info._jieyi_info:Find(role._roledata._jieyi_info._jieyi_id)
+	if fit ~= nil then
+		local v =  fit._value;
+		resp.id = v._id:Tostr()
+		resp.name = v._name
+		resp.level = v._level
+		resp.exp = v._exp
+		resp.bossinfo = {}
+		resp.bossinfo.id = v._boss_info._id
+		resp.bossinfo.name = v._boss_info._name 
+		resp.bossinfo.level = v._boss_info._level 
+		resp.bossinfo.photo = v._boss_info._photo 
+		
+		--兄弟信息
+		resp.brotherInfo = {}
+		local sit = v._brother_info:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local tmp_brother = {}
+			tmp_brother.id = s._id
+			tmp_brother.name = s._name
+			tmp_brother.level = s._level
+			tmp_brother.photo = s._photo
+			
+			resp.brotherInfo[#resp.brotherInfo+1] = tmp_brother
+			sit:Next()
+			s = sit:GetValue()
+		end
+
+		--邀请信息
+		resp.inviteInfo = {}
+		local sit = v._invite_member:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local tmp_invite = {}
+			tmp_invite.id = s._id
+			tmp_invite.name = s._name
+			tmp_invite.level = s._level
+			tmp_invite.photo = s._photo
+			tmp_invite.accept = s._accept
+			tmp_invite.ready = s._ready
+			tmp_invite.time = s._time
+			
+			resp.inviteInfo[#resp.inviteInfo+1] = tmp_invite
+			sit:Next()
+			s = sit:GetValue()
+		end
+			
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end	
+	
+	--准备结义的
+	local fit = jieyi_info._compare_jieyi_info:Find(role._roledata._jieyi_info._cur_operate_id)
+	if fit ~= nil then
+		local v =  fit._value
+		resp.id = v._id:Tostr()
+		resp.name = v._name
+		resp.level = v._level
+		resp.exp = v._exp
+		resp.bossinfo = {}
+		resp.bossinfo.id = v._boss_info._id
+		resp.bossinfo.name = v._boss_info._name 
+		resp.bossinfo.level = v._boss_info._level 
+		resp.bossinfo.photo = v._boss_info._photo 
+		
+		--兄弟信息
+		resp.brotherInfo = {}
+		local sit = v._brother_info:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local tmp_brother = {}
+			tmp_brother.id = s._id
+			tmp_brother.name = s._name
+			tmp_brother.level = s._level
+			tmp_brother.photo = s._photo
+			
+			resp.brotherInfo[#resp.brotherInfo+1] = tmp_brother
+			sit:Next()
+			s = sit:GetValue()
+		end
+			
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end	
+		
+	--没有人邀请 也没有结义 id默认为0
+	resp.id = role._roledata._jieyi_info._jieyi_id:ToStr() 
+	resp.name = role._roledata._jieyi_info._jieyi_name()
+	player:SendToClient(SerializeCommand(resp))	
+	
+end

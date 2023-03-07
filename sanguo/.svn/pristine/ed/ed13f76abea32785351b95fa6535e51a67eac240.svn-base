@@ -1,0 +1,146 @@
+--注意这个接口的作用是根据传进来的模板ID来进行随机物品的掉落
+function DROPITEM_DropItem(role, tid)
+	local item_list = {}
+	local prize_template = role._roledata._status._prize_template
+	local i = prize_template:Find(tid)
+	local count = DROPITEM_DropItemCount(role, tid)
+	if i == nil then
+		DROPITEM_DropItemTemplate(role, tid)
+	end
+	--调用开始给奖励
+	return DROPITEM_BeginDropItem(role, tid, count)
+
+end
+
+--这个函数就是用来给玩家身上根据tid随机出来需要用下面的那一层模板来进行顺序发奖
+function DROPITEM_DropItemTemplate(role, tid)
+	local ed = DataPool_Find("elementdata")
+	local rand_plan = ed:FindBy("randplan_id",tid)
+	local quanju = ed.gamedefine[1]
+	
+	if rand_plan ==  nil then
+		return 
+	end
+	--随机出来需要使用的模板ID
+	local drop_tid = 0
+	local seed = math.random(1000000)
+	local prob = 0
+	for i = 1, quanju.plan_arrayid_max do
+		local xxx = "dropchance"..i
+		prob = prob + rand_plan[xxx]
+		if seed <= prob then
+			local yyy = "arrayid"..i
+			drop_tid = rand_plan[yyy]
+			break
+		end
+	end
+
+	if drop_tid == 0 then
+		ThrowException("DROPITEM_DropItemTemplate drop_tid=0")
+	end
+	local prize_template = role._roledata._status._prize_template
+	local value = CACHE.PrizeTemplate:new()
+	value._tid = tid
+	value._tid2 = drop_tid
+	value._position = 1
+
+	prize_template:Insert(tid, value)
+end
+
+--这个函数就是用来给玩家身上根据tid随机出来需要给几个物品
+function DROPITEM_DropItemCount(role, tid)
+	local ed = DataPool_Find("elementdata")
+	local rand_plan = ed:FindBy("randplan_id",tid)
+	local quanju = ed.gamedefine[1]
+	
+	if rand_plan == nil then
+		return 0
+	end
+	local seed = math.random(1000000)
+	--首先随机出来要给的数量
+	local drop_count = 0
+	local prob = 0
+	for i = 0, quanju.plan_droptimes_max - 1 do
+		local xxx="drop"..i.."timechance"
+		prob = prob + rand_plan[xxx]
+		if seed <= prob then
+			drop_count = i
+			break
+		end
+	end
+	return drop_count
+end
+
+--这个接口是真正的在给玩家随机物品
+function DROPITEM_BeginDropItem(role, tid, count)
+	local iteminfo = {}
+	local ed = DataPool_Find("elementdata")
+	while count > 0 do
+		local itemgroup = 0
+		local prize_template = role._roledata._status._prize_template
+		local i = prize_template:Find(tid)
+		if i ~= nil then
+			droparray = ed:FindBy("droparray_id",i._tid2)
+			if droparray ~= nil then
+				if i._position <= droparray.array_length then
+					local yyy="itemgroup"..i._position
+					itemgroup = droparray[yyy]
+					local itemid = 0
+					local droparray = ed:FindBy("itemgroup_id",itemgroup)
+					if droparray ~= nil then
+						local seed = math.random(1,droparray.group_length)
+						if seed <= 100 then
+							local xxx="Item"..seed
+							itemid = droparray[xxx]
+						else
+							
+						end
+						local item = {}
+						item.id = itemid
+						item.count = 1
+						iteminfo[#iteminfo+1]=item
+					end
+					i._position = i._position + 1
+					count = count - 1
+				else
+					DROPITEM_DropItemTemplate(role, tid)
+				end
+			else
+				API_Log("DROPITEM_BeginDropItem id is error i._tid2=="..i._tid2)
+				return iteminfo
+			end
+		else
+			--其实这里是不应该进来的。进来的话就是哪里出现了问题
+			DROPITEM_DropItemTemplate(role, tid)	
+		end
+	end
+	return iteminfo
+end
+
+function DROPITEM_Reward(role, rewardmouldid)
+	local iteminfo = {}
+	iteminfo.item = {}
+	local ed = DataPool_Find("elementdata")
+	local reward = ed:FindBy("reward_id", rewardmouldid)
+
+	if reward == nil then
+		return nil
+	end
+	
+	iteminfo.exp = reward.exp
+	iteminfo.heroexp =  reward.heroexp
+	iteminfo.money = reward.money
+	iteminfo.yuanbao = reward.yuanbao
+	iteminfo.jade = reward.jade
+	iteminfo.talent_point = reward.talent_point
+	iteminfo.jewelry = reward.jewelry
+	for i = 1, reward.reward_item_num do
+		local tmp_itemid = "item"..i.."id"
+		local itemcount = "item"..i.."num"
+		local tmp_item={}
+		tmp_item.itemid = reward[tmp_itemid]
+		tmp_item.itemnum = reward[itemcount]
+		iteminfo.item[i] = tmp_item
+	end
+	return iteminfo
+end

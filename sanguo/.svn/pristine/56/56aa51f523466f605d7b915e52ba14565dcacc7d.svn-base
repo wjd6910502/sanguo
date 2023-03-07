@@ -1,0 +1,3 @@
+function OnCommand_YueZhanCancel(player, role, arg, others)
+	--player:Log("OnCommand_YueZhanCancel, "..DumpTable(arg).." "..DumpTable(others))
+end

@@ -1,0 +1,26 @@
+function OnCommand_LegionJunXueZhuanJingLevelUp(player, role, arg, others)
+	player:Log("OnCommand_LegionJunXueZhuanJingLevelUp, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("LegionJunXueZhuanJingLevelUp_Re")
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	resp.id = arg.id
+
+	local junxue_info = role._roledata._legion_info._junxueguan._junxueinfo:Find(arg.id)
+	if junxue_info ~= nil then
+		junxue_info._level = junxue_info._level + 1
+		resp.level = junxue_info._level
+
+		--local ed = DataPool_Find("elementdata")
+		--local leginonspe_info = ed:FindBy("legionspec_id", arg.id)
+		--if junxue_info._level == leginonspe.spec_platform_lv then
+		--	local insert_learned = CACHE.Int()
+		--	insert_learned._value = leginonspe.spec_original_tech
+		--	junxue_info._learned:Insert(leginonspe.spec_original_tech, insert_learned)
+		--	resp.xiangmu_open = 1
+		--	resp.xiangmu_id = leginonspe.spec_original_tech
+		--end
+	end
+
+	ROLE_UpdateZhanli(role)
+	player:SendToClient(SerializeCommand(resp))
+end

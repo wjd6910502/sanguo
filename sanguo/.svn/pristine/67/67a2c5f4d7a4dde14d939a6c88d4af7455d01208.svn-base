@@ -1,0 +1,69 @@
+function OnCommand_MilitaryEndBattle(player, role, arg, others)
+	player:Log("OnCommand_MilitaryEndBattle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("MilitaryEndBattle_Re")
+
+	resp.reward_param = arg.reward_param
+	resp.stage_id = role._roledata._military_data._stage_id
+	resp.difficult = role._roledata._military_data._stage_difficult
+
+	if arg.reward_param > 100 then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_ARG"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryEndBattle, error=MILITARY_ERROR_ARG")
+		return
+	end
+
+	if role._roledata._military_data._stage_id == 0 or role._roledata._military_data._stage_difficult == 0 then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_BATTLE_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryEndBattle, error=MILITARY_ERROR_BATTLE_DATA")
+		return
+	end
+
+	local ed = DataPool_Find("elementdata")
+	local military = ed:FindBy("military", role._roledata._military_data._stage_id)
+	if military == nil then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryJoinBattle, error=MILITARY_ERROR_DATA")
+		return
+	end
+
+	local battle_info = military.nandu_set[role._roledata._military_data._stage_difficult]
+	if battle_info == nil then
+		resp.retcode = G_ERRCODE["MILITARY_ERROR_BATTLE_DATA"]
+		player:SendToClient(SerializeCommand(resp))
+		player:Log("OnCommand_MilitaryEndBattle, error=MILITARY_ERROR_BATTLE_DATA1")
+		return
+	end
+
+	resp.item = {}
+	local Reward = DROPITEM_Reward(role, battle_info.nandu_reward_id)
+	
+	local ed = DataPool_Find("elementdata")
+	local quanju = ed.gamedefine[1]
+	local vip_data = ed:FindBy("vip_level", ROLE_GetVIP(role))
+
+	local item_count = table.getn(Reward.item)
+	for i = 1, item_count do
+		local reward_info = {}
+		reward_info.tid = Reward.item[i].itemid
+		if arg.reward_param < 100 then
+			Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*arg.reward_param/100)
+			--计算月卡和vip对奖励结果影响
+			Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*(quanju.dailybenefits_bonus_monthcard_1+100)/100)
+			Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*(quanju.dailybenefits_bonus_monthcard_2+100)/100)
+			Reward.item[i].itemnum = math.ceil(Reward.item[i].itemnum*(vip_data.dailybenefits_bonus+100)/100)
+		end
+		reward_info.count = Reward.item[i].itemnum
+		resp.item[#resp.item+1] = reward_info
+	end
+	ROLE_AddReward(role, Reward, 0)
+	role._roledata._military_data._stage_id = 0
+	role._roledata._military_data._stage_difficult = 0
+
+	resp.retcode = G_ERRCODE["SUCCESS"]
+	player:SendToClient(SerializeCommand(resp))
+	return
+end

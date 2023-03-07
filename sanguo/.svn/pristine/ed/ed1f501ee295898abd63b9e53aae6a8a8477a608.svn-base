@@ -1,0 +1,47 @@
+[Global]
+ip			=	10.68.8.16
+port			=	19238
+ip2			=	10.68.8.16
+port2			=	19239
+account			=	1
+
+[GateClient]
+type			=	tcp
+port			=	0
+address			=	0.0.0.0
+so_sndbuf		=	131072
+so_rcvbuf		=	131072
+ibuffermax		=	131072
+obuffermax		=	131072
+accumulate		=	131072
+
+[TransClient]
+type			=	tcp
+port			=	0
+address			=	0.0.0.0
+so_sndbuf		=	131072
+so_rcvbuf		=	131072
+ibuffermax		=	131072
+obuffermax		=	131072
+accumulate		=	131072
+
+[UDPTransClient]
+type			=	udp
+port			=	0
+address			=	0.0.0.0
+so_sndbuf		=	131072
+so_rcvbuf		=	131072
+ibuffermax		=	131072
+obuffermax		=	131072
+accumulate		=	131072
+
+[StatusClient]
+type			=	tcp
+port			=	0
+address			=	0.0.0.0
+so_sndbuf		=	131072
+so_rcvbuf		=	131072
+ibuffermax		=	131072
+obuffermax		=	131072
+accumulate		=	131072
+

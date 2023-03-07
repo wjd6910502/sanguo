@@ -1,0 +1,60 @@
+
+#ifndef __GNET_GAMEPROTOCOL_HPP
+#define __GNET_GAMEPROTOCOL_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "commonmacro.h"
+#include "connection.h"
+#include "script_wrapper.h"
+#include <lua.hpp>
+
+extern lua_State *g_L;
+
+namespace GNET
+{
+
+class GameProtocol : public GNET::Protocol
+{
+	#include "gameprotocol"
+
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//fprintf(stderr, "GameProtocol::Process, data=%s\n", B16EncodeOctets(data).c_str());
+		//fprintf(stderr, "GameProtocol::Process, data=%.*s\n", (int)data.size(), (char*)data.begin());
+		//printf("GameProtocol::Process, data=%.*s\n", (int)data.size(), (char*)data.begin());
+
+		Connection::GetInstance().OnReceivedGameProtocol();
+
+		//check data
+		if(data.size() < 2)
+		{
+			fprintf(stderr, "GameProtocol::Process, wrong length\n");
+			return;
+		}
+		for(size_t i=0; i<data.size(); ++i)
+		{
+			int c = ((char*)data.begin())[i];
+			if(!isupper(c) && !islower(c) && !isdigit(c) && c!='+' && c!='/' && c!='=' && c!=':') //并不标准的base64
+			{
+				fprintf(stderr, "GameProtocol::Process, wrong char(%d)\n", c);
+				return;
+			}
+		}
+
+		if(g_L)
+		{
+			LuaWrapper lw(g_L);
+			if(!lw.gExec("DeserializeAndProcessCommand", LuaParameter((void*)0, std::string((char*)data.begin(), data.size()))))
+			{
+				fprintf(stderr, "GameProtocol::Process, gExec, DeserializeAndProcessCommand, %.*s\n", (int)data.size(), (char*)data.begin());
+			}
+		}
+	}
+};
+
+};
+
+#endif

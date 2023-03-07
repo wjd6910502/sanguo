@@ -1,0 +1,11 @@
+
+激活码生成说明
+	./gactivcode gamesys.conf mkcode type count
+
+	type 为生成激活码的类型 范围 (1 - 65535)
+	count 为生成激活码的数量
+
+
+
+
+

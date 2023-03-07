@@ -1,0 +1,104 @@
+--DONT CHANGE ME!
+
+dofile "scripts/base64.lua"
+dofile "scripts/serialize.lua"
+dofile "scripts/serialize_struct.lua"
+dofile "scripts/deserialize_struct.lua"
+dofile "scripts/common.lua"
+dofile "scripts/util.lua"
+
+dofile "scripts/cmds/GetVersion_Re.lua"
+dofile "scripts/cmds/GetRoleInfo_Re.lua"
+dofile "scripts/cmds/CreateRole_Re.lua"
+dofile "scripts/cmds/EnterInstance_Re.lua"
+dofile "scripts/cmds/CompleteInstance_Re.lua"
+dofile "scripts/cmds/SyncRoleInfo.lua"
+dofile "scripts/cmds/SweepInstance_Re.lua"
+dofile "scripts/cmds/GetBackPack_Re.lua"
+dofile "scripts/cmds/GetInstance_Re.lua"
+dofile "scripts/cmds/Role_Mon_Exp.lua"
+dofile "scripts/cmds/BuyVp_Re.lua"
+dofile "scripts/cmds/BuyInstanceCount_Re.lua"
+dofile "scripts/cmds/RoleCommonLimit.lua"
+dofile "scripts/cmds/ChongZhi_Re.lua"
+dofile "scripts/cmds/TaskFinish_Re.lua"
+dofile "scripts/cmds/Task_Condition.lua"
+dofile "scripts/cmds/BuyHero_Re.lua"
+dofile "scripts/cmds/HeroList_Re.lua"
+dofile "scripts/cmds/AddHero.lua"
+dofile "scripts/cmds/UpdateHeroInfo.lua"
+dofile "scripts/cmds/UseItem_Re.lua"
+dofile "scripts/cmds/One_Level_Up_Re.lua"
+dofile "scripts/cmds/Hero_Up_Grade_Re.lua"
+dofile "scripts/cmds/ErrorInfo.lua"
+dofile "scripts/cmds/BuyHorse_Re.lua"
+dofile "scripts/cmds/AddHorse.lua"
+dofile "scripts/cmds/GetLastHero_Re.lua"
+dofile "scripts/cmds/PvpJoin_Re.lua"
+dofile "scripts/cmds/PvpMatchSuccess.lua"
+dofile "scripts/cmds/PvpEnter_Re.lua"
+dofile "scripts/cmds/PvpCancle_Re.lua"
+dofile "scripts/cmds/PvpSpeed.lua"
+dofile "scripts/cmds/SendNotice.lua"
+dofile "scripts/cmds/CurrentTask.lua"
+dofile "scripts/cmds/FinishedTask.lua"
+dofile "scripts/cmds/ItemCountChange.lua"
+dofile "scripts/cmds/HeroUpgradeSkill_Re.lua"
+dofile "scripts/cmds/PublicChat.lua"
+dofile "scripts/cmds/ListFriends_Re.lua"
+dofile "scripts/cmds/FriendRequest.lua"
+dofile "scripts/cmds/NewFriend.lua"
+dofile "scripts/cmds/MafiaGet_Re.lua"
+dofile "scripts/cmds/MafiaCreate_Re.lua"
+dofile "scripts/cmds/MafiaInvite.lua"
+dofile "scripts/cmds/MafiaAddMember.lua"
+dofile "scripts/cmds/MafiaUpdate.lua"
+dofile "scripts/cmds/MafiaKickout_Re.lua"
+dofile "scripts/cmds/MafiaLoseMember.lua"
+dofile "scripts/cmds/MafiaQuit_Re.lua"
+dofile "scripts/cmds/MafiaDestory_Re.lua"
+dofile "scripts/cmds/MafiaAnnounce_Re.lua"
+dofile "scripts/cmds/Ping_Re.lua"
+dofile "scripts/cmds/UDPPing_Re.lua"
+dofile "scripts/cmds/PVPInvite.lua"
+dofile "scripts/cmds/PVPPrepare.lua"
+dofile "scripts/cmds/PVPBegin.lua"
+dofile "scripts/cmds/PVPOperation.lua"
+dofile "scripts/cmds/PVPOperationSet.lua"
+dofile "scripts/cmds/PVPEnd.lua"
+dofile "scripts/cmds/PVPError.lua"
+dofile "scripts/cmds/TopListGet_Re.lua"
+
+dofile "scripts/serialize_command.lua"
+dofile "scripts/deserialize_command.lua"
+
+function InitCommandInMainThread()
+	API_ResetCmdExtraRolesMax()
+	API_ResetCmdExtraMafiasMax()
+	API_ResetCmdExtraPVPsMax()
+	API_ResetCmdLockToplist()
+	API_ReSetCmdLockMist()
+
+	API_SetCmdExtraRolesMax(10306,1)
+	API_SetCmdExtraRolesMax(10109,1)
+	API_SetCmdExtraRolesMax(10105,1)
+	API_SetCmdExtraRolesMax(10008,1)
+	API_SetCmdExtraRolesMax(10009,1)
+	API_SetCmdExtraRolesMax(10106,1)
+	API_SetCmdExtraRolesMax(10301,1)
+	API_SetCmdExtraRolesMax(10302,1)
+	API_SetCmdExtraMafiasMax(10112,1)
+	API_SetCmdExtraMafiasMax(10114,1)
+	API_SetCmdExtraMafiasMax(10116,1)
+	API_SetCmdExtraMafiasMax(10101,1)
+	API_SetCmdExtraMafiasMax(10105,1)
+	API_SetCmdExtraMafiasMax(10106,1)
+	API_SetCmdExtraMafiasMax(10109,1)
+	API_SetCmdExtraPVPsMax(10304,1)
+	API_SetCmdExtraPVPsMax(10306,1)
+	API_SetCmdExtraPVPsMax(10308,1)
+	API_SetCmdLockToplist(20000)
+	API_SetCmdLockToplist(99999)
+
+end
+

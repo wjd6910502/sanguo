@@ -1,0 +1,51 @@
+
+#ifndef __GNET_CHANGEMAFIANAME_HPP
+#define __GNET_CHANGEMAFIANAME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "changemafianamearg"
+#include "changemafianameres"
+
+namespace GNET
+{
+
+class ChangeMafiaName : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "changemafianame"
+#undef	RPC_BASECLASS
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// ChangeMafiaNameArg *arg = (ChangeMafiaNameArg *)argument;
+		// ChangeMafiaNameRes *res = (ChangeMafiaNameRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		ChangeMafiaNameArg *arg = (ChangeMafiaNameArg *)argument;
+		ChangeMafiaNameRes *res = (ChangeMafiaNameRes *)result;
+
+		GLog::log(LOG_INFO, "ChangeMafiaName::Client, retcode=%d, account=%.*s, name=%.*s, thread=%u",
+		          res->retcode, (int)arg->account.size(), (char*)arg->account.begin(), (int)arg->name.size(), (char*)arg->name.begin(),
+		       	  (unsigned int)pthread_self());
+		//这里不直接考虑结果，直接给这个玩家仍一个消息过去就可以了
+		Octets out_name;
+		Base64Encoder::Convert(out_name, arg->name);
+
+		//char msg[100];
+		//snprintf(msg, sizeof(msg), "10003:%d:%d:%.*s:", res->retcode,_create_time, (int)out_name.size(), (char*)out_name.begin()); 
+		//MessageManager::GetInstance().Put(arg->roleid, arg->roleid, msg, 0);
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+	}
+
+};
+
+};
+#endif

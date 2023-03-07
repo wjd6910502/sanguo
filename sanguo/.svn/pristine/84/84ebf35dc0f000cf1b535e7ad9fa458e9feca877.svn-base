@@ -1,0 +1,60 @@
+#ifndef _SERVERREWARD_H_
+#define _SERVERREWARD_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+#include "serverreward"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_ServerReward: public Singleton, public TransactionBase
+{
+	bool _in_transaction;
+	int64_t _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	ServerRewardData _data;
+
+private:
+	SGT_ServerReward();
+
+public:
+	static SGT_ServerReward& GetInstance()
+	{
+		static SGT_ServerReward _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "ServerReward"; }
+	virtual int GetID() const { return 15; }
+	virtual const char* GetLockName() const { return "server_reward"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int64_t transaction_id);
+	void restore(int64_t transaction_id);
+	void cleanup();
+
+	//TODO: Save/Load
+
+	//手动增加的代码
+	//仅给c++使用
+	int Add(const GNET::ServerReward& gsr);
+	int List(std::vector<GNET::ServerReward>& gsrs);
+	int Remove(int id);
+	void OnTimer(int tick, int now);
+};
+
+}
+
+inline CACHE::SGT_ServerReward* API_GetLuaServerReward(void *r) { return (CACHE::SGT_ServerReward*)r; }
+inline CACHE::SGT_ServerReward* API_GetLuaServerReward() { return (InBigLock() ? &CACHE::SGT_ServerReward::GetInstance() : 0); }
+
+#endif //_SERVERREWARD_H_
+

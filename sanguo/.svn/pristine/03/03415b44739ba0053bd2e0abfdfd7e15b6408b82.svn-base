@@ -1,0 +1,22 @@
+function OnMessage_RoleLogout(player, role, arg, others)
+	player:Log("OnMessage_RoleLogout, "..DumpTable(arg).." "..DumpTable(others))
+
+	--首先设置自己下面，然后广播给自己所有的好友，自己信息的变化
+	role._roledata._status._online = 0
+
+	--遍历自己的好友，把自己的信息发过去
+	local msg = NewMessage("RoleUpdateFriendInfo")
+	msg.roleid = role._roledata._base._id:ToStr()
+	msg.level = role._roledata._status._level
+	msg.zhanli = role._roledata._status._zhanli
+	msg.online = role._roledata._status._online
+	local friend_info_it = role._roledata._friend._friends:SeekToBegin()
+	local friend_info = friend_info_it:GetValue()
+	while friend_info ~= nil do
+		
+		player:SendMessage(friend_info._brief._id, SerializeMessage(msg))
+
+		friend_info_it:Next()
+		friend_info = friend_info_it:GetValue()
+	end
+end

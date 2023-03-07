@@ -1,0 +1,77 @@
+--DONT CHANGE ME!
+
+function SerializeMessage(msg)
+	local os = ""
+
+	if false then
+		--never to here
+	elseif msg.__type__ == "UpdateRoleInfo" then
+		os = os..Serialize(1)
+		os = os..Serialize(msg.id)
+		os = os..Serialize(msg.name)
+		os = os..Serialize(msg.photo)
+		os = os..Serialize(msg.level)
+	elseif msg.__type__ == "PublicChat" then
+		os = os..Serialize(2)
+		os = os..SerializeStruct("RoleBrief", msg.src)
+		os = os..Serialize(msg.content)
+	elseif msg.__type__ == "MafiaAddMember" then
+		os = os..Serialize(3)
+		os = os..SerializeStruct("RoleBrief", msg.member)
+	elseif msg.__type__ == "TestMessage3" then
+		os = os..Serialize(90003)
+	elseif msg.__type__ == "TestMessage4" then
+		os = os..Serialize(90004)
+	elseif msg.__type__ == "TestMessage1" then
+		os = os..Serialize(90001)
+	elseif msg.__type__ == "TestMessage2" then
+		os = os..Serialize(90002)
+	elseif msg.__type__ == "CreateRoleResult" then
+		os = os..Serialize(10001)
+		os = os..Serialize(msg.retcode)
+	elseif msg.__type__ == "Heartbeat" then
+		os = os..Serialize(10002)
+		os = os..Serialize(msg.now)
+	elseif msg.__type__ == "CreateMafiaResult" then
+		os = os..Serialize(10003)
+		os = os..Serialize(msg.retcode)
+	elseif msg.__type__ == "PVPHeartbeat" then
+		os = os..Serialize(10004)
+		os = os..Serialize(msg.now)
+	elseif msg.__type__ == "PVPTriggerSend" then
+		os = os..Serialize(10005)
+	elseif msg.__type__ == "DBHeartbeat" then
+		os = os..Serialize(10006)
+	elseif msg.__type__ == "ReloadLua" then
+		os = os..Serialize(10007)
+	elseif msg.__type__ == "PVPCreateResult" then
+		os = os..Serialize(10008)
+		os = os..Serialize(msg.retcode)
+	elseif msg.__type__ == "PVPEnd" then
+		os = os..Serialize(10009)
+		os = os..Serialize(msg.reason)
+	elseif msg.__type__ == "PVPMatchSuccess" then
+		os = os..Serialize(10010)
+		os = os..Serialize(msg.retcode)
+		os = os..Serialize(msg.index)
+	elseif msg.__type__ == "PVPJoinRe" then
+		os = os..Serialize(10011)
+		os = os..Serialize(msg.retcode)
+	elseif msg.__type__ == "PVPEnterRe" then
+		os = os..Serialize(10012)
+		os = os..Serialize(msg.role_pvpinfo)
+		os = os..Serialize(msg.fight_pvpinfo)
+	elseif msg.__type__ == "PvpBegin" then
+		os = os..Serialize(10013)
+		os = os..Serialize(msg.start_time)
+		os = os..Serialize(msg.ip)
+		os = os..Serialize(msg.port)
+	elseif msg.__type__ == "PvpEnd" then
+		os = os..Serialize(10014)
+		os = os..Serialize(msg.reason)
+
+	end
+
+	return os
+end
+

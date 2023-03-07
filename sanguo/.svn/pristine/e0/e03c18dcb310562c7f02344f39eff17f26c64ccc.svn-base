@@ -1,0 +1,26 @@
+function OnMessage_BroadCastPublicChat(player, role, arg, others)
+	player:Log("OnMessage_BroadCastPublicChat, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local msg = NewMessage("PublicChatnew")
+	msg.src = ROLE_MakeRoleBrief(role)  
+	
+	msg.text_content = arg.text_content
+	msg.speech_content = arg.speech_content
+	msg.time = arg.time
+	msg.chat_typ = arg.chat_typ
+	msg.channel = arg.channel
+	if arg.channel == 2 then
+		player:SendMessageToAllRole(SerializeMessage(msg))
+	elseif arg.channel == 3 then
+		if role._roledata._mafia._id:ToStr() ~= "0" or role._roledata._mafia._name ~= "" then
+			local mafia_msg = NewMessage("MafiaChat")
+			mafia_msg.src = msg.src
+			mafia_msg.text_content = msg.text_content
+			mafia_msg.channel = msg.channel
+			mafia_msg.speech_content = msg.speech_content
+			mafia_msg.time = msg.time
+			mafia_msg.chat_typ = msg.chat_typ
+			API_SendMessage(role._roledata._mafia._id, SerializeMessage(mafia_msg), CACHE.Int64List(), CACHE.Int64List(), CACHE.IntList())
+		end
+	end
+end

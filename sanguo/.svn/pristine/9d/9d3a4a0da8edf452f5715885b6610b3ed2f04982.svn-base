@@ -1,0 +1,379 @@
+--这个函数是用来处理日常成就的，比如把日常成就从当前已经完成的，以及当前的成就删除
+function TASK_RefreshDailyTask(role, diff_time)
+	--首先检查每天定点自动完成的成就。比如说领取体力，PVP段位奖励
+	TASK_CheckAutoFinishTask(role, diff_time)	
+	
+	--查看是否过了每天的 5点，不是的话不进行刷新，否则的话进行刷新
+	if (diff_time.last_day - diff_time.cur_day) == -1 then
+		if diff_time.cur_hour < 5 then
+			return
+		end
+	elseif (diff_time.last_day - diff_time.cur_day) == 0 then
+		if diff_time.last_hour >= 5 or diff_time.cur_hour < 5 then
+			return
+		end
+	end
+	local current_task = role._roledata._task._current_task
+	local finish_task = role._roledata._task._finish_task
+	local ed = DataPool_Find("elementdata")
+	--首先处理当前成就
+	local current = {}
+	local tit = current_task:SeekToBegin()
+	local t = tit:GetValue()
+	while t ~= nil do
+		local ele_task = ed:FindBy("task_id", t._task_id)
+		if ele_task ~= nil then
+			if ele_task.isdaily == 1 and ele_task.achtype ~= G_ACH_TYPE["AUTO_FINISH"] then
+				current[#current+1] = t._task_id
+			end
+		end
+		tit:Next()
+		t = tit:GetValue()
+	end
+	--开始遍历删除
+	local count = table.getn(current)
+	for i = 1, count do
+		current_task:Delete(current[i])
+	end
+	
+	--再次处理已经完成的成就
+	local finish = {}
+	tit = finish_task:SeekToBegin()
+	t = tit:GetValue()
+	while t ~= nil do
+		local ele_task = ed:FindBy("task_id", t._task_id)
+		if ele_task ~= nil then
+			if ele_task.isdaily == 1 then
+				finish[#finish+1] = t._task_id
+			end
+		end
+		tit:Next()
+		t = tit:GetValue()
+	end
+
+	--开始遍历删除
+	count = table.getn(finish)
+	for i = 1, count do
+		finish_task:Delete(finish[i])
+	end
+
+	--进行刷新，把日常任务再次添加进去
+	TASK_RefreshTask(role)
+	--再次把当前的成就，以及完成的成就发给客户端，让客户端来进行更新
+	local resp = NewCommand("FinishedTask")
+	resp.finish = {}
+	local finish_task = role._roledata._task._finish_task
+	local tit = finish_task:SeekToBegin()
+	local t = tit:GetValue()
+	while t ~= nil do
+		resp.finish[#resp.finish+1]=t._task_id
+		tit:Next()
+		t = tit:GetValue()
+	end
+	role:SendToClient(SerializeCommand(resp))
+
+	local resp_cur = NewCommand("CurrentTask")
+	resp_cur.current = {}
+	local current_task = role._roledata._task._current_task
+	local tit = current_task:SeekToBegin()
+	local t = tit:GetValue()
+	while t ~= nil do
+		local t2 = {}
+		t2.id = t._task_id
+		t2.condition = {}
+		local tit3 = t._task_condition:SeekToBegin()
+		local t3 = tit3:GetValue()
+		while t3 ~= nil do 
+			local t4 = {}
+			t4.current_num = t3._num
+			t4.max_num = t3._maxnum
+			t2.condition[#t2.condition+1]=t4
+			tit3:Next()
+			t3 = tit3:GetValue()
+		end
+		resp_cur.current[#resp_cur.current+1]=t2
+		tit:Next()
+		t = tit:GetValue()
+	end
+	role:SendToClient(SerializeCommand(resp_cur))
+end
+
+--这个函数就是用来添加当前成就的，查看现在是否可以把一些新的成就添加进去
+function TASK_FinishTask(role, finish_task, task_condition)
+	--等级，前置任务，自己这个任务是否完成
+	local ed = DataPool_Find("elementdata")
+	local quanjus = ed.gamedefine
+	local condition_count = 0
+	for quanju in DataPool_Array(quanjus) do
+		condition_count = quanju.achievement_condition_max
+		break
+	end
+	local current_task = role._roledata._task._current_task
+	local finish_task = role._roledata._task._finish_task
+	local tasks = ed.achievement
+	for ach in DataPool_Array(tasks) do
+		local flag = 0
+		if ach.aquire_ach == finish_task then
+			flag = 1
+		end
+
+		if flag == 1 then
+			--这个任务没有完成
+			local find = finish_task:Find(ach.id)
+			if find == nil then
+				--这个任务不再当前任务中了
+				find = current_task:Find(ach.id)
+				if find == nil and role._roledata._status._level >= ach.aquire_level then
+					--可以把这个成就添加到当前成就中了
+					local tmp = CACHE.Task:new()
+					tmp._task_id = ach.id
+
+					if ach.if_own_pre == 1 then
+						tmp._task_condition = task_condition
+					else
+						local task_data = CACHE.TaskData:new()
+						for i = 1,condition_count do
+							local xxx = "condition"..i.."_type"
+							local yyy = "condition"..i.."_facor"
+							local zzz = "condition"..i.."_data"
+							if ach[xxx] ~= 0 then
+								task_data._type = ach[xxx]
+								task_data._condition = ach[yyy]
+								task_data._num = 0
+								task_data._maxnum = ach[zzz]
+								tmp._task_condition:PushBack(task_data)
+							end
+						end
+					end
+			
+					current_task:Insert(ach.id, tmp)
+					local resp = NewCommand("Task_Condition")
+					resp.tid = ach.id
+					resp.condition = {}
+					local tmp_con = {}
+					local cit = tmp._task_condition:SeekToBegin()
+					local c = cit:GetValue()
+					while c ~= nil do
+						tmp_con.current = c._num
+						tmp_con.max = c._maxnum
+						resp.condition[#resp.condition+1] = tmp_con
+						cit:Next()
+						c = cit:GetValue()
+					end
+					role:SendToClient(SerializeCommand(resp))
+				end
+			end
+		end
+	end
+end
+
+--这个函数就是用来添加当前成就的，查看现在是否可以把一些新的成就添加进去
+function TASK_RefreshTask(role)
+	--等级，前置任务，自己这个任务是否完成
+	local ed = DataPool_Find("elementdata")
+	local quanjus = ed.gamedefine
+	local condition_count = 0
+	for quanju in DataPool_Array(quanjus) do
+		condition_count = quanju.achievement_condition_max
+		break
+	end
+	local current_task = role._roledata._task._current_task
+	local finish_task = role._roledata._task._finish_task
+	local tasks = ed.achievement
+	for ach in DataPool_Array(tasks) do
+		local flag = 1
+		if ach.aquire_ach ~= 0 then
+			--前置任务没有完成
+			local find = finish_task:Find(ach.aquire_ach)
+			if find == nil then
+				flag = 0
+			end
+		end
+
+		if flag == 1 and ach.achtype ~= G_ACH_TYPE["AUTO_FINISH"] then
+			--这个任务没有完成
+			local find = finish_task:Find(ach.id)
+			if find == nil then
+				--这个任务不再当前任务中了
+				find = current_task:Find(ach.id)
+				if find == nil and role._roledata._status._level >= ach.aquire_level then
+					--可以把这个成就添加到当前成就中了
+					local tmp = CACHE.Task:new()
+					tmp._task_id = ach.id
+
+					local task_data = CACHE.TaskData:new()
+					for i = 1,condition_count do
+						local xxx = "condition"..i.."_type"
+						local yyy = "condition"..i.."_facor"
+						local zzz = "condition"..i.."_data"
+						if ach[xxx] ~= 0 then
+							task_data._type = ach[xxx]
+							task_data._condition = ach[yyy]
+							task_data._num = 0
+							task_data._maxnum = ach[zzz]
+							tmp._task_condition:PushBack(task_data)
+						end
+					end
+					current_task:Insert(ach.id, tmp)
+			
+					local resp = NewCommand("Task_Condition")
+					resp.tid = ach.id
+					resp.condition = {}
+					local tmp_con = {}
+					local cit = tmp._task_condition:SeekToBegin()
+					local c = cit:GetValue()
+					while c ~= nil do
+						tmp_con.current = c._num
+						tmp_con.max = c._maxnum
+						resp.condition[#resp.condition+1] = tmp_con
+						cit:Next()
+						c = cit:GetValue()
+					end
+					role:SendToClient(SerializeCommand(resp))
+				end
+			end
+		end
+	end
+end
+
+function TASK_ChangeCondition(role, task_type, task_condition, num)
+	if num == 0 then
+		return
+	end
+	local task = role._roledata._task._current_task
+	local tit = task:SeekToBegin()
+	local t = tit:GetValue()
+	--循环当前的所有成就
+	while t ~= nil do
+		local condition = t._task_condition
+		local cit = condition:SeekToBegin()
+		local c = cit:GetValue()
+		local flag = 0
+		while c ~= nil do
+			if c._type == task_type and c._condition == task_condition then
+				--if c._num < c._maxnum then
+				c._num = c._num + num
+					--if c._num > c._maxnum then
+					--	c._num = c._maxnum
+					--end
+				flag = 1
+				--end
+			end
+			cit:Next()
+			c = cit:GetValue()
+		end
+		if flag == 1 then
+			--在这里会给客户端发送条件已经修改的数据
+			local resp = NewCommand("Task_Condition")
+			resp.tid = t._task_id
+			resp.condition = {}
+			local tmp = {}
+			cit = condition:SeekToBegin()
+			c = cit:GetValue()
+			while c ~= nil do
+				tmp.current = c._num
+				tmp.max = c._maxnum
+				resp.condition[#resp.condition+1] = tmp
+				cit:Next()
+				c = cit:GetValue()
+			end
+			role:SendToClient(SerializeCommand(resp))
+		end
+		tit:Next()
+		t = tit:GetValue()
+	end
+end
+
+function TASK_CheckAutoFinishTask(role, diff_time)
+	local ed = DataPool_Find("elementdata")
+	local quanjus = ed.gamedefine
+	local condition_count = 0
+	for quanju in DataPool_Array(quanjus) do
+		condition_count = quanju.achievement_condition_max
+		break
+	end
+	local achs = ed.achievement
+	for ach in DataPool_Array(achs) do
+		if ach.achtype == G_ACH_TYPE["AUTO_FINISH"] then
+			local cur_time = 0
+			local last_time = 0
+			if diff_time.cur_hour == 0 then
+				cur_time = 2400
+			else
+				cur_time = diff_time.cur_hour*100
+			end
+
+			if diff_time.last_hour == 0 then
+				last_time = 2400
+			else
+				last_time = diff_time.last_hour*100
+			end
+			
+			--存在跨天的情况,需要考虑第一次心跳
+			local kuatian_flag = 0
+			if diff_time.last_year == 1970 then
+				last_time = 0
+			else
+				if diff_time.last_year ~= diff_time.cur_year then
+					local mday = 365
+					if diff_time.last_year%100 == 0 then
+						if diff_time.last_year%400 == 0 then
+							mday = 366
+						end
+					elseif diff_time.last_year%4 == 0 then
+						mday = 366
+					end
+					kuatian_flag = diff_time.cur_day + mday - diff_time.last_day
+				else
+					kuatian_flag = diff_time.cur_day - diff_time.last_day
+				end
+			end
+			cur_time = cur_time + kuatian_flag*2400
+			--跨天，跨年
+			if (cur_time >= ach.auto_finish_time and last_time < ach.auto_finish_time) or kuatian_flag >= 2 then
+				--首先不管那么多直接在当前成就以及完成的成就里面把这个成就删除
+				role._roledata._task._current_task:Delete(ach.id)
+				role._roledata._task._finish_task:Delete(ach.id)
+
+				--检查是否可以把这个添加进去
+				if ach.achtype2 == 1 then
+					--体力
+					local tmp = CACHE.Task()
+					tmp._task_id = ach.id
+
+					role._roledata._task._current_task:Insert(ach.id, tmp)
+				
+					local resp = NewCommand("Task_Condition")
+					resp.tid = ach.id
+					resp.condition = {}
+					role:SendToClient(SerializeCommand(resp))
+
+				elseif ach.achtype2 == 2 then
+					--PVP界别发奖，判断自己属于哪一个界别，然后完成相应的成就
+					if role._roledata._pvp_info._pvp_grade >= ach.start_range and role._roledata._pvp_info._pvp_grade <= ach.end_range then
+						local tmp = CACHE.Task()
+						tmp._task_id = ach.id
+
+						role._roledata._task._current_task:Insert(ach.id, tmp)
+				
+						local resp = NewCommand("Task_Condition")
+						resp.tid = ach.id
+						resp.condition = {}
+						role:SendToClient(SerializeCommand(resp))
+					end
+				end
+			end
+			--elseif ach.end_time ~= 0 and (cur_time >= ach.end_time or cur_time < ach.begin_time) then
+			if ach.end_time ~= 0 and (cur_time >= ach.end_time or cur_time < ach.begin_time) then
+				--这个是用来查看是否有的任务已经不再范围中了，是的话那么需要进行删除
+				role._roledata._task._current_task:Delete(ach.id)
+				role._roledata._task._finish_task:Delete(ach.id)
+
+				--通知客户端，把这个成就删除掉
+				local resp = NewCommand("DeleteTask")
+				resp.task_id = ach.id
+				role:SendToClient(SerializeCommand(resp))
+			end
+		end
+	end
+end

@@ -1,0 +1,7 @@
+846badbf4a2c04c44ea38f8e055b27a4  laohuinform
+ff9c7962b29b4f606636c8eb4af92fa9  laohuinformclient.o
+d7fb8833cae89ac5ffcc13fd4407fc2b  state.o
+9b9a6956235c34ddc288bec293d04a66  stubs.o
+57e2b73ee66356469b7e597c089d168c  laohuinform.o
+daaade91a922d742e7c1b5172dbadbff  ../xlib/libio32.so
+48d02041f09547a1d1470b2dba6e8608  ../xlib/liblog32.so

@@ -1,0 +1,7 @@
+function OnCommand_GetCurBattleField(player, role, arg, others)
+	player:Log("OnCommand_GetCurBattleField, "..DumpTable(arg).." "..DumpTable(others))
+	
+	local resp = NewCommand("GetCurBattleField_Re")
+	resp.battle_id = role._roledata._status._cur_battle_id
+	player:SendToClient(SerializeCommand(resp))
+end

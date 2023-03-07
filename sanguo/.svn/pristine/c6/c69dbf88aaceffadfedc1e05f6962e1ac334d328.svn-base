@@ -1,0 +1,50 @@
+function OnCommand_WuZheShiLianSelectDifficulty(player, role, arg, others)
+	player:Log("OnCommand_WuZheShiLianSelectDifficulty, "..DumpTable(arg).." "..DumpTable(others))
+		
+	local resp = NewCommand("WuZheShiLianSelectDifficulty_Re")
+	resp.retcode = 0
+	
+	-- 难度定义 1-低  2-中 3-高  4-极高 5-暴怒 
+	local difficulty = arg.difficulty
+
+	--这里主要验证传入参数是否正确就可以
+	local hero_trial = role._roledata._wuzhe_shilian	
+	
+	if difficulty < 1 or difficulty > hero_trial._high_difficulty then
+		--关卡尚未开启
+		resp.retcode = G_ERRCODE["TRIAL_ACTIVE_DIFFICULTY_LOCK"] 
+		player:SendToClient(SerializeCommand(resp))
+		return
+	end
+
+	--把关卡数据也直接给客户端 关卡三种状态 0 开启  1 上锁  2通关
+	resp.opponent_info = {}
+	local f = hero_trial._attack_info:Find(difficulty)	
+	if f ~= nil then
+		local sit = f._difficulty_attackinfo:SeekToBegin()
+		local s = sit:GetValue()
+		while s ~= nil do
+			local opp_info ={}
+			opp_info.id = s._id
+			opp_info.level = s._level
+			opp_info.alive = s._alive_flag		
+			opp_info.stage = s._stage
+			opp_info.hp = s._hp
+			opp_info.anger = s._anger
+			resp.opponent_info[#resp.opponent_info+1] = opp_info 
+			sit:Next()
+			s = sit:GetValue()		
+		end
+	else
+		--数据库中找不到 一般不可能出现
+		throw()
+	end
+	
+	player:Log("OnCommand_WuZheShiLianSelectDifficulty, "..hero_trial._cur_difficulty.." "..hero_trial._cur_stage)		
+	resp.cur_diffculty = hero_trial._cur_difficulty
+	--单独计算
+	resp.cur_stage  = hero_trial._cur_stage
+
+	player:SendToClient(SerializeCommand(resp))
+
+end

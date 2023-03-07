@@ -1,0 +1,331 @@
+#include "rbt.h"
+
+int RBT::_cur = 0;
+int RBT::_confirm = 0;
+int RBT::_ref_index_stub = 0;
+std::set<RBT::_node_t*> RBT::_unconfirmed_set;
+
+int RBT::Get(lua_State *l)
+{
+	const char *name = lua_tostring(l, 2);
+	if(!name || *name=='\0')
+	{
+		return 0;
+	}
+
+	std::unordered_map<std::string, _node_t*>::const_iterator it = _map.find(name);
+	if(it == _map.end())
+	{
+		return 0;
+	}
+
+	bool cfm = (_cur==_confirm);
+
+	_node_t *nd = it->second;
+	_lua_value_t *lv = 0;
+
+	if(cfm)
+	{
+		lv = &nd->_v;
+	}
+	else
+	{
+		auto it2 = nd->_vt.lower_bound(_cur);
+		if(it2 == nd->_vt.end())
+		{
+			lv = &nd->_v;
+		}
+		else
+		{
+			lv = &it2->second;
+		}
+	}
+
+	if(!lv || lv->_type==LUA_TYPE_NIL)
+	{
+		return 0;
+	}
+	else if(lv->_type == LUA_TYPE_OBJECT)
+	{
+		lua_pushstring(l, "RBT_refer_table");	//... "RBT_refer_table"
+		lua_rawget(l, LUA_REGISTRYINDEX);	//... ref_table
+		if(lua_isnil(l, -1))
+		{
+			return 0;
+		}
+		lua_pushinteger(l, lv->_i64_value);	//... ref_table|ref_idx
+		lua_rawget(l, -2);			//... ref_table|value
+		return 1;
+	}
+	else if(lv->_type == LUA_TYPE_BOOLEAN)
+	{
+		lua_pushboolean(l, lv->_b_value);
+		return 1;
+	}
+	else if(lv->_type == LUA_TYPE_NUMBER)
+	{
+		lua_pushnumber(l, lv->_f64_value);
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+int RBT::Put(lua_State *l)
+{
+	const char *name = lua_tostring(l, 2);
+	if(!name || *name=='\0')
+	{
+		return 0;
+	}
+
+	bool cfm = (_cur==_confirm);
+
+	_node_t *nd = 0;
+	_lua_value_t *lv = 0;
+
+	std::unordered_map<std::string, _node_t*>::iterator it = _map.find(name);
+	if(it != _map.end())
+	{
+		nd = it->second;
+		if(cfm)
+		{
+			lv = &nd->_v;
+		}
+		else
+		{
+			auto it2 = nd->_vt.find(_cur);
+			if(it2 != nd->_vt.end())
+			{
+				lv = &it2->second;;
+			}
+		}
+	}
+
+	if(lv)
+	{
+		DeleteFromLua(l, *lv);
+	}
+
+	_lua_value_t new_lv;
+	if(lua_isnil(l, 3))
+	{
+		new_lv._type = LUA_TYPE_NIL;
+	}
+	else if(lua_isboolean(l, 3))
+	{
+		new_lv._type = LUA_TYPE_BOOLEAN;
+		new_lv._b_value = lua_toboolean(l, 3);
+	}
+	else if(lua_isnumber(l, 3))
+	{
+		new_lv._type = LUA_TYPE_NUMBER;
+		new_lv._f64_value = lua_tonumber(l, 3);
+	}
+	else
+	{
+		new_lv._type = LUA_TYPE_OBJECT;
+		new_lv._i64_value = AllocRefIndex();
+
+		lua_pushstring(l, "RBT_refer_table");		//... "RBT_refer_table"
+		lua_rawget(l, LUA_REGISTRYINDEX);		//... ref_table
+		if(lua_isnil(l, -1))
+		{
+			lua_pop(l,1);				//... 
+			lua_newtable(l);			//... ref_table
+			lua_pushstring(l, "RBT_refer_table");	//... ref_table|"RBT_refer_table"
+			lua_pushvalue(l, -2);			//... ref_table|"RBT_refer_table"|ref_table
+			lua_rawset(l, LUA_REGISTRYINDEX);	//... ref_table
+		}
+		lua_pushinteger(l, new_lv._i64_value);		//... ref_table|ref_idx
+		lua_pushvalue(l, 3);				//... ref_table|ref_idx|value
+		lua_rawset(l, -3);				//... ref_table
+	}
+
+	if(!nd)
+	{
+		nd = new _node_t;
+		_map[name] = nd;
+		if(cfm)
+		{
+			lv = &nd->_v;
+		}
+	}
+
+	if(lv)
+	{
+		*lv = new_lv;
+	}
+	else if(nd)
+	{
+		nd->_vt[_cur] = new_lv;
+	}
+
+	if(!cfm)
+	{
+		_unconfirmed_set.insert(nd);
+	}
+
+	return 0;
+}
+
+void RBT::Destroy(lua_State *l)
+{
+	lua_pushstring(l, "RBT_refer_table");	//... "RBT_refer_table"
+	lua_rawget(l, LUA_REGISTRYINDEX);	//... ref_table
+	if(lua_isnil(l, -1))
+	{
+		return;
+	}
+
+	for(std::unordered_map<std::string, _node_t*>::iterator it=_map.begin(); it!=_map.end(); ++it)
+	{
+		_node_t *nd = it->second;
+		DeleteFromLua(l, nd->_v);
+		for(auto it2=nd->_vt.begin(); it2!=nd->_vt.end(); ++it2)
+		{
+			DeleteFromLua(l, it2->second);
+		}
+
+		_unconfirmed_set.erase(nd);
+		delete nd;
+	}
+	_map.clear();
+}
+
+int RBT::Create(lua_State *l)
+{
+	*(RBT**)lua_newuserdata(l, sizeof(RBT*)) = new RBT();
+	lua_newtable(l);
+	lua_pushstring(l, "__index");
+	lua_pushcfunction(l, RBT_Index);
+	lua_rawset(l, -3);
+	lua_pushstring(l, "__newindex");
+	lua_pushcfunction(l, RBT_NewIndex);
+	lua_rawset(l, -3);
+	lua_pushstring(l, "__gc");
+	lua_pushcfunction(l, RBT_GC);
+	lua_rawset(l, -3);
+	lua_setmetatable(l, -2);
+	return 1;
+}
+
+void RBT::Reset()
+{
+	_cur = 0;
+	_confirm = 0;
+}
+
+void RBT::Next(bool confirmed)
+{
+	if(confirmed)
+	{
+		assert(_cur==_confirm);
+		_confirm++;
+	}
+	_cur++;
+}
+
+void RBT::DeleteFromLua(lua_State *l, const _lua_value_t& lv)
+{
+	if(lv._type == LUA_TYPE_OBJECT)
+	{
+		int top = lua_gettop(l);
+
+		lua_pushstring(l, "RBT_refer_table");		//... "RBT_refer_table"
+		lua_rawget(l, LUA_REGISTRYINDEX);		//... ref_table
+		if(!lua_isnil(l, -1))
+		{
+			lua_pushinteger(l, lv._i64_value);	//... ref_table|ref_idx
+			lua_pushnil(l);				//... ref_table|ref_idx|nil
+			lua_rawset(l, -3);			//... ref_table
+		}
+
+		lua_settop(l, top);
+	}
+}
+
+void RBT::Confirm(lua_State *l)
+{
+	assert(_cur>_confirm);
+	_confirm++;
+
+	std::list<_node_t*> _rm_list;
+	for(auto it=_unconfirmed_set.begin(); it!=_unconfirmed_set.end(); ++it)
+	{
+		_node_t *nd = *it;
+		if(!nd->_vt.empty())
+		{
+			auto it2 = nd->_vt.end();
+			--it2;
+			if(it2->first == _confirm)
+			{
+				DeleteFromLua(l, nd->_v);
+				nd->_v = it2->second;
+				nd->_vt.erase(it2);
+				if(nd->_vt.empty())
+				{
+					_rm_list.push_back(nd);
+				}
+			}
+		}
+	}
+	for(auto it=_rm_list.begin(); it!=_rm_list.end(); ++it)
+	{
+		_unconfirmed_set.erase(*it);
+	}
+}
+
+void RBT::Rollback(lua_State *l)
+{
+	_cur = _confirm;
+
+	for(auto it=_unconfirmed_set.begin(); it!=_unconfirmed_set.end(); ++it)
+	{
+		_node_t *nd = *it;
+		for(auto it2=nd->_vt.begin(); it2!=nd->_vt.end(); ++it2)
+		{
+			DeleteFromLua(l, it2->second);
+		}
+		nd->_vt.clear();
+	}
+	_unconfirmed_set.clear();
+}
+
+int RBT::RBT_Index(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 2) return 0;
+
+	RBT *rbt = *(RBT**)lua_touserdata(l, 1);
+	if(!rbt) return 0;
+
+	return rbt->Get(l);
+}
+
+int RBT::RBT_NewIndex(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 3) return 0;
+
+	RBT *rbt = *(RBT**)lua_touserdata(l, 1);
+	if(!rbt) return 0;
+
+	return rbt->Put(l);
+}
+
+int RBT::RBT_GC(lua_State *l)
+{
+	int n = lua_gettop(l);
+	if(n != 1) return 0;
+
+	RBT *rbt = *(RBT**)lua_touserdata(l, 1);
+	if(!rbt) return 0;
+
+	rbt->Destroy(l);
+	delete rbt;
+	return 0;
+}
+

@@ -1,0 +1,367 @@
+#!/usr/bin/env python
+#coding=GBK
+
+import sys, os
+from xml.dom import minidom
+
+g_sgts = {} #name=>(service, id, lock_name)
+g_id2name = {} #id=>name
+g_lock2name = {} #lock_name=>name
+g_service_sgts = {} #service=>[name1,name2,...]
+
+class ParseError():
+	pass
+
+def abort(desc):
+	print u"FATAL ERROR: "+desc
+	raise ParseError
+
+def warning(desc):
+	print u"WARNING: "+desc
+
+def parseSgtNode(sgt_node):
+	name = ""
+	service = ""
+	id = 0
+	lock_name = ""
+
+	for (k,v) in sgt_node.attributes.items():
+		if k == "name":
+			name = v
+		elif k == "service":
+			service = v
+		elif k == "id":
+			id = int(v)
+		elif k == "lock_name":
+			lock_name = v
+
+	if len(name) == 0:
+		abort(u"singleton缺少name")
+	elif g_sgts.has_key(name):
+		abort(u"singleton name重复: %s"%name)
+	elif len(service) == 0:
+		abort(u"singleton(%s)缺少service"%name)
+	elif id == 0:
+		abort(u"singleton(%s) id==0"%name)
+	elif g_id2name.has_key(id):
+		abort(u"singleton(%s) id重复: %d"%(name,id))
+	elif len(lock_name) == 0:
+		abort(u"singleton(%s)缺少lock_name"%name)
+	elif g_lock2name.has_key(lock_name):
+		abort(u"singleton(%s) lock_name重复: %s"%(name,lock_name))
+
+	return (name, service, id, lock_name)
+
+def makePrepareOthers(app, sgts):
+	ids = []
+	for name in sgts:
+		ids.append(g_sgts[name][1])
+	ids.sort()
+
+	p1 = ""
+	count = 1
+	for id in ids:
+		name = g_id2name[id]
+		(_, _, lock_name) = g_sgts[name]
+		p1 += """	elseif k==%d then
+		v = API_GetLua%s(v)
+		others.%s = v
+"""%(count,name,lock_name)
+		count += 1
+
+	contents = """--DONT CHANGE ME!
+
+function PrepareOthers4Command(others, k, v)
+	if k<1 then error("PrepareOthers4Command") end
+
+	if false then
+		--never to here
+%s
+	end
+end
+
+function PrepareOthers4Message(others, k, v)
+	if k<1 then error("PrepareOthers4Message") end
+
+	if false then
+		--never to here
+%s
+	end
+end
+""" % (p1,p1)
+
+	try:
+		os.makedirs("%s/scripts"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/scripts/prepare_others.lua"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+def makeSingleton(app, sgt_name):
+	path = "%s/singletons/%s.h"%(app,sgt_name)
+	if os.access(path, os.F_OK):
+		return
+
+	d = {}
+	d["name"] = sgt_name
+	d["NAME"] = sgt_name.upper()
+	(_, id, lock_name) = g_sgts[sgt_name]
+	d["id"] = id
+	d["lock_name"] = lock_name
+
+	contents = """#ifndef _%(NAME)s_H_
+#define _%(NAME)s_H_
+
+#include "singletonmanager.h"
+#include "structs.h"
+
+using namespace GNET;
+
+namespace CACHE
+{
+
+class SGT_%(name)s: public Singleton, TransactionBase
+{
+	bool _in_transaction;
+	int _transaction_id;
+	std::map<std::string, Octets> _transaction_data;
+
+public:
+	%(name)sData _data;
+
+private:
+	SGT_%(name)s();
+
+public:
+	static SGT_%(name)s& GetInstance()
+	{
+		static SGT_%(name)s _instance;
+		return _instance;
+	}
+
+	virtual const char* GetName() const { return "%(name)s"; }
+	virtual int GetID() const { return %(id)d; }
+	virtual const char* GetLockName() const { return "%(lock_name)s"; }
+
+	virtual void BeginTransaction();
+	virtual void CommitTransaction();
+	virtual void CancelTransaction();
+
+	void backup(const char *name, int transaction_id);
+	void restore(int transaction_id);
+	void cleanup();
+};
+
+}
+
+inline CACHE::SGT_%(name)s* API_GetLua%(name)s(void *r) { return (CACHE::SGT_%(name)s*)r; }
+inline CACHE::SGT_%(name)s* API_GetLua%(name)s() { return (InBigLock() ? &CACHE::SGT_%(name)s::GetInstance() : 0); }
+
+#endif //_%(NAME)s_H_
+
+"""%d
+
+	fp = open(path, "w")
+	fp.write(contents)
+	fp.close()
+
+	contents = """#include "%(name)s.h"
+
+namespace CACHE
+{
+
+SGT_%(name)s::SGT_%(name)s()
+{
+	_in_transaction = false;
+	_transaction_id = 0;
+
+	SingletonManager::GetInstance().Register(%(id)d, this);
+}
+
+void SGT_%(name)s::BeginTransaction()
+{
+	if(_in_transaction) return;
+	_in_transaction = true;
+
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_%(name)s::CommitTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+}
+
+void SGT_%(name)s::CancelTransaction()
+{
+	if(!_in_transaction) return;
+	_in_transaction = false;
+
+	restore(g_transaction_id);
+}
+
+void SGT_%(name)s::backup(const char *name, int transaction_id)
+{
+	if(transaction_id != _transaction_id)
+	{
+		_transaction_id = transaction_id;
+		_transaction_data.clear();
+	}
+	else if(_transaction_data.find(name) != _transaction_data.end())
+	{
+		return;
+	}
+
+	if(false)
+	{
+	}
+	else if(strcmp(name, "_data") == 0)
+	{
+		_data.restore(transaction_id);
+
+		Marshal::OctetsStream os;
+		os._for_transaction = true;
+		os << _data;
+		_transaction_data["_data"] = os;
+	}
+	else
+	{
+		abort();
+	}
+}
+
+void SGT_%(name)s::restore(int transaction_id)
+{
+	if(transaction_id == _transaction_id)
+	{
+		auto it = _transaction_data.end();
+		it = _transaction_data.find("_data");
+		if(it != _transaction_data.end())
+		{
+			Marshal::OctetsStream os(it->second);
+			os._for_transaction = true;
+			os >> _data;
+			_data.cleanup();
+		}
+		else
+		{
+			_data.restore(transaction_id);
+		}
+	}
+	else
+	{
+		_data.restore(transaction_id);
+	}
+	_transaction_id = 0;
+	_transaction_data.clear();
+}
+
+void SGT_%(name)s::cleanup()
+{
+	_transaction_id = 0;
+	_transaction_data.clear();
+
+	_data.cleanup();
+}
+
+}
+
+"""%d
+
+	path = "%s/singletons/%s.cpp"%(app,sgt_name)
+	fp = open(path, "w")
+	fp.write(contents)
+	fp.close()
+
+
+def makeSingletons(app, sgts):
+	try:
+		os.makedirs("%s/singletons"%app, 0777)
+	except:
+		pass
+
+	for name in sgts:
+		makeSingleton(app, name)
+
+def makeToLuaPkg(app, sgts):
+	p1 = ""
+	p2 = ""
+	p3 = ""
+	for sgt_name in sgts:
+		d = {}
+		d["name"] = sgt_name
+		d["NAME"] = sgt_name.upper()
+		(_, id, lock_name) = g_sgts[sgt_name]
+		d["id"] = id
+		d["lock_name"] = lock_name
+
+		p1 += """$#include "%(name)s.h"
+"""%d
+
+		p2 += """class SGT_%(name)s
+{
+public:
+	%(name)sData _data;
+};
+
+"""%d
+
+		p3 += """inline CACHE::SGT_%(name)s* API_GetLua%(name)s(void *r) { return (CACHE::SGT_%(name)s*)r; }
+inline CACHE::SGT_%(name)s* API_GetLua%(name)s() { return (InBigLock() ? &CACHE::SGT_%(name)s::GetInstance() : 0); }
+"""%d
+
+	contents = """
+%s
+namespace CACHE
+{
+
+%s
+}
+
+%s
+""" % (p1,p2,p3)
+
+	try:
+		os.makedirs("%s/singletons"%app, 0777)
+	except:
+		pass
+
+	fp = open("%s/singletons/singletons.pkg"%app, "w")
+	fp.write(contents)
+	fp.close()
+
+def main():
+	xmldoc = minidom.parse("./sgts.xml")
+	if xmldoc.firstChild.tagName != "singletons":
+		abort(u"sgts.xml文件格式有错误")
+
+	root_node = xmldoc.firstChild
+	for nd in root_node.childNodes:
+		if nd.nodeType == nd.ELEMENT_NODE and nd.tagName == "singleton":
+			sgt = parseSgtNode(nd)
+			(name, service, id, lock_name) = sgt 
+			g_sgts[name] = (service, id, lock_name)
+			g_id2name[id] = name
+			g_lock2name[lock_name] = name
+			if g_service_sgts.has_key(service):
+				g_service_sgts[service].append(name)
+			else:
+				g_service_sgts[service] = [name, ]
+	#print g_sgts
+	#print g_id2name
+	#print g_lock2name
+	#print g_service_sgts
+
+	for (k,v) in g_service_sgts.items():
+		makePrepareOthers(k, v)
+	for (k,v) in g_service_sgts.items():
+		makeSingletons(k, v)
+	for (k,v) in g_service_sgts.items():
+		makeToLuaPkg(k, v)
+
+if __name__ == "__main__":
+	main()
+

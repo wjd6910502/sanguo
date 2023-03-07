@@ -1,0 +1,32 @@
+	public:
+		int zoneid;
+		enum { PROTOCOL_TYPE = PROTOCOL_STTZONEREGISTER };
+	public:
+		STTZoneRegister() { type = PROTOCOL_STTZONEREGISTER; }
+		STTZoneRegister(void*) : Protocol(PROTOCOL_STTZONEREGISTER) { }
+		STTZoneRegister (int l_zoneid)
+			 : zoneid(l_zoneid)
+		{
+			type = PROTOCOL_STTZONEREGISTER;
+		}
+
+		STTZoneRegister(const STTZoneRegister &rhs)
+			: Protocol(rhs),zoneid(rhs.zoneid) { }
+
+		GNET::Protocol *Clone() const { return new STTZoneRegister(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << zoneid;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> zoneid;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

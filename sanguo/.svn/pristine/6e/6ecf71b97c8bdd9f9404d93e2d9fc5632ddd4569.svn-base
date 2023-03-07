@@ -1,0 +1,7 @@
+function OnMessage_PvpCancle(player, role, arg, others)
+	player:Log("OnMessage_PvpCancle, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("PvpCancle_Re")
+	resp.retcode = arg.retcode
+	player:SendToClient(SerializeCommand(resp))
+end

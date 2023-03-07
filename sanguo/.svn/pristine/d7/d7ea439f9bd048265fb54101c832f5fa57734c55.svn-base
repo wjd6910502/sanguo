@@ -1,0 +1,3 @@
+function OnCommand_TowerSetArmyInfo(player, role, arg, others)
+	--player:Log("OnCommand_TowerSetArmyInfo, "..DumpTable(arg).." "..DumpTable(others))
+end

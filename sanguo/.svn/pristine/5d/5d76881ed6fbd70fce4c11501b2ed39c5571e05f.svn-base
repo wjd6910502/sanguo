@@ -1,0 +1,3 @@
+function OnCommand_PveArenaEndBattle(player, role, arg, others)
+	--player:Log("OnCommand_PveArenaEndBattle, "..DumpTable(arg).." "..DumpTable(others))
+end

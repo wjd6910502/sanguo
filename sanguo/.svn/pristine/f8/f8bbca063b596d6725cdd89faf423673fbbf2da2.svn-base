@@ -1,0 +1,331 @@
+
+#ifndef __GNET_DBLOADDATA_HPP
+#define __GNET_DBLOADDATA_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+
+#include "dbloaddataarg"
+#include "dbloaddatares"
+#include "topmanager.h"
+#include "gamedbclient.hpp"
+#include "packagemanager.h"
+#include "playermanager.h"
+#include "mafiamanager.h"
+#include "commonmacro.h"
+#include "TopList.h"
+#include "Misc.h"
+#include "PveArena.h"
+#include "TopList_All_Role.h"
+
+using namespace GNET;
+using namespace CACHE;
+
+extern int g_server_state;
+
+namespace GNET
+{
+
+class DBLoadData : public Rpc
+{
+#define	RPC_BASECLASS	Rpc
+	#include "dbloaddata"
+#undef	RPC_BASECLASS
+	
+
+	void Server(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		// DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		// DBLoadDataRes *res = (DBLoadDataRes *)result;
+	}
+
+	void Client(Rpc::Data *argument, Rpc::Data *result, Manager *manager, Manager::Session::ID sid)
+	{
+		DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		DBLoadDataRes *res = (DBLoadDataRes *)result;
+
+		//取出当前的表的名字
+		//目前只有3个表，以后添加新的表的时候需要在这里添加相应的代码。以及存储的代码
+		//roleinfo,mafia,toplist
+		std::string get_table = std::string((char*)arg->key_table.begin(), arg->key_table.size());
+	
+		GLog::log(LOG_INFO, "retcode=%d ... get_table=%s", res->retcode, get_table.c_str());
+		if(get_table == "roleinfo_")
+		{
+			if(res->retcode == 0)
+			{
+				for(unsigned int num = 0; num < res->result_key.size(); num++)
+				{
+					PlayerManager::GetInstance().Load(res->result_key[num], res->result_value[num]);
+				}
+				
+				if(res->flag == 0)
+				{
+					//在这里取下一个表
+					std::string table = "mafia_";
+					DBLoadDataArg new_arg;
+					new_arg.key_table = Octets(table.c_str(), table.size());
+					new_arg.step = 0;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+
+				}
+				else
+				{
+					//当前这个表的数据还没有取完，继续到数据库去查找
+					DBLoadDataArg new_arg;
+					new_arg.key_table = arg->key_table;
+					new_arg.step = res->result_step;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "mafia_")
+		{
+			if(res->retcode == 0)
+			{
+				for(unsigned int num = 0; num < res->result_key.size(); num++)
+				{
+					MafiaManager::GetInstance().Load(res->result_key[num], res->result_value[num]);
+				}
+				
+				if(res->flag == 0)
+				{
+					//在这里取下一个表
+					std::string table = "toplist_";
+					DBLoadDataArg new_arg;
+					new_arg.key_table = Octets(table.c_str(), table.size());
+					new_arg.step = 0;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+				else
+				{
+					//当前这个表的数据还没有取完，继续到数据库去查找
+					DBLoadDataArg new_arg;
+					new_arg.key_table = arg->key_table;
+					new_arg.step = res->result_step;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "toplist_")
+		{
+			if(res->retcode == 0)
+			{
+				for(unsigned int num = 0; num < res->result_key.size(); num++)
+				{
+					SGT_TopList::GetInstance().Load(res->result_key[num], res->result_value[num]);
+				}
+				if(res->flag == 0)
+				{
+					std::string table = "package_";
+					DBLoadDataArg new_arg;
+					new_arg.key_table = Octets(table.c_str(), table.size());
+					new_arg.step = 0;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+				else
+				{
+					//当前这个表的数据还没有取完，继续到数据库去查找
+					DBLoadDataArg new_arg;
+					new_arg.key_table = arg->key_table;
+					new_arg.step = res->result_step;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "package_")
+		{
+			if(res->retcode == 0)
+			{
+				if(res->result_value.size() == 1)
+				{
+					PackagManager::GetInstance().Load(res->result_value[0]);
+				}
+				
+				std::string table = "playermanagerinfo";
+				DBLoadDataArg new_arg;
+				new_arg.key_table = Octets(table.c_str(), table.size());
+				new_arg.step = 0;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "playermanagerinfo")
+		{
+			if(res->retcode == 0)
+			{
+				if(res->result_value.size() == 1)
+				{
+					PlayerManager::GetInstance().LoadPlayerInfo(res->result_key[0], res->result_value[0]);
+				}
+				
+				std::string table = "pvearena_";
+				DBLoadDataArg new_arg;
+				new_arg.key_table = Octets(table.c_str(), table.size());
+				new_arg.step = 0;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "pvearena_")
+		{
+			if(res->retcode == 0)
+			{
+				if(res->result_value.size() == 1)
+				{
+					SGT_PveArena::GetInstance().Load(res->result_key[0], res->result_value[0]);
+				}
+				
+				std::string table = "toplistallrole_";
+				DBLoadDataArg new_arg;
+				new_arg.key_table = Octets(table.c_str(), table.size());
+				new_arg.step = 0;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "toplistallrole_")
+		{
+			if(res->retcode == 0)
+			{
+				for(unsigned int num = 0; num < res->result_key.size(); num++)
+				{
+					SGT_TopList_All_Role::GetInstance().Load(res->result_key[num], res->result_value[num]);
+				}
+				if(res->flag == 0)
+				{
+					std::string table = "miscmanager_";
+					DBLoadDataArg new_arg;
+					new_arg.key_table = Octets(table.c_str(), table.size());
+					new_arg.step = 0;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+				else
+				{
+					//当前这个表的数据还没有取完，继续到数据库去查找
+					DBLoadDataArg new_arg;
+					new_arg.key_table = arg->key_table;
+					new_arg.step = res->result_step;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+		else if(get_table == "miscmanager_")
+		{
+			if(res->retcode == 0)
+			{
+				for(unsigned int num = 0; num < res->result_key.size(); num++)
+				{
+					SGT_Misc::GetInstance().Load(res->result_key[num], res->result_value[num]);
+				}
+				if(res->flag == 0)
+				{
+					//在这里扔一个消息出去，做一些服务器启动完成以后的初始化信息
+					char msg[100];
+					snprintf(msg, sizeof(msg), "10027:"); //OpenServer
+					MessageManager::GetInstance().Put(0, 0, msg, 0);
+
+					GLog::log(LOG_INFO, "dbloaddata finish");
+				}
+				else
+				{
+					//当前这个表的数据还没有取完，继续到数据库去查找
+					DBLoadDataArg new_arg;
+					new_arg.key_table = arg->key_table;
+					new_arg.step = res->result_step;
+					DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+					GameDBClient::GetInstance()->SendProtocol(rpc);
+				}
+			}
+			else
+			{
+				DBLoadDataArg new_arg;
+				new_arg.key_table = arg->key_table;
+				new_arg.step = arg->step;
+				DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+				GameDBClient::GetInstance()->SendProtocol(rpc);
+			}
+		}
+	}
+
+	void OnTimeout(Rpc::Data *argument)
+	{
+		DBLoadDataArg *arg = (DBLoadDataArg *)argument;
+		
+		GLog::log(LOG_INFO, "DBLoadData OnTimeout");
+		DBLoadDataArg new_arg;
+		new_arg.key_table = arg->key_table;
+		new_arg.step = arg->step;
+		DBLoadData *rpc = (DBLoadData *)Rpc::Call(RPC_DBLOADDATA,new_arg);
+		GameDBClient::GetInstance()->SendProtocol(rpc);
+	}
+
+};
+
+};
+#endif

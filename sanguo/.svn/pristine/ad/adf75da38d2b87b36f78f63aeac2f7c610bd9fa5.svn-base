@@ -1,0 +1,32 @@
+	public:
+		int load;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPSERVERUPDATESTATUS };
+	public:
+		PVPServerUpdateStatus() { type = PROTOCOL_PVPSERVERUPDATESTATUS; }
+		PVPServerUpdateStatus(void*) : Protocol(PROTOCOL_PVPSERVERUPDATESTATUS) { }
+		PVPServerUpdateStatus (int l_load)
+			 : load(l_load)
+		{
+			type = PROTOCOL_PVPSERVERUPDATESTATUS;
+		}
+
+		PVPServerUpdateStatus(const PVPServerUpdateStatus &rhs)
+			: Protocol(rhs),load(rhs.load) { }
+
+		GNET::Protocol *Clone() const { return new PVPServerUpdateStatus(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << load;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> load;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

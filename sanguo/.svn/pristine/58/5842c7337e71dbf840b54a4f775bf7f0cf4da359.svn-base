@@ -1,0 +1,37 @@
+
+#ifndef __GNET_SYNCNETIME_HPP
+#define __GNET_SYNCNETIME_HPP
+
+#include "localdefs.h"
+#include "callid.hxx"
+#include "state.hxx"
+#include <sstream>
+#include <string>
+
+
+namespace GNET
+{
+
+class SyncNetime : public GNET::Protocol
+{
+	#include "syncnetime"
+	
+	void Process(Manager *manager, Manager::Session::ID sid)
+	{
+		//fprintf(stderr,"----------------------orignate_time = %ld,recieve_time = %ld ,transmit_time = %ld \n", orignatetime, receivetime,transmittime);		
+		struct timeval ref_time;
+		gettimeofday(&ref_time, NULL);	
+	
+		int64_t referencetime = ref_time.tv_sec*1000000 + ref_time.tv_usec;		
+		//网络延时
+		int64_t roundtrip_delay =  (referencetime - orignatetime)  - (transmittime - receivetime);
+		//客户端与服务器时间差
+		int64_t difftimes2c = ((receivetime - orignatetime) + ( transmittime - referencetime))/2;	
+		//计算网络延时和时间差
+		Connection::GetInstance().EstimateNTPbySample(roundtrip_delay,difftimes2c);
+	}
+};
+
+};
+
+#endif

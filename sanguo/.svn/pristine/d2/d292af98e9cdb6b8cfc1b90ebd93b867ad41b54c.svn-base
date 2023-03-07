@@ -1,0 +1,47 @@
+	public:
+		int id;
+		int video_flag;
+		int win_flag;
+		int robot_flag;
+		int robot_seed;
+		enum { PROTOCOL_TYPE = PROTOCOL_PVPDELETE };
+	public:
+		PVPDelete() { type = PROTOCOL_PVPDELETE; }
+		PVPDelete(void*) : Protocol(PROTOCOL_PVPDELETE) { }
+		PVPDelete (int l_id,int l_video_flag,int l_win_flag,
+			int l_robot_flag,int l_robot_seed)
+			 : id(l_id),video_flag(l_video_flag),win_flag(l_win_flag)
+			,robot_flag(l_robot_flag),robot_seed(l_robot_seed)
+		{
+			type = PROTOCOL_PVPDELETE;
+		}
+
+		PVPDelete(const PVPDelete &rhs)
+			: Protocol(rhs),id(rhs.id),video_flag(rhs.video_flag),win_flag(rhs.win_flag)
+			,robot_flag(rhs.robot_flag),robot_seed(rhs.robot_seed) { }
+
+		GNET::Protocol *Clone() const { return new PVPDelete(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << id;
+			os << video_flag;
+			os << win_flag;
+			os << robot_flag;
+			os << robot_seed;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> id;
+			os >> video_flag;
+			os >> win_flag;
+			os >> robot_flag;
+			os >> robot_seed;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

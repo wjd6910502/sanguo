@@ -1,0 +1,33 @@
+[PVPUDPTransServer]
+type                    =       udp
+port                    =       39237
+address                 =       0.0.0.0
+public_port             =       9237
+public_address          =       10.68.8.16
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+tcp_nodelay             =       0
+listen_backlog          =       10
+accumulate              =       16777216
+
+[PVPCenterClient]
+type                    =       tcp
+port                    =       39245
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+accumulate              =       16777216
+
+[PVPGameClient]
+type                    =       tcp
+port                    =       39241
+address                 =       127.0.0.1
+so_sndbuf               =       32768
+so_rcvbuf               =       32768
+ibuffermax              =       1048576
+obuffermax              =       1048576
+accumulate              =       16777216

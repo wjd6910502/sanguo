@@ -1,0 +1,48 @@
+function OnCommand_WeaponForgeGetInfo(player, role, arg, others)
+--[[
+	player:Log("OnCommand_WeaponForgeGetInfo, "..DumpTable(arg).." "..DumpTable(others))
+
+	local resp = NewCommand("WeaponForgeGetInfo_Re")
+
+	local mist = API_GetLuaMisc()
+	local time = math.floor(mist._miscdata._open_server_time/86400)*86400 -- 3600*24
+	local today = math.floor((API_GetTime() - time)/86400) + 1 --今天是开服第多少天 从1开始
+	
+	resp.today = today
+	resp.weapon_info = {}
+
+	if role._roledata._forge_info._typ ~= 0 then
+		resp.weapon_info.base_item = {}
+		resp.weapon_info.base_item.tid = role._roledata._forge_info._weapon_info._base_item._tid
+		resp.weapon_info.base_item.count = role._roledata._forge_info._weapon_info._base_item._count
+
+		resp.weapon_info.weapon_info = {}
+		resp.weapon_info.weapon_info.level = role._roledata._forge_info._weapon_info._level
+		resp.weapon_info.weapon_info.star = role._roledata._forge_info._weapon_info._star
+		resp.weapon_info.weapon_info.quality = role._roledata._forge_info._weapon_info._quality
+		resp.weapon_info.weapon_info.prop = role._roledata._forge_info._weapon_info._weapon_pro._prop
+		resp.weapon_info.weapon_info.attack = role._roledata._forge_info._weapon_info._weapon_pro._attack
+		resp.weapon_info.weapon_info.strength = role._roledata._forge_info._weapon_info._weapon_pro._strength
+		resp.weapon_info.weapon_info.level_up = role._roledata._forge_info._weapon_info._weapon_pro._level_up
+		resp.weapon_info.weapon_info.exp = role._roledata._forge_info._weapon_info._weapon_pro._exp
+		
+		resp.weapon_info.weapon_info.skill_pro = {}
+		local tmp_skill_it = role._roledata._forge_info._weapon_info._weapon_pro._skill_pro:SeekToBegin()
+		local tmp_skill = tmp_skill_it:GetValue()
+		while tmp_skill ~= nil do
+			local skill = {}
+			skill.skill_id = tmp_skill._skill_id
+			skill.skill_level = tmp_skill._skill_level
+			resp.weapon_info.weapon_info.skill_pro[#resp.weapon_info.weapon_info.skill_pro+1] = skill
+
+			tmp_skill_it:Next()
+			tmp_skill = tmp_skill_it:GetValue()
+		end
+
+		resp.typ = role._roledata._forge_info._typ
+		resp.reset_time = role._roledata._forge_info._num
+	end
+
+	role:SendToClient(SerializeCommand(resp))
+]]--
+end

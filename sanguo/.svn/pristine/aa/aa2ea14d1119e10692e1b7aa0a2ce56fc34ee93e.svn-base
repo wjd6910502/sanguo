@@ -1,0 +1,73 @@
+function MAFIA_MakeMafia(mafia)
+	local ret = {}
+	ret.id = mafia._id:ToStr()
+	ret.name = mafia._name
+	ret.flag = mafia._flag
+	ret.announce = mafia._announce
+	ret.level = mafia._level
+	ret.activity = mafia._activity
+	ret.boss_id = mafia._boss_id:ToStr()
+	ret.boss_name = mafia._boss_name
+	ret.exp = mafia._exp
+	ret.jisi = mafia._jisi
+	ret.mashu_toplist_if = mafia._mashu_toplist_if
+	ret.level_limit = mafia._level_limit
+	--_member_map
+	ret.members = {}
+	for m in Cache_Map(mafia._member_map) do
+		local m2 = {}
+		m2.id = m._id:ToStr()
+		m2.name = m._name
+		m2.photo = m._photo
+		m2.level = m._level
+		m2.activity = m._activity
+		ret.members[#ret.members+1] = m2
+	end
+
+	--申请列表
+	ret.apply_list = {}
+	local apply_info_it = mafia._applylist:SeekToBegin()
+	local apply_info = apply_info_it:GetValue()
+	while apply_info ~= nil do
+		local tmp_apply_info = {}
+		tmp_apply_info.id = apply_info._id
+		tmp_apply_info.name = apply_info._name
+		tmp_apply_info.photo = apply_info._photo
+		tmp_apply_info.level = apply_info._level
+		tmp_apply_info.zhanli = apply_info._zhanli
+
+		ret.apply_list[#ret.apply_list+1] = tmp_apply_info
+		apply_info_it:Next()
+		apply_info = apply_info_it:GetValue()
+	end
+	
+	--事件列表
+	ret.notice = {}
+	local notice_info_it = mafia._notice:SeekToBegin()
+	local notice_info = notice_info_it:GetValue()
+	while notice_info ~= nil do
+		local tmp_notice_info = {}
+		tmp_notice_info.typ = notice_info._typ
+		tmp_notice_info.id = notice_info._id
+		tmp_notice_info.role_info = {}
+		
+		local role_info_it = notice_info._role_info:SeekToBegin()
+		local role_info = role_info_it:GetValue()
+		while role_info ~= nil do
+			local tmp_role_info = {}
+			tmp_role_info.id = role_info._id:ToStr()
+			tmp_role_info.name = role_info._name
+			
+			tmp_notice_info.role_info[#tmp_notice_info.role_info+1] = tmp_role_info
+			role_info_it:Next()
+			role_info = role_info_it:GetValue()
+		end
+
+		ret.notice[#ret.notice+1] = tmp_notice_info
+		notice_info_it:Next()
+		notice_info = notice_info_it:GetValue()
+	end
+
+	return ret
+end
+

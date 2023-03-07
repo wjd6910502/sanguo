@@ -1,0 +1,71 @@
+function ROLE_MakeRoleInfo(role)
+	local roleinfo = {}
+	--base
+	roleinfo.base = {}
+	roleinfo.base.id = role._base._id:ToStr()
+	roleinfo.base.name = role._base._name
+	roleinfo.base.photo = role._base._photo
+	--status
+	roleinfo.status = {}
+	roleinfo.status.level = role._status._level
+	roleinfo.status.exp = role._status._exp:ToStr()
+	roleinfo.status.vp = role._status._vp
+	--status.instances
+	roleinfo.status.instances = {}
+	local instances = role._status._instances
+	local iit = instances:SeekToBegin() --从头开始遍历
+	local i = iit:GetValue()
+	while i~=nil do
+		local i2 = {}
+		i2.tid = i._tid
+		i2.score = i._score
+		roleinfo.status.instances[#roleinfo.status.instances+1] = i2
+		iit:Next()
+		i = iit:GetValue()
+	end
+	--hero_hall
+	roleinfo.hero_hall = {}
+	roleinfo.hero_hall.heros = {}
+	local heros = role._hero_hall._heros
+	local hit = heros:SeekToBegin() --从头开始遍历
+	local h = hit:GetValue()
+	while h~=nil do
+		local h2 = {}
+		h2.tid = h._tid
+		roleinfo.hero_hall.heros[#roleinfo.hero_hall.heros+1] = h2
+		hit:Next()
+		h = hit:GetValue()
+	end
+	--backpack
+	roleinfo.backpack = {}
+	roleinfo.backpack.capacity = role._backpack._capacity
+	roleinfo.backpack.items = {}
+	local items = role._backpack._items
+	local iit = items:SeekToBegin() --从头开始遍历
+	local i = iit:GetValue()
+	while i~=nil do
+		local i2 = {}
+		i2.tid = i._tid
+		i2.count = i._count;
+		roleinfo.backpack.items[#roleinfo.backpack.items+1] = i2
+		iit:Next()
+		i = iit:GetValue()
+	end
+	--mafia
+	roleinfo.mafia = {}
+	roleinfo.mafia.id = role._mafia._id:ToStr()
+	roleinfo.mafia.name = role._mafia._name
+	--TODO: _invites
+	return roleinfo
+end
+
+function ROLE_MakeRoleBrief(role)
+	local rolebrief = {}
+	rolebrief.id = role._base._id:ToStr()
+	rolebrief.name = role._base._name
+	rolebrief.photo = role._base._photo
+	rolebrief.level = role._status._level
+	rolebrief.mafia_id = role._mafia._id:ToStr()
+	rolebrief.mafia_name = role._mafia._name
+	return rolebrief
+end

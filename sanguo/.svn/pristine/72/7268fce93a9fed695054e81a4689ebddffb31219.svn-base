@@ -1,0 +1,124 @@
+--注意一下这里面所有的函数在使用的时候，都要判断一下返回值。
+function LIMIT_TestUseLimit(role, id, count)
+	local ed = DataPool_Find("elementdata")
+	local template_common = ed:FindBy("limit_id", id)
+	if template_common == nil then
+		return false
+	end
+	local vip_level = ROLE_GetVIP(role)
+	local tem_count = 0
+	local flag = 0
+	for vip_count in DataPool_Array(template_common.vip_level_max) do
+		
+		if flag == 0 then
+			tem_count = vip_count
+		end
+		if vip_level == flag then
+			if vip_count ~= 0 then
+				tem_count = vip_count
+			end
+		end
+		flag = flag + 1
+	end
+	local common_use_limit = role._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		if tem_count >= inv._count+count then
+			return true
+		end
+	else
+		if tem_count >= count then
+			return true
+		end
+	end
+	return false
+end
+
+function LIMIT_AddUseLimit(role, id, count)
+	local common_use_limit = role._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	local tmp_count = 0
+	if inv~=nil then
+		inv._count = inv._count + count
+		tmp_count = inv._count
+	else
+		local ed = DataPool_Find("elementdata")
+		local template_common = ed:FindBy("limit_id", id)
+		if template_common == nil then
+			return false
+		end
+		local limit = CACHE.CommonUseLimit:new()
+		limit._tid = id
+		limit._count = count
+		limit._type = template_common.limitmode
+		common_use_limit:Insert(id, limit)
+		tmp_count = count
+	end
+	local resp = NewCommand("RoleCommonLimit")
+	resp.tid = id
+	resp.count = tmp_count
+	role:SendToClient(SerializeCommand(resp))
+	return true
+end
+
+--在玩家买次数的时候，需要用这个判断一下，要是系统直接重置次数的时候就不需要了
+function LIMIT_TestResetUseLimit(role, id)
+	local common_use_limit = role._status._common_use_limit
+	local ed = DataPool_Find("elementdata")
+	local template_common = ed:FindBy("limit_id", id)
+	if template_common == nil then
+		return false
+	end
+	
+	local vip_level = ROLE_GetVIP(role)
+	local tem_count = 0
+	local flag = 0
+	for vip_count in DataPool_Array(template_common.vip_level_max) do
+		if flag == 0 then
+			tem_count = vip_count
+		end
+		if vip_level == flag then
+			if vip_count ~= 0 then
+				tem_count = vip_count
+			end
+		end
+		flag = flag + 1
+	end
+	
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		if tem_count == inv._count then
+			return true
+		else
+			return false
+		end
+	else
+		return false
+	end
+end
+
+function LIMIT_ResetUseLimit(role, id)
+	local common_use_limit = role._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	if inv~=nil then
+		inv._count = 0
+		local resp = NewCommand("RoleCommonLimit")
+		resp.tid = id
+		resp.count = 0
+		role:SendToClient(SerializeCommand(resp))
+		return true
+	else
+		return false
+	end
+end
+
+function LIMIT_GetUseLimit(role, id)
+	local common_use_limit = role._status._common_use_limit
+	local inv = common_use_limit:Find(id)
+	local tmp_count = 0
+	if inv~=nil then
+		return inv._count
+	else
+		return 0
+	end
+end

@@ -1,0 +1,60 @@
+#!/bin/sh
+
+stop_run()
+{
+        killall client
+        exit 0
+}
+
+#trap "stop_run" SIGINT
+
+
+
+export LD_LIBRARY_PATH=../xlib/:.
+
+ulimit -n 4096
+ulimit -c unlimited
+
+
+
+./client gamesys.duxg.conf duxg TestRoleNameQuery 1
+#./client gamesys.duxg.conf duxg GMCommand_Mail2Role 1
+#./client gamesys.conf gm GMCommand_Mail2Role 1
+#./client gamesys.duxg.conf 2 TestMafia2 &
+#./client gamesys.duxg.conf 1 TestPVPFriend2 &
+#./client gamesys.duxg.conf 1 TestPing &
+#./client gamesys.duxg.conf 1 TestPVP &
+#./client gamesys.duxg.conf 2 TestPVP &
+
+#for i in `seq 10000`
+#do
+#	if [ $i -gt 100 -a $i -le 200 ]
+#	then
+#		./client gamesys.duxg.conf $i TestMafia2 &
+#	fi
+#done
+
+
+
+
+
+
+
+
+
+#./client gamesys.conf 1 TestPVPFriend &
+
+
+
+
+
+
+
+
+#while true
+#do
+#        sleep 1
+#done
+
+
+

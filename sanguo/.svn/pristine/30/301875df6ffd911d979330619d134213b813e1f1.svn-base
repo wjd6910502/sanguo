@@ -1,0 +1,158 @@
+
+#ifndef _HTTP_GET_REQUEST_H_
+#define _HTTP_GET_REQUEST_H_
+
+#include <string>
+#include <map>
+#include <cstdlib>
+#include "httpprotocol.h"
+
+#define GetQuery(query) \
+do { \
+	_GetQuery(_query_map, #query, query); \
+} while(0)
+
+#define AddResult(result) \
+do { \
+	_AddResult(json_body, #result, result); \
+} while(0)
+
+#define AddResultNOComma(result) \
+do { \
+	_AddResultNOComma(json_body, #result, result); \
+} while(0)
+
+namespace GNET {
+
+typedef std::map<std::string, std::string> QUERY_MAP;
+
+void _GetQuery(const QUERY_MAP& map, const char *name, int& value);
+void _GetQuery(const QUERY_MAP& map, const char *name, int64_t& value);
+void _GetQuery(const QUERY_MAP& map, const char *name, std::string& value);
+
+void _AddResult(std::string& json_body, const char *name, const int& value);
+void _AddResult(std::string& json_body, const char *name, const int64_t& value);
+void _AddResult(std::string& json_body, const char *name, const std::string& value);
+
+void _AddResultNOComma(std::string& json_body, const char *name, const int& value);
+void _AddResultNOComma(std::string& json_body, const char *name, const int64_t& value);
+void _AddResultNOComma(std::string& json_body, const char *name, const std::string& value);
+
+class HttpGetResponseInJson4Send : public HttpResponse
+{
+protected:
+	std::string json_body;
+
+public:
+	HttpGetResponseInJson4Send() {}
+
+	virtual void PrepareResults() = 0;				//将结果按固定格式打包
+	virtual void Prepare()
+	{
+		status = 200;
+		json_body = "{";
+		PrepareResults();
+		json_body += "}\r\n";
+		body = Octets(json_body.c_str(), json_body.size());
+	}
+
+	virtual HttpResponse* Clone() const { ASSERT(false); return 0; }//要Clone干什么?
+
+private:
+	HttpGetResponseInJson4Send(const HttpGetResponseInJson4Send& rhs);
+	HttpGetResponseInJson4Send& operator= (const HttpGetResponseInJson4Send& rhs);
+};
+
+class ReceivedHttpGetRequest : public HttpRequest
+{
+protected:
+	QUERY_MAP _query_map;
+
+public:
+	ReceivedHttpGetRequest() {}
+
+	virtual const char* GetPath() const = 0;			//本对象应该对应的url(做检查用，和收到的HTTP请求中包含的URL应该一致)
+	virtual void ParseQuery() = 0;					//获取url query参数
+	virtual HttpGetResponseInJson4Send* OnGetRequest(SESSION_ID sid) = 0;				//收到HTTP请求时的处理函数
+
+	virtual HttpRequest* Clone() const { ASSERT(false); return 0; }	//要Clone干什么?
+	virtual void Process(PManager *manager, SESSION_ID sid)
+	{
+		//TODO: check path
+		InitQueryMap();
+		ParseQuery();
+		HttpGetResponseInJson4Send *re = OnGetRequest(sid);
+		if (re)
+		{
+			re->Prepare();
+			manager->Send(sid, re);
+			delete re;
+		}
+	}
+
+private:
+	void InitQueryMap()
+	{
+		const char *p = strchr(url.c_str(), '?');
+		while (p)
+		{
+			p++;
+			const char *q = strchr(p, '=');
+			if (!q) return; //Err
+			const char *r = strchr(p, '&');
+			if (r && r<q) return; //Err
+			std::string n(p, q-p);
+			q++;
+			std::string v(q, r ? (r-q) : strlen(q));
+			_query_map[HttpProtocol::UrlDecode(n)] = HttpProtocol::UrlDecode(v);
+			p = r;
+		}
+	}
+};
+
+class ___ReceivedHttpGetRequest
+{
+protected:
+	QUERY_MAP _query_map;
+
+public:
+	___ReceivedHttpGetRequest() {}
+
+	virtual const char* GetPath() const = 0;				//本对象应该对应的url(做检查用，和收到的HTTP请求中包含的URL应该一致)
+	virtual void ParseQuery() = 0;						//获取url query参数
+	virtual HttpGetResponseInJson4Send* OnGetRequest(SESSION_ID sid) = 0;	//收到HTTP请求时的处理函数
+
+public:
+	void InitQueryMap(const std::string& url)
+	{
+		const char *p = strchr(url.c_str(), '?');
+		while (p)
+		{
+			p++;
+			const char *q = strchr(p, '=');
+			if (!q) return; //Err
+			const char *r = strchr(p, '&');
+			if (r && r<q) return; //Err
+			std::string n(p, q-p);
+			q++;
+			std::string v(q, r ? (r-q) : strlen(q));
+			_query_map[HttpProtocol::UrlDecode(n)] = HttpProtocol::UrlDecode(v);
+			p = r;
+		}
+	}
+};
+
+class ___HttpRequest : public HttpRequest
+{
+public:
+	virtual HttpRequest* Clone() const { ASSERT(false); return 0; }	//要Clone干什么?
+	virtual void Process(PManager *manager, SESSION_ID sid);
+
+private:
+	std::string GetUrlPath() const;
+};
+
+};
+
+#endif //_HTTP_GET_REQUEST_H_
+

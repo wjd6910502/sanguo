@@ -1,0 +1,38 @@
+	public:
+		Octets client_rand1_encoded;
+		Octets account_encoded;
+		Octets password_encoded;
+		enum { PROTOCOL_TYPE = PROTOCOL_RESPONSE };
+	public:
+		Response() { type = PROTOCOL_RESPONSE; }
+		Response(void*) : Protocol(PROTOCOL_RESPONSE) { }
+		Response (const Octets& l_client_rand1_encoded,const Octets& l_account_encoded,const Octets& l_password_encoded)
+			 : client_rand1_encoded(l_client_rand1_encoded),account_encoded(l_account_encoded),password_encoded(l_password_encoded)
+		{
+			type = PROTOCOL_RESPONSE;
+		}
+
+		Response(const Response &rhs)
+			: Protocol(rhs),client_rand1_encoded(rhs.client_rand1_encoded),account_encoded(rhs.account_encoded),password_encoded(rhs.password_encoded) { }
+
+		GNET::Protocol *Clone() const { return new Response(*this); }
+
+		OctetsStream& marshal(OctetsStream & os) const
+		{
+			os << client_rand1_encoded;
+			os << account_encoded;
+			os << password_encoded;
+			return os;
+		}
+
+		const OctetsStream& unmarshal(const OctetsStream &os)
+		{
+			os >> client_rand1_encoded;
+			os >> account_encoded;
+			os >> password_encoded;
+			return os;
+		}
+
+		int PriorPolicy( ) const { return 1; }
+
+		bool SizePolicy(size_t size) const { return size <= 1024; }

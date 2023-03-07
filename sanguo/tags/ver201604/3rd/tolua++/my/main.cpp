@@ -1,0 +1,26 @@
+extern "C"
+{
+#include "lua.h"
+#include "lualib.h"
+#include "lauxlib.h"
+}
+
+#include <stdlib.h>
+#include "test.h"
+
+int tolua_test_open(lua_State*);
+
+int main(int argc, char *argv[])
+{
+	lua_State* L = luaL_newstate();
+	luaL_openlibs(L);
+	tolua_test_open(L);
+	if (luaL_dofile(L,"test.lua"))
+	{
+		printf("Error: %s\n", lua_tostring(L,-1));
+	}
+	//lua_gc(L, LUA_GCCOLLECT, 0);
+	lua_close(L);
+	return 0;
+}
+

@@ -1,0 +1,20 @@
+function OnMessage_PvpVideoID(player, role, arg, others)
+	player:Log("OnMessage_PvpVideoID, "..DumpTable(arg).." "..DumpTable(others))
+
+	local video = CACHE.Str:new()
+	video._value = arg.video_id
+	role._roledata._status._pvp_video:PushBack(video);
+
+	--把当前的所有的录像信息发送给客户端
+	local resp = NewCommand("UpdatePvpVideo")
+	resp.video = {}
+	local vit = role._roledata._status._pvp_video:SeekToBegin()
+	local v = vit:GetValue()
+	while v ~= nil do
+		resp.video[#resp.video+1] = v._value
+		vit:Next()
+		v = vit:GetValue()
+	end
+
+	player:SendToClient(SerializeCommand(resp))
+end

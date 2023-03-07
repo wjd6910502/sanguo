@@ -1,0 +1,1000 @@
+
+#include "gateclient.hpp"
+#include "transclient.hpp"
+#include "udptransclient.hpp"
+#include "statusclient.hpp"
+#include "response.hpp"
+#include "transresponse.hpp"
+#include "connection.h"
+#include "commonmacro.h"
+#include "gameprotocol.hpp"
+#include "udpgameprotocol.hpp"
+#include "continue.hpp"
+#include "rsa.h"
+#include "keepalive.hpp"
+#include "udpkeepalive.hpp"
+#include "syncnetime.hpp"
+#include "udpc2sgameprotocols.hpp"
+#include "udpstunrequest.hpp"
+#include "udpp2pmakehole.hpp"
+#include "reportudpinfo.hpp"
+
+void FastUDPSession::Reset()
+{
+	_index_stub = 0;
+	_data_map.clear();
+	_received_index = 0;
+	_need_send_ack = false;
+	_prev_real_send_ms = 0;
+}
+
+void FastUDPSession::Send(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias, const std::vector<int>& extra_pvps)
+{
+	_index_stub++;
+
+	C2SGameProtocol prot;
+	prot.data = data;
+	prot.extra_roles = extra_roles;
+	prot.extra_mafias = extra_mafias;
+	prot.extra_pvps = extra_pvps;
+	_data_map[_index_stub] = prot;
+
+	TriggerSend(true);
+}
+
+void FastUDPSession::OnAck(int index_ack)
+{
+	auto it = _data_map.find(index_ack);
+	if(it != _data_map.end())
+	{
+		_data_map.erase(_data_map.begin(), ++it);
+	}
+}
+
+bool FastUDPSession::IsReceived(int index) const
+{
+	return (index<=_received_index);
+}
+
+void FastUDPSession::SetReceived(int index)
+{
+	assert(index==_received_index+1); //FIXME: 上线前删掉吧
+	_received_index = index;
+}
+
+void FastUDPSession::SendAck()
+{
+	_need_send_ack = true;
+}
+
+void FastUDPSession::TriggerSend(bool force)
+{
+	if(_data_map.empty() && !_need_send_ack) return;
+
+	GameClient *gc = Connection::GetInstance().GetGameClient();
+	if(!gc) return;
+
+	int64_t now_ms = gc->GetLocalTimeInMicroSec()/1000;
+	if(!force && now_ms<_prev_real_send_ms+30) return;
+
+	UDPC2SGameProtocols prot;
+	prot.id = gc->GetRoleId();
+	prot.index = 0;
+	if(!_data_map.empty())
+	{
+		prot.index = _data_map.begin()->first;
+	}
+	size_t sz = 0;
+	for(auto it=_data_map.begin(); it!=_data_map.end(); ++it)
+	{
+		const C2SGameProtocol& dat = it->second;
+		prot.protocols.push_back(dat);
+		sz += dat.data.size();
+		if(sz > 400) break; //TODO:
+		if(prot.protocols.size()>20) break; //TODO:
+	}
+	prot.index_ack = _received_index;
+	//TODO:
+	//prot.client_send_time = 
+	//prot.server_send_time = 
+
+	if(!_p2p)
+	{
+		UDPTransClient::GetInstance()->SendTo(gc->GetPVPDIP(), gc->GetPVPDPort(), prot);
+	}
+	else
+	{
+		std::string ip;
+		unsigned short port;
+		if(Connection::GetInstance().P2P_GetPeerInfo(ip, port))
+		{
+			UDPTransClient::GetInstance()->SendTo(ip.c_str(), port, prot);
+		}
+	}
+
+	_need_send_ack = false;
+	_prev_real_send_ms = now_ms;
+}
+
+int Connection::_status_timeout[] = { CONN_STATUS_TIMEOUT_NONE,
+                                      CONN_STATUS_TIMEOUT_WAIT_CHALLENGE,
+                                      CONN_STATUS_TIMEOUT_WAIT_AUTH_RESULT,
+                                      CONN_STATUS_TIMEOUT_WAIT_TRANS_CHALLENGE,
+                                      CONN_STATUS_TIMEOUT_WAIT_TRANS_AUTH_RESULT,
+                                      CONN_STATUS_TIMEOUT_ESTABLISHED,
+                                      CONN_STATUS_TIMEOUT_WAIT_SERVER_STATUS,
+                                    };
+
+void Connection::Initialize()
+{
+	//IntervalTimer::Attach(this, (1000000)/IntervalTimer::Resolution());
+	IntervalTimer::Attach(this, (20000)/IntervalTimer::Resolution());
+}
+
+void Connection::Open(GameClient *callback, const char *gate_ip, unsigned short gate_port, const char *account, const char *password,
+                      const char *status_ip, unsigned short status_port)
+{
+	if(_status != CONN_STATUS_NONE) return;
+
+	_callback = callback;
+
+	_gate_ip = gate_ip;
+	_gate_port = gate_port;
+	_account = account;
+	_password = password;
+	_status_ip = status_ip;
+	_status_port = status_port;
+
+	GateClient *manager = GateClient::GetInstance();
+	Protocol::Client(manager);
+
+	ChangeStatus(CONN_STATUS_WAIT_CHALLENGE);
+}
+
+void Connection::Close()
+{
+	ChangeStatus(CONN_STATUS_NONE);
+	_can_send_game_protocol = false;
+
+	GateClient::GetInstance()->CloseCur();
+	TransClient::GetInstance()->CloseCur();
+	//UDPTransClient::GetInstance()->CloseCur();
+	StatusClient::GetInstance()->CloseCur();
+}
+
+void Connection::SendGameProtocol(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias,
+                                  const std::vector<int>& extra_pvps)
+{
+	GameProtocol prot;
+	prot.data = data;
+	//TODO:
+	//prot.client_send_time = 
+	//prot.server_send_time = 
+	prot.extra_roles = extra_roles;
+	prot.extra_mafias = extra_mafias;
+	prot.extra_pvps = extra_pvps;
+	prot.reserved1 = 0;
+	prot.reserved2 = 0;
+
+	if(_status==CONN_STATUS_ESTABLISHED && _can_send_game_protocol) TransClient::GetInstance()->SendProtocol(prot);
+
+	AddHistory(prot);
+}
+
+void Connection::SendUDPGameProtocol(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias,
+                                     const std::vector<int>& extra_pvps)
+{
+	UDPGameProtocol prot;
+	prot.id = 0;
+	if(_callback)
+	{
+		prot.id = _callback->GetRoleId();
+	}
+	prot.data = data;
+	//TODO:
+	//prot.client_send_time = 
+	//prot.server_send_time = 
+	prot.extra_roles = extra_roles;
+	prot.extra_mafias = extra_mafias;
+	prot.extra_pvps = extra_pvps;
+	prot.reserved1 = 0;
+	prot.reserved2 = 0;
+
+	//if(_status==CONN_STATUS_ESTABLISHED && _can_send_game_protocol) UDPTransClient::GetInstance()->SendProtocol(prot);
+	UDPTransClient::GetInstance()->SendTo(_trans_ip.c_str(), _trans_port, prot);
+}
+
+void Connection::AddHistory(const GameProtocol& prot)
+{
+	_game_protocol_history.push_back(prot);
+	if(_game_protocol_history.size() > CONN_CONST_CLIENT_SEND_HISTORY_MAX)
+	{
+		_first_game_protocol_id++;
+		_game_protocol_history.pop_front();
+	}
+}
+
+
+void Connection::OnChallenge(Protocol::Manager *manager, int sid, const Octets& server_rand1)
+{
+	//fprintf(stderr, "Connection::OnChallenge, _status=%d, manager=%p, sid=%d, server_rand1=%s\n",
+	//        _status, manager, sid, B16EncodeOctets(server_rand1).c_str());
+
+	assert(_status==CONN_STATUS_WAIT_CHALLENGE);
+	assert(server_rand1.size()==CONN_CONST_RAND1_SIZE);
+
+	//client_rand1
+	Octets client_rand1;
+	Security *random = Security::Create(RANDOM);
+	random->Update(client_rand1.resize(CONN_CONST_RAND1_SIZE));
+	random->Destroy();
+	//_key1
+	_key1.resize(CONN_CONST_RAND1_SIZE);
+	for(auto i=0; i<CONN_CONST_RAND1_SIZE; ++i)
+	{
+		((unsigned char*)_key1.begin())[i] = ((unsigned char*)server_rand1.begin())[i]^((unsigned char*)client_rand1.begin())[i];
+	}
+	//enc_key, dec_key
+	Octets enc_key(_key1.begin(), CONN_CONST_RAND1_SIZE/2);
+	Octets dec_key((unsigned char*)_key1.begin()+CONN_CONST_RAND1_SIZE/2, CONN_CONST_RAND1_SIZE/2);
+	//_enc_sec1/_dec_sec1
+	if(_enc_sec1) _enc_sec1->Destroy();
+	_enc_sec1 = Security::Create(ARCFOURSECURITY);
+	_enc_sec1->SetParameter(enc_key);
+	if(_dec_sec1) _dec_sec1->Destroy();
+	_dec_sec1 = Security::Create(ARCFOURSECURITY);
+	_dec_sec1->SetParameter(dec_key);
+	//Send Response
+	Response prot;
+#ifdef ENABLE_RSA
+	Octets pubkey;
+	pubkey.push_back(RSA_E,strlen(RSA_E) + 1);
+	prot.client_rand1_encoded = rsa_encode(pubkey,client_rand1);
+	//fprintf(stderr, "---------Connection::OnChallenge, client_rand1=%s\n",B16EncodeOctets(client_rand1).c_str());
+	//fprintf(stderr, "---------Connection::OnChallenge, server_rand1=%s,  client_rand1=%s,  client_rand1_encoded=%s, \n",B16EncodeOctets(server_rand1).c_str(),B16EncodeOctets(client_rand1).c_str(),B16EncodeOctets(prot.client_rand1_encoded).c_str());
+#else
+	prot.client_rand1_encoded = client_rand1;
+#endif
+	prot.account_encoded = Octets(_account.c_str(), _account.size());
+	_enc_sec1->Update(prot.account_encoded);
+	prot.password_encoded = Octets(_password.c_str(), _password.size()+1);
+	if(prot.password_encoded.size() < CONN_CONST_PASSWORD_SIZE_MIN) prot.password_encoded.resize(CONN_CONST_PASSWORD_SIZE_MIN);
+	_enc_sec1->Update(prot.password_encoded);
+
+	manager->Send(sid, prot);
+
+	ChangeStatus(CONN_STATUS_WAIT_AUTH_RESULT);
+}
+
+void Connection::OnAuthResult(Protocol::Manager *manager, int sid, int retcode, const Octets& trans_ip, unsigned short trans_port,
+                              const Octets& udp_trans_ip, unsigned short udp_trans_port, const Octets& stund_ip, unsigned short stund_port,
+                              const Octets& trans_token)
+{
+	//fprintf(stderr, "Connection::OnAuthResult, _status=%d, manager=%p, sid=%d, retcode=%d, trans_ip=%s, trans_port=%d, udp_trans_ip=%s, udp_trans_port=%d, trans_token=%s\n",
+	//        _status, manager, sid, retcode, B16EncodeOctets(trans_ip).c_str(), trans_port, B16EncodeOctets(udp_trans_ip).c_str(),
+	//        udp_trans_port, B16EncodeOctets(trans_token).c_str());
+
+	assert(_status==CONN_STATUS_WAIT_AUTH_RESULT);
+
+	if(retcode != 0)
+	{
+		if(_callback) _callback->OnAuthFailed();
+
+		//ChangeStatus(CONN_STATUS_NONE);
+		Close();
+		return;
+	}
+
+	assert(trans_token.size()==CONN_CONST_TRANS_TOKEN_SIZE);
+
+	_trans_ip = std::string((char*)trans_ip.begin(), trans_ip.size());
+	_trans_port = trans_port;
+	_udp_trans_ip = std::string((char*)udp_trans_ip.begin(), udp_trans_ip.size());
+	_udp_trans_port = udp_trans_port;
+	_stund_ip = std::string((char*)stund_ip.begin(), stund_ip.size());
+	_stund_port = stund_port;
+	_trans_token = trans_token;
+
+	//manager->Close(sid);
+	((GateClient*)manager)->CloseCur();
+
+	TransClient *manager2 = TransClient::GetInstance();
+	Protocol::Client(manager2);
+
+	if(!_udp_is_init)
+	{
+		_udp_is_init = true;
+		UDPTransClient *manager3 = UDPTransClient::GetInstance();
+		//Protocol::Client(manager3);
+		Protocol::Server(manager3);
+	}
+
+	ChangeStatus(CONN_STATUS_WAIT_TRANS_CHALLENGE);
+}
+
+void Connection::OnTransChallenge(Protocol::Manager *manager, int sid, const Octets& server_rand2)
+{
+	//fprintf(stderr, "Connection::OnTransChallenge, _status=%d, manager=%p, sid=%d, server_rand2=%s\n",
+	//        _status, manager, sid, B16EncodeOctets(server_rand2).c_str());
+
+	assert(_status==CONN_STATUS_WAIT_TRANS_CHALLENGE);
+	assert(server_rand2.size()==CONN_CONST_RAND2_SIZE);
+
+	//client_rand2
+	Octets client_rand2;
+	Security *random = Security::Create(RANDOM);
+	random->Update(client_rand2.resize(CONN_CONST_RAND2_SIZE));
+	//salt
+	Octets salt;
+	random->Update(salt.resize(CONN_CONST_TRANS_SALT_SIZE));
+	random->Destroy();
+	//enc_key
+	Octets enc_key(_key1.begin(), CONN_CONST_RAND1_SIZE/2);
+	enc_key.insert(enc_key.end(), salt.begin(), salt.size());
+	//enc_sec
+	Security *enc_sec = Security::Create(ARCFOURSECURITY);
+	enc_sec->SetParameter(enc_key);
+	//Send TransResponse
+	TransResponse prot;
+	prot.device_id = Octets("robot", strlen("robot"));
+	prot.trans_token = _trans_token;
+	prot.salt = salt;
+	prot.server_rand2_encoded = server_rand2;
+	enc_sec->Update(prot.server_rand2_encoded);
+	prot.client_rand2_encoded = client_rand2;
+	enc_sec->Update(prot.client_rand2_encoded);
+	prot.client_received_count = _client_received_game_protocol_count;
+	manager->Send(sid, prot);
+	//Destroy
+	enc_sec->Destroy();
+	//key2
+	Octets key2;
+	key2.resize(CONN_CONST_RAND2_SIZE);
+	for(auto i=0; i<CONN_CONST_RAND2_SIZE; ++i)
+	{
+		//key2[i] = server_rand2[i]^client_rand2[i];
+		((unsigned char*)key2.begin())[i] = ((unsigned char*)server_rand2.begin())[i]^((unsigned char*)client_rand2.begin())[i];
+	}
+	//_enc_key2, _dec_key
+	_enc_key2 = Octets(key2.begin(), CONN_CONST_RAND2_SIZE/2);
+	_dec_key2 = Octets((unsigned char*)key2.begin()+CONN_CONST_RAND2_SIZE/2, CONN_CONST_RAND2_SIZE/2);
+	//enable input security
+#ifdef ENABLE_SECURITY
+	manager->SetISecurity(sid, DECOMPRESSARCFOURSECURITY, _dec_key2);
+#endif
+
+	ChangeStatus(CONN_STATUS_WAIT_TRANS_AUTH_RESULT);
+
+	P2P_ClearNetType();
+	P2P_TryGetNetType();
+}
+
+void Connection::OnTransAuthResult(Protocol::Manager *manager, int sid, int retcode, int server_received_count, bool do_reset)
+{
+	//fprintf(stderr, "Connection::OnTransAuthResult, _status=%d, manager=%p, sid=%d, retcode=%d, server_received_count=%d, do_reset=%d\n",
+	//        _status, manager, sid, retcode, server_received_count, do_reset);
+
+	if(retcode != 0)
+	{
+		//manager->Close(sid);
+		((TransClient*)manager)->CloseCur();
+
+		GateClient *manager2 = GateClient::GetInstance();
+		Protocol::Client(manager2);
+
+		ChangeStatus(CONN_STATUS_WAIT_CHALLENGE);
+		return;
+	}
+
+	ChangeStatus(CONN_STATUS_ESTABLISHED);
+	_can_send_game_protocol = false;
+	_server_received_game_protocol_count = server_received_count;
+
+	//enable output security
+	//fprintf(stderr, "Connection::OnTransAuthResult, _enc_key2=%s, _dec_key2=%s\n", B16EncodeOctets(_enc_key2).c_str(), B16EncodeOctets(_dec_key2).c_str());
+#ifdef ENABLE_SECURITY
+	manager->SetOSecurity(sid, ARCFOURSECURITY, _enc_key2);
+#endif
+
+	bool need_reset = false;
+	if(do_reset)
+	{
+		need_reset = true;
+	}
+	else if(server_received_count+1 < _first_game_protocol_id)
+	{
+		//历史不足以满足重传
+		need_reset = true;
+	}
+	else if((unsigned int)server_received_count > _first_game_protocol_id+_game_protocol_history.size()-1)
+	{
+		//服务器收到的比客户端发过的还多，客户端重启了???
+		need_reset = true;
+	}
+
+	Continue prot;
+	prot.reset = need_reset;
+	manager->Send(sid, prot);
+}
+
+void Connection::OnContinue(Protocol::Manager *manager, int sid, bool reset)
+{
+	_can_send_game_protocol = true;
+	
+	if(reset)
+	{
+		_client_received_game_protocol_count = 0;
+		_server_received_game_protocol_count = 0;
+		_first_game_protocol_id = 1;
+		_game_protocol_history.clear();
+
+		if(_callback) _callback->DoReload();
+		return;
+	}
+
+	//触发重传
+	if((unsigned int)_server_received_game_protocol_count < _first_game_protocol_id+_game_protocol_history.size()-1)
+	{
+		auto it = _game_protocol_history.begin();
+		auto i = 0;
+		for(; it!=_game_protocol_history.end(); ++it, ++i)
+		{
+			if(_server_received_game_protocol_count < _first_game_protocol_id+i)
+			{
+				GameProtocol& prot = *it;
+				//TODO:
+				//prot.client_send_time = 
+				//prot.server_send_time = 
+				manager->Send(sid, prot);
+			}
+		}
+	}
+}
+
+void Connection::OnTransLostConnection(Protocol::Manager *manager, int sid)
+{
+	fprintf(stderr, "Connection::OnTransLostConnection, _status=%d, manager=%p, sid=%d\n",
+	        _status, manager, sid);
+
+	if(_status != CONN_STATUS_ESTABLISHED) return;
+
+	Protocol::Client(manager);
+
+	ChangeStatus(CONN_STATUS_WAIT_TRANS_CHALLENGE);
+}
+
+void Connection::OnKickout(Protocol::Manager *manager, int sid, int reason)
+{
+	fprintf(stderr, "Connection::OnKickout, _status=%d, manager=%p, sid=%d, reason=%d\n",
+	        _status, manager, sid, reason);
+
+	if(_callback) _callback->OnKickout(reason);
+
+	//ChangeStatus(CONN_STATUS_NONE);
+	Close();
+}
+
+void Connection::OnServerStatus(Protocol::Manager *manager, int sid, const Octets& info)
+{
+	fprintf(stderr, "Connection::OnServerStatus, _status=%d, manager=%p, sid=%d, info=%.*s\n",
+	        _status, manager, sid, (int)info.size(), (char*)info.begin());
+
+	assert(_status==CONN_STATUS_WAIT_SERVER_STATUS);
+
+	if(_callback) _callback->OnServerMaintaining(info);
+
+	//ChangeStatus(CONN_STATUS_NONE);
+	Close();
+}
+
+bool Connection::Update()
+{
+	GameClient *gc = Connection::GetInstance().GetGameClient();
+	if(!gc) return true;
+
+	_udp_session.TriggerSend(false);
+	if(P2P_IsEstablished()) _p2p_udp_session.TriggerSend(false);
+
+	time_t now = gc->GetLocalTime();
+
+	_p2p_helper.Update(now);
+
+	if(now == _prev_update_time) return true;
+	_prev_update_time = now;
+
+	if(_p2p_helper.NeedReport() && IsEstablished())
+	{
+		_p2p_helper.ClearNeedReport();
+
+		ReportUDPInfo prot;
+		prot.net_type = _p2p_helper.GetNetType();
+		std::string ip = _p2p_helper.GetPublicIP();
+		prot.public_ip = Octets(ip.c_str(), ip.size());
+		prot.public_port = _p2p_helper.GetPublicPort();
+		ip = GateClient::GetInstance()->GetLocalIP();
+		prot.local_ip = Octets(ip.c_str(), ip.size());
+		prot.local_port = UDPTransClient::GetInstance()->GetLocalPort();
+		TransClient::GetInstance()->SendProtocol(prot);
+	}
+
+	if(_status == CONN_STATUS_NONE)
+	{
+		return true;
+	}
+	else if(_status == CONN_STATUS_ESTABLISHED)
+	{
+		if(now-_prev_keepalive_send_time > 10)
+		{
+			_prev_keepalive_send_time = now;
+
+			{
+				KeepAlive prot;
+				//TODO:
+				//prot.client_send_time = 
+				//prot.server_send_time = 
+				TransClient::GetInstance()->SendProtocol(prot);
+			}
+			{
+				UDPKeepAlive prot;
+				prot.id = gc->GetRoleId();
+				//TODO:
+				//prot.client_send_time = 
+				//prot.server_send_time = 
+				UDPTransClient::GetInstance()->SendTo(Connection::GetInstance().GetUDPTransIP(), Connection::GetInstance().GetUDPTransPort(), prot);
+			}
+					
+		}
+		return true;
+	}
+
+	//for timeout
+	if(--_timeout <= 0)
+	{
+		switch(_status)
+		{
+		case CONN_STATUS_WAIT_CHALLENGE:
+		{
+			GateClient::GetInstance()->DiscardPendingSession();
+
+			StatusClient *manager2 = StatusClient::GetInstance();
+			Protocol::Client(manager2);
+
+			ChangeStatus(CONN_STATUS_WAIT_SERVER_STATUS);
+			break;
+		}
+		case CONN_STATUS_WAIT_AUTH_RESULT:
+		{
+			GateClient *manager = GateClient::GetInstance();
+			manager->CloseCur();
+			Protocol::Client(manager);
+
+			ChangeStatus(CONN_STATUS_WAIT_CHALLENGE);
+			break;
+		}
+		case CONN_STATUS_WAIT_TRANS_CHALLENGE:
+		{
+			TransClient::GetInstance()->DiscardPendingSession();
+
+			_wait_trans_challenge_timeout_count++;
+			if(_wait_trans_challenge_timeout_count >= CONN_CONST_WAIT_TRANS_CHALLENGE_COUNT_MAX)
+			{
+				GateClient *manager = GateClient::GetInstance();
+				Protocol::Client(manager);
+
+				ChangeStatus(CONN_STATUS_WAIT_CHALLENGE);
+			}
+			else
+			{
+				TransClient *manager = TransClient::GetInstance();
+				Protocol::Client(manager);
+
+				ChangeStatus(CONN_STATUS_WAIT_TRANS_CHALLENGE); //only for reset timeout
+			}
+			break;
+		}
+		case CONN_STATUS_WAIT_TRANS_AUTH_RESULT:
+		{
+			TransClient *manager = TransClient::GetInstance();
+			manager->CloseCur();
+			Protocol::Client(manager);
+
+			ChangeStatus(CONN_STATUS_WAIT_TRANS_CHALLENGE);
+			break;
+		}
+		case CONN_STATUS_WAIT_SERVER_STATUS:
+		{
+			StatusClient::GetInstance()->DiscardPendingSession();
+
+			GateClient *manager2 = GateClient::GetInstance();
+			Protocol::Client(manager2);
+
+			ChangeStatus(CONN_STATUS_WAIT_CHALLENGE);
+			break;
+		}
+		default:
+			fprintf(stderr, "Connection::Update, _status=%d, _timeout=%d\n", _status, _timeout);
+			break;
+		}
+	}
+
+	return true;
+}
+
+void Connection::ChangeStatus(CONN_STATUS status)
+{
+	fprintf(stderr, "Connection::ChangeStatus, _status=%d, status=%d\n", _status, status);
+
+	if(status==CONN_STATUS_WAIT_TRANS_CHALLENGE && _status!=CONN_STATUS_WAIT_TRANS_CHALLENGE)
+	{
+		_wait_trans_challenge_timeout_count = 0;
+	}
+	
+	_status = status;
+	_timeout = _status_timeout[status];
+}
+
+void Connection::FastSess_Reset()
+{
+	_udp_session.Reset();
+	_p2p_udp_session.Reset();
+}
+
+void Connection::FastSess_Send(const Octets& data, const std::vector<int64_t>& extra_roles, const std::vector<int64_t>& extra_mafias,
+                               const std::vector<int>& extra_pvps)
+{
+	_udp_session.Send(data, extra_roles, extra_mafias, extra_pvps);
+	if(P2P_IsEstablished())
+	{
+		_p2p_udp_session.Send(data, extra_roles, extra_mafias, extra_pvps);
+	}
+}
+
+void Connection::FastSess_OnAck(int index_ack, bool p2p)
+{
+	if(p2p)
+	{
+		_p2p_udp_session.OnAck(index_ack);
+	}
+	else
+	{
+		_udp_session.OnAck(index_ack);
+	}
+}
+
+bool Connection::FastSess_IsReceived(int index, bool p2p) const
+{
+	if(p2p)
+	{
+		return _p2p_udp_session.IsReceived(index);
+	}
+	else
+	{
+		return _udp_session.IsReceived(index);
+	}
+}
+
+void Connection::FastSess_SetReceived(int index, bool p2p)
+{
+	if(p2p)
+	{
+		_p2p_udp_session.SetReceived(index);
+	}
+	else
+	{
+		_udp_session.SetReceived(index);
+	}
+}
+
+void Connection::FastSess_SendAck(bool p2p)
+{
+	if(p2p)
+	{
+		_p2p_udp_session.SendAck();
+	}
+	else
+	{
+		_udp_session.SendAck();
+	}
+}
+
+//void Connection::SetPVPDInfo(const char *ip, unsigned short port)
+//{
+//	_pvpd_ip = ip;
+//	_pvpd_port = port;
+//}
+
+void Connection::P2P_TryConnect(int magic, const char *peer_ip, unsigned short peer_port)
+{
+	_p2p_helper.TryMakeHole(magic, peer_ip, peer_port);
+	//_p2p_magic = magic;
+}
+
+bool P2PHelper::Update(time_t now)
+{
+	UpdateGetNetType(now);
+	UpdateMakeHole(now);
+	return true;
+}
+
+void P2PHelper::TryGetNetType()
+{
+	if(_get_net_type_status != P2P_GET_NET_TYPE_STATUS_NONE) return;
+
+	GameClient *gc = Connection::GetInstance().GetGameClient();
+	if(!gc) return;
+
+	_get_net_type_magic = gc->RandomInt();
+	_need_report = false;
+
+	GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_1);
+	SendTest1ToGamed();
+}
+
+void P2PHelper::OnReceivedUDPSTUNResponse(int magic, const char *client_ip, unsigned short client_port)
+{
+	if(magic != _get_net_type_magic) return;
+
+	if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_1)
+	{
+		_public_ip = client_ip;
+		_public_port = client_port;
+
+		GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_2);
+		SendTest2ToGamed();
+	}
+	else if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_2)
+	{
+		GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_NONE);
+		_net_type = P2P_NET_TYPE_FULL_CONE;
+	}
+	else if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_STUND_1)
+	{
+		if(_public_ip==client_ip && _public_port==client_port)
+		{
+			GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_3);
+			SendTest3ToGamed();
+		}
+		else
+		{
+			GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_NONE);
+			_net_type = P2P_NET_TYPE_SYMMETRIC;
+		}
+	}
+	else if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_3)
+	{
+		GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_NONE);
+		_net_type = P2P_NET_TYPE_RESTRICTED_CONE;
+	}
+}
+
+void P2PHelper::ResetConnection()
+{
+	_make_hole_status = P2P_MAKE_HOLE_STATUS_NONE;
+	_make_hole_magic = 0;
+	_make_hole_peer_ip = "";
+	_make_hole_peer_port = 0;
+	_make_hole_time = 0;
+}
+
+void P2PHelper::TryMakeHole(int magic, const char *peer_ip, unsigned short peer_port)
+{
+	if(peer_port == 0) return;
+
+	if(_make_hole_status!=P2P_MAKE_HOLE_STATUS_NONE) return;
+
+	_make_hole_status = P2P_MAKE_HOLE_STATUS_DOING;
+	_make_hole_magic = magic;
+	_make_hole_peer_ip = peer_ip;
+	_make_hole_peer_port = peer_port;
+	GameClient *gc = Connection::GetInstance().GetGameClient();
+	if(gc)
+	{
+		_make_hole_time = gc->GetLocalTime();
+	}
+
+	UDPP2PMakeHole prot;
+	prot.magic = _make_hole_magic;
+	prot.request = 1;
+	UDPTransClient::GetInstance()->SendTo(_make_hole_peer_ip.c_str(), _make_hole_peer_port, prot);
+}
+
+void P2PHelper::OnMakeHole(int magic, const char *src_ip, unsigned short src_port)
+{
+	if(magic == _make_hole_magic)
+	{
+		_make_hole_status = P2P_MAKE_HOLE_STATUS_DONE;
+		_make_hole_peer_ip = src_ip;
+		_make_hole_peer_port = src_port;
+	}
+}
+
+bool P2PHelper::IsHoleOK() const
+{
+	if(_make_hole_status != P2P_MAKE_HOLE_STATUS_DONE) return false;
+	return true;
+}
+
+bool P2PHelper::GetP2PPeer(std::string& peer_ip, unsigned short& peer_port) const
+{
+	if(_make_hole_status != P2P_MAKE_HOLE_STATUS_DONE) return false;
+	//if(_make_hole_magic != magic) return false;
+
+	peer_ip = _make_hole_peer_ip;
+	peer_port = _make_hole_peer_port;
+	return true;
+}
+
+void P2PHelper::SendTest1ToGamed()
+{
+	//send Test1 to gamed
+	UDPSTUNRequest prot;
+	prot.magic = _get_net_type_magic;
+	prot.change_ip = 0;
+	prot.change_port = 0;
+	UDPTransClient::GetInstance()->SendTo(Connection::GetInstance().GetUDPTransIP(), Connection::GetInstance().GetUDPTransPort(), prot);
+}
+
+void P2PHelper::SendTest2ToGamed()
+{
+	//send Test2 to gamed
+	UDPSTUNRequest prot;
+	prot.magic = _get_net_type_magic;
+	prot.change_ip = 1;
+	prot.change_port = 0;
+	UDPTransClient::GetInstance()->SendTo(Connection::GetInstance().GetUDPTransIP(), Connection::GetInstance().GetUDPTransPort(), prot);
+}
+
+void P2PHelper::SendTest3ToGamed()
+{
+	//send Test3 to gamed
+	UDPSTUNRequest prot;
+	prot.magic = _get_net_type_magic;
+	prot.change_ip = 0;
+	prot.change_port = 1;
+	UDPTransClient::GetInstance()->SendTo(Connection::GetInstance().GetUDPTransIP(), Connection::GetInstance().GetUDPTransPort(), prot);
+}
+
+void P2PHelper::SendTest1ToStund()
+{
+	//send Test1 to stund
+	UDPSTUNRequest prot;
+	prot.magic = _get_net_type_magic;
+	prot.change_ip = 0;
+	prot.change_port = 0;
+	UDPTransClient::GetInstance()->SendTo(Connection::GetInstance().GetStundIP(), Connection::GetInstance().GetStundPort(), prot);
+}
+
+void P2PHelper::GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS status)
+{
+	_get_net_type_status = status;
+	_get_net_type_magic++; //区分不同的状态，避免延迟到达的response互相干扰
+
+	GameClient *gc = Connection::GetInstance().GetGameClient();
+	if(gc)
+	{
+		_get_net_type_status_change_time = gc->GetLocalTime();
+	}
+	if(status == P2P_GET_NET_TYPE_STATUS_NONE)
+	{
+		_need_report=true;
+	}
+}
+
+void P2PHelper::UpdateGetNetType(time_t now)
+{
+	if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_NONE) return;
+
+	if(now == _prev_update_time) return;
+	_prev_update_time = now;
+
+	if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_1)
+	{
+		if(now-_get_net_type_status_change_time > 3)
+		{
+			GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_NONE);
+			_net_type = P2P_NET_TYPE_UDP_BLOCKED;
+		}
+		else if(now-_get_net_type_status_change_time >= 1)
+		{
+			SendTest1ToGamed();
+		}
+	}
+	else if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_2)
+	{
+		if(now-_get_net_type_status_change_time > 3)
+		{
+			GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_WAIT_STUND_1);
+			SendTest1ToStund();
+		}
+		else if(now-_get_net_type_status_change_time >= 1)
+		{
+			SendTest2ToGamed();
+		}
+	}
+	else if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_STUND_1)
+	{
+		if(now-_get_net_type_status_change_time > 3)
+		{
+			GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_NONE);
+			_net_type = P2P_NET_TYPE_UNKNOWN;
+		}
+		else if(now-_get_net_type_status_change_time >= 1)
+		{
+			SendTest1ToStund();
+		}
+	}
+	else if(_get_net_type_status == P2P_GET_NET_TYPE_STATUS_WAIT_GAMED_3)
+	{
+		if(now-_get_net_type_status_change_time > 3)
+		{
+			GetNetType_ChangeStatus(P2P_GET_NET_TYPE_STATUS_NONE);
+			_net_type = P2P_NET_TYPE_PORT_RESTRICTED_CONE;
+		}
+		else if(now-_get_net_type_status_change_time >= 1)
+		{
+			SendTest3ToGamed();
+		}
+	}
+}
+
+void P2PHelper::UpdateMakeHole(time_t now)
+{
+	if(_make_hole_status!=P2P_MAKE_HOLE_STATUS_DOING) return;
+
+	if(now-_make_hole_time>10)
+	{
+		_make_hole_status = P2P_MAKE_HOLE_STATUS_NONE;
+		return;
+	}
+	if(_make_hole_peer_port)
+	{
+		UDPP2PMakeHole prot;
+		prot.magic = _make_hole_magic;
+		prot.request = 1;
+		UDPTransClient::GetInstance()->SendTo(_make_hole_peer_ip.c_str(), _make_hole_peer_port, prot);
+	}
+}
+
+void Connection::OnReceivedGameProtocol(const Octets& lua_prot)
+{
+	_client_received_game_protocol_count++;
+
+	GameClient *gc = Connection::GetInstance().GetGameClient();
+	if(!gc) return;
+	gc->OnRecvGameProtocol(lua_prot);
+}
+
+void Connection::OnReceivedUDPGameProtocol(const Octets& lua_prot)
+{
+	if(_callback)
+	{
+		_callback->OnRecvGameProtocol(lua_prot);
+	}
+}
+
+void Connection::SetServerTimeOffset(int64_t off)
+{
+	printf("Connection::SetServerTimeOffset, off=%ld\n", off);
+	_server_time_offset=off;
+}
+
+time_t Connection::GetServerTime() const
+{
+	if(_callback)
+	{
+		int64_t t = _callback->GetLocalTimeInMicroSec()-_server_time_offset;
+		return (time_t)t/1000000;
+	}
+	return 0;
+}
+
+int64_t Connection::GetServerTimeInMicroSec() const
+{
+	if(_callback)
+	{
+		return _callback->GetLocalTimeInMicroSec()-_server_time_offset;
+	}
+	return 0;
+}
+
+

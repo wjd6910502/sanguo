@@ -1,0 +1,24 @@
+CXX=g++ -m64
+CXXFLAGS=-g -Wall -ansi -std=c++0x -O3
+#CXXFLAGS=-g -Wall -ansi -std=c++0x
+INCLUDES=-Iinclude -I../src
+LD=g++ -m64
+LDFLAGS=-O3
+#LDFLAGS=
+DASM=objdump
+DASMFLAGS=-dS
+OBJS=
+#LIBS=-Llib -lio64 -L. -lluajit -ldl -lssl
+LIBS=-Llib -lio64 -L. -llua64 -ldl -lssl
+
+all: test
+
+test: main.o ${OBJS}
+	${LD} ${LDFLAGS} -o $@ $< ${OBJS} ${LIBS}
+	${DASM} ${DASMFLAGS} $@ >test.s
+
+main.o: main.cpp
+	${CXX} ${CXXFLAGS} ${INCLUDES} -c $<
+
+clean:
+	rm -f *.o test test.s
